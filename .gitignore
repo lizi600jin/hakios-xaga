@@ -1,0 +1,7 @@
+release/     本地构建产物（用 wget 从 Releases 取，不提交）
+*.img
+*.bin
+!patches/*.bin
+build/
+out/
+.DS_Store

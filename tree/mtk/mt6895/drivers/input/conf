@@ -1,0 +1,19 @@
+# mtk/mt6895/drivers/input/conf: the MT6895's keys and its touch screen.
+# CONFIG_HAKIOS_<NAME>=y in a defconfig builds a driver into the kernel (docs/drivers-config.md). MediaTek's drivers are
+# `default n`: a configuration has them only when it includes mt6895.config.
+
+driver MTK6895_KEYS
+	file    bsd/dev/hakios.mt6895_keys.c
+	default n
+	help    the volume keys through the keypad at 0x1c00e000 (mediatek,kp, hw-init-map 0x72) and the power key through
+	help    the MT6363's TOPSTATUS over SPMI at 0x1c804000 (buttons=2). The MT6895 keeps its keys in those two places;
+	help    mt6768's MTK_KEYS reads 0x10010000 and an MT6358, which this SoC has neither of
+
+driver NVT
+	file    bsd/dev/hakios.nvt.c
+	default n
+	help    the touch screen of the Redmi Note 11T Pro (xaga): a Novatek NT36672E on SPI2 (0x11012000), driven by hand
+	help    over GPIO109 (MI), 110 (CS), 111 (MO) and 112 (CLK) because this SoC's SPI2_A function number is not known
+	help    from the sources here, with the report read off address 0 after a page select (touchscreen=3). The chip runs
+	help    its own firmware out of its own flash: nothing has to be sent to it first, which is why this driver needs no
+	help    fw-touch/ file. Its interrupt line is GPIO135, polled rather than wired to a GIC SPI

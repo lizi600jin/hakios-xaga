@@ -1,0 +1,14 @@
+# mtk/mt6895/drivers/usb/conf: the MT6895's USB device port.
+# CONFIG_HAKIOS_<NAME>=y in a defconfig builds a driver into the kernel (docs/drivers-config.md). MediaTek's drivers are
+# `default n`: a configuration has them only when it includes mt6895.config.
+
+driver MT6895_USB
+	file    bsd/dev/hakios.mt6895_usb.c
+	default n
+	help    the USB device port of the Redmi Note 11T Pro (xaga): the MT6895's MTU3 controller at 0x11201000 with its
+	help    IPPC block at 0x11203e00 and the port 0 USB2 phy (mediatek,xsphy) at 0x11e40000 (usb=2). Nothing in this
+	help    tree had a USB stack -- no bsd/dev/*usb*.c, no iokit usb, no usb header in xnu/files -- so this is written
+	help    against Linux drivers/usb/mtu3/, against the phone's own LK (which is a complete, working MTU3 device-mode
+	help    implementation: it is what fastboot runs), and against the shape of the sweet port's XNU usb patches.
+	help    It starts by reading the state LK left behind rather than resetting it, the way hakios.ufshc.c inherits
+	help    LK's task list
