@@ -4,7 +4,7 @@
 
 整个过程分五步：**备份 → 备份分区表 → 刻 xnusys 分区 → 写入系统镜像 → 刷 boot_a**。
 
-每一步都为"手机变砖"留了退路。真的卡住了，跳到最后的[救砖](#救砖)。
+卡住了跳到最后的[救砖](#救砖)。
 
 ---
 
@@ -47,7 +47,7 @@ adb shell getprop ro.product.device    # 应输出 xaga
 
 ## 第一步：备份 boot_a
 
-这是唯一一处不做就会后悔的操作。
+先备份，恢复全靠它。
 
 ```bash
 export S=$(adb devices | awk 'NR==2{print $1}')
@@ -60,11 +60,9 @@ adb -s $S shell 'rm -f /data/local/tmp/boot_a.img'
 md5sum backup/boot_a.img
 ```
 
-记下这个 md5。恢复时先核对它，避免拿错文件。
+写镜像到手机上再从手机上 `adb pull`，`adb shell ... > file` 会损坏二进制。
 
-`dd if=... | adb pull` 这种写法会损坏二进制（`adb shell` 是 pty 不是管道），必须先在手机上写到文件，再 `adb pull`。
-
-顺手把 `vendor_boot_a` 也备份了，将来做 TWRP 之类的东西会用上：
+`vendor_boot_a` 一起备份：
 
 ```bash
 adb -s $S shell 'su -c "dd if=/dev/block/by-name/vendor_boot_a of=/data/local/tmp/vb.img"'
@@ -76,14 +74,14 @@ adb -s $S shell 'rm -f /data/local/tmp/vb.img'
 
 ## 第二步：备份分区表
 
-改 GPT 是唯一"出错就回不来"的操作，所以先留底。
+动手前先留底。
 
 ```bash
 adb -s $S shell 'su -c "dd if=/dev/block/sdc bs=4096 count=64 of=/data/local/tmp/gpt-head.bin"'
 adb -s $S pull /data/local/tmp/gpt-head.bin backup/gpt-head.bin
 ```
 
-`xaga` 的 GPT 用 **4096 字节逻辑块**，header 在 byte 4096（不是 512），这也是备份从 `sdc` 开头 64 个 4096 块的原因。
+`xaga` 的 GPT 用 **4096 字节逻辑块**，header 在 byte 4096。
 
 ---
 
@@ -91,13 +89,13 @@ adb -s $S pull /data/local/tmp/gpt-head.bin backup/gpt-head.bin
 
 `system.apfs` 有 2.32 GiB，`boot_a` 只有 64 MiB，装不下。要从 `userdata` 尾部划一块独立的 `xnusys` 出来。
 
-先**只算不写**，看清楚会动哪些数字：
+先只算不写：
 
 ```bash
 HAKIOS_SERIAL=$S mtk/tools/xaga-carve.sh --gib 2.5
 ```
 
-输出会列出：当前 `userdata` 的起止块、划走之后的新尺寸、新 `xnusys` 的起止块、entry 编号。确认没有异常，再加 `--write`：
+确认 output 里的起止块没有异常，再加 `--write`：
 
 ```bash
 HAKIOS_SERIAL=$S mtk/tools/xaga-carve.sh --gib 2.5 --write
@@ -105,9 +103,9 @@ HAKIOS_SERIAL=$S mtk/tools/xaga-carve.sh --gib 2.5 --write
 
 脚本会自己备份原 GPT 到 `backup/gpt/`。
 
-### 刻完之后必须重建 userdata
+### 刻完之后重建 userdata
 
-这一步不做，Android 会崩：f2fs 的超级块里还记着旧的 106.48 GiB，实际分区已经小了 2.5 GiB，surfaceflinger 会 SIGBUS。
+f2fs 里还记着旧的尺寸，不重建 Android 会 SIGBUS。
 
 ```bash
 adb -s $S reboot bootloader
@@ -117,7 +115,7 @@ fastboot -s $S reboot
 
 Android 起来后会按新尺寸重建 `/data`，`df /data` 应该显示约 104 GB。
 
-> **root 会一起没掉。** `erase userdata` 清掉的不只是数据，KernelSU 的应用配置也在里面。重新装一遍 KernelSU 管理器并激活 root，否则第四步写不进去。
+> `erase userdata` 会清掉 KernelSU 配置，root 要重装一遍，否则第四步写不进去。
 
 确认分区在：
 
@@ -138,9 +136,9 @@ timeout 60 adb -s $S shell "su -c 'sync'"
 adb -s $S shell 'rm -f /data/local/tmp/system.apfs'
 ```
 
-2.32 GiB 走 USB 2.0 大概要 3 到 6 分钟，`dd` 那一步再几十秒。`timeout` 给宽一点。
+2.32 GiB 走 USB 2.0 大约 3 到 6 分钟。
 
-校验一下写对了：
+校验：
 
 ```bash
 adb -s $S shell 'su -c "dd if=/dev/block/by-name/xnusys bs=512 count=1 2>/dev/null" | xxd -s 32 -l 4'
@@ -148,7 +146,7 @@ adb -s $S shell 'su -c "dd if=/dev/block/by-name/xnusys bs=512 count=1 2>/dev/nu
 
 应该输出 `NXSB`（APFS 容器的魔数在 offset 32）。
 
-仓库里的 `mtk/tools/system-flash.sh` 把这几步包好了，等价于上面全部：
+`mtk/tools/system-flash.sh` 把这几步包好了：
 
 ```bash
 HAKIOS_SERIAL=$S sh mtk/tools/system-flash.sh /path/to/system.apfs
@@ -170,9 +168,7 @@ fastboot -s $S reboot
 2. 大约 20 秒后**苹果 logo** 出现，下面有进度条。
 3. 大约 60 到 90 秒后进入**桌面**：状态栏、小组件、Dock。
 
-第一次进系统会跑一次数据迁移，屏幕中间会转很久。这段时间不要断电。
-
-首次启动后，机器上会一直停在这个桌面。
+第一次进系统会跑数据迁移，中间转很久，别断电。之后一直停在这个桌面。
 
 ### 现在能做什么
 
@@ -182,7 +178,7 @@ fastboot -s $S reboot
 
 ### 现在不能做什么
 
-- **没有触控**，没有按键，USB 也不枚举。iOS 起来了但操作不了，这一版只能"看"。
+- 没有触控、没有按键，USB 也不枚举。
 - 没有 GPU 加速，复杂界面的流畅度会掉。
 - 没有 Wi-Fi、没有蜂窝、没有音频、没有相机。
 - 重启不保存任何设置。
@@ -209,7 +205,7 @@ fastboot -s $S reboot
 
 ### 还能进 fastboot
 
-问题不大。刷回备份就行：
+刷回备份：
 
 ```bash
 fastboot devices                       # 确认能看到手机
@@ -225,19 +221,19 @@ fastboot -s $S reboot
 fastboot -s $S getvar current-slot     # 必须是 a
 ```
 
-如果刷的是 `boot_a` 而机器在 `boot_b` 上启动，什么都不会变。
+刷 `boot_b` 时机器得在 `boot_b` 上启动。
 
 ### 连 fastboot 都进不去
 
 长按电源键 15 秒强制断电，然后 **电源 + 音量下** 进 fastboot。
 
-MTK 的机型断电后会先枚举成 `0e8d:2000 MT65xx Preloader`，几秒后才是 fastboot。`lsusb` 看到 `0e8d:2000` 说明机器还活着，等一下再试。
+MTK 的机器断电后会先枚举成 `0e8d:2000 MT65xx Preloader`，几秒后才是 fastboot。`lsusb` 看到它就说明机器还活着。
 
 ### 都不行
 
-用 MTK 官方刷机工具（SP Flash Tool）配合官方固件包救。这一步需要机器的 scatter 文件，官方固件里带。
+用 MTK 官方刷机工具（SP Flash Tool）配合官方固件包救，scatter 文件在固件包里。
 
-> 官方 ROM 里的 `lk.img` 与本机 dump 的 `lk_a.img` 的 fastboot 命令表完全一致，`boot:` 出现 0 次 —— 所以没有"用 fastboot boot 临时试"这种办法，每次实验都是写 `boot_a`。这也是为什么本文把备份放在最前面。
+> 官方 ROM 里的 `lk.img` 与本机 dump 的 `lk_a.img` 命令表完全一致，`boot:` 出现 0 次。所以每次实验都是写 `boot_a`。
 
 ---
 
@@ -245,20 +241,20 @@ MTK 的机型断电后会先枚举成 `0e8d:2000 MT65xx Preloader`，几秒后�
 
 **为什么不能 `fastboot boot`？**
 
-这台机的 LK 没有注册 `boot:` 命令。从 `lk_a.img` 里读出的完整命令表是 `getvar:`、`erase:`、`set_active:`、`continue`、`reboot-*`、`oem poweroff`、`oem p2u`、`download:`、`oem ultraflash`，没有 `boot:`。MTK 的刷机走 `download:` 加分区名的私有路径。
+从 `lk_a.img` 读出的命令表是 `getvar:`、`erase:`、`set_active:`、`continue`、`reboot-*`、`oem poweroff`、`oem p2u`、`download:`、`oem ultraflash`，没有 `boot:`。MTK 刷机走 `download:` 加分区名。
 
 **为什么装完 iOS，Android 的数据还在但空间少了？**
 
-`xnusys` 是从 `userdata` 尾部划的，Android 分区本身没被格式化，只是变小了。但 `erase userdata` 那一步会清空它 —— 那一步是为了让 f2fs 按新尺寸重建。
+`xnusys` 从 `userdata` 尾部划出来。`erase userdata` 会清空它，那是为了让 f2fs 按新尺寸重建。
 
 **屏幕右下角/整体偏右怎么办？**
 
-已知问题，与 framebuffer 无关，是 DSI / panel 时序。暂时没有绕过办法。
+DSI / panel 时序问题，暂无绕过办法。
 
 **能刷回官方系统吗？**
 
-能。恢复 `boot_a` 备份即可回到原来的 Android。要彻底还原分区表，用 `backup/gpt/` 里的原件恢复 GPT，再 `fastboot erase userdata`。
+能。恢复 `boot_a` 备份就回到原来的 Android。彻底还原分区表用 `backup/gpt/` 里的原件，再 `fastboot erase userdata`。
 
 **这版会自己重启进 Android 吗？**
 
-不会。Release 里是给用户用的版本，启动后停在 iOS。开发过程中有一个"跑完自动回 Android 方便取日志"的调试版，那个不在 Release 里。
+不会。Release 的版本启动后停在 iOS。

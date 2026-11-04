@@ -79,7 +79,7 @@ if (!PE_parse_boot_argn("loader_return_after", &seconds, sizeof(seconds)) || sec
 
 boot-arg 给非零值，XNU 跑够那么多秒就把控制权交回 loader，loader 写 logbook 再 `chain_android()` 回 Android —— 一次刷机就能自动完成「跑 → 收日志 → 回 Android」，不用手动救砖。
 
-开发时用 `-DXNU_RETURN_AFTER='"70"'`，一轮 113 秒。给用户发的版本必须写 `'"0"'`，否则机器会自己重启回 Android，看着像崩溃。
+调试用 `-DXNU_RETURN_AFTER='"70"'`，一轮 113 秒。发出去的版本写 `'"0"'`。
 
 ## 看门狗快照：内核彻底死掉时
 
@@ -93,7 +93,7 @@ XNU 挂死的话 `loader_return_after` 那条路走不成，日志还在 DRAM �
 
 `report_kernel_log(pa, len)` 把内核日志按 45×51 字符分页画到 framebuffer，`XNU_REPORT_DWELL_MS 20000` 一页，`XNU_REPORT_MAX_KB 6` 封顶，`report_park` 控制最后一页是否永久停在屏上。
 
-`BOARD_REPORT_PAGES=0` 关掉整段，`BOARD_REPORT_SYSTEM_IMAGE=0` 关掉跳转前那张信息屏 —— 给用户发的版本两个都关。
+`BOARD_REPORT_PAGES=0` 关掉整段，`BOARD_REPORT_SYSTEM_IMAGE=0` 关掉跳转前那张信息屏。
 
 ## 屏幕上验证某一步到底跑到没有
 
