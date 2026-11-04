@@ -297,8 +297,7 @@ MAC 侧没看到主机，问题在 PHY 的 D+ 比较器。已排除：
 - [oosexgang/hakios-xnu-kernel](https://github.com/oosexgang/hakios-xnu-kernel)
 - [Apple xnu](https://github.com/apple-oss-distributions/xnu)
 - [ios-sweet](https://github.com/dipa-studio/ios-sweet)
-- Linux 内核的 MediaTek 驱动
-- Xiaomi 公开的 `xaga` 内核树与厂商模块
+
 
 ---
 
