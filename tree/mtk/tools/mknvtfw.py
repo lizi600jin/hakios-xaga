@@ -31,7 +31,7 @@ import sys
 DEFAULT_BIN = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "..", "..", "..", "work-xaga", "dt-device_xiaomi_xaga-TWRP",
-    "recovery", "root", "vendor", "firmware", "novatek_nt36672e_l16_fw01.bin")
+    "recovery", "root", "vendor", "firmware", "novatek_ts_fw.bin")
 # The header lives with the other kernel files, not with the SoC: drivers/map is what tells
 # xnu/apply.sh and xnu/sync-drivers.sh where a .h goes, and a drivers/*/conf can only name .c
 # files. drivers/input/hakios.focaltech_fw.h set that precedent for a firmware blob.

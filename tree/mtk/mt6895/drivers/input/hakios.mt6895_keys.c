@@ -63,6 +63,65 @@ extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
 #define LINE_VOLUMEUP   17
 
 static vm_offset_t kpd;
+static vm_offset_t pmif;
+
+/*
+ * The PMIC's own key registers, reached over SPMI rather than through the keypad block.
+ *
+ * The keypad at 1c00e000 answers with all ones on this phone -- every one of its five state
+ * registers reads ffff no matter what is pressed -- so the volume keys are not wired to it. The
+ * device tree says where they are instead: mt6363keys hangs off mt6363 (slave 4 of the SPMI bus)
+ * with a power child on keycode 116 and a home child on 115, and the Android side confirms the
+ * state register is 0x001e, a bit per key with the bit *clear* while the key is down (bit 1 the
+ * power key, bit 3 home, which this phone wires to volume up).
+ *
+ * Reading it means speaking SPMI, and the SoC's own arbiter is the only way in: MTK calls the
+ * block PMIF, and a transfer is a command word written to a software-interface channel followed
+ * by a poll on that channel's state for WFVLDCLR. Translated from spmi-mtk-pmif.c, which is the
+ * driver Android uses for this exact controller (mediatek,mt6895-spmi, mt6873 register layout):
+ *
+ *   the channel   swinf_ch_start = 0x0a in this phone's tree, which is PMIF_CHAN_OFFSET (5) times
+ *                 soc_chan (2) -- the same arithmetic the vendor driver does at probe.
+ *   the command   (opc << 30) | (sid << 24) | ((len - 1) << 16) | addr, plus BIT(29) for a write.
+ *                 opc is not the SPMI opcode but the arbiter's own: 1 for a plain register read,
+ *                 which is what the driver maps SPMI_CMD_READ (0x60) onto.
+ *   the state     bits 3:1 hold the FSM, 0 idle and 6 "valid, clear it"; the data is in RDATA and
+ *                 the read is acknowledged by writing 1 to VLD_CLR.
+ */
+#define PMIF_BASE           0x1c804000
+#define PMIF_SIZE           0x1000
+/*
+ * Which software-interface channel is ours, and where its registers are.
+ *
+ * The tree says swinf_ch_start = 0x0a and ap_swinf_no = 0x02, and the vendor driver's arithmetic
+ * explains both: chan_offset = PMIF_CHAN_OFFSET (5) * soc_chan (2) = 10, added to the *index* of
+ * the PMIF_SWINF_0_* entries in its register table, not to their addresses. Ten entries past
+ * SWINF_0 is SWINF_2, whose registers sit a fixed stride further on. Reading the table out:
+ * SWINF_2_ACC 0x0c80, WDATA 0x0c84, RDATA 0x0c94, VLD_CLR 0x0ca4, STA 0x0ca8.
+ *
+ * The first version of this file added ten to the SWINF_0 *addresses*, which lands in the middle
+ * of SWINF_0's dwords -- a transfer that could never complete.
+ */
+#define PMIF_SWINF_ACC      0x0c80
+#define PMIF_SWINF_WDATA    0x0c84
+#define PMIF_SWINF_RDATA    0x0c94
+#define PMIF_SWINF_VLDCLR   0x0ca4
+#define PMIF_SWINF_STA      0x0ca8
+
+#define PMIF_CMD_REG        1u
+#define SWINF_IDLE          0x00u
+#define SWINF_WFVLDCLR      0x06u
+#define PMIF_SPIN_LIMIT     200000u
+
+/* Enough of the arbiter's own state to tell "not brought up" from "brought up but stuck". */
+#define PMIF_INIT_DONE      0x0000
+#define PMIF_INF_EN         0x0024
+#define PMIF_ARB_EN         0x0150
+
+#define PMIC_SID            4               /* mt6363 is "pmic@4" on the bus */
+#define MT6363_KEYS_STATE   0x001e          /* bit 1 power, bit 3 home; clear means pressed */
+#define MT6363_POWER_BIT    1
+#define MT6363_HOME_BIT     3
 
 static inline uint16_t
 rd16(uint32_t at)
@@ -82,20 +141,80 @@ rd32(uint32_t at)
 	return *(volatile uint32_t *)(kpd + at);
 }
 
+/* The arbiter is reached through its own window, so it needs its own pair. */
+static inline uint32_t
+pmif_rd(uint32_t at)
+{
+	uint32_t value = *(volatile uint32_t *)(pmif + at);
+
+	__asm__ volatile ("dsb sy" ::: "memory");
+	return value;
+}
+
+static inline void
+pmif_wr(uint32_t at, uint32_t value)
+{
+	__asm__ volatile ("dsb sy" ::: "memory");
+	*(volatile uint32_t *)(pmif + at) = value;
+	__asm__ volatile ("dsb sy" ::: "memory");
+}
+
+/*
+ * One register of the PMIC, over the arbiter. Returns false and leaves `value` alone if the
+ * transfer did not complete; nothing here retries, because a caller that is polling a key every
+ * twenty milliseconds has all the retries it needs.
+ */
+static bool
+pmic_read(uint8_t addr, uint8_t *value)
+{
+	uint32_t cmd;
+	uint32_t spins;
+
+	/* Only proceed when the software interface is idle; a stuck one must not be driven anyway. */
+	for (spins = 0; spins < PMIF_SPIN_LIMIT; spins++) {
+		if (((pmif_rd(PMIF_SWINF_STA) >> 1) & 0x7u) == SWINF_IDLE) {
+			break;
+		}
+	}
+	if (spins == PMIF_SPIN_LIMIT) {
+		return false;
+	}
+	cmd = (PMIF_CMD_REG << 30) | ((uint32_t)PMIC_SID << 24) | (0u << 16) | addr;
+	pmif_wr(PMIF_SWINF_ACC, cmd);
+	for (spins = 0; spins < PMIF_SPIN_LIMIT; spins++) {
+		if (((pmif_rd(PMIF_SWINF_STA) >> 1) & 0x7u) == SWINF_WFVLDCLR) {
+			break;
+		}
+	}
+	if (spins == PMIF_SPIN_LIMIT) {
+		return false;
+	}
+	*value = (uint8_t)(pmif_rd(PMIF_SWINF_RDATA) & 0xffu);
+	pmif_wr(PMIF_SWINF_VLDCLR, 1u);
+	return true;
+}
+
 static uint16_t state[KP_STATE_REGS];
+static bool have_keypad;
 static unsigned changes, keylog_level, reports;
 
 /* Which line a key of ours sits on, and whether the last poll saw it down. */
 struct key {
-	unsigned line;
+	unsigned line;          /* keypad line, or the PMIC's bit number when from_pmic */
 	uint32_t button;
+	bool from_pmic;
 	bool down;
 };
 
+/*
+ * Two sources, because this phone splits its buttons. The keypad has one declared key of its own
+ * (line 0, KEY_VOLUMEDOWN, in mt6895.dts's hw-init-map) and the PMIC has the other two: power on
+ * bit 1 and home on bit 3, and this phone's device tree wires home to keycode 115, volume up.
+ */
 static struct key keys[] = {
-	{ LINE_VOLUMEDOWN, HAKIOS_BUTTON_VOLUME_DOWN, false },
-	{ LINE_VOLUMEUP,   HAKIOS_BUTTON_VOLUME_UP,   false },
-	{ LINE_POWER,      HAKIOS_BUTTON_LOCK,        false },
+	{ LINE_VOLUMEDOWN, HAKIOS_BUTTON_VOLUME_DOWN, false, false },
+	{ MT6363_HOME_BIT, HAKIOS_BUTTON_VOLUME_UP,   true,  false },
+	{ MT6363_POWER_BIT, HAKIOS_BUTTON_LOCK,       true,  false },
 };
 
 static void
@@ -136,6 +255,13 @@ read_settled(uint16_t *into)
 }
 
 static bool
+pmic_bit_down(uint8_t value, unsigned bit)
+{
+	/* Same sense as the keypad: the bit is clear while the key is held. */
+	return (value & (1u << bit)) == 0;
+}
+
+static bool
 line_down(const uint16_t *from, unsigned line)
 {
 	unsigned r = line / 16;
@@ -169,6 +295,55 @@ keys_thread(__unused void *parameter, __unused wait_result_t result)
 		poll_ms = 20;
 	}
 	kpd = ml_io_map(KPD_PHYS, KPD_SIZE);
+	pmif = ml_io_map(PMIF_BASE, PMIF_SIZE);
+	if (pmif == 0) {
+		printf("mt6895-keys: the arbiter at %#x will not map; no key can be read\n",
+		    (unsigned)PMIF_BASE);
+		return;
+	}
+	{
+		uint8_t keys_state = 0;
+
+		if (pmic_read(MT6363_KEYS_STATE, &keys_state)) {
+			printf("mt6895-keys: the PMIC's key register %#x reads %02x "
+			    "(bit %u power, bit %u home/volume up; clear means held)\n",
+			    MT6363_KEYS_STATE, keys_state, MT6363_POWER_BIT, MT6363_HOME_BIT);
+
+			/*
+			 * The address above came from differencing five hundred register snapshots
+			 * taken on the Android side, and it is not the one the vendor driver uses:
+			 * mtk-pmic-keys reads TOPSTATUS at 0x2a on mt6359, with the power key on
+			 * bit 1 of the value it gets back and home on bit 3 -- the same bit numbers,
+			 * a different register. MT6363 is close enough to mt6359 that either could
+			 * be right, so read both and let the log say which one moves when a key is
+			 * pressed. The poll uses 0x1e; if only 0x2a changes, that constant is wrong.
+			 */
+			{
+				uint8_t alt = 0;
+
+				if (pmic_read(0x2a, &alt)) {
+					printf("mt6895-keys: for comparison register 0x2a reads %02x\n",
+					    alt);
+				} else {
+					printf("mt6895-keys: register 0x2a did not answer\n");
+				}
+			}
+		} else {
+			/*
+			 * Say which part of the arbiter looks dead, because there are only a few ways
+			 * this fails and they need different fixes: INIT_DONE clear means the block
+			 * has not been brought up at all, ARB_EN clear means it is brought up but not
+			 * enabled, and a state machine parked outside IDLE means someone else is
+			 * using the channel.
+			 */
+			printf("mt6895-keys: the arbiter did not answer for the PMIC's key register; "
+			    "only the keypad's own line will work\n");
+			printf("mt6895-keys: pmif init_done %#x inf_en %#x arb_en %#x sta %#x "
+			    "(fsm %u)\n", pmif_rd(PMIF_INIT_DONE), pmif_rd(PMIF_INF_EN),
+			    pmif_rd(PMIF_ARB_EN), pmif_rd(PMIF_SWINF_STA),
+			    (unsigned)((pmif_rd(PMIF_SWINF_STA) >> 1) & 0x7u));
+		}
+	}
 
 	/*
 	 * The block is not in Android's iomem map (only 1c00f000, the dvfsrc, is), which on this SoC is
@@ -177,27 +352,34 @@ keys_thread(__unused void *parameter, __unused wait_result_t result)
 	 * whole machine down. So read the state once, and treat a register block that answers with all
 	 * ones or all zeros as absent rather than looping on it.
 	 */
-	read_state(state);
-	if ((state[0] & state[1] & state[2] & state[3] & state[4]) == 0xffffu ||
-	    (state[0] | state[1] | state[2] | state[3] | state[4]) == 0u) {
-		printf("mt6895-keys: the keypad at %#x reads %04x %04x %04x %04x %04x, which is not a"
-		    " block that is running; leaving it alone\n", (unsigned)KPD_PHYS,
-		    state[0], state[1], state[2], state[3], state[4]);
-		return;
-	}
-
 	/*
-	 * Start the block, in the order kpd_pdrv_probe uses: enable first, then the debounce period.
-	 * The period the phone asks for is 1024, which is what bits 13:0 of the register hold.
+	 * The keypad cannot be the end of the story any more. It answers with all ones here, which
+	 * used to make this function return -- and that return would now take the PMIC's keys with
+	 * it, since they are read through the arbiter and have nothing to do with this block. So the
+	 * block decides only whether the keypad half of the poll runs.
 	 */
-	wr16(KP_ENABLE, (uint16_t)(rd16(KP_ENABLE) | 0x1u));
-	wr16(KP_DEBOUNCE, (uint16_t)1024u);
-
 	read_state(state);
-	printf("mt6895-keys: the keypad reads %04x %04x %04x %04x %04x every %u ms; "
-	    "line %u is volume down, %u volume up, %u the power key\n",
-	    state[0], state[1], state[2], state[3], state[4], poll_ms,
-	    LINE_VOLUMEDOWN, LINE_VOLUMEUP, LINE_POWER);
+	have_keypad = !((state[0] & state[1] & state[2] & state[3] & state[4]) == 0xffffu ||
+	    (state[0] | state[1] | state[2] | state[3] | state[4]) == 0u);
+	if (!have_keypad) {
+		printf("mt6895-keys: the keypad at %#x reads %04x %04x %04x %04x %04x, which is not a"
+		    " block that is running; only the PMIC's keys will be watched\n",
+		    (unsigned)KPD_PHYS, state[0], state[1], state[2], state[3], state[4]);
+	} else {
+		/*
+		 * Start the block, in the order kpd_pdrv_probe uses: enable first, then the debounce
+		 * period. The period the phone asks for is 1024, which is what bits 13:0 hold.
+		 */
+		wr16(KP_ENABLE, (uint16_t)(rd16(KP_ENABLE) | 0x1u));
+		wr16(KP_DEBOUNCE, (uint16_t)1024u);
+
+		read_state(state);
+		printf("mt6895-keys: the keypad reads %04x %04x %04x %04x %04x every %u ms; "
+		    "line %u is volume down\n", state[0], state[1], state[2], state[3], state[4],
+		    poll_ms, LINE_VOLUMEDOWN);
+	}
+	printf("mt6895-keys: polling every %u ms; PMIC bit %u is power, bit %u volume up\n",
+	    poll_ms, MT6363_POWER_BIT, MT6363_HOME_BIT);
 	if (keylog_level >= 1) {
 		dump();
 	}
@@ -207,8 +389,41 @@ keys_thread(__unused void *parameter, __unused wait_result_t result)
 		bool sent = false;
 
 		read_settled(now);
-		for (unsigned i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
-			bool down = line_down(now, keys[i].line);
+		{
+			uint8_t keys_state = 0;
+			bool have_pmic = pmic_read(MT6363_KEYS_STATE, &keys_state);
+
+			for (unsigned i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
+				bool down;
+
+				if (!keys[i].from_pmic) {
+					continue;
+				}
+				if (!have_pmic) {
+					continue;
+				}
+				down = pmic_bit_down(keys_state, keys[i].line);
+				if (down == keys[i].down) {
+					continue;
+				}
+				keys[i].down = down;
+				changes++;
+				hakios_touch_post(down ? HAKIOS_BUTTON_DOWN : HAKIOS_BUTTON_UP,
+				    keys[i].button, 0, 0);
+				sent = true;
+				if (keylog_level != 0) {
+					printf("mt6895-keys: pmic bit %u %s (register %02x)\n",
+					    keys[i].line, down ? "down" : "up", keys_state);
+				}
+			}
+		}
+		for (unsigned i = 0; have_keypad && i < sizeof(keys) / sizeof(keys[0]); i++) {
+			bool down;
+
+			if (keys[i].from_pmic) {
+				continue;
+			}
+			down = line_down(now, keys[i].line);
 
 			if (down == keys[i].down) {
 				continue;

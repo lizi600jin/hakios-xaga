@@ -268,6 +268,30 @@ nvt_read(uint32_t address, uint8_t *data, uint32_t len)
 #define FINGER_BYTES    6
 #define MAX_FINGERS     10
 
+/*
+ * How often the line is sampled while waiting for a report, and for how long.
+ *
+ * One sample per tick was too coarse to ever see the assertion: the line goes high for a few
+ * microseconds while a tick is two hundred milliseconds, and Android's own eint counter reports
+ * tens of thousands of edges, so the pulses are real and frequent. A short burst of back-to-back
+ * reads was the first answer, but a burst of two hundred and fifty-six register reads covers
+ * perhaps twenty-five microseconds and then sleeps for the rest of the window -- at an edge every
+ * six or seven milliseconds that misses better than ninety-nine percent of them.
+ *
+ * So the wait itself is the sampling loop: fifty-microsecond steps across the whole window. Four
+ * thousand single-register reads per two hundred milliseconds is nothing, and it means every
+ * assertion is seen rather than gambled on.
+ */
+#define NVT_IRQ_STEP_US    50u
+#define NVT_IRQ_WINDOW_US  200000u
+
+/*
+ * How many quiet ticks to let pass before asking anyway. At the default two-hundred-millisecond
+ * tick this is one read every two seconds, which is slow enough that it cannot be mistaken for the
+ * pacing that four-thousand-reads-a-second turned out to be.
+ */
+#define NVT_QUIET_READ_TICKS 10u
+
 #define PANEL_W         1080
 #define PANEL_H         2460
 #define PICTURE_W       1125            /* what iOS thinks the display is, and draws for */
@@ -593,6 +617,25 @@ nvt_boot_ready(void)
 	delay(5000);
 }
 
+/*
+ * nvt_eng_reset(): the first thing the vendor's probe does.
+ *
+ * nt36xxx.c:1598 runs nvt_eng_reset() -- one write of 0x5A to ENG_RST_ADDR 0x7FFF80, then a
+ * millisecond -- before it asks for the trim id, and only then registers the input device and
+ * queues the firmware push fourteen seconds later. This driver had the address defined and never
+ * used it, which means it has been talking to a chip nobody put into a known state first.
+ *
+ * It is behind touch_eng_rst rather than unconditional: the reset is harmless in the vendor's
+ * order but this driver's order is not the vendor's, and a change that cannot be undone without
+ * a reflash should be something the log can attribute.
+ */
+static void
+nvt_eng_reset(void)
+{
+	nvt_write_addr(NVT_ENG_RST_ADDR, 0x5A);
+	delay(1000);
+}
+
 /* nvt_bootloader_reset(): park the MCU, then turn off its fast read, which changes frame shapes. */
 static void
 nvt_bootloader_reset(void)
@@ -782,8 +825,57 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 	 */
 	printf("nvt: step 1, the gpio block is mapped at %#lx\n", (unsigned long)gpio);
 
+	/*
+	 * What the bootloader left in the function-select fields, read before this driver writes
+	 * them. The Android pinctrl dump taken while the touch screen worked there shows
+	 * MI=1 CS=0 MO=1 CLK=1 IRQ=0 -- three of the five are not on function zero while the chip
+	 * is being talked to, and the one that is (CS) is the one the vendor's own pinctrl state
+	 * drives as plain GPIO. Bit-banging works with all five at zero because the pad then
+	 * belongs to the GPIO block either way, but a chip ID and a firmware CRC both arriving
+	 * through a path nobody has measured is not the same as a path known to be right, and this
+	 * line is the measurement that separates the two.
+	 */
+	printf("nvt: step 1a, the function select was MI %u CS %u MO %u CLK %u IRQ %u\n",
+	    (rd(GPIO_MODE_BASE + (PIN_MI / 8) * GPIO_MODE_STEP) >> ((PIN_MI % 8) * 4)) & 0xfu,
+	    (rd(GPIO_MODE_BASE + (PIN_CS / 8) * GPIO_MODE_STEP) >> ((PIN_CS % 8) * 4)) & 0xfu,
+	    (rd(GPIO_MODE_BASE + (PIN_MO / 8) * GPIO_MODE_STEP) >> ((PIN_MO % 8) * 4)) & 0xfu,
+	    (rd(GPIO_MODE_BASE + (PIN_CLK / 8) * GPIO_MODE_STEP) >> ((PIN_CLK % 8) * 4)) & 0xfu,
+	    (rd(GPIO_MODE_BASE + (PIN_IRQ / 8) * GPIO_MODE_STEP) >> ((PIN_IRQ % 8) * 4)) & 0xfu);
+
 	pins_as_gpio();
 	printf("nvt: step 2, the five pins are plain gpio and their directions are set\n");
+
+	/*
+	 * The vendor's probe resets the controller before it reads anything (nt36xxx.c:1676), and
+	 * it does so for a reason that this driver had backwards for a while: the reset puts the
+	 * chip into its bootloader, and nothing runs on the other side of that bus until an image
+	 * has been written back and the reset state has reached RESET_STATE_INIT. A run that reset
+	 * the chip and then skipped the download (touch_eng_rst=1 with touch_keep_fw=1) therefore
+	 * read a bootloader that was waiting for an image, which is exactly what its FWINFO looked
+	 * like: ver c0, node counts that match no panel, and 0x77 everywhere the event buffer
+	 * should have been. The two switches answer different questions and must not be combined.
+	 */
+	uint32_t eng = 0;
+	uint32_t keep = 0;
+
+	PE_parse_boot_argn("touch_eng_rst", &eng, sizeof(eng));
+	PE_parse_boot_argn("touch_keep_fw", &keep, sizeof(keep));
+
+	if (eng != 0 && keep != 0) {
+		/*
+		 * Refuse the combination rather than run it. Resetting into the bootloader and then
+		 * declining to load an image leaves the part in a state this driver cannot read, and
+		 * the readings it produced were mistaken for evidence about the panel and the wiring.
+		 */
+		printf("nvt: touch_eng_rst and touch_keep_fw ask for opposite things; also "
+		    "dropping the reset so the chip keeps whatever boot chain left in it\n");
+		eng = 0;
+	}
+
+	if (eng != 0) {
+		nvt_eng_reset();
+		printf("nvt: step 2b, eng reset sent (0x5A to 0x7FFF80) and one millisecond given\n");
+	}
 
 	/*
 	 * Latch the page once, the way probe does, and then read address 0 for every report: each
@@ -793,6 +885,7 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 	nvt_set_page(page);
 	printf("nvt: step 3, page %#x is latched; the bus is GPIO%d/%d/%d/%d driven by hand\n",
 	    page, PIN_MI, PIN_CS, PIN_MO, PIN_CLK);
+
 
 	/*
 	 * Group 3 first: pin_settle() reads it, so this one is already known to answer. It is
@@ -957,29 +1050,29 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 	 * hundred bytes of Novatek boot code inside the chip, and has nothing to do with the
 	 * phone's bootloader or its lock.
 	 */
-	if (nvt_download_firmware()) {
+	/*
+	 * Its keep is the default now.
+	 *
+	 * The Android driver reports fw_ver=22 through /proc/nvt_fw_version. None of the twelve
+	 * novatek*.bin files in the firmware directory has version 22 -- the closest are 5, 17 and
+	 * 201 -- so what Android is talking to is the image in the chip's own flash, not one it
+	 * pushed. That matters here: this driver has twice written its own image (version 5, then
+	 * version 201), and twice the chip answered FWINFO correctly and then reported nothing but
+	 * the bootloader's 0x77 fill. Reading a chip that was never overwritten is the control
+	 * experiment that tells the two apart.
+	 *
+	 * keep=1 skips the download and leaves whatever is in flash alone.
+	 */
+	if (keep != 0) {
+		printf("nvt: leaving the image in the chip alone; no download\n");
+	} else if (nvt_download_firmware()) {
 		printf("nvt: the chip is running the image this driver sent it\n");
 		/*
-		 * And then tell it to scan. Waking from standby is not enough on this part: the
-		 * vendor's nvt_write_ic_command(WRITE_IC_TP_ACTIVE, true) writes 0x61 to
-		 * EVENT_BUF_ADDR | EVENT_MAP_HOST_CMD, and nothing in the download sequence above does
-		 * that. Without it the chip sits with its firmware loaded, its baseline running and no
-		 * reason to raise the line -- which is exactly the state this board kept reporting:
-		 * zero edges, an event buffer of 0x77, and a firmware table that agrees on the panel.
+		 * Then let the firmware settle. Every read of the event buffer moves the
+		 * chip's SPI state machine on by one report, so a driver that reads four
+		 * thousand times a second is not observing the chip, it is pacing it.
 		 */
-		nvt_set_page(NVT_EVENT_BUF_ADDR | NVT_EVENT_MAP_HOST_CMD);
-		nvt_write_addr(NVT_EVENT_BUF_ADDR | NVT_EVENT_MAP_HOST_CMD, 0x61);
-		printf("nvt: asked the chip to scan (host command 0x61)\n");
-	/*
-	 * Let it settle before the first read. Every read of the event buffer moves the chip's
-	 * SPI state machine on by one report, so a driver that reads four thousand times a second
-	 * is not observing the chip, it is pacing it -- and what came back for twenty thousand
-	 * reads in a row was the bootloader's 0x77 fill, which is exactly what the vendor's
-	 * nvt_fw_recovery() calls "the firmware is not ready". Two seconds of silence, then a
-	 * read every two hundred milliseconds, is a different experiment: it is the one the
-	 * Android driver runs, where reads are driven by an interrupt and never outpace the chip.
-	 */
-	delay(2000000);
+		delay(200000);
 	} else {
 		printf("nvt: the image did not take; the bus is there but the chip will not report\n");
 	}
@@ -1044,18 +1137,32 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 	 * because this thread is polling instead of taking an interrupt.
 	 */
 	{
-		unsigned high = 0, low = 0;
+		/*
+		 * Counting edges, not levels.
+		 *
+		 * The earlier version of this sampled the line every hundred microseconds and reported
+		 * "high 0 times and low 20000". That number said more about the sampler than the line:
+		 * Android's own interrupt controller logs this pin as an edge source and had counted
+		 * thirty-five thousand of them, so the pulses exist and are shorter than the gap. A
+		 * spin loop sees the line at roughly register-read speed, which is what it takes.
+		 */
+		unsigned edges = 0, high = 0, spins = 0;
+		bool last = pin_in(PIN_IRQ);
 
-		for (unsigned n = 0; n < 20000; n++) {
-			if (pin_in(PIN_IRQ)) {
+		for (unsigned n = 0; n < 2000000 && edges < 1000; n++) {
+			bool now = pin_in(PIN_IRQ);
+
+			spins++;
+			if (now) {
 				high++;
-			} else {
-				low++;
 			}
-			delay(100);
+			if (now && !last) {
+				edges++;
+			}
+			last = now;
 		}
-		printf("nvt: over %u ms the interrupt line was high %u times and low %u\n",
-		    (high + low) / 10, high, low);
+		printf("nvt: over %u spins the interrupt line saw %u rising edges and was high %u times\n",
+		    spins, edges, high);
 	}
 
 	/*
@@ -1091,22 +1198,16 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 	unsigned edges = 0;
 	bool was_high = pin_in(PIN_IRQ);
 	uint32_t since_stats = 0;
+	uint32_t quiet_ticks = 0;
+
+	/*
+	 * The read budget has to live here and not inside the loop: it was declared in the body
+	 * once, so every tick started again at zero, "taken < 16" was always true, and the loop
+	 * read the event buffer on every pass instead of sixteen times per run.
+	 */
+	unsigned taken = 0;
 
 	for (unsigned tick = 1;; tick++) {
-		/*
-		 * Nothing is read unless the chip asks: reading one that has nothing to say puts its
-		 * side of the bus out of step, and then the next real report cannot be read either.
-		 */
-		unsigned taken = 0;
-
-		{
-			bool now_high = pin_in(PIN_IRQ);
-
-			if (now_high && !was_high) {
-				edges++;
-			}
-			was_high = now_high;
-		}
 
 		/*
 		 * The line is active high: the vendor driver registers its handler with
@@ -1121,22 +1222,71 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 		 * not arrived yet. That is exactly why a touch on this build produced four identical
 		 * reads of the bootloader's 0x77 fill instead of a report -- the driver was asking every
 		 * four milliseconds, whether or not there was anything to ask for. The edges counter
-		 * above is what makes the strict version decidable: zero edges while a finger is on the
+		 * is what makes the strict version decidable: zero edges while a finger is on the
 		 * screen means the chip is not talking, more than zero means it is and the answer was
 		 * still wrong.
 		 */
 		/*
-		 * Read whether or not the line looks asserted, because polling cannot see the
-		 * assertion at all: on this board the touch interrupt is delivered as an edge to
-		 * MediaTek's external interrupt block -- /proc/interrupts on the Android side reads
-		 * "mtk-eint 135 Edge NVT-ts-spi", and it counts about a hundred and fifty a second
-		 * while a finger moves -- so the line is high for microseconds and this loop samples
-		 * it every four milliseconds. A strictly gated loop therefore sat at zero reads for
-		 * the whole run and reported "0 edges", which was read as the chip staying quiet. It
-		 * never was: the firmware is loaded and its CRC checked, the panel table agrees with
-		 * this screen, and the Android side of the same hardware sees the edges.
+		 * Read only when the chip asks, and look for the asking hard enough to catch it.
+		 *
+		 * Both extremes have now been tried and both were wrong. A strict gate that sampled the
+		 * line once per tick read nothing for a whole run: the interrupt is an edge into
+		 * MediaTek's external interrupt block -- the Android side reads "mtk-eint 135 Edge
+		 * NVT-ts-spi" and counts tens of thousands of them -- so the line is high for
+		 * microseconds while a once-per-tick sample comes around every two hundred
+		 * milliseconds. Reading unconditionally instead got reads, but every read of an empty
+		 * event buffer moves the chip's SPI state machine on by one report, so the driver spent
+		 * the run pacing the firmware and collecting its fill pattern.
+		 *
+		 * The wait is now the sampling loop itself: the window is walked in fifty-microsecond
+		 * steps and the read only happens when an assertion was seen, which is what the vendor
+		 * driver does with its interrupt handler. Four thousand register reads across two
+		 * hundred milliseconds costs nothing and sees every edge instead of gambling on one.
 		 */
-		if (taken < 16) {
+		{
+			bool asserted = pin_in(PIN_IRQ);
+
+			if (asserted && !was_high) {
+				edges++;
+			}
+			was_high = asserted;
+			for (unsigned step = 0; !asserted && step < NVT_IRQ_WINDOW_US / NVT_IRQ_STEP_US;
+			    step++) {
+				bool now;
+
+				delay(NVT_IRQ_STEP_US);
+				now = pin_in(PIN_IRQ);
+				if (now) {
+					asserted = true;
+					if (!was_high) {
+						edges++;
+					}
+				}
+				was_high = now;
+			}
+			if (asserted && !was_high) {
+				edges++;
+				was_high = true;
+			}
+			if (!asserted) {
+				/*
+				 * Fall back to reading after a stretch of quiet, but at a cadence slow
+				 * enough not to pace the chip: one read every two seconds. A chip that
+				 * only asserts on touch would otherwise tell us nothing at all between
+				 * touches, and this driver cannot tell "no touch" from "the sampler missed
+				 * it" without occasionally asking.
+				 *
+				 * No extra delay here: the window above already took the two hundred
+				 * milliseconds that used to be at the foot of the loop.
+				 */
+				if (++quiet_ticks >= NVT_QUIET_READ_TICKS) {
+					quiet_ticks = 0;
+				} else {
+					continue;
+				}
+			} else {
+				quiet_ticks = 0;
+			}
 			if (!nvt_read(0, data, POINT_DATA_LEN)) {
 				break;
 			}
@@ -1187,15 +1337,24 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 					    "%02x, last %02x\n", bad, data[0], data[1], data[2], data[3], data[4],
 					    data[5], data[6], data[7], data[POINT_DATA_LEN - 1]);
 				}
-				continue;
+				/*
+				 * No continue here. It used to skip the delay at the foot of the loop, so a
+				 * bad report turned the two-hundred-millisecond cadence into a two-and-a-half
+				 * millisecond one -- measured at 378 reads in 1.044 s. The comment above says
+				 * exactly what that does: reading a chip that has nothing queued advances its
+				 * side of the bus past a report that has not arrived yet. The bad path is the
+				 * one that must be slowest, and it was the fastest.
+				 */
+			} else {
+				idle_ok++;
+				if (raw && reports < 8) {
+					printf("nvt: report %02x %02x %02x %02x %02x %02x %02x %02x %02x "
+					    "%02x %02x %02x %02x\n",
+					    data[0], data[1], data[2], data[3], data[4], data[5], data[6],
+					    data[7], data[8], data[9], data[10], data[11], data[12]);
+				}
+				report(data);
 			}
-			idle_ok++;
-			if (raw && reports < 8) {
-				printf("nvt: report %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
-				    data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
-				    data[8], data[9], data[10], data[11], data[12]);
-			}
-			report(data);
 		}
 		/*
 		 * Every five seconds rather than every sixty: the kernel only runs for seventy, and the

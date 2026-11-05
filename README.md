@@ -11,7 +11,7 @@
 
 </details>
 
-> 实验性的 bring-up 工作，不能日用。没有 GPU 加速，触控、按键、USB、Wi-Fi 还在修，重启后不保存任何设置。
+> 实验性的 bring-up 工作，不能日用。触控已可用，没有 GPU 加速（3~14 fps），按键、USB、Wi-Fi 还在修，重启后不保存任何设置。
 
 **只想装上试试**：到 [Releases](../../releases) 下 `hakios-xaga-boot_a.img`，按 [INSTALL.md](INSTALL.md) 五步走。自己编译往下看。
 
@@ -40,13 +40,13 @@
 | UFS 读盘 | ✅ | HS-G4 双通道，2.32 GiB 的 `system.apfs` 读进内存 |
 | 分屏与显示 | ✅ | 1080×2460 全屏可写，60 fps |
 | iOS 用户态 | ✅ | SpringBoard 起来了，状态栏、小组件、Dock 全部渲染 |
-| 触控（Novatek NT36672E） | 🚧 | 固件灌入、CRC 校验全过，事件缓冲仍恒读 `0x77` |
-| 按键（keypad + MT6363） | 🚧 | 寄存器能读，判据没对上 |
+| 触控（Novatek NT36672E） | ✅ | 单点/多点都报，backboardd 已 `create touch stream` |
+| 按键（keypad + MT6363） | 🚧 | keypad 恒读 `ffff`；MT6363 走 SPMI 的读通路已写，待真机确认寄存器 |
 | USB（MTU3） | 🚧 | 控制器配置已与 Android 工作态逐位对齐，PHY 侧 D+ 仍不上拉 |
-| GPU（Mali-G610） | ⬜ | 走软件渲染，`CoreAnimation: Software renderer!` |
+| GPU（Mali-G610） | ⬜ | 走软件渲染，3~14 fps；驱动本身 1.5 ms/帧，瓶颈在 CPU 光栅化 |
 | Wi-Fi / 基带 / 音频 / 相机 | ⬜ | 未开始 |
 
-画面整体右移一个固定偏移，见[正在卡的地方](#画面右移)。
+画面整体右移一个固定偏移，已定位到 OVL 层，见[画面右移](#画面右移)。
 
 ---
 
@@ -90,7 +90,8 @@ tree/            直接落到上游 hakios-xnu-kernel mtk 分支上的新文件
   mtk/mt6895/drivers/input/hakios.mt6895_keys.c  keypad + MT6363 按键
   mtk/mt6895/drivers/usb/hakios.mt6895_usb.c  MTU3 设备模式 gadget
   mtk/mt6895/configs/mt6895.config            SoC 层配置
-  mtk/tools/xaga-*.sh                         xaga 专用的刷机 / 刻分区 / 取日志
+  mtk/tools/xaga-{cycle,carve,auto}.sh        xaga 专用的刷机 / 刻分区 / 自动化
+  mtk/tools/xaga-pull-log.sh                  从 Android 里拉内核 logbook
   mtk/tools/mknvtfw.py                        厂商触控固件转 C 头
   mtk/tools/mkfont8x16.py                     点阵字体生成（替代 swift 版）
 patches/
@@ -102,7 +103,7 @@ docs/
 screenshots/     真机照片
 ```
 
-`tree/` 按原路径拷进上游工作树，`patches/0001-upstream-changes.patch` 用 `git apply` 打。patch 覆盖 24 个文件、5123 行。
+`tree/` 按原路径拷进上游工作树，`patches/0001-upstream-changes.patch` 用 `git apply` 打。patch 覆盖 40 个文件。
 
 `drivers/input/hakios.nvt_fw.h` 是厂商触控固件转出来的 C 头（847 KB），不入库，用 `mtk/tools/mknvtfw.py` 从厂商 bin 生成。
 
@@ -227,14 +228,42 @@ check(synthetic_dir("/System/Library/Caches=/System/Cryptexes/OS/System/Library/
 
 ### 触控
 
-Novatek 协议里几个不对称的地方，反汇编真机的 `nvt36672c.ko` 才看清：
+反汇编真机的 `nvt36672c.ko`、对着 `nt36xxx*.c` 逐函数比对，才把这条链走通。踩过的坑按代价从大到小：
 
-- 所有多字节**写**的第一个字节必须置 bit7（`SPI_WRITE_MASK`）。漏了芯片把每块当**读**，139264 字节固件一个都没进去，而 CRC 还会"通过"（读回来的是事件缓冲的填充值 `0x77`）
-- `nvt_read()` 不设 page（厂商依赖 probe 时锁存），每个 CRC 读之前必须显式 `nvt_set_page()`
-- INT 是**高有效**，主循环条件写反就一直不读
-- 指纹偏移是 `FINGER_BYTES * i`，不是 `1 + 6*i`
+1. **所有多字节写的第一个字节必须置 bit7**（`SPI_WRITE_MASK`）。漏了芯片把每块当**读**，139264 字节固件一个都没进去，而 CRC 还会"通过"——读回来的是事件缓冲的填充值 `0x77`。我为此以为固件灌好了，其实一个字节都没写。
+2. **`touch_eng_rst` 和 `touch_keep_fw` 不能同时开**。前者把芯片复位进 bootloader ROM，后者拒绝灌镜像，芯片整轮停在"等镜像"，读出来的 FWINFO 是垃圾（`ver c0 xnum 91`）、`reset state` 低于 `0xA0`。我曾把这个状态当成"芯片 flash 里的固件不在跑"，是很贵的误判。现在代码里直接拒绝这个组合。
+3. **INT 高有效，且脉冲只有微秒级**。第一版主循环用「连读 256 次 GPIO 再睡 200 ms」，那 256 次只覆盖 25 µs，而 Android 侧 `mtk-eint 135` 大约每 6.5 ms 一个边沿 —— 等于漏掉 99% 的脉冲。改成「等待本身就是采样循环」：每 50 µs 采一次、铺满整个 200 ms 窗口，边沿计数从 0 变成几十。
+4. **`bad report` 分支不能 `continue`**。它跳过循环末尾的 `delay(200000)`，把 200 ms 的读节奏变成 2.76 ms（实测 378 次读 / 1.044 s）。注释里我自己写过「读速必须比报告率低两个数量级」，结果坏路径成了最快路径，正好把芯片状态机推过头、读出 `0x77`。
+5. **`taken` 要提到 `for` 之外**。原来声明在循环体内每轮重置，`taken < 16` 恒真，逐字节 dump 每轮都打，把 1 MB 内核环缓冲塞满 —— 这是「日志里看不到更早输出」的真凶。
+6. `nvt_read()` 不设 page（厂商依赖 probe 时锁存），每个 CRC 读之前必须显式 `nvt_set_page()`。
+7. 指纹偏移是 `FINGER_BYTES * i`，不是 `1 + 6*i`。
 
-XNU 的 `delay(int usec)` 收**微秒**，按毫秒写会短 1000 倍。
+还有两个框架级的：XNU 的 `delay(int usec)` 收**微秒**，按毫秒写会短 1000 倍；logbook 是**环形缓冲**，判读前必须先按 header 的 `len` 截断，否则会把上一次启动的残留当成这一次的证据（我因此误判过两次）。
+
+打通后的日志：
+
+```
+nvt: the image was accepted on attempt 1; the reset state reads a0
+nvt: crc flags 04 (done 1 ilm 0 dlm 0); ilm 8fbec5a6 vs 8fbec5a6 same; dlm 1c1345a0 vs 1c1345a0 same
+nvt: fw info ver c9 (~36) xnum 18 ynum 36 xmax 1080 ymax 2400 buttons 0; consistent
+nvt: report 0a 10 2d 23 12 01 ff ff ff ff ff ff ff
+nvt: 101 reports, 48 positions, 93 edges on the line, 19 bad; line idle
+```
+
+`0a` = `(1<<3)|2`：手指 1、状态 2（按下/移动），`x=0x102`、`y=0xd23`。
+
+用户态侧不用改 —— 属性协商本来就是通的：
+
+```
+[08:00:26.923] [TouchEvents] digitizer attached
+[08:00:26.923] [TouchEvents] *** acquired main display digitizer (after 0.00561577s)
+[08:01:09.326] [TouchEvents] create touch stream <BKDigitizerTouchStreamClient: … pid: 6(vD); SpringBoard; system-gestures
+   hakios: input: sample type 1 finger 1 at 15670 19268
+   hakios: input: sample type 3 finger 1 at 15670 19268
+   hakios: input: sample type 1 finger 2 at 39478 6902
+```
+
+`sample type 1` = DOWN、`3` = UP。`create touch stream` 且 `pid: 6(vD); SpringBoard` 说明上层消费者已经订阅 —— 有些 MTK 移植停在「`digitizer attached` 之后没有 `create touch stream`」，那是 HID 服务属性（`bundleID`/`pid`/`PrimaryUsagePage`）没补全，让 backboardd 判成「matched 但不可用」。
 
 ---
 
@@ -267,15 +296,58 @@ MAC 侧没看到主机，问题在 PHY 的 D+ 比较器。已排除：
 
 主机侧是 VMware 环境的 Ubuntu，手机经 USB 透传，`lsusb -t` 走 `xhci_hcd`。
 
-### 触控：事件缓冲恒 `77`
+### 按键
 
-固件完整灌入（CRC `da439a01` 对上）、固件在跑（`fw info` 报 1080×2460，与实际面板一致）、页地址四个都试过。事件缓冲 65 字节整块冻结在 `77 77 77 77 77 77`，慢速读（200 ms 一次）能读到，跨启动变化、同启动内不变 —— 是真实 SRAM，不是总线浮空。
+xaga 的键分在两处，这点很难从源码看出来：
 
-`0x77` 是厂商 `nvt_fw_recovery()` 认的"固件未就绪"签名。与 Android 还剩两处差异：Android 用硬件 SPI 控制器（spi2.0，13 MHz），我们用 GPIO 位操作；Android 用中断驱动，我们轮询。
+| 键 | 实际路由 | 说明 |
+|---|---|---|
+| 音量下 | keypad `1c00e000`（`mediatek,kp`） | `hw-init-map` 只有 key 0 = 114 |
+| 音量上 | **MT6363** 的 home 键 | `linux,keycodes = <115>` |
+| 电源 | **MT6363** 的 power 键 | `linux,keycodes = <116>` |
 
-### 画面右移
+keypad 的五个状态寄存器在真机上恒读 `ffff`（Android 里也是），所以音量上/电源根本不在这块。它们挂在 `/spmi@1c804000/pmic@4/mt6363keys`，要走 SPMI 才能读。
 
-`fbwidth`/`fbheight` 改成 1080×2460 后，内核日志从 `display 1125x2436 on a panel of 1080x2460` 变成 `display 1080x2460`，映射已经恒等，但右移仍在。`fbshot` 解出的帧缓冲内容水平居中，偏移不在 XNU 绘制层。指向 DSI / panel 时序。
+SPMI 有几个必须先弄清楚的点，弄错了传输永远不完成：
+
+- **通道号是数组下标不是字节偏移**。DTS 的 `swinf_ch_start = 0x0a`，厂商算法是 `PMIF_CHAN_OFFSET(5) × soc_chan(2) = 10`，加在寄存器表的**下标**上。十个下标之后是 **SWINF_2**，即 `ACC 0x0c80 / WDATA 0x0c84 / RDATA 0x0c94 / VLD_CLR 0x0ca4 / STA 0x0ca8`。我第一版把 `0x0a` 加在 SWINF_0 的地址上（`0x0c0a`），落在 SWINF_0 自己的 dword 中间，传输永远等不到完成。
+- 命令字 `(opc << 30) | (sid << 24) | ((len-1) << 16) | addr`，写多 `BIT(29)`。`opc` 不是 SPMI opcode，是 arbiter 自己的（`1` = 普通寄存器读）。
+- 状态机 `GET_SWINF(STA) = (x >> 1) & 7`，`0` = idle、`6` = 有效待清除；读完写 1 到 `VLD_CLR`。
+
+寄存器地址还有一处没定：我用 Android 侧 522 帧快照差分，定到 `0x001e`（bit1 电源、bit3 home，位清 0 = 按下）；但厂商 `mtk-pmic-keys` 在 mt6359 上读的是 `TOPSTATUS 0x2a`，位号却一样。两个都读、都打进日志，按一次键就知道哪个是真的。
+
+### 画面右移：在 OVL，不在 XNU，也不在 DSI
+
+这条排得比较干净：
+
+- `MiniIOMobileFramebuffer: swap 7 layer 0: surface 3 (1080x2460 'BGRA') from 0,0 1080x2460 to 0,0 1080x2460` —— 合成器坐标完全恒等
+- `dsi size_con 0x99c0168`：`[31:16]=0x99c=2460`、`[15:0]=0x168=360`，而 `360 = 1080/3` 正是 DSC 3:1 压缩后的每行字节数，DSI 侧自洽
+- `panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080` —— XNU 侧几何全对
+
+剩下的只有 OVL。这里有个坑：`src_con 0x2` 说明在用的是 **layer 1**，而第一版 dump 只读 layer 0 的寄存器，所以全是 0、看起来像"没配"。改成按 `src_con` 选层、并扫全部 6 块 OVL 之后拿到：
+
+```
+ovl0 src_con 0x2 datapath 0x7000005   l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb89000
+ovl1 src_con 0x2 datapath 0x7000005   l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb89870
+ovl4 src_con 0x1 datapath 0x7000001   l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14f000
+ovl6 src_con 0x1 datapath 0x7000001   l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14f870
+```
+
+`offset` 全是 0、`size` 全是 `0x99c021c`（2460 × 1080），pitch `0x10e0`=4320 / `0x1100`=4352 —— 也就是说 OVL 看到的源几何也是完整的，没有裁剪。下一步是往上游找：谁在配 `DISP_MUTEX` 与 `OVL` 的绑定关系，以及 DSI 的 `hsa/hbp/hfp`（`0x14/0x1c/0x3cc`）与面板驱动里那份时序对不对得上。
+
+### 卡顿：软件渲染压在 4 个 999 MHz 核上
+
+```
+hakios: no accelerated renderer; the software one will draw
+CoreAnimation: Software renderer! Simulating crash!
+CoreAnimation: Failed to initialize Metal or OpenGLES contexts!
+[ 83.7] 46 frames in 5016 ms (9 a second), 1485 us each in the driver, after 0 us waiting for the GPU
+[130.7] 20 frames in 5083 ms (3 a second)
+```
+
+驱动本身只花 **1.5 ms/帧**、`0 us waiting for the GPU`，所以瓶颈不在 framebuffer 路径，在 CPU 光栅化。而 CPU 报的是 **999 MHz**、还被 `cpus=4` 限成 4 个核。
+
+两条低成本的改善：`cpus=4` → `cpus=8`；`XNU_BIG_CLOCK` 打开（`ARMPLL_CON1` 现在是 LK 留下的 1176 MHz 档，但内核报 999 MHz，这个不一致本身要查）。中长期是 Mesa 软件 GL（`tools/mk-mesa.sh`）——现在 `inject.c` 的 `opengl_es()` 因 `access(HAKIOS_GL, R_OK) != 0` 直接返回，连软件 GL 都没有。
 
 ---
 
@@ -283,9 +355,10 @@ MAC 侧没看到主机，问题在 PHY 的 D+ 比较器。已排除：
 
 - [ ] USB 枚举通过（D+ 上拉）
 - [ ] USB CDC-ECM 网络链路，接上 `sys/hakios.net.h`
-- [ ] 触控改用硬件 SPI 控制器
-- [ ] 按键判据修正
-- [ ] 画面右移（DSI / panel 时序）
+- [x] 触控（Novatek NT36672E）
+- [ ] 按键：确认 MT6363 的键寄存器是 `0x1e` 还是 `0x2a`
+- [ ] 画面右移：OVL 源几何已确认无误，往 `DISP_MUTEX` 与面板时序查
+- [ ] 卡顿：`cpus=8`、`XNU_BIG_CLOCK`、Mesa 软件 GL
 - [ ] Mali-G610 的 kernel 侧：电源域、时钟、MMU、job queue
 - [ ] Wi-Fi（CONNSYS）
 - [ ] 音频、相机

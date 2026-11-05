@@ -296,6 +296,17 @@
 #ifndef OVL0_BASE
 #define OVL0_BASE               0x14002000ULL
 #endif
+/*
+ * The overlay and the DSI host the console's pixels travel through. ovl0 at 14002000 and
+ * dsi@14017000 are what the live device tree names; 1400b000 is disp_ccorr there, which is why
+ * OVL0_BASE above is 14002000 and not the MT6768's 1400b000.
+ */
+#ifndef OVL_BASE
+#define OVL_BASE                0x14002000ULL
+#endif
+#ifndef DSI_BASE
+#define DSI_BASE                0x14017000ULL
+#endif
 #ifndef DISP_MUTEX_EN
 #define DISP_MUTEX_EN           0x14001020ULL
 #endif
@@ -490,6 +501,37 @@
 #endif
 
 /*
+ * A bare-metal USB pull-up probe, used only while the kernel side of USB is being brought up.
+ * The loader takes the port from LK and drives the same registers the kernel driver will, then
+ * sits polling DEVICE_CONF and COMMON_USB_INTR instead of jumping to XNU. What it answers is
+ * whether the port can be attached from firmware at all, with no kernel, no caches and no
+ * ordering of its own in the way: if the host enumerates after this, the electrical path is
+ * fine and the kernel is the problem; if it stays silent here too, the port needs something
+ * that only LK's own start-up does. Off in normal builds.
+ */
+#ifndef BOARD_USB_PROBE
+#define BOARD_USB_PROBE         0
+#endif
+
+/*
+ * Dump the overlay and DSI registers into the logbook and stop before the kernel.
+ *
+ * The console draws into the framebuffer LK hands over, the kernel maps that framebuffer with an
+ * identity transform (fbwidth/fbheight are the panel's own 1080x2460, and the kernel's own log
+ * line says "display 1080x2460 on a panel of 1080x2460"), and the picture still sits to the right
+ * of the glass. Anything that could do that is in the block that scans the framebuffer out: which
+ * address it reads, at what stride, with what source width and at what offset into the line.
+ *
+ * The Android side of this question is already answered -- the working display block was dumped
+ * through debugfs and is in work-xaga/disp/ -- but those files turned out to hold the DSI and
+ * dispsys halves, not the overlay, so the overlay side has only ever been guessed at. This reads
+ * it from the one context that has no kernel in the way.
+ */
+#ifndef BOARD_DISP_PROBE
+#define BOARD_DISP_PROBE        0
+#endif
+
+/*
  * Paging the kernel log across the screen is for a person watching the phone. Here the phone is
  * expected to finish on its own and start Android, and the log is already in the flash by then,
  * so paging only delays that: this board's 400 KB log at scale 3 is 172 pages held 20 seconds
@@ -590,7 +632,7 @@
  * loader adds itself (rd=md0 cpus=4 loader_return_after=900) take about 40.
  */
 #ifndef XNU_EXTRA_ARGS
-#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 fbwidth=1080 fbheight=2460 usb=2"
+#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 touch_raw=1 fbwidth=1080 fbheight=2460 fb_disp=1 usb=2"
 #endif
 
 /*

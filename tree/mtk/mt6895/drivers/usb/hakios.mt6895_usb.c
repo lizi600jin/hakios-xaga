@@ -79,8 +79,21 @@ extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
  * rebuild the controller the way mtu3_core.c does.
  */
 #ifndef USB_IP_SW_RESET
-#define USB_IP_SW_RESET 1
+#define USB_IP_SW_RESET 0
 #endif
+#ifndef USB_PHY_DTM0_RESET
+#define USB_PHY_DTM0_RESET 1
+#endif
+
+/*
+ * Switch the U2 PLL on. Nothing in phy-mtk-xsphy.c does, and the frequency meter has been
+ * returning fm_out = 0 on every run since this driver first ran, which says the ring oscillator
+ * it measures was never running.
+ */
+#ifndef USB_PHY_PLL
+#define USB_PHY_PLL 1
+#endif
+
 #ifndef USB_PHY_BRING_UP
 #define USB_PHY_BRING_UP 1
 #endif
@@ -107,6 +120,7 @@ extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
 #define U3D_EPISR        (SSUSB_DEV_BASE + 0x0080u)
 #define U3D_EPIER        (SSUSB_DEV_BASE + 0x0084u)
 #define U3D_EPIECR       (SSUSB_DEV_BASE + 0x008cu)
+#define U3D_EPIESR       (SSUSB_DEV_BASE + 0x0088u)   /* enable-set; mtu3_hw_regs.h:32 */
 #define U3D_EP0CSR       (SSUSB_DEV_BASE + 0x0100u)
 #define U3D_RXCOUNT0     (SSUSB_DEV_BASE + 0x0108u)
 #define U3D_FIFO0        (SSUSB_DEV_BASE + 0x0300u)
@@ -145,7 +159,11 @@ extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
 #define EP0_SETUPPKTRDY (1u << 17)
 #define EP0_RXPKTRDY    (1u << 16)
 #define EP0_MAXPKTSZ_MSK 0x3ffu
+#define EP0_MAXPKTSZ(x)  ((x) & EP0_MAXPKTSZ_MSK)
 #define EP0_W1C_BITS    (~(EP0_RXPKTRDY | EP0_SETUPPKTRDY | EP0_SENTSTALL))
+#define EP0ISR          (1u << 0)   /* mtu3_hw_regs.h:110 */
+#define SETUPENDISR     (1u << 16)  /* mtu3_hw_regs.h:108 */
+#define SSUSB_DEV_SPEED_CHG_INTR (1u << 0)  /* mtu3_hw_regs.h:286 */
 
 /* ---- device conf, EP reset, power management ---- */
 #define DEV_ADDR_MSK    (0x7fu << 24)
@@ -277,14 +295,80 @@ extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
 #define SSUSB_SIFSLV_U2PHY_COM 0x300u
 #define XSP_USBPHYACR0  (SSUSB_SIFSLV_U2PHY_COM + 0x000u)
 #define XSP_USBPHYACR1  (SSUSB_SIFSLV_U2PHY_COM + 0x004u)
+#define XSP_USBPHYACR4  (SSUSB_SIFSLV_U2PHY_COM + 0x020u)
 #define XSP_USBPHYACR5  (SSUSB_SIFSLV_U2PHY_COM + 0x014u)
 #define XSP_USBPHYACR6  (SSUSB_SIFSLV_U2PHY_COM + 0x018u)
+#define XSP_U2PHYDTM0   (SSUSB_SIFSLV_U2PHY_COM + 0x068u)
 #define XSP_U2PHYDTM1   (SSUSB_SIFSLV_U2PHY_COM + 0x06cu)
 
+/*
+ * The three bits the vendor's power_on touches that phy-mtk-xsphy.c never mentions. Its
+ * u2_phy_instance_power_on() is four lines upstream; in phy-mtk-xsphy.ko it is nine register
+ * writes plus a 129 ms settle, and three of those writes are what connect the port.
+ *
+ *   ACR4 bits 8..9   cleared          the "usb20 gpio mode" pair, which parks the pads
+ *   DTM0 bits 18, 26 cleared          and DTM0 masked down to 0xff41c30b
+ *   ACR6 bit 30      set              upstream only ever writes bit 20 and bit 23 here
+ *
+ * Read from the module in the TWRP tree (recovery/root/lib/modules/phy-mtk-xsphy.ko), which is
+ * the same silicon and therefore a better authority than a driver that has no MT6895 support.
+ */
+#define P2A4_RG_USB20_GPIO_MSK  0x300u
+
+/* DTM0 fields, from phy-mtk-tphy.c:93-106 (the same registers, the same silicon) */
+#define P2D0_FORCE_UART_EN  (1u << 26)
+#define P2D0_FORCE_SUSPENDM (1u << 18)
+#define P2D0_RG_DATAIN      (0xfu << 10)
+#define P2D0_RG_XCVRSEL     (0x3u << 4)
+/* P2C_DTM0_PART_MASK, phy-mtk-tphy.c:106-110: the force bits plus the pulldown and termsel bits */
+#define P2D0_PART_MASK      ((1u << 23) | (1u << 21) | (1u << 20) | (1u << 19) | \
+                             (1u << 17) | (1u << 7) | (1u << 6) | (1u << 2))
+#define P2D0_CLR_MSK            0x00be3cf4u    /* bits 18..31 as the vendor leaves them */
+#define P2A6_RG_BIT30            (1u << 30)
+#define P2D_RG_UART_EN           (1u << 16)
+
+/*
+ * The frequency meter sits in its own bank (SSUSB_SIFSLV_U2FREQ 0x100). u2_phy_slew_rate_calibrate()
+ * runs a ring oscillator against it to work out what the HS transmitter's slew rate should be. On a
+ * freshly reset phy every one of these reads 0, which is how we know the vendor's power_on path has
+ * never run here.
+ */
+#define SSUSB_SIFSLV_U2FREQ   0x100u
+#define XSP_U2FREQ_FMCR0   (SSUSB_SIFSLV_U2FREQ + 0x00u)
+#define XSP_U2FREQ_MMONR0  (SSUSB_SIFSLV_U2FREQ + 0x0cu)
+#define XSP_U2FREQ_FMMONR1 (SSUSB_SIFSLV_U2FREQ + 0x10u)
+
+#define P2F_RG_FREQDET_EN (1u << 24)
+#define P2F_RG_CYCLECNT   (0xffffffu)
+#define P2F_RG_FRCK_EN    (1u << 8)
+#define P2F_USB_FM_VALID  (1u << 0)
+
+#define XSP_REF_CLK          26u
+#define XSP_SLEW_RATE_COEF   17u
+#define XSP_SR_COEF_DIVISOR  1000u
+#define XSP_FM_DET_CYCLE_CNT 1024u
+
 #define P2A0_RG_INTR_EN        (1u << 5)
+#define P2A0_RG_U2PLL_FORCE_ON (1u << 15)
+#define P2A0_USB20_PLL_PREDIV  (0x3u << 6)
+
+#define XSP_USBPHYACR2         (SSUSB_SIFSLV_U2PHY_COM + 0x008u)
+#define P2A2_RG_U2PLL_BW       (0x7u << 19)
+#define P2A2_RG_SIF_U2PLL_FORCE_EN (1u << 18)
+
+/* U3P_U2PHYA_RESV and RESV1 hold the U2 PLL divider, phy-mtk-tphy.c:81-87 */
+#define XSP_U2PHYA_RESV        (SSUSB_SIFSLV_U2PHY_COM + 0x030u)
+#define XSP_U2PHYA_RESV1       (SSUSB_SIFSLV_U2PHY_COM + 0x044u)
+#define P2R_RG_U2PLL_FBDIV_26M 0x1bb13bu
+#define P2R_RG_U2PLL_REFCLK_SEL (1u << 5)
+#define P2R_RG_U2PLL_FRA_EN    (1u << 3)
+
+#define XSP_U2PHYDCR0          (SSUSB_SIFSLV_U2PHY_COM + 0x060u)
+#define P2C_RG_SIF_U2PLL_FORCE_ON (1u << 24)
 #define P2A1_RG_INTR_CAL       (0x1fu << 19)
 #define P2A1_RG_VRT_SEL        (0x7u << 12)
 #define P2A1_RG_TERM_SEL       (0x7u << 8)
+#define P2A5_RG_HSTX_SRCAL_EN  (1u << 15)
 #define P2A5_RG_HSTX_SRCTRL    (0x7u << 12)
 #define P2A6_RG_BC11_SW_EN     (1u << 23)
 #define P2A6_RG_OTG_VBUSCMP_EN (1u << 20)
@@ -914,6 +998,80 @@ usb_probe(void)
  * automatic U2/U3 switch, and the D+ pullup.
  */
 /*
+ * u2_phy_slew_rate_calibrate(), the half of the vendor's power_on path that runs after the vbus
+ * comparator is set. A ring oscillator is fed into the phy's frequency meter, the result is compared
+ * against the 26 MHz reference, and the answer goes into the HS transmitter's slew control.
+ *
+ * Skipped when the device tree supplies mediatek,eye-src, which xaga's does not -- so on this board
+ * it always runs, and the fact that every U2FREQ register reads 0 at handover says it never has.
+ */
+static void
+usb_phy_slew_rate_calibrate(void)
+{
+	uint32_t fm_out, tmp, calib;
+
+	/* enable USB ring oscillator */
+	phy_set(XSP_USBPHYACR5, P2A5_RG_HSTX_SRCAL_EN);
+	delay(1);
+
+	/* enable free run clock */
+	phy_set(XSP_U2FREQ_FMMONR1, P2F_RG_FRCK_EN);
+
+	/* set cycle count as 1024 */
+	phy_update(XSP_U2FREQ_FMCR0, P2F_RG_CYCLECNT, XSP_FM_DET_CYCLE_CNT);
+
+	/* enable frequency meter */
+	phy_set(XSP_U2FREQ_FMCR0, P2F_RG_FREQDET_EN);
+
+	for (uint32_t spin = 0; spin < 200u; spin++) {
+		if (phy_rd(XSP_U2FREQ_FMMONR1) & P2F_USB_FM_VALID) {
+			break;
+		}
+		delay(10);
+	}
+
+	fm_out = phy_rd(XSP_U2FREQ_MMONR0);
+
+	/* disable frequency meter */
+	phy_clear(XSP_U2FREQ_FMCR0, P2F_RG_FREQDET_EN);
+
+	/* disable free run clock */
+	phy_clear(XSP_U2FREQ_FMMONR1, P2F_RG_FRCK_EN);
+
+	if (fm_out != 0u) {
+		/* (1024 / FM_OUT) x reference clock frequency x coefficient */
+		tmp = XSP_REF_CLK * XSP_SLEW_RATE_COEF;
+		tmp = (tmp * XSP_FM_DET_CYCLE_CNT) / fm_out;
+		calib = (tmp + XSP_SR_COEF_DIVISOR / 2u) / XSP_SR_COEF_DIVISOR;
+	} else {
+		/* if FM detection fail, set default value */
+		calib = 3u;
+	}
+
+	/* set HS slew rate */
+	phy_update(XSP_USBPHYACR5, P2A5_RG_HSTX_SRCTRL, calib << 12);
+
+	/* disable USB ring oscillator */
+	phy_clear(XSP_USBPHYACR5, P2A5_RG_HSTX_SRCAL_EN);
+
+	printf("usb: slew: fmcr0 %#x fmmonr1 %#x fm_out %u calib %u; acr5 %#x\n",
+	    phy_rd(XSP_U2FREQ_FMCR0), phy_rd(XSP_U2FREQ_FMMONR1),
+	    fm_out, calib, phy_rd(XSP_USBPHYACR5));
+}
+
+/*
+ * The phy's reference clock. The device tree names it "ref" under usb2-phy0@11e40000 and Linux
+ * enables it in mtk_phy_init() before touching any register. Its gate lives in the apmixed block,
+ * which this loader has no driver for, so report where it stands instead of pretending to set it.
+ */
+static void
+usb_phy_ref_clock_report(void)
+{
+	printf("usb: phy ref clk gate is in apmixed; dtm1 %#x acr0 %#x (live phy has bit5 set)\n",
+	    phy_rd(XSP_U2PHYDTM1), phy_rd(XSP_USBPHYACR0));
+}
+
+/*
  * The phy, which the loader leaves in whatever state fastboot put it. phy-mtk-xsphy.c splits this
  * in two, and both halves matter:
  *
@@ -921,6 +1079,7 @@ usb_probe(void)
  *                      u2_phy_props_set(): the four tuning values the device tree carries
  *   mtk_phy_power_on() u2_phy_instance_power_on(): OTG_VBUSCMP_EN, then force VBUSVALID and AVALID
  *                      in the debug/test register
+ *                      u2_phy_slew_rate_calibrate(): the ring oscillator measurement
  *
  * The second half is the one that decides whether the port connects at all. A USB phy that does not
  * see VBUS refuses to drive D+, no matter what the controller's soft-connect bit says -- the first
@@ -931,9 +1090,55 @@ usb_probe(void)
 static void
 usb_phy_bring_up(void)
 {
-	printf("usb: phy before: acr0 %#x acr1 %#x acr5 %#x acr6 %#x dtm1 %#x\n",
-	    phy_rd(XSP_USBPHYACR0), phy_rd(XSP_USBPHYACR1), phy_rd(XSP_USBPHYACR5),
-	    phy_rd(XSP_USBPHYACR6), phy_rd(XSP_U2PHYDTM1));
+	printf("usb: phy before: acr0 %#x acr1 %#x acr4 %#x acr5 %#x acr6 %#x dtm0 %#x dtm1 %#x\n",
+	    phy_rd(XSP_USBPHYACR0), phy_rd(XSP_USBPHYACR1), phy_rd(XSP_USBPHYACR4),
+	    phy_rd(XSP_USBPHYACR5), phy_rd(XSP_USBPHYACR6),
+	    phy_rd(XSP_U2PHYDTM0), phy_rd(XSP_U2PHYDTM1));
+
+	/*
+	 * DTM0, which phy-mtk-xsphy.c never touches and phy-mtk-tphy.c:829 opens with.
+	 *
+	 * The loader hands the phy over with dtm0 = 0x2be00d4, and bit 18 of that is
+	 * P2C_FORCE_SUSPENDM: the phy is held in suspend. A phy in suspend does not drive D+, so the
+	 * port can have every controller register matching Android's working dump -- soft connect
+	 * set, vbus forced, dev ctl 0x99 -- and the host still sees nothing, which is exactly the
+	 * wall this driver spent several rounds against.
+	 *
+	 * tphy clears FORCE_UART_EN (26) and FORCE_SUSPENDM (18) first, then the transceiver select,
+	 * the data-in field and the DTM0 part mask. Same order here; xsphy simply omits the block
+	 * because on MT6989-and-later the boot chain is expected to have done it.
+	 */
+	/*
+	 * Leave DTM0 alone. The bit table above comes from phy-mtk-tphy.c, and this is an xsphy
+	 * part: the two IP blocks do not lay DTM0 out the same way, and the vendor's xsphy module
+	 * never writes this register at all. It matters -- the loader hands over dtm0 = 0x2be00d4
+	 * and Android enumerates with exactly that value. Clearing the transceiver select, the
+	 * data-in field and the part mask turned it into 0x2000000, which is a phy the vendor
+	 * never runs, and the port stopped reporting to the host.
+	 *
+	 * The one clear the vendor module does perform is bit 26 inside power_on, kept below.
+	 */
+#if USB_PHY_DTM0_RESET == 2
+	/*
+	 * The narrow clear: bit 26 and bit 18 and nothing else.
+	 *
+	 * The wide clear below leaves dtm0 = 0x2000000. That is not a value the vendor's own driver
+	 * ever produces -- phy-mtk-xsphy.ko, disassembled, never writes DTM0 at all, and the loader
+	 * hands over 0x2be00d4. So both of the two states tried so far are states no working phone
+	 * runs in: 0x2be00d4 holds the phy in suspend, and 0x2000000 throws away the transceiver
+	 * select and the data-in field along with it.
+	 *
+	 * This variant keeps everything the loader set and lifts only the suspend, which is
+	 * 0x2be00d4 & ~(bit18|bit26) = 0x2ba00d4. Worth one round because it is the smallest step
+	 * that both lets the phy leave suspend and leaves the rest of the loader's configuration
+	 * intact.
+	 */
+	phy_clear(XSP_U2PHYDTM0, P2D0_FORCE_UART_EN | P2D0_FORCE_SUSPENDM);
+#elif USB_PHY_DTM0_RESET
+	phy_clear(XSP_U2PHYDTM0, P2D0_FORCE_UART_EN | P2D0_FORCE_SUSPENDM);
+	phy_clear(XSP_U2PHYDTM0, P2D0_RG_XCVRSEL | P2D0_RG_DATAIN | P2D0_PART_MASK);
+	phy_clear(XSP_U2PHYDTM1, P2D_RG_UART_EN);
+#endif
 
 	/* mtk_phy_init(): the BC1.1 path off (it answers charger types, which this port does not
 	 * want to be asked about), the interrupt path on */
@@ -945,19 +1150,38 @@ usb_phy_bring_up(void)
 	phy_update(XSP_USBPHYACR1, P2A1_RG_VRT_SEL, BOARD_EYE_VRT << 12);
 
 	/*
-	 * mtk_phy_power_on(), minus the vbus comparator.
+	 * u2_phy_instance_power_on(), transcribed from phy-mtk-xsphy.ko rather than from the driver.
 	 *
-	 * The vendor enables P2A6_RG_OTG_VBUSCMP_EN and then forces VBUSVALID/AVALID into DTM1, which
-	 * works because on a real phone the PMIC (MT6363, over SPMI) tells the phy that VBUS is there.
-	 * This loader has no MTK SPMI driver, so leaving the comparator enabled means the phy believes
-	 * its own comparison -- of a VBUS the PMIC has never confirmed -- and disregards the forced
-	 * bits entirely. With the comparator off the forced value is the only source, which is exactly
-	 * what a board with no PMIC access needs.
+	 * Upstream that function is two writes. In the module -- same silicon, built by the people who
+	 * make the part -- it is ten, and the eight extras are the difference between a port whose
+	 * registers all match Android's working dump and a port that never reports a single event:
+	 *
+	 *   dtm0 &= ~(1 << 26)
+	 *   dtm1 &= ~(1 << 16)          dtm1 &= ~(1 << 18)
+	 *   acr4 &= ~0x300              the "usb20 gpio mode" pair, which parks the pads
+	 *   dtm1 &= 0xff41c30b          masks it down to the vendor's notion of a clean DTM1
+	 *   acr6 &= ~(1 << 23)
+	 *   acr6 |=  (1 << 20)          the vbus comparator -- enabled, not disabled
+	 *   dtm1 &= ~0x30 ; dtm1 |= 0x24
+	 *   acr6 = (acr6 & 0x3fffffff) | (1 << 30)
+	 *
+	 * This file previously cleared bit 20 of acr6, reasoning that with no PMIC access the
+	 * comparator would compare against a VBUS nobody had confirmed. The module enables it, and
+	 * bit 30 appears nowhere in the driver at all.
 	 */
-	phy_clear(XSP_USBPHYACR6, P2A6_RG_OTG_VBUSCMP_EN);
-	phy_update(XSP_U2PHYDTM1,
-	    P2D_RG_VBUSVALID | P2D_RG_AVALID | P2D_RG_SESSEND,
-	    P2D_RG_VBUSVALID | P2D_RG_AVALID);
+	phy_clear(XSP_U2PHYDTM0, 1u << 26);
+	phy_clear(XSP_U2PHYDTM1, (1u << 16) | (1u << 18));
+	phy_clear(XSP_USBPHYACR4, P2A4_RG_USB20_GPIO_MSK);
+	phy_wr(XSP_U2PHYDTM1, phy_rd(XSP_U2PHYDTM1) & 0xff41c30bu);
+	phy_clear(XSP_USBPHYACR6, P2A6_RG_BC11_SW_EN);
+	phy_set(XSP_USBPHYACR6, P2A6_RG_OTG_VBUSCMP_EN | P2A6_RG_BIT30);
+	/* dtm1 = (dtm1 & ~0x30) | 0x24, which sets AVALID (bit 2) as well as VBUSVALID (bit 5).
+	 * A masked update cannot express this: 0x24 is not a subset of 0x30, so bit 2 would stay
+	 * cleared by the 0xff41c30b mask above. */
+	phy_wr(XSP_U2PHYDTM1, (phy_rd(XSP_U2PHYDTM1) & ~0x30u) | 0x24u);
+
+	/* the module waits ~3.4 s worth of counts here before it returns */
+	delay(1000);
 
 	/*
 	 * This port is a device and only a device, so the phy is told so rather than left to read
@@ -967,9 +1191,72 @@ usb_phy_bring_up(void)
 	 */
 	phy_set(XSP_U2PHYDTM1, P2D_FORCE_IDDIG | P2D_RG_IDDIG);
 
-	printf("usb: phy after:  acr0 %#x acr1 %#x acr5 %#x acr6 %#x dtm1 %#x\n",
-	    phy_rd(XSP_USBPHYACR0), phy_rd(XSP_USBPHYACR1), phy_rd(XSP_USBPHYACR5),
-	    phy_rd(XSP_USBPHYACR6), phy_rd(XSP_U2PHYDTM1));
+	/*
+	 * The U2 PLL, which nothing so far has switched on.
+	 *
+	 * The frequency meter inside usb_phy_slew_rate_calibrate() has read fm_out = 0 on every run,
+	 * which is it failing to measure anything rather than measuring zero. It measures the phy's
+	 * ring oscillator against the 26 MHz reference, and a ring oscillator that is not running
+	 * produces no count. The oscillator lives behind the U2 PLL.
+	 *
+	 * phy-mtk-tphy.c switches that PLL on in two places, and phy-mtk-xsphy.c has neither:
+	 *
+	 *   u2_phy_instance_init()     ACR2 |= PA2_RG_SIF_U2PLL_FORCE_EN   (bit 18)
+	 *   u2_phy_pll_26m_set()       ACR0 PREDIV = 0, ACR2 BW = 3,
+	 *                              RESV = 0x1bb13b (the 26 MHz feedback divider),
+	 *                              RESV1 |= FRA_EN | REFCLK_SEL
+	 *
+	 * u2_phy_pll_26m_set() is gated on tphy->pdata->sw_pll_48m_to_26m upstream, so it runs only
+	 * on the parts whose PLL is fed 48 MHz and has to be told to divide down to 26. This board
+	 * wires the phy's "ref" clock straight to clk26m -- see usb2-phy0@11e40000 in the device
+	 * tree -- so the divider value is right for a 26 MHz input either way, and writing it is
+	 * harmless if the boot chain already did.
+	 *
+	 * ACR0 bit 15, PA0_RG_U2PLL_FORCE_ON, is not in that list. It is the "run the PLL whether or
+	 * not anything asked for it" bit, and it is the one adb-hosted board bring-up always sets on
+	 * this IP. Without a PLL there is no transceiver, and a transceiver-less phy cannot present
+	 * the 1.5 kOhm pull-up on D+ no matter what SOFT_CONN says -- which is the one explanation
+	 * left that fits every reading so far.
+	 */
+#if USB_PHY_PLL
+	phy_update(XSP_USBPHYACR0, P2A0_USB20_PLL_PREDIV, 0u);
+	phy_set(XSP_USBPHYACR2, P2A2_RG_SIF_U2PLL_FORCE_EN);
+	phy_update(XSP_USBPHYACR2, P2A2_RG_U2PLL_BW, 3u << 19);
+	phy_wr(XSP_U2PHYA_RESV, P2R_RG_U2PLL_FBDIV_26M);
+	phy_set(XSP_U2PHYA_RESV1, P2R_RG_U2PLL_REFCLK_SEL | P2R_RG_U2PLL_FRA_EN);
+	phy_set(XSP_USBPHYACR0, P2A0_RG_U2PLL_FORCE_ON);
+	delay(200);
+	printf("usb: pll: acr0 %#x acr2 %#x resv %#x resv1 %#x dcr0 %#x\n",
+	    phy_rd(XSP_USBPHYACR0), phy_rd(XSP_USBPHYACR2), phy_rd(XSP_U2PHYA_RESV),
+	    phy_rd(XSP_U2PHYA_RESV1), phy_rd(XSP_U2PHYDCR0));
+#endif
+
+	/* the tail of mtk_phy_power_on() */
+	usb_phy_slew_rate_calibrate();
+	usb_phy_ref_clock_report();
+
+	printf("usb: phy after:  acr0 %#x acr1 %#x acr4 %#x acr5 %#x acr6 %#x dtm0 %#x dtm1 %#x\n",
+	    phy_rd(XSP_USBPHYACR0), phy_rd(XSP_USBPHYACR1), phy_rd(XSP_USBPHYACR4),
+	    phy_rd(XSP_USBPHYACR5), phy_rd(XSP_USBPHYACR6),
+	    phy_rd(XSP_U2PHYDTM0), phy_rd(XSP_U2PHYDTM1));
+}
+
+/*
+ * Program EP0's max packet size.
+ *
+ * mtu3_core.c:mtu3_ep0_setup() is four lines -- read EP0CSR, clear EP0_MAXPKTSZ_MSK, or in the
+ * width, write back the W1C-safe bits -- and mtu3_link_isr() calls it after every bus reset,
+ * because the reset clears the field. The host reads bMaxPacketSize0 out of this same field
+ * during the first GET_DESCRIPTOR, so a wrong value makes the first control transfer fail and
+ * the host drops the port without printing anything on this side, which is exactly what the
+ * log showed before this existed.
+ */
+static void
+ep0_configure(void)
+{
+	uint32_t csr = (mac_rd(U3D_EP0CSR) & ~EP0_MAXPKTSZ_MSK) & EP0_W1C_BITS;
+
+	mac_wr(U3D_EP0CSR, csr | EP0_MAXPKTSZ(USB_EP0_MAXPACKET_HS));
 }
 
 static void
@@ -1118,6 +1405,15 @@ usb_take_over(void)
 	mac_wr(U3D_DEV_LINK_INTR_ENABLE, 0);
 	mac_wr(U3D_LV1ISR, mac_rd(U3D_LV1ISR));
 	mac_wr(U3D_EPISR, mac_rd(U3D_EPISR));
+	/*
+	 * Link and EP1 interrupts are the only path by which mtu3 ever re-arms EP0 after a bus
+	 * reset -- mtu3_core.c:mtu3_ep0_setup() lives at the tail of mtu3_link_isr(), and the
+	 * reset that clears EP0's max packet field is delivered through that same interrupt.
+	 * Leaving both masked, as this stage did, means the field stays at whatever the reset
+	 * left it and the host's first GET_DESCRIPTOR gets no answer.
+	 */
+	mac_wr(U3D_DEV_LINK_INTR_ENABLE, SSUSB_DEV_SPEED_CHG_INTR);
+	mac_wr(U3D_EPIESR, EP0ISR | SETUPENDISR);
 
 	/* EP0 out of whatever state fastboot left it in */
 	mac_wr(U3D_EP_RST, EP0_RST);
@@ -1132,6 +1428,8 @@ usb_take_over(void)
 	}
 	csr = mac_rd(U3D_EP0CSR) & EP0_W1C_BITS;
 	mac_wr(U3D_EP0CSR, csr | EP0_SENTSTALL);
+
+	ep0_configure();
 
 	/*
 	 * Port 0 is left exactly as the loader left it, and that is not laziness: the register dump
@@ -1353,6 +1651,28 @@ usb_take_over(void)
 	 */
 	mac_set(U3D_DEVICE_CONTROL, DC_SESSION);
 
+	/*
+	 * Soft disconnect and reconnect, and this is the one experiment that tells the two possible
+	 * failures apart.
+	 *
+	 * The device has been reporting opstate 0x12 and a detected speed of 3 (high speed) while the
+	 * host logs nothing for the whole window and not a single SOF arrives. Both cannot be true of
+	 * a bus that is actually connected, so one of the two is being reported by a MAC that is not
+	 * talking to anything.
+	 *
+	 * Dropping SOFT_CONN removes the D+ pullup, and putting it back a tenth of a second later
+	 * re-announces the device. If the pullup really reaches the cable the host has to log a
+	 * disconnect followed by a new device. If the host stays silent, the pullup is being swallowed
+	 * somewhere before the connector -- the Type-C side, where mt6375-tcpc owns the cc lines and
+	 * the D+/D- mux, and where nothing in this kernel has ever spoken i2c.
+	 */
+	printf("usb: soft disconnect (power mgmt %#x)\n", mac_rd(U3D_POWER_MANAGEMENT));
+	mac_clear(U3D_POWER_MANAGEMENT, SOFT_CONN);
+	delay(100000);
+	mac_set(U3D_POWER_MANAGEMENT, SOFT_CONN | SUSPENDM_ENABLE);
+	delay(100000);
+	printf("usb: soft connect again (power mgmt %#x)\n", mac_rd(U3D_POWER_MANAGEMENT));
+
 	printf("usb: dev ctl %#x; otg sts %#x [vbus %u]; power mgmt %#x\n",
 	    mac_rd(U3D_DEVICE_CONTROL), ippc_rd(OTG_STS),
 	    (ippc_rd(OTG_STS) & SSUSB_VBUS_VALID) ? 1u : 0u,
@@ -1403,26 +1723,38 @@ usb_watch_events(void)
 	    ippc_rd(IP_PW_CTRL1));
 
 	/*
-	 * Last electrical check available from software: force full speed.
+	 * FORCE_FS stays off.
 	 *
-	 * A high-speed handshake needs the phy's HS current driver and the chirp state machine, but a
-	 * full-speed attach needs nothing except a 1.5k pullup on D+ and a working D- receiver. If the
-	 * host still sees nothing with FORCE_FS set, the pullup itself is not reaching the cable and
-	 * no amount of controller configuration will fix it.
+	 * It was added to answer "is the pullup reaching the cable at all", and it did answer that:
+	 * with it set the device reported a bus reset it could not have received, because the host
+	 * logged nothing for the whole window. A phy held in a test mode drives its own SE0, which
+	 * the U2 MAC reads back as RESET_INTR -- a reset nobody sent. So the test was measuring
+	 * itself. HS_ENABLE in POWER_MANAGEMENT already asks for a high speed chirp; let the phy
+	 * run that instead of pinning it.
 	 */
-	mac_set(U3D_USB2_TEST_MODE, FORCE_FS);
-	printf("usb: forced full speed; test mode now %#x\n", mac_rd(U3D_USB2_TEST_MODE));
+	printf("usb: test mode %#x, letting the phy chirp\n", mac_rd(U3D_USB2_TEST_MODE));
 
 	printf("usb: watching; intr now %#x enable %#x\n",
 	    mac_rd(U3D_COMMON_USB_INTR), mac_rd(U3D_COMMON_USB_INTR_ENABLE));
 
-	for (uint32_t round = 0; round < 32u; round++) {
+	uint32_t live_at = 0xffffffffu;
+	uint32_t sofs = 0;
+
+	for (uint32_t round = 0; round < 3000u; round++) {
 		uint32_t intr = mac_rd(U3D_COMMON_USB_INTR);
 		uint32_t opstate = mac_rd(U3D_USB20_OPSTATE);
 
+		/*
+		 * Serve EP0 while watching. The host sends GET_DESCRIPTOR right after the reset,
+		 * and a SETUPPKTRDY nobody reads just sits there until the host gives up. Polling
+		 * here keeps the first control transfer moving instead of stalling for the length
+		 * of this loop.
+		 */
+		ep0_poll();
+
 		if (intr & ~seen) {
-			printf("usb: [%u ms] intr %#x%s%s%s%s%s%s\n",
-			    round * 250u, intr,
+			printf("usb: [%u us] intr %#x%s%s%s%s%s%s\n",
+			    round * 1000u, intr,
 			    (intr & DISCONN_INTR) ? " disconn" : "",
 			    (intr & CONN_INTR) ? " conn" : "",
 			    (intr & SOF_INTR) ? " sof" : "",
@@ -1431,26 +1763,62 @@ usb_watch_events(void)
 			    (intr & SUSPEND_INTR) ? " suspend" : "");
 			mac_wr(U3D_COMMON_USB_INTR, intr);      /* W1C */
 			seen |= intr;
+
+			/*
+			 * A bus reset clears EP0's max packet field, so put it back. This is what
+			 * mtu3_link_isr() does at the end, and a reset is the only event that can
+			 * arrive before the first SETUP.
+			 */
+			if (intr & RESET_INTR) {
+				ep0_configure();
+				printf("usb: reset seen; ep0 csr %#x maxpacket %u\n",
+				    mac_rd(U3D_EP0CSR), mac_rd(U3D_EP0CSR) & EP0_MAXPKTSZ_MSK);
+			}
 		}
 
-		if (round < 4u || opstate != 0u) {
-			printf("usb: [%u ms] opstate %#x ltssm %#x dev conf %#x power %#x\n",
-			    round * 250u, opstate, mac_rd(U3D_LINK_STATE_MACHINE),
-			    mac_rd(U3D_DEVICE_CONF), mac_rd(U3D_POWER_MANAGEMENT));
-		}
-		if (opstate != 0u) {
-			printf("usb: the port is live at %u ms\n", round * 250u);
-			return;
+		if (live_at == 0xffffffffu && (round < 800u ? (round % 50u) == 0u : (round % 500u) == 0u)) {
+			printf("usb: [%u us] opstate %#x ltssm %#x dev conf %#x power %#x ep0 %#x lv1 %#x\n",
+			    round * 1000u, opstate, mac_rd(U3D_LINK_STATE_MACHINE),
+			    mac_rd(U3D_DEVICE_CONF), mac_rd(U3D_POWER_MANAGEMENT),
+			    mac_rd(U3D_EP0CSR), mac_rd(U3D_LV1ISR));
 		}
 		/*
-		 * delay() is microseconds, not milliseconds.
+		 * Do not leave once the port reports a speed.
 		 *
-		 * Every "250 ms" line in the earlier runs was 250 us: the logbook timestamps showed
-		 * [0 ms] and [250 ms] 289 us apart, so the whole 32 round watch lasted 8 ms. A device that
-		 * has just pulled D+ up needs the host to notice, debounce and reset it, which is on the
-		 * order of 100 ms, so the watch has to be in real milliseconds.
+		 * A speed of 3 is high speed, and that is not something a phy can produce on its own: it
+		 * takes a host reset followed by a chirp K/J handshake. So the host is talking to us. What
+		 * comes next is the host asking for the device descriptor over EP0, and that is where the
+		 * run has been stopping with ep0 csr still 0x40 -- SETUPPKTRDY never set, so no SETUP ever
+		 * arrived.
+		 *
+		 * SOF counts tell the two possible reasons apart. A host that is still running the bus
+		 * sends a start of frame every millisecond and SOF_INTR keeps coming back; a host that
+		 * gave up stops and the bus goes to suspend instead.
 		 */
-		delay(250000);
+		if (intr & SOF_INTR) {
+			sofs++;
+		}
+
+		if (opstate != 0u && live_at == 0xffffffffu) {
+			live_at = round * 1000u;
+			printf("usb: the port is live at %u us\n", live_at);
+		}
+
+		if (live_at != 0xffffffffu && (round % 200u) == 0u) {
+			printf("usb: [%u us] live %u sofs %u ep0 %#x epi %#x lv1 %#x opstate %#x\n",
+			    round * 1000u, live_at, sofs, mac_rd(U3D_EP0CSR),
+			    mac_rd(U3D_EPISR), mac_rd(U3D_LV1ISR), opstate);
+		}
+		/*
+		 * One millisecond per round, and this number matters.
+		 *
+		 * The rounds used to be 250 ms apart. The host asks for the device descriptor within a
+		 * millisecond or two of the bus reset and gives up after a few tens of milliseconds, so a
+		 * poll every 250 ms can miss the only SETUP that is ever sent -- which is exactly the
+		 * reading that kept coming back: ep0 csr 0x40, SETUPPKTRDY never set. delay() takes
+		 * microseconds here, so 1000 is one millisecond.
+		 */
+		delay(1000);
 	}
 }
 
