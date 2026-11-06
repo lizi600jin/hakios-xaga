@@ -262,6 +262,17 @@
  * alignment) -> 4352. The exact pitch LK uses is settled by what display_find() reads; the
  * fallback only has to be plausible, and PANEL_W/PANEL_H are 1080x2460 either way.
  */
+/*
+ * The engine reads its first pixel from 0xfe14f000, not from the start of the carve-out. ovl4 l0
+ * and ovl6 l0 both report 0xfe14f000 with a pitch of 4352, read back from the panel registers by
+ * the kernel's fb_disp probe; the carve-out itself begins one page lower at 0xfe14e000. Handing
+ * the lower address over made the panel show the picture a thousand and twenty-four pixels to the
+ * side, every row starting inside the previous one -- the "shifted right" screen.
+ *
+ * It is fixed here rather than in the kernel because the kernel maps exactly the range named by
+ * base/pitch/height: sliding the base afterwards in the driver writes past the end of that mapping
+ * and drawRows() takes a data abort.
+ */
 #ifndef LK_FB_BASE
 #define LK_FB_BASE              0xfe14e000ULL
 #endif
@@ -574,10 +585,30 @@
  *     al. are the MT6768's values and are not verified here. A watchdog programmed wrong is worse
  *     than none: it can reset the phone in the middle of Android. (1) and (2) do the job.
  *
- * The watcher runs on core_order[XNU_CORES]. With XNU_CORES 4 and the order below, XNU gets cores
- * 0, 4, 5 and 7 (all four A78s, the fast ones) and the watcher gets core 1, an A55 -- no core is
- * asked to do both, which the _Static_assert in mtkloader.c enforces for the whole table.
+ * The watcher runs on core_order[XNU_CORES]. With the order below, XNU gets every core but one and
+ * the watcher gets core_order[7], which is 6 -- the last A55. No core is asked to do both, which the
+ * _Static_assert in mtkloader.c enforces for the whole table.
+ *
+ * Seven, not eight: the loader is a freestanding program with no scheduler, and the watcher has to
+ * own a core outright -- one that XNU is also spinning up would either be pulled out from under the
+ * watcher or starve it. Seven also stays inside the kernel's own MAX_CPUS, which pexpert's
+ * board_config.h sets to 8 for this family; the kernel counts the reserve core out of the device
+ * tree's /cpus, so seven is what it will ever see here.
+ *
+ * Seven was tried and is not the answer by itself. Nothing on this board sets a CPU frequency (the
+ * vendor path is cpuhvfs over mt6319 buck rails up the SPMI, none of which is running), so the cores
+ * stay at whatever LK left them -- 999 MHz measured on core 0, against a 2171 MHz part. Adding cores
+ * to a clock that low mostly adds rendezvous to wait on. The frequency is the lever; until it moves
+ * this stays at four, which is the set that is known to boot.
+ *
+ * Raising it is not just a PLL write: the vendor cpuhvfs raises ARMPLL_LL/BL/B (0x1000c000 + 0x20c,
+ * 0x21c, 0x22c -- note 0x20c is the A55, not an A78) *and* the MT6319 buck rails behind them over
+ * SPMI (proc1 = mt6319_7_vbuck3, proc3 = mt6319_6_vbuck1). With no voltage control on this port yet,
+ * a frequency above what LK left would brown the cluster out.
  */
+#ifndef XNU_CORES
+#define XNU_CORES               4
+#endif
 #ifndef XNU_RETURN_AFTER
 #define XNU_RETURN_AFTER        "70"
 #endif

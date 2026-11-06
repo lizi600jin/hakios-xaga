@@ -31,7 +31,26 @@ import sys
 DEFAULT_BIN = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "..", "..", "..", "work-xaga", "dt-device_xiaomi_xaga-TWRP",
-    "recovery", "root", "vendor", "firmware", "novatek_ts_fw.bin")
+    "recovery", "root", "vendor", "firmware",
+    "novatek_nt36672e_l16_fw02.bin")
+# Which image, and why this one: novatek_nt36672e_l16_fw02.bin.
+#
+# Three earlier guesses were wrong and the boot log settled it. On a normal Android boot,
+# nvt_ts_resume calls nvt_update_firmware, which reaches nvt_match_fw / nvt_get_panel_type and
+# prints
+#
+#   [21.254] nvt_get_panel_type 1240: match panle type, fw is [novatek_nt36672e_l16_fw02.bin]
+#   [21.254] update_firmware_request 321: filename is novatek_nt36672e_l16_fw02.bin
+#   [21.339] nvt_update_firmware 1180: Update firmware success! <83891 us>
+#   [21.339] nvt_get_fw_info 754: FW type is 0x01, fw_ver=22
+#
+# So Android does download an image -- fw_ver=22 is the version of the file it just wrote, not a
+# factory image living in the chip. fw01 (what cfg_0 in the device tree names for a Tianma panel)
+# boots its identity but never leaves reset state a1: no baseline, no interrupt edges. fw02 runs,
+# and the panel is the CSOT one: the lockdown info this board reports starts 0x53 0x42, which is
+# cfg_1's tp-vendor 0x53 and display-maker 0x42. fw02 also carries 17 partitions (ovly_sec_num 2)
+# against novatek_ts_fw.bin's 15, so the coordinate tables differ between the two -- which is why
+# a matching FWINFO identity never guaranteed the axis scale.
 # The header lives with the other kernel files, not with the SoC: drivers/map is what tells
 # xnu/apply.sh and xnu/sync-drivers.sh where a .h goes, and a drivers/*/conf can only name .c
 # files. drivers/input/hakios.focaltech_fw.h set that precedent for a firmware blob.

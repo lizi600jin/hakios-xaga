@@ -23,10 +23,10 @@ index 686124d..90a507d 100644
  	XL_SB_DELAY=8 $(RUNNER_BASE) tools/modem-cycle.sh "$(ARGS)" $(SECS)
  endif
 diff --git a/configs/boot-args.lst b/configs/boot-args.lst
-index e7a3f96..453d7e4 100644
+index e7a3f96..7fb8b9f 100644
 --- a/configs/boot-args.lst
 +++ b/configs/boot-args.lst
-@@ -91,6 +91,7 @@ emmc_root	k
+@@ -91,12 +91,14 @@ emmc_root	k
  epoch	k
  fb_beat	k
  fb_diff	k
@@ -34,7 +34,14 @@ index e7a3f96..453d7e4 100644
  fb_filter	k
  fb_flicker	k
  fb_flip	k
-@@ -154,6 +155,7 @@ hakios_kver	k
+ fb_hz	k
+ fb_inuse	k
+ fb_measure	k
++fb_move	k
+ fb_queue	k
+ fb_threads	k
+ fbfit	k
+@@ -154,6 +156,7 @@ hakios_kver	k
  haptic	k
  haptic_effect	k
  hv_wdt_pet	k
@@ -42,7 +49,7 @@ index e7a3f96..453d7e4 100644
  keylog	k
  loader_return_after	kl
  machine_name	k
-@@ -215,6 +217,7 @@ modem_wda_off	k
+@@ -215,6 +218,7 @@ modem_wda_off	k
  mtk_cpufreq	k
  net_names	k
  net_trace	k
@@ -50,7 +57,7 @@ index e7a3f96..453d7e4 100644
  pmic	k
  pmic_list	k
  privs	k
-@@ -274,10 +277,13 @@ thermal_tm1	k
+@@ -274,10 +278,13 @@ thermal_tm1	k
  torch	kl
  torch_max_s	k
  torch_secs	k
@@ -64,7 +71,7 @@ index e7a3f96..453d7e4 100644
  touch_spi_hz	k
  touchscreen	k
  ufs	l
-@@ -294,6 +300,7 @@ ufs_native_spin	k
+@@ -294,6 +301,7 @@ ufs_native_spin	k
  ufs_probe	l
  ufs_shared_pa	k
  ufs_write	kl
@@ -73,7 +80,7 @@ index e7a3f96..453d7e4 100644
  ustacks_at	k
  ustacks_count	k
 diff --git a/configs/symbols.tsv b/configs/symbols.tsv
-index aebb706..ba9f5f0 100644
+index aebb706..d0bac35 100644
 --- a/configs/symbols.tsv
 +++ b/configs/symbols.tsv
 @@ -55,7 +55,7 @@ BATTERY	arg	battery	Audio and battery	kl	hakios.adsp.c,hakios.battery.c,loader.c
@@ -85,7 +92,7 @@ index aebb706..ba9f5f0 100644
  BUTTONS_STEPS	arg	buttons_steps	Touch and buttons	k	hakios.buttons.c	
  CA_VBL	arg	ca_vbl	User space	u	inject.c	CoreAnimation's frame clock from the display driver's refresh notifications
  CAENV	arg	caenv	User space	u	inject.c	
-@@ -82,6 +82,7 @@ DISPLAY_PROBE	arg	display_probe	GPU and display	k	hakios.adreno.c	before any ste
+@@ -82,15 +82,17 @@ DISPLAY_PROBE	arg	display_probe	GPU and display	k	hakios.adreno.c	before any ste
  EMMC_ROOT	arg	emmc_root	CPU, memory and boot	k	(patch)	
  FB_BEAT	arg	fb_beat	GPU and display	k	MiniIOMobileFramebuffer.cpp	
  FB_DIFF	arg	fb_diff	GPU and display	k	MiniIOMobileFramebuffer.cpp	which pixels of the panel each frame changed (it costs: the panel's memory is slow to read)
@@ -93,8 +100,10 @@ index aebb706..ba9f5f0 100644
  FB_FILTER	arg	fb_filter	GPU and display	k	MiniIOMobileFramebuffer.cpp	the picture is scaled to the panel nearest neighbour, as it once was
  FB_FLICKER	arg	fb_flicker	GPU and display	k	MiniIOMobileFramebuffer.cpp	
  FB_FLIP	arg	fb_flip	GPU and display	k	MiniIOMobileFramebuffer.cpp	two of the boot framebuffer's pictures, drawn in turn, the panel's scanout (OVL0 layer 0) pointed at the finished one -- see flipStart()
-@@ -90,7 +91,7 @@ FB_INUSE	arg	fb_inuse	GPU and display	k	MiniIOMobileFramebuffer.cpp	a swap's sur
+ FB_HZ	arg	fb_hz	GPU and display	k	MiniIOMobileFramebuffer.cpp	
+ FB_INUSE	arg	fb_inuse	GPU and display	k	MiniIOMobileFramebuffer.cpp	a swap's surfaces are counted in use while they wait for the panel, as on an iPhone: CoreAnimation took a surface still waiting here for the next
  FB_MEASURE	arg	fb_measure	GPU and display	k	MiniIOMobileFramebuffer.cpp	how often the panel is really refreshed
++FB_MOVE	arg	fb_move	GPU and display	k	MiniIOMobileFramebuffer.cpp	where the display engine reads the picture from is moved to where the kernel writes it, instead of the other way round
  FB_QUEUE	arg	fb_queue	GPU and display	k	MiniIOMobileFramebuffer.cpp	
  FB_THREADS	arg	fb_threads	GPU and display	k	MiniIOMobileFramebuffer.cpp	
 -FBFIT	arg	fbfit	GPU and display	k	MiniIOMobileFramebuffer.cpp,hakios.tcm.c	keep the iPhone's proportions on a taller panel, black bands above and below
@@ -102,7 +111,7 @@ index aebb706..ba9f5f0 100644
  FBHEIGHT	arg	fbheight	GPU and display	k	MiniIOMobileFramebuffer.cpp	
  FBSCALE	arg	fbscale	GPU and display	k	MiniIOMobileFramebuffer.cpp	the same 375 x 812 points drawn at two pixels a point instead of three
  FBSHOT	arg	fbshot	GPU and display	k	MiniIOMobileFramebuffer.cpp	the frame, 60 pixels wide, red green blue, in base64 on lines that begin "fbshot N:" (tools/fbshot.py makes a picture of them): what the screen
-@@ -141,7 +142,8 @@ GPU_EXACT	arg	gpu_exact	GPU and display	k	hakios.adreno.c
+@@ -141,7 +143,8 @@ GPU_EXACT	arg	gpu_exact	GPU and display	k	hakios.adreno.c
  GPU_KEEP	arg	gpu_keep	GPU and display	k	hakios.gpu.cpp	
  GPU_LOG	arg	gpu_log	GPU and display	k	hakios.adreno.c	
  HAPTIC_EFFECT	arg	haptic_effect	Haptics and torch	k	hakios.haptic.c	
@@ -112,7 +121,7 @@ index aebb706..ba9f5f0 100644
  MACHINE_NAME	arg	machine_name	CPU, memory and boot	k	GenericARMPE.cpp	
  MALI	arg	mali	GPU and display	k	hakios.mali.c	every address below belongs to this phone (the other phone's GPU is an Adreno, bsd/dev/hakios.adreno.c)
  MALI_FASTMAP	arg	mali_fastmap	GPU and display	k	hakios.mali.c	
-@@ -195,6 +197,7 @@ MODEM_STEP	arg	modem_step	Cellular	k	hakios.mpss.c	the steps once the root is th
+@@ -195,6 +198,7 @@ MODEM_STEP	arg	modem_step	Cellular	k	hakios.mpss.c	the steps once the root is th
  MODEM_WAIT	arg	modem_wait	Cellular	k	hakios.mpss.c	
  MODEM_WDA_OFF	arg	modem_wda_off	Cellular	k	hakios.mpss.c	
  MTK_CPUFREQ	arg	mtk_cpufreq	Touch and buttons	k	hakios.mtk_keys.c	
@@ -120,7 +129,7 @@ index aebb706..ba9f5f0 100644
  PMIC_LIST	arg	pmic_list	Chip, thermal and PMIC	k	hakios.pmic.c	only the clock, not the inventory of every block
  PRIVS	arg	privs	Security stand-ins	k	kern_minimac.c	
  RD	arg	rd	CPU, memory and boot	kl	(patch),loader.c	
-@@ -247,10 +250,13 @@ THERMAL_TM1	arg	thermal_tm1	Chip, thermal and PMIC	k	hakios.thermal.c
+@@ -247,10 +251,13 @@ THERMAL_TM1	arg	thermal_tm1	Chip, thermal and PMIC	k	hakios.thermal.c
  TORCH	arg	torch	Haptics and torch	kl	hakios.torch.c,loader.c	a look, reading only: the arbiter's channel for the module and who may write through it, the module's type, its registers, the PMIC's temperature
  TORCH_MAX_S	arg	torch_max_s	Haptics and torch	k	hakios.torch.c	
  TORCH_SECS	arg	torch_secs	Haptics and torch	k	hakios.torch.c	
@@ -135,7 +144,7 @@ index aebb706..ba9f5f0 100644
  TOUCH_SPI_HZ	arg	touch_spi_hz	Touch and buttons	k	hakios.goodix.c	the bus at N Hz (Android's device tree gives the chip 5 MHz)
  UFS_BENCH	arg	ufs_bench	Storage and APFS	k	hakios.ufs.c	what one request through the loader costs, by size
  UFS_CHECK	arg	ufs_check	Storage and APFS	k	hakios.ufs.c	
-@@ -263,6 +269,7 @@ UFS_NATIVE_LEAVE	arg	ufs_native_leave	Storage and APFS	k	hakios.ufshc.c
+@@ -263,6 +270,7 @@ UFS_NATIVE_LEAVE	arg	ufs_native_leave	Storage and APFS	k	hakios.ufshc.c
  UFS_NATIVE_SLOTS	arg	ufs_native_slots	Storage and APFS	k	hakios.ufshc.c	
  UFS_NATIVE_SPIN	arg	ufs_native_spin	Storage and APFS	k	hakios.ufshc.c	
  UFS_PROBE	arg	ufs_probe	Loader	l	loader.c	
@@ -165,7 +174,7 @@ index a413608..f3f4186 100644
  	repository  https://github.com/oosexgang/hakios-uefi.git
  	revision    a450a79a167fb25783fd0f0321478bbc171cae23
 diff --git a/docs/boot-args.md b/docs/boot-args.md
-index 6cbc16c..e26aa7a 100644
+index 6cbc16c..295df2a 100644
 --- a/docs/boot-args.md
 +++ b/docs/boot-args.md
 @@ -2,13 +2,13 @@
@@ -173,18 +182,18 @@ index 6cbc16c..e26aa7a 100644
  Made by `tools/boot-args.py --markdown`; CI fails if it is out of date with the source (`tools/boot-args.py --check`).
  
 -Every argument that the kernel, the loader or user space of this port reads, and which file reads it. **342 arguments**: 292 read by the kernel, 14 by the loader, 46 by user space (one is read in more than one place).
-+Every argument that the kernel, the loader or user space of this port reads, and which file reads it. **349 arguments**: 299 read by the kernel, 14 by the loader, 46 by user space (one is read in more than one place).
++Every argument that the kernel, the loader or user space of this port reads, and which file reads it. **350 arguments**: 300 read by the kernel, 14 by the loader, 46 by user space (one is read in more than one place).
  
  This is a catalogue of what exists and who reads it, not a manual. What an argument means is in the head of the file that reads it. The stable switches have a symbol in the configuration (`tools/hakios-config.py help SYMBOL`, `docs/configs.md`); the rest are the knobs of bring-up (a driver's steps, pauses, traces, test modes) and can change with the driver. Any of them can be given in a configuration with `CONFIG_BOOTARGS="name=value ..."`, which checks that each name is in this list.
  
  Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl kern.bootargs`).
  
 -## GPU and display (84)
-+## GPU and display (85)
++## GPU and display (86)
  
  | Argument | Layer | Read by | Configuration | Set by |
  |---|---|---|---|---|
-@@ -27,6 +27,7 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
+@@ -27,15 +27,17 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
  | `display_probe` | K | `hakios.adreno.c` | `CONFIG_DISPLAY_PROBE` |  |
  | `fb_beat` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_BEAT` |  |
  | `fb_diff` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_DIFF` |  |
@@ -192,8 +201,10 @@ index 6cbc16c..e26aa7a 100644
  | `fb_filter` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_FILTER` |  |
  | `fb_flicker` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_FLICKER` |  |
  | `fb_flip` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_FLIP` |  |
-@@ -35,7 +36,7 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
+ | `fb_hz` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_HZ` |  |
+ | `fb_inuse` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_INUSE` |  |
  | `fb_measure` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_MEASURE` |  |
++| `fb_move` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_MOVE` |  |
  | `fb_queue` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_QUEUE` |  |
  | `fb_threads` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FB_THREADS` |  |
 -| `fbfit` | K | `MiniIOMobileFramebuffer.cpp`, `hakios.tcm.c` | `CONFIG_FBFIT` |  |
@@ -201,7 +212,7 @@ index 6cbc16c..e26aa7a 100644
  | `fbheight` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FBHEIGHT` |  |
  | `fbscale` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FBSCALE` |  |
  | `fbshot` | K | `MiniIOMobileFramebuffer.cpp` | `CONFIG_FBSHOT` |  |
-@@ -258,17 +259,17 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
+@@ -258,17 +260,17 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
  
  | Argument | Layer | Read by | Configuration | Set by |
  |---|---|---|---|---|
@@ -223,7 +234,7 @@ index 6cbc16c..e26aa7a 100644
  | `virtio_input` | K | `hakios.virtio_input.c` | `CONFIG_VIRTIO_INPUT` |  |
  
  ## Storage and APFS (43)
-@@ -409,7 +410,7 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
+@@ -409,7 +411,7 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
  | `ufs` | L | `loader.c` | `CONFIG_UFS` |  |
  | `ufs_probe` | L | `loader.c` | `CONFIG_UFS_PROBE` |  |
  
@@ -232,7 +243,7 @@ index 6cbc16c..e26aa7a 100644
  
  | Argument | Layer | Read by | Configuration | Set by |
  |---|---|---|---|---|
-@@ -424,8 +425,14 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
+@@ -424,8 +426,14 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
  | `glno` | U | `inject.c` | `CONFIG_GLNO` |  |
  | `glsb3` | U | `inject.c` | `CONFIG_GLSB3` |  |
  | `glyes` | U | `inject.c` | `CONFIG_GLYES` |  |
@@ -929,7 +940,7 @@ index ec3b553..abcef26 100644
  {
  	while (*s) {
 diff --git a/mtk/loader/mtkloader.c b/mtk/loader/mtkloader.c
-index 3abb684..dc6f863 100644
+index 3abb684..11fdc83 100644
 --- a/mtk/loader/mtkloader.c
 +++ b/mtk/loader/mtkloader.c
 @@ -1,5 +1,5 @@
@@ -1888,7 +1899,7 @@ index 3abb684..dc6f863 100644
  }
  
  /* ---- XNU's log into ramoops ---- */
-@@ -1132,32 +1675,351 @@ static void show_log_tail(uint32_t lines)
+@@ -1132,32 +1675,460 @@ static void show_log_tail(uint32_t lines)
  	}
  }
  
@@ -2087,15 +2098,124 @@ index 3abb684..dc6f863 100644
 + * after the kernel has had its four. If the later record is missing but this one is there, the
 + * write path is fine and the kernel never came back.
 + */
++/* Defined further down, next to the rest of the bring-up reporting. */
++static uint32_t cpu_mhz(void);
++
 +static void logbook_boot_note(void)
 +{
 +#if BOARD_STORAGE_UFS
-+	static char buf[256];
++	/*
++	 * What the kernel is told, and what the cores were actually running at when it was told
++	 * that. The frequency question cannot be answered from inside the kernel: by then the
++	 * value it measures is its own, and a number that low looks the same whether LK left the
++	 * PLL there or something below us moved it. Here the cycle counter and the PLL registers
++	 * are read in the same breath, on the same core, before any of that can happen.
++	 *
++	 * The register layout is the one the vendor's cpuhvfs uses (mt6895.dts): ARMPLL_LL/BL/B/DSU
++	 * live at apmixedsys + 0x20c/0x21c/0x22c/0x23c, with the post divider in bits 24..26 and
++	 * the feedback word in bits 0..21, against a 26 MHz reference. The clock dividers those
++	 * PLLs feed are in mcusys_ao_cfg + 0xa2a0/0xa2a4/0xa2a8/0xa2e0.
++	 */
++	static char buf[768];
 +	uint32_t n = 0;
 +	const char *text = "mtkloader: about to enter XNU\nboot args: " XNU_BOOT_ARGS "\n";
++	const uint64_t pll[4] = { 0x20c, 0x21c, 0x22c, 0x23c };
++	const char *names[4] = { "LL(A55)", "BL(A78)", "B(A78)", "DSU" };
 +
 +	while (*text && n < sizeof(buf) - 1u) {
 +		buf[n++] = *text++;
++	}
++
++	{
++		uint32_t mhz = cpu_mhz();
++
++		text = "clock: this core measures ";
++		while (*text && n < sizeof(buf) - 1u) {
++			buf[n++] = *text++;
++		}
++		{
++			char digits[12];
++			uint32_t d = 0, v = mhz;
++
++			if (v == 0) {
++				digits[d++] = '0';
++			}
++			while (v != 0) {
++				digits[d++] = (char)('0' + (v % 10u));
++				v /= 10u;
++			}
++			while (d != 0) {
++				buf[n++] = digits[--d];
++			}
++		}
++		text = " MHz\n";
++		while (*text && n < sizeof(buf) - 1u) {
++			buf[n++] = *text++;
++		}
++	}
++
++	for (uint32_t i = 0; i < 4; i++) {
++		uint32_t con = rd32(APMIXED_BASE + pll[i]);
++		uint32_t post = (con >> 24) & 7u;
++		uint32_t pcw = con & 0x3fffffu;
++		uint32_t div = rd32(0x0c530000ull + 0xa2a0u + i * 4u) & 0x1fu;
++		uint64_t mhz = post ? (((26ull * pcw) >> 14) >> post) : 0;
++
++		text = "clock: ";
++		while (*text && n < sizeof(buf) - 1u) {
++			buf[n++] = *text++;
++		}
++		for (const char *w = names[i]; *w && n < sizeof(buf) - 1u; w++) {
++			buf[n++] = *w;
++		}
++		{
++			const char *w = " con ";
++			while (*w && n < sizeof(buf) - 1u) {
++				buf[n++] = *w++;
++			}
++		}
++		{
++			const char *hex = "0123456789abcdef";
++			for (int sh = 28; sh >= 0; sh -= 4) {
++				buf[n++] = hex[(con >> sh) & 0xfu];
++			}
++		}
++		{
++			char digits[12];
++			uint32_t d = 0, v = (uint32_t)mhz;
++
++			text = " pll ";
++			while (*text && n < sizeof(buf) - 1u) {
++				buf[n++] = *text++;
++			}
++			if (v == 0) {
++				digits[d++] = '0';
++			}
++			while (v != 0) {
++				digits[d++] = (char)('0' + (v % 10u));
++				v /= 10u;
++			}
++			while (d != 0) {
++				buf[n++] = digits[--d];
++			}
++			text = " MHz div ";
++			while (*text && n < sizeof(buf) - 1u) {
++				buf[n++] = *text++;
++			}
++			d = 0;
++			v = div;
++			if (v == 0) {
++				digits[d++] = '0';
++			}
++			while (v != 0) {
++				digits[d++] = (char)('0' + (v % 10u));
++				v /= 10u;
++			}
++			while (d != 0) {
++				buf[n++] = digits[--d];
++			}
++			buf[n++] = '\n';
++		}
 +	}
 +	buf[n] = 0;
 +	(void)save_log_to_flash((uint64_t)(uintptr_t)buf, n, 0xfeedfaceull, 0, 0, 0);
@@ -2261,7 +2381,7 @@ index 3abb684..dc6f863 100644
  		if (l == levels - 1 || !(d & 2)) { /* page, or block */
  			uint64_t span = 1ULL << shift;
  			return (oa & ~(span - 1)) | (va & (span - 1));
-@@ -1484,9 +2346,49 @@ void xnu_returned(uint64_t log_pa, uint64_t len, uint64_t reason, uint64_t code,
+@@ -1484,9 +2455,49 @@ void xnu_returned(uint64_t log_pa, uint64_t len, uint64_t reason, uint64_t code,
  	save_log(&sp, 1);
  	dbg_puts("=== end of XNU log ===\n");
  	save_host_keep(&xsyms);
@@ -2311,7 +2431,7 @@ index 3abb684..dc6f863 100644
  }
  
  /*
-@@ -1599,8 +2501,6 @@ static void rescue_log(void)
+@@ -1599,8 +2610,6 @@ static void rescue_log(void)
   * never arrives: the kernel idles for ever waiting for a root device that no timeout ever wakes.
   * Set up the GIC as XNU does, arm each timer in turn and see which one is taken.
   */
@@ -2320,7 +2440,7 @@ index 3abb684..dc6f863 100644
  
  #if TIMER_PROBE
  static void gic_cpu_prepare(void)
-@@ -1742,6 +2642,37 @@ static void plog_flush(void)
+@@ -1742,6 +2751,37 @@ static void plog_flush(void)
  	dcache_clean_range(MARKER_PA, 192);
  }
  
@@ -2358,12 +2478,12 @@ index 3abb684..dc6f863 100644
  /*
   * XNU never came back (no timer, a hang): with its caches visible through our own cacheable
   * mapping, take what it shows and has written, put it into ramoops and reset the board.
-@@ -1761,15 +2692,82 @@ void watcher_main(void)
+@@ -1761,15 +2801,82 @@ void watcher_main(void)
  	mmu_on((uint64_t)watcher_l1);
  	watcher_started = 1;
  	dcache_clean_range((uint64_t)&watcher_started, 8);
 +	snap_begin();
- 
++
 +#if XNU_WATCH_HEARTBEAT
 +	/*
 +	 * The console structure was filled in by the core that started this one, and only part of it
@@ -2380,7 +2500,7 @@ index 3abb684..dc6f863 100644
 +	fb_base = LK_FB_BASE;
 +	fb_pitch = LK_FB_PITCH;
 +#endif
-+
+ 
 +	/*
 +	 * The watchdog's own clock. Between the 100 ms naps there is a count of naps, so a counter
 +	 * that does not run turns "watch for two minutes" into a bounded number of sleeps and then
@@ -2442,7 +2562,7 @@ index 3abb684..dc6f863 100644
  		dbg_delay_ms(100);
  	}
  	dcache_clean_range((uint64_t)&xnu_back, 8);
-@@ -1779,7 +2777,28 @@ void watcher_main(void)
+@@ -1779,7 +2886,28 @@ void watcher_main(void)
  		}
  	}
  
@@ -2471,7 +2591,7 @@ index 3abb684..dc6f863 100644
  	marker_set(MARK_DONE);
  	dbg_puts("\n=== watcher: XNU still running after " );
  	dbg_dec(XNU_WATCH_SECONDS);
-@@ -1912,8 +2931,20 @@ void watcher_main(void)
+@@ -1912,8 +3040,20 @@ void watcher_main(void)
  	save_host_keep(&xsyms);
  	dbg_puts("=== end of watcher snapshot ===\n");
  	plog_flush();
@@ -2492,7 +2612,7 @@ index 3abb684..dc6f863 100644
  }
  
  static void watcher_start(void)
-@@ -1922,7 +2953,7 @@ static void watcher_start(void)
+@@ -1922,7 +3062,7 @@ static void watcher_start(void)
  		return;
  	}
  	watcher_started = 0;
@@ -2501,7 +2621,7 @@ index 3abb684..dc6f863 100644
  	out("watcher on cpu");
  	out_dec(WATCH_CORE);
  	out(": PSCI CPU_ON ");
-@@ -1973,7 +3004,9 @@ static uint32_t cpu_mhz(void)
+@@ -1973,7 +3113,9 @@ static uint32_t cpu_mhz(void)
   * else wants. The loader's image ends before 0x400c0000, XNU's log ring sits at 0x47b1c9c0 and
   * ramoops at 0x4d0e0000, XNU's own memory starts at 0xc0000000, and DRAM covers all of it.
   */
@@ -2512,7 +2632,7 @@ index 3abb684..dc6f863 100644
  
  /* The SPI clock mux as we found it, so that Android can be given it back that way. */
  static uint32_t touch_clk_cfg2;
-@@ -2069,8 +3102,11 @@ static uint8_t touch_bring_up_once(void)
+@@ -2069,8 +3211,11 @@ static uint8_t touch_bring_up_once(void)
   * The whole sequence, up to six times, waiting a little longer between tries each time. Now and then the chip takes the image and then says
   * nothing after the go command -- two runs in four did -- and a fresh start from a reset brings
   * it up; this was what left iOS without a touch screen.
@@ -2525,7 +2645,7 @@ index 3abb684..dc6f863 100644
  {
  	for (int attempt = 1; attempt <= 6; attempt++) {
  		uint8_t mode = touch_bring_up_once();
-@@ -2098,11 +3134,14 @@ static uint8_t touch_bring_up(void)
+@@ -2098,11 +3243,14 @@ static uint8_t touch_bring_up(void)
   * (here /2), bits 0..21 the multiplier of 26 MHz / 2^14 -- the same write the vendor's GPU driver
   * makes to its PLL.
   */
@@ -2541,7 +2661,7 @@ index 3abb684..dc6f863 100644
  {
  	uint32_t before = rd32(APMIXED_BASE + ARMPLL_CON1), post = (before >> 24) & 7u;
  	uint32_t pcw = (uint32_t)(((uint64_t)BIG_MHZ << post) * 16384u / 26u);
-@@ -2125,16 +3164,24 @@ static void __attribute__((noreturn)) run_xnu(void)
+@@ -2125,16 +3273,24 @@ static void __attribute__((noreturn)) run_xnu(void)
  	struct payload_info pi;
  	struct xnu_syms s;
  
@@ -2567,7 +2687,7 @@ index 3abb684..dc6f863 100644
  
  	const struct mach_header_64 *mh = (const struct mach_header_64 *)pi.kernel;
  	uint64_t vm_hi = 0, entry_va = 0;
-@@ -2160,10 +3207,12 @@ static void __attribute__((noreturn)) run_xnu(void)
+@@ -2160,10 +3316,12 @@ static void __attribute__((noreturn)) run_xnu(void)
  	out(", entry ");
  	out_hex(kva_to_pa(entry_va));
  	out("\n");
@@ -2580,7 +2700,7 @@ index 3abb684..dc6f863 100644
  
  	/* XNU's console colors (32 bpp column) opaque. */
  	if (s.vc_colors) {
-@@ -2279,12 +3328,55 @@ static void __attribute__((noreturn)) run_xnu(void)
+@@ -2279,12 +3437,55 @@ static void __attribute__((noreturn)) run_xnu(void)
  		memcpy((void *)rd_pa, pi.ramdisk, pi.ramdisk_size);
  	}
  	/* and the big one off the flash, if it is there (with XNU_ROOT_EMMC the kernel reads it itself) */
@@ -2637,7 +2757,7 @@ index 3abb684..dc6f863 100644
  	uint64_t ba_pa = (dt_pa + dt_len + PAGE_SIZE_MAX - 1) & ~(PAGE_SIZE_MAX - 1);
  	uint64_t top = ba_pa + PAGE_SIZE_MAX;
  
-@@ -2300,7 +3392,7 @@ static void __attribute__((noreturn)) run_xnu(void)
+@@ -2300,7 +3501,7 @@ static void __attribute__((noreturn)) run_xnu(void)
  	ba->deviceTreeP = dt_pa - XNU_SLIDE;
  	ba->deviceTreeLength = dt_len;
  	ba->video.v_baseAddr = fb_base;
@@ -2646,7 +2766,7 @@ index 3abb684..dc6f863 100644
  	ba->video.v_rowBytes = fb_pitch;
  	ba->video.v_width = PANEL_W;
  	ba->video.v_height = PANEL_H;
-@@ -2343,6 +3435,7 @@ static void __attribute__((noreturn)) run_xnu(void)
+@@ -2343,6 +3544,7 @@ static void __attribute__((noreturn)) run_xnu(void)
  	out_hex(XNU_MEM_SIZE);
  	out("\n");
  	display_alpha_off();
@@ -2654,7 +2774,7 @@ index 3abb684..dc6f863 100644
  
  	if (XNU_WDT_SECONDS) {
  		uint32_t t = XNU_WDT_SECONDS > 31 ? 31 : XNU_WDT_SECONDS;
-@@ -2401,9 +3494,16 @@ static void __attribute__((noreturn)) run_xnu(void)
+@@ -2401,9 +3603,16 @@ static void __attribute__((noreturn)) run_xnu(void)
  	 * handed its firmware before anything can read a finger out of it, and the kernel is a bad
  	 * place to do it from: it would have to carry those hundred kilobytes itself, and it comes
  	 * up long after the chip has forgotten them.
@@ -2671,7 +2791,7 @@ index 3abb684..dc6f863 100644
  	/*
  	 * Nothing of ours is left on the panel: iOS paints only what it draws, and where it does not
  	 * reach, what LK wrote there stays -- its "Orange State: your device has been unlocked"
-@@ -2414,6 +3514,18 @@ static void __attribute__((noreturn)) run_xnu(void)
+@@ -2414,6 +3623,18 @@ static void __attribute__((noreturn)) run_xnu(void)
  		__asm__ volatile("dc cvac, %0" : : "r"(at));
  	}
  	__asm__ volatile("dsb sy");
@@ -2690,7 +2810,7 @@ index 3abb684..dc6f863 100644
  	out("Jumping to XNU...\n");
  	jump_to_kernel(kva_to_pa(entry_va), ba_pa);
  	__builtin_unreachable();
-@@ -2547,15 +3659,16 @@ static void msdc_self_test(void)
+@@ -2547,15 +3768,16 @@ static void msdc_self_test(void)
  	}
  
  	memset(buf, 0, sizeof(buf));
@@ -2711,7 +2831,7 @@ index 3abb684..dc6f863 100644
  	out("boot_a 8 blocks: ");
  	if (ok) {
  		uint32_t ksize = *(volatile uint32_t *)(buf + 8);
-@@ -2568,9 +3681,9 @@ static void msdc_self_test(void)
+@@ -2568,9 +3790,9 @@ static void msdc_self_test(void)
  		}
  	} else {
  		out("FAILED at ");
@@ -2723,7 +2843,7 @@ index 3abb684..dc6f863 100644
  	}
  	out("\n");
  
-@@ -2585,7 +3698,7 @@ static void msdc_self_test(void)
+@@ -2585,7 +3807,7 @@ static void msdc_self_test(void)
  
  		t0 = dbg_ticks();
  		for (uint32_t r = 0; r < rounds && fine; r++) {
@@ -2732,7 +2852,7 @@ index 3abb684..dc6f863 100644
  			for (uint32_t i = 0; fine && i < blocks * 512 / 4; i++) {
  				sum = sum * 31u + *(volatile uint32_t *)(at + 4 * i);
  			}
-@@ -2596,9 +3709,9 @@ static void msdc_self_test(void)
+@@ -2596,9 +3818,9 @@ static void msdc_self_test(void)
  		out("-block chunks: ");
  		if (!fine) {
  			out("FAILED at ");
@@ -2744,7 +2864,7 @@ index 3abb684..dc6f863 100644
  		} else {
  			out_dec((t1 - t0) * 1000 / f);
  			out(" ms, ");
-@@ -2612,54 +3725,674 @@ static void msdc_self_test(void)
+@@ -2612,30 +3834,650 @@ static void msdc_self_test(void)
  }
  #endif /* MSDC_TEST */
  
@@ -2799,13 +2919,6 @@ index 3abb684..dc6f863 100644
 -	    buf[1] == TCM_MODE_APPLICATION ? "running its application" : "something else");
 -	out("), part ");
 -	for (uint32_t i = 2; i < got && i < 18; i++) {
--		out_putc(buf[i] >= 0x20 && buf[i] < 0x7f ? (char)buf[i] : ' ');
--	}
--	if (got >= 22) {
--		out(", build ");
--		out_hex((uint32_t)buf[18] | ((uint32_t)buf[19] << 8) |
--		    ((uint32_t)buf[20] << 16) | ((uint32_t)buf[21] << 24));
--	}
 +	fb_rect(0, 0, PANEL_W, PANEL_H, 0xff000000u);
 +	fbc.x = 0;
 +	fbc.y = fbc.top = 0;
@@ -2886,24 +2999,11 @@ index 3abb684..dc6f863 100644
 +	out("\n");
 +	out("last "); out(ufs_last.what ? ufs_last.what : "-");
 +	out(" "); out_hex(ufs_last.status);
- 	out("\n");
- }
- 
--/*
-- * Wait for the chip to speak, and only then listen.
-- *
-- * After the go command the chip restarts into the firmware and introduces itself unasked, so
-- * there is nothing to ask for and nothing to gain by clocking at it meanwhile -- reading a chip
-- * that is not ready only puts its SPI side out of step. So this watches the interrupt line and
-- * reads one message each time it goes low, printing whatever comes, until an identify report
-- * arrives or the patience runs out. Returns the mode it found, or 0.
-- */
--static uint8_t touch_wait_identify(uint32_t patience_ms)
++	out("\n");
++}
++
 +static void ufs_self_test(void)
- {
--	static uint8_t buf[320];
--	uint8_t code = 0;
--	uint32_t got = 0, waited = 0;
++{
 +	static uint8_t buf[4096] __attribute__((aligned(16)));
 +	const uint64_t boot_a_lba = 0x3d100000 / 512;   /* scatter: linear_start_addr, in 512-byte sectors */
 +	int ok;
@@ -3432,34 +3532,10 @@ index 3abb684..dc6f863 100644
 +	    buf[1] == TCM_MODE_APPLICATION ? "running its application" : "something else");
 +	out("), part ");
 +	for (uint32_t i = 2; i < got && i < 18; i++) {
-+		out_putc(buf[i] >= 0x20 && buf[i] < 0x7f ? (char)buf[i] : ' ');
-+	}
-+	if (got >= 22) {
-+		out(", build ");
-+		out_hex((uint32_t)buf[18] | ((uint32_t)buf[19] << 8) |
-+		    ((uint32_t)buf[20] << 16) | ((uint32_t)buf[21] << 24));
-+	}
-+	out("\n");
-+}
-+
-+/*
-+ * Wait for the chip to speak, and only then listen.
-+ *
-+ * After the go command the chip restarts into the firmware and introduces itself unasked, so
-+ * there is nothing to ask for and nothing to gain by clocking at it meanwhile -- reading a chip
-+ * that is not ready only puts its SPI side out of step. So this watches the interrupt line and
-+ * reads one message each time it goes low, printing whatever comes, until an identify report
-+ * arrives or the patience runs out. Returns the mode it found, or 0.
-+ */
-+static uint8_t touch_wait_identify(uint32_t patience_ms)
-+{
-+	static uint8_t buf[320];
-+	uint8_t code = 0;
-+	uint32_t got = 0, waited = 0;
- 	int heard = 0;
- 
- 	while (waited < patience_ms) {
-@@ -3028,23 +4761,78 @@ static int xnu_requested(void)
+ 		out_putc(buf[i] >= 0x20 && buf[i] < 0x7f ? (char)buf[i] : ' ');
+ 	}
+ 	if (got >= 22) {
+@@ -3028,23 +4870,78 @@ static int xnu_requested(void)
  
  static int boot_choice(void)
  {
@@ -3538,7 +3614,7 @@ index 3abb684..dc6f863 100644
  	return xnu;
  }
  
-@@ -3386,17 +5174,730 @@ rails_off:
+@@ -3386,17 +5283,730 @@ rails_off:
  }
  #endif /* GPU_PROBE */
  
@@ -4269,7 +4345,7 @@ index 3abb684..dc6f863 100644
  		chain_android();
  	}
  	if (mark == MARK_RUNNING) {
-@@ -3406,6 +5907,9 @@ void mtkloader_main(uint64_t dtb)
+@@ -3406,6 +6016,9 @@ void mtkloader_main(uint64_t dtb)
  	}
  
  	plog_reset();
@@ -4279,7 +4355,7 @@ index 3abb684..dc6f863 100644
  #if TOUCH_PROBE
  	fb_rect(0, 0, PANEL_W, PANEL_H, 0xff000000u);
  	fbc.x = 0;
-@@ -3436,18 +5940,113 @@ void mtkloader_main(uint64_t dtb)
+@@ -3436,18 +6049,113 @@ void mtkloader_main(uint64_t dtb)
  	wdt_disable();
  	chain_android();
  #endif
@@ -8530,10 +8606,10 @@ index 0000000..4d9beb6
 +}
 diff --git a/mtk/mt6895/drivers/input/hakios.nvt.c b/mtk/mt6895/drivers/input/hakios.nvt.c
 new file mode 100644
-index 0000000..15e178b
+index 0000000..5b0a75d
 --- /dev/null
 +++ b/mtk/mt6895/drivers/input/hakios.nvt.c
-@@ -0,0 +1,1419 @@
+@@ -0,0 +1,1547 @@
 +/*
 + * The touch screen of the Redmi Note 11T Pro (xaga): a Novatek NT36672E on the MT6895's SPI2, as a
 + * source of touches for /dev/hakios-touch (sys/hakios.input.h). Only with boot-arg touchscreen=3:
@@ -8735,7 +8811,11 @@ index 0000000..15e178b
 +#define NVT_READ_MASK   0x7f
 +#define NVT_WRITE_MASK  0x80
 +
-+#define XFER_MAX        80              /* the widest transfer here is the 65-byte report */
++/*
++ * The widest transfer here is one report: 108 bytes plus the address byte and its dummy, so
++ * 110 on the bus. It was 80 when the report was believed to be 65 bytes long.
++ */
++#define XFER_MAX        128
 +
 +static bool
 +nvt_set_page(uint32_t address)
@@ -8800,9 +8880,45 @@ index 0000000..15e178b
 +
 +/* ---- what a report holds ---- */
 +
-+#define POINT_DATA_LEN  65              /* the whole report, its last byte the checksum */
++/*
++ * How long one report is depends on the resolution mode the panel is wired for, and the two
++ * lengths are not interchangeable.
++ *
++ * The vendor driver carries both: nt36xxx.h:110 sets NVT_SUPER_RESOLUTION_10S to 10, and on the
++ * line after it POINT_DATA_LEN becomes 108 instead of 65. In the ten-times mode each finger is
++ * still six bytes, but x and y are sixteen bits wide and the pressure array moves to byte 98.
++ * This phone's panel is ten-times: Android registers ABS_MT_POSITION_X with a maximum of 10799,
++ * which is 1080 * 10 - 1, and the device tree asks for super-resolution-factor = <10>.
++ *
++ * Reading 65 bytes out of a 108-byte report is what made the vertical axis look unsolvable: the
++ * upper bits of y were never on the wire as far as this driver was concerned, so no amount of
++ * fitting could find them. Four corners pressed on the real panel and compared against Android
++ * left a least-squares slope of -9.15 that no flip or scale could explain.
++ */
++/*
++ * The read length and the decoding are separate questions and are answered separately here.
++ *
++ * The length is not in doubt: the vendor driver that is actually compiled on this phone
++ * (drivers/input/touchscreen/NVT36672C, selected by Makefile:122 through
++ * CONFIG_TOUCHSCREEN_NVT36672C_HOSTDL_SPI) sets NVT_SUPER_RESOLUTION_10S to 10 at nt36xxx.h:110,
++ * and the line under it makes POINT_DATA_LEN 108. So it asks the chip for 109 bytes on every
++ * interrupt, on every panel, whatever mode the coordinates then turn out to be in. This driver
++ * has been asking for sixty-six and reading the first sixty-five.
++ *
++ * Those extra bytes turned out to hold nothing this driver needs: bytes 65..107 were byte for
++ * byte identical across forty reports. What settled the decode was the image, not the length.
++ * With fw02 -- the file the device downloads on its own, which nvt_match_fw picks from the
++ * lockdown bytes -- the ten-times branch is the right one: five presses gave x 112, 969, 101,
++ * 999, 574 and y 2346, 2347, 110, 156, 1367 for physical (91,2363) (1003,2383) (91,157)
++ * (997,116) (573,1290), all within a fingertip. With novatek_ts_fw.bin the same branch gave
++ * 1568 pixels of x, which is why it was once rejected; that image simply reports differently.
++ */
++#define NVT_SUPER_10S   1               /* the chip reports tenths of a pixel, as Android sees it */
++#define POINT_DATA_LEN  108             /* what the vendor driver asks for, in every mode */
++#define POINT_DATA_CHECKSUM_LEN 65      /* the checksum still covers only the first sixty-five */
 +#define FINGER_BYTES    6
 +#define MAX_FINGERS     10
++#define FINGER_PRESSURE 98              /* the ten-times mode keeps pressures at 98 + i */
 +
 +/*
 + * How often the line is sampled while waiting for a report, and for how long.
@@ -8846,10 +8962,17 @@ index 0000000..15e178b
 +{
 +	uint8_t sum = 0;
 +
-+	for (unsigned i = 0; i < POINT_DATA_LEN - 1; i++) {
++	/*
++	 * The checksum keeps its old extent in the ten-times mode: it sums the first sixty-four
++	 * report bytes and sits in byte sixty-four, while the report itself is a hundred and eight
++	 * bytes long. The vendor says the same thing twice -- POINT_DATA_CHECKSUM_LEN is 65 on both
++	 * sides of the #if that changes POINT_DATA_LEN -- and nvt_ts_point_data_checksum() sums
++	 * length - 1 bytes and compares against byte `length`.
++	 */
++	for (unsigned i = 0; i < POINT_DATA_CHECKSUM_LEN - 1; i++) {
 +		sum = (uint8_t)(sum + data[i]);
 +	}
-+	return (uint8_t)(~sum + 1) == data[POINT_DATA_LEN - 1];
++	return (uint8_t)(~sum + 1) == data[POINT_DATA_CHECKSUM_LEN - 1];
 +}
 +
 +static uint32_t fit;                    /* boot-arg fbfit: how the picture sits on the panel */
@@ -8858,6 +8981,12 @@ index 0000000..15e178b
 +#define PICTURE_H_ON_W  (PANEL_W * PICTURE_H / PICTURE_W)
 +#define PICTURE_TOP     ((PANEL_H - PICTURE_H_ON_W) / 2)
 +
++/*
++ * No mirror. The earlier one was an artefact of the wrong image: with novatek_ts_fw.bin the chip
++ * reported a compressed four-bit x, and 1080 - x happened to fit four corners. With fw02, the
++ * image Android itself loads, the plain reading already runs the right way -- five presses gave
++ * x 112, 969, 101, 999, 574 for physical 91, 1003, 91, 997, 573.
++ */
 +static uint32_t
 +picture_x(uint32_t x)
 +{
@@ -8867,6 +8996,11 @@ index 0000000..15e178b
 +	return x * 65535 / (PANEL_W - 1);
 +}
 +
++/*
++ * The vertical axis reads straight through once the reports are decoded as tenths of a pixel:
++ * fw02 gave y 2346, 2347, 110, 156, 1367 for physical 2363, 2383, 157, 116, 1290. The compressed
++ * span that a flip could not explain was the four-bit decode, not the chip.
++ */
 +static uint32_t
 +picture_y(uint32_t y)
 +{
@@ -8909,8 +9043,20 @@ index 0000000..15e178b
 +		if (what != 1 && what != 2) {
 +			continue;               /* lifted, or a gloved touch: nothing this queue has a word for */
 +		}
++#if NVT_SUPER_10S
++		/*
++		 * Ten-times mode: x and y are sixteen bits each and are already expressed in tenths
++		 * of a pixel, exactly as nvt_ts_work_func() reads them
++		 * (nt36xxx.c:1614-1616, point_data[position+1..4]).
++		 */
++		x = ((uint32_t)data[at + 1] << 8) | (uint32_t)data[at + 2];
++		y = ((uint32_t)data[at + 3] << 8) | (uint32_t)data[at + 4];
++		x /= 10;
++		y /= 10;
++#else
 +		x = ((uint32_t)data[at + 1] << 4) | (data[at + 3] >> 4);
 +		y = ((uint32_t)data[at + 2] << 4) | (data[at + 3] & 0x0f);
++#endif
 +		if (x >= PANEL_W) {
 +			x = PANEL_W - 1;
 +		}
@@ -9193,12 +9339,13 @@ index 0000000..15e178b
 +	uint8_t buf[8];
 +	unsigned tries = want == NVT_RESET_STATE_INIT ? 10u : 50u;
 +
++	/*
++	 * The page is latched once, outside the loop, the way nvt_check_fw_reset_state() does it in
++	 * the vendor driver. Latching it on every pass was a difference between the two, and the
++	 * baseline runs while this loop polls: page selects are not obviously free on this chip.
++	 */
++	nvt_set_page(NVT_EVENT_BUF_ADDR | NVT_EVENT_MAP_RESET_COMPLETE);
 +	for (unsigned i = 0; i < tries; i++) {
-+		/*
-+		 * The vendor reads six bytes and looks at buf[1], which is the first byte of the
-+		 * shifted stream. nvt_read() does that shifting, so the same byte is buf[0] here.
-+		 */
-+		nvt_set_page(NVT_EVENT_BUF_ADDR | NVT_EVENT_MAP_RESET_COMPLETE);
 +		if (nvt_read(NVT_EVENT_MAP_RESET_COMPLETE, buf, 5)) {
 +			*last = buf[0];
 +			if (raw) {
@@ -9280,11 +9427,29 @@ index 0000000..15e178b
 +	 * nvt_fw_recovery() names as "the firmware is not ready" and this driver kept reporting as a
 +	 * bad report. Five seconds, in ten-millisecond steps, then the caller decides what to say.
 +	 */
-+	for (unsigned round = 0; round < 10; round++) {
-+		if (nvt_check_fw_reset_state(NVT_RESET_STATE_REK_FINISH, state, raw)) {
++	uint8_t seen = 0;
++
++	/*
++	 * Sixty rounds of half a second is thirty seconds. The previous budget was five, which is
++	 * enough for one image and not for another -- so the budget was guessing. Every change of
++	 * state is printed instead: if the baseline is merely slow the log shows a1 then a2 then a3,
++	 * and if it is stuck the log shows one value for thirty seconds and says so.
++	 */
++	for (unsigned round = 0; round < 60; round++) {
++		uint8_t now = 0;
++
++		if (nvt_check_fw_reset_state(NVT_RESET_STATE_REK_FINISH, &now, raw)) {
++			printf("nvt: the baseline finished after %u rounds; state %02x\n", round, now);
++			*state = now;
 +			return NVT_RESET_STATE_NORMAL_RUN;
 +		}
++		if (now != seen) {
++			printf("nvt: the baseline is at %02x (round %u)\n", now, round);
++			seen = now;
++		}
++		*state = now;
 +	}
++	printf("nvt: the baseline never left %02x in thirty seconds\n", seen);
 +	return NVT_RESET_STATE_MAX;
 +}
 +
@@ -9883,11 +10048,50 @@ index 0000000..15e178b
 +				 */
 +			} else {
 +				idle_ok++;
-+				if (raw && reports < 8) {
-+					printf("nvt: report %02x %02x %02x %02x %02x %02x %02x %02x %02x "
-+					    "%02x %02x %02x %02x\n",
-+					    data[0], data[1], data[2], data[3], data[4], data[5], data[6],
-+					    data[7], data[8], data[9], data[10], data[11], data[12]);
++				/*
++				 * Every report, not the first eight. The window was there to keep a busy log
++				 * small, but a run collects a few dozen reports at most, and any fixed head
++				 * count samples exactly the part of a session that nobody is asking about:
++				 * calibration taps arrive after the screen has settled, which is well past
++				 * eight. Decoded and raw together, so one line is enough to place a finger.
++				 */
++				if (raw) {
++					/*
++					 * Every slot, not only the first. The report carries MAX_FINGERS
++					 * six-byte records and nothing in this driver says which one a
++					 * resting finger lands in: the first slot is the one the vendor's
++					 * example reads, but a firmware that pages its report differently
++					 * puts the same finger in another record. Printing all of them
++					 * turns "the coordinates are wrong" into "the coordinates are in
++					 * slot n", which is a question one line of log can answer.
++					 *
++					 * Each record: [0] = (slot << 3) | state, [1] high x, [2] high y,
++					 * [3] low nibbles of both, [4] width, [5] pressure.
++					 */
++					printf("nvt: slots");
++					for (unsigned s = 0; s < MAX_FINGERS; s++) {
++						uint32_t at = FINGER_BYTES * s;
++						uint32_t id = data[at] >> 3;
++						uint32_t st = data[at] & 0x07;
++
++						if (st != 1 && st != 2) {
++							continue;
++						}
++#if NVT_SUPER_10S
++						printf(" %u:%u/%u,%u", id, st,
++						    (((uint32_t)data[at + 1] << 8) | data[at + 2]) / 10u,
++						    (((uint32_t)data[at + 3] << 8) | data[at + 4]) / 10u);
++#else
++						printf(" %u:%u/%u,%u", id, st,
++						    ((uint32_t)data[at + 1] << 4) | (data[at + 3] >> 4),
++						    ((uint32_t)data[at + 2] << 4) | (data[at + 3] & 0x0f));
++#endif
++					}
++					printf(" all");
++					for (unsigned b = 0; b < POINT_DATA_LEN; b++) {
++						printf(" %02x", data[b]);
++					}
++					printf("\n");
 +				}
 +				report(data);
 +			}
@@ -11866,10 +12070,10 @@ index 0000000..12a529c
 +}
 diff --git a/mtk/mt6895/loader/board.h b/mtk/mt6895/loader/board.h
 new file mode 100644
-index 0000000..af6afa9
+index 0000000..2f2a5be
 --- /dev/null
 +++ b/mtk/mt6895/loader/board.h
-@@ -0,0 +1,671 @@
+@@ -0,0 +1,702 @@
 +/*
 + * mtk/mt6895/loader/board.h: what mtkloader has to be told for a phone with this SoC. The loader
 + * is one program for every MediaTek phone (mtk/loader/mtkloader.c); a board is this file, and
@@ -12133,6 +12337,17 @@ index 0000000..af6afa9
 + * framebuffer is the logical resolution, so 1080 pitch of 4320 bytes, rounded up to 64 (the OVL's
 + * alignment) -> 4352. The exact pitch LK uses is settled by what display_find() reads; the
 + * fallback only has to be plausible, and PANEL_W/PANEL_H are 1080x2460 either way.
++ */
++/*
++ * The engine reads its first pixel from 0xfe14f000, not from the start of the carve-out. ovl4 l0
++ * and ovl6 l0 both report 0xfe14f000 with a pitch of 4352, read back from the panel registers by
++ * the kernel's fb_disp probe; the carve-out itself begins one page lower at 0xfe14e000. Handing
++ * the lower address over made the panel show the picture a thousand and twenty-four pixels to the
++ * side, every row starting inside the previous one -- the "shifted right" screen.
++ *
++ * It is fixed here rather than in the kernel because the kernel maps exactly the range named by
++ * base/pitch/height: sliding the base afterwards in the driver writes past the end of that mapping
++ * and drawRows() takes a data abort.
 + */
 +#ifndef LK_FB_BASE
 +#define LK_FB_BASE              0xfe14e000ULL
@@ -12446,10 +12661,30 @@ index 0000000..af6afa9
 + *     al. are the MT6768's values and are not verified here. A watchdog programmed wrong is worse
 + *     than none: it can reset the phone in the middle of Android. (1) and (2) do the job.
 + *
-+ * The watcher runs on core_order[XNU_CORES]. With XNU_CORES 4 and the order below, XNU gets cores
-+ * 0, 4, 5 and 7 (all four A78s, the fast ones) and the watcher gets core 1, an A55 -- no core is
-+ * asked to do both, which the _Static_assert in mtkloader.c enforces for the whole table.
++ * The watcher runs on core_order[XNU_CORES]. With the order below, XNU gets every core but one and
++ * the watcher gets core_order[7], which is 6 -- the last A55. No core is asked to do both, which the
++ * _Static_assert in mtkloader.c enforces for the whole table.
++ *
++ * Seven, not eight: the loader is a freestanding program with no scheduler, and the watcher has to
++ * own a core outright -- one that XNU is also spinning up would either be pulled out from under the
++ * watcher or starve it. Seven also stays inside the kernel's own MAX_CPUS, which pexpert's
++ * board_config.h sets to 8 for this family; the kernel counts the reserve core out of the device
++ * tree's /cpus, so seven is what it will ever see here.
++ *
++ * Seven was tried and is not the answer by itself. Nothing on this board sets a CPU frequency (the
++ * vendor path is cpuhvfs over mt6319 buck rails up the SPMI, none of which is running), so the cores
++ * stay at whatever LK left them -- 999 MHz measured on core 0, against a 2171 MHz part. Adding cores
++ * to a clock that low mostly adds rendezvous to wait on. The frequency is the lever; until it moves
++ * this stays at four, which is the set that is known to boot.
++ *
++ * Raising it is not just a PLL write: the vendor cpuhvfs raises ARMPLL_LL/BL/B (0x1000c000 + 0x20c,
++ * 0x21c, 0x22c -- note 0x20c is the A55, not an A78) *and* the MT6319 buck rails behind them over
++ * SPMI (proc1 = mt6319_7_vbuck3, proc3 = mt6319_6_vbuck1). With no voltage control on this port yet,
++ * a frequency above what LK left would brown the cluster out.
 + */
++#ifndef XNU_CORES
++#define XNU_CORES               4
++#endif
 +#ifndef XNU_RETURN_AFTER
 +#define XNU_RETURN_AFTER        "70"
 +#endif
@@ -13246,10 +13481,10 @@ index 0000000..a74d5c2
 +    main()
 diff --git a/mtk/tools/mknvtfw.py b/mtk/tools/mknvtfw.py
 new file mode 100755
-index 0000000..0e7acf7
+index 0000000..48a825c
 --- /dev/null
 +++ b/mtk/tools/mknvtfw.py
-@@ -0,0 +1,185 @@
+@@ -0,0 +1,204 @@
 +#!/usr/bin/env python3
 +"""Generate the Novatek touch firmware blob that hakios.nvt.c programs into the controller.
 +
@@ -13283,7 +13518,26 @@ index 0000000..0e7acf7
 +DEFAULT_BIN = os.path.join(
 +    os.path.dirname(os.path.abspath(__file__)),
 +    "..", "..", "..", "work-xaga", "dt-device_xiaomi_xaga-TWRP",
-+    "recovery", "root", "vendor", "firmware", "novatek_ts_fw.bin")
++    "recovery", "root", "vendor", "firmware",
++    "novatek_nt36672e_l16_fw02.bin")
++# Which image, and why this one: novatek_nt36672e_l16_fw02.bin.
++#
++# Three earlier guesses were wrong and the boot log settled it. On a normal Android boot,
++# nvt_ts_resume calls nvt_update_firmware, which reaches nvt_match_fw / nvt_get_panel_type and
++# prints
++#
++#   [21.254] nvt_get_panel_type 1240: match panle type, fw is [novatek_nt36672e_l16_fw02.bin]
++#   [21.254] update_firmware_request 321: filename is novatek_nt36672e_l16_fw02.bin
++#   [21.339] nvt_update_firmware 1180: Update firmware success! <83891 us>
++#   [21.339] nvt_get_fw_info 754: FW type is 0x01, fw_ver=22
++#
++# So Android does download an image -- fw_ver=22 is the version of the file it just wrote, not a
++# factory image living in the chip. fw01 (what cfg_0 in the device tree names for a Tianma panel)
++# boots its identity but never leaves reset state a1: no baseline, no interrupt edges. fw02 runs,
++# and the panel is the CSOT one: the lockdown info this board reports starts 0x53 0x42, which is
++# cfg_1's tp-vendor 0x53 and display-maker 0x42. fw02 also carries 17 partitions (ovly_sec_num 2)
++# against novatek_ts_fw.bin's 15, so the coordinate tables differ between the two -- which is why
++# a matching FWINFO identity never guaranteed the axis scale.
 +# The header lives with the other kernel files, not with the SoC: drivers/map is what tells
 +# xnu/apply.sh and xnu/sync-drivers.sh where a .h goes, and a drivers/*/conf can only name .c
 +# files. drivers/input/hakios.focaltech_fw.h set that precedent for a firmware blob.
@@ -14388,7 +14642,7 @@ index 6801ce2..71f56d8 100644
  	/* daemons that do not run as root get the console as their standard error too */
  	chmod("/dev/console", 0666);
 diff --git a/userland/src/inject.c b/userland/src/inject.c
-index 1a125f2..0aff24e 100644
+index 1a125f2..5f6249c 100644
 --- a/userland/src/inject.c
 +++ b/userland/src/inject.c
 @@ -925,9 +925,30 @@ input_thread(__unused void *arg)
@@ -14423,6 +14677,21 @@ index 1a125f2..0aff24e 100644
  		if (client == NULL) {
  			say("hakios: input: no HID client of type %d\n", types[i]);
  			continue;
+@@ -950,7 +971,13 @@ input_thread(__unused void *arg)
+ 	while (read(device, &t, sizeof(t)) == (ssize_t)sizeof(t)) {
+ 		uint64_t read_at = mach_absolute_time();
+ 
+-		if (count++ < 4) {
++		if (count++ < 64) {
++			/*
++			 * The first sixty-four samples rather than the first four: four was chosen when the
++			 * only question was whether anything arrived at all, and it answers that within the
++			 * first touch. Placing a finger on the screen needs the samples from after the
++			 * desktop is up, which are well past four, and a session produces a few dozen.
++			 */
+ 			say("hakios: input: sample type %u finger %u at %u %u\n", t.type, t.finger, t.x, t.y);
+ 		}
+ 		if (t.type > HAKIOS_TOUCH_UP) {
 diff --git a/xnu/files/bsd/sys/hakios.input.h b/xnu/files/bsd/sys/hakios.input.h
 index e1791a0..3e853fe 100644
 --- a/xnu/files/bsd/sys/hakios.input.h
@@ -14439,18 +14708,31 @@ index e1791a0..3e853fe 100644
  bool hakios_mali_ready(void);          /* ... and up: its jobs can be sent */
  void hakios_mtk_scp_init(void);        /* boot-arg scp_step=N: the MT6768's SCP (the sensor hub), steps 1 to N */
 diff --git a/xnu/files/iokit/Kernel/MiniIOMobileFramebuffer.cpp b/xnu/files/iokit/Kernel/MiniIOMobileFramebuffer.cpp
-index 5767e5c..1ea71c9 100644
+index 5767e5c..a8a4f8f 100644
 --- a/xnu/files/iokit/Kernel/MiniIOMobileFramebuffer.cpp
 +++ b/xnu/files/iokit/Kernel/MiniIOMobileFramebuffer.cpp
-@@ -340,6 +340,7 @@ public:
+@@ -332,6 +332,10 @@ class IOMobileFramebuffer : public IOService
+ public:
+ 	IOLock *        fLock;
+ 	uint8_t *       fBase;                  /* the boot framebuffer: the panel */
++	/* where the display engine says it is scanning, and with what row length; read back in
++	 * start() and preferred over the loader's constants -- see the note there */
++	uint32_t        fScannedBase;
++	uint32_t        fScannedPitch;
+ 	/* boot-arg fb_flip=1: two of the boot framebuffer's pictures, drawn in turn, the panel's
+ 	 * scanout (OVL0 layer 0) pointed at the finished one -- see flipStart() */
+ 	bool            fFlip;
+@@ -340,6 +344,9 @@ public:
  	uint32_t        fFlipPA[2];             /* each, the address OVL0 is given */
  	volatile uint32_t * fOvl;
  	void flipStart(void);
 +	void dispDump(void);
++	/* point the block that is scanning out at a different picture: one plane-address write */
++	bool ovlPointAt(uint64_t target);
  	uint32_t        fPanelWidth, fPanelHeight, fRowBytes;
  	uint32_t        fFillWidth, fCropX;         /* fbfit=2: the picture's width on the panel, and how much of it is cut off at each side */
  	uint32_t        fWidth, fHeight;        /* the display as user space sees it */
-@@ -520,6 +521,105 @@ extern "C" vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
+@@ -520,6 +527,216 @@ extern "C" vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
  extern "C" vm_offset_t ml_io_map_wcomb(vm_offset_t phys_addr, vm_size_t size);
  static TUNABLE(uint32_t, gFlipOn, "fb_flip", 0);
  
@@ -14465,6 +14747,17 @@ index 5767e5c..1ea71c9 100644
 + */
 +#define DISP_OVL0_BASE          0x14002000ULL
 +#define DISP_DSI0_BASE          0x14017000ULL
++/* the display's carve-out, from iomem: 0xfe14e000-0xffffefff, 30.7 MiB */
++#define DISP_CARVE_LO           0xfe14e000u
++#define DISP_CARVE_HI           0xfffff000u
++/*
++ * What the loader puts into boot_args video.v_baseAddr: the bottom of the display carve-out, as
++ * board.h's LK_FB_BASE names it. The engine scans one page above this (ovl4 l0 reads 0xfe14f000 at
++ * pitch 4352), and that page of difference shifts every line by a thousand and twenty-four pixels.
++ * Rather than drag the kernel's writes up to the engine, the engine is brought down to the writes
++ * -- see ovlPointAt() and the note in start(). Kept here so a drifting loader shows up in the log.
++ */
++#define DISP_LOADER_FB_PHYS     0xfe14e000u
 +
 +/*
 + * OVL0 came back with layer 0 unconfigured -- size, offset, pitch and address all zero -- yet its
@@ -14484,6 +14777,12 @@ index 5767e5c..1ea71c9 100644
 +	{ "ovl6", 0x14404000ULL },
 +};
 +static TUNABLE(uint32_t, gDispDump, "fb_disp", 0);
++/*
++ * Boot-arg fb_move=1: where the display engine reads the picture from is moved to where the kernel
++ * writes it, instead of the other way round. Only engages when the probe actually found a mismatch,
++ * so an image whose addresses already agree is left alone.
++ */
++static TUNABLE(uint32_t, gScanMove, "fb_move", 1);
 +
 +void
 +IOMobileFramebuffer::dispDump(void)
@@ -14553,10 +14852,226 @@ index 5767e5c..1ea71c9 100644
 +	    fPanelWidth, fPanelHeight, fRowBytes, fWidth, fHeight, fCropX, fFillWidth);
 +}
 +
++/*
++ * Write the plane address of whichever OVL layer is scanning a panel-sized picture, so that the
++ * engine reads from `target` instead of wherever it was pointed. The block chosen is the same one
++ * the probe in start() looks for: src_con names the live layers, and the layer has to describe
++ * exactly this panel. Only the address register is touched -- con, size, offset and pitch are left
++ * as they are -- so the geometry the engine reports on the next fb_disp stays comparable.
++ */
++bool
++IOMobileFramebuffer::ovlPointAt(uint64_t target)
++{
++	const uint32_t geometry = 0x99c021c;      /* 2460 rows over 1080 columns, as OVL4 reads */
++	uint32_t lowest = 0;
++	int64_t delta;
++
++	/*
++	 * Find the plane that starts earliest; that is the picture's own base.
++	 *
++	 * The panel is described with two DSC slices (panel-l16-42-02-0a: DSC_SLICE_WIDTH 540, half of
++	 * 1080), and ovl6 l0 sits 0x870 bytes -- two thousand one hundred and sixty, five hundred and
++	 * forty pixels at four bytes each, one slice exactly -- above ovl4 l0. That distance is the
++	 * slice routing the engine was configured with, and it has to survive: two live planes reading
++	 * the same address is what put the frame out in bands, and moving only one of them is what
++	 * left the left half of the picture right and the right half wrong.
++	 */
++	for (size_t i = 0; i < sizeof(gOvlBlocks) / sizeof(gOvlBlocks[0]); i++) {
++		vm_offset_t window = ml_io_map((vm_offset_t) gOvlBlocks[i].base, PAGE_SIZE);
++		uint32_t src;
++
++		if (window == 0) {
++			continue;
++		}
++		src = ((volatile uint32_t *) window)[0x02c / 4];
++		for (unsigned layer = 0; layer < 4; layer++) {
++			uint32_t at = 0x030 + 0x20 * layer, addr;
++
++			if ((src & (1u << layer)) == 0) {
++				continue;
++			}
++			if (((volatile uint32_t *) window)[(at + 0x08) / 4] != geometry) {
++				continue;
++			}
++			addr = ((volatile uint32_t *) window)[(0x0f40 + 0x20 * layer) / 4];
++			if (addr < DISP_CARVE_LO || addr >= DISP_CARVE_HI) {
++				continue;
++			}
++			if (lowest == 0 || addr < lowest) {
++				lowest = addr;
++			}
++		}
++	}
++	if (lowest == 0) {
++		return false;
++	}
++	delta = (int64_t) (uint32_t) target - (int64_t) lowest;
++	if (delta == 0) {
++		return false;
++	}
++	/*
++	 * Slide every plane by the same amount, so the slice spacing inside the picture is unchanged
++	 * and only the picture's own origin moves.
++	 */
++	for (size_t i = 0; i < sizeof(gOvlBlocks) / sizeof(gOvlBlocks[0]); i++) {
++		vm_offset_t window = ml_io_map((vm_offset_t) gOvlBlocks[i].base, PAGE_SIZE);
++		uint32_t src;
++
++		if (window == 0) {
++			continue;
++		}
++		src = ((volatile uint32_t *) window)[0x02c / 4];
++		for (unsigned layer = 0; layer < 4; layer++) {
++			uint32_t at = 0x030 + 0x20 * layer, addr, moved_to;
++
++			if ((src & (1u << layer)) == 0) {
++				continue;
++			}
++			if (((volatile uint32_t *) window)[(at + 0x08) / 4] != geometry) {
++				continue;
++			}
++			addr = ((volatile uint32_t *) window)[(0x0f40 + 0x20 * layer) / 4];
++			if (addr < DISP_CARVE_LO || addr >= DISP_CARVE_HI) {
++				continue;
++			}
++			moved_to = (uint32_t) ((int64_t) addr + delta);
++			if (moved_to < DISP_CARVE_LO || moved_to >= DISP_CARVE_HI) {
++				continue;
++			}
++			((volatile uint32_t *) window)[(0x0f40 + 0x20 * layer) / 4] = moved_to;
++			IOLog("MiniIOMobileFramebuffer: %s l%u pointed at %#x, was %#x\n",
++			    gOvlBlocks[i].name, layer, moved_to, addr);
++		}
++	}
++	return true;
++}
++
  void
  IOMobileFramebuffer::flipStart(void)
  {
-@@ -658,6 +758,7 @@ IOMobileFramebuffer::start(IOService * provider)
+@@ -588,10 +805,120 @@ IOMobileFramebuffer::start(IOService * provider)
+ 		thread_set_thread_name(thread, "frames to the panel: a helper");
+ 		thread_deallocate(thread);
+ 	}
++	/*
++	 * Where the picture actually starts, asked of the engine rather than assumed.
++	 *
++	 * The boot framebuffer's address comes from the loader, which copies LK_FB_BASE out of the
++	 * board file -- and that constant was taken from the iomem carve-out for the display
++	 * (0xfe14e000-0xffffefff), which is the start of the region, not necessarily the start of the
++	 * first picture in it. The dump says otherwise: the block that is really scanning out (OVL4,
++	 * laid out exactly as the panel, 1080 x 2460 at pitch 0x1100) reads 0xfe14f000. A thousand
++	 * bytes of difference between where the engine reads and where the kernel writes would shift
++	 * every line by a quarter of it, and the shift is horizontal and constant, which is what a
++	 * wrong base address looks like and what nothing in the compositor explains.
++	 *
++	 * So the engine is the authority: if the live block's layer covers this panel and its address
++	 * lands inside the display carve-out, that is the picture, and the picture geometry comes from
++	 * the same layer rather than from the loader. Nothing is written here; a wrong answer just
++	 * leaves the loader's values in place.
++	 */
++	{
++		uint64_t scanned = 0;
++		uint32_t scanned_pitch = 0;
++		const uint32_t geometry = 0x99c021c;      /* 2460 rows over 1080 columns, as OVL4 reads */
++
++		for (size_t i = 0; i < sizeof(gOvlBlocks) / sizeof(gOvlBlocks[0]); i++) {
++			vm_offset_t window = ml_io_map((vm_offset_t) gOvlBlocks[i].base, PAGE_SIZE);
++			uint32_t src;
++			unsigned layer;
++
++			if (window == 0) {
++				continue;
++			}
++			src = ((volatile uint32_t *) window)[0x02c / 4];
++			for (layer = 0; layer < 4; layer++) {
++				uint32_t at = 0x030 + 0x20 * layer;
++				uint32_t size, addr;
++
++				if ((src & (1u << layer)) == 0) {
++					continue;
++				}
++				size = ((volatile uint32_t *) window)[(at + 0x08) / 4];
++				if (size != geometry) {
++					continue;
++				}
++				addr = ((volatile uint32_t *) window)[(0x0f40 + 0x20 * layer) / 4];
++				if (addr < DISP_CARVE_LO || addr >= DISP_CARVE_HI) {
++					continue;
++				}
++				scanned = addr;
++				scanned_pitch = ((volatile uint32_t *) window)[(at + 0x14) / 4] & 0xffffu;
++				IOLog("MiniIOMobileFramebuffer: %s l%u scans %#llx pitch %u; the loader said %#llx "
++				    "pitch %u\n", gOvlBlocks[i].name, layer, (unsigned long long) scanned,
++				    scanned_pitch, (unsigned long long) vinfo.v_baseaddr, vinfo.v_rowbytes);
++			}
++		}
++		if (scanned != 0 && scanned_pitch >= vinfo.v_width * 4) {
++			/*
++			 * The lowest address wins: two live layers point at two pictures a few thousand
++			 * bytes apart, and the one that starts first is the picture's base -- the other is
++			 * an offset into it. Keeping the last one found would report a shift that belongs
++			 * to the second layer.
++			 */
++			if (fScannedBase == 0 || (uint32_t) scanned < fScannedBase) {
++				fScannedBase = (uint32_t) scanned;
++				fScannedPitch = scanned_pitch;
++			}
++		}
++	}
++	if (fScannedBase == 0) {
++		/*
++		 * Nothing was found, so the engine scans where the loader said: no shift to make up.
++		 */
++		fScannedBase = DISP_LOADER_FB_PHYS;
++	}
++	if (fScannedPitch == 0) {
++		fScannedPitch = vinfo.v_rowbytes;
++	}
++	/*
++	 * fBase stays the virtual address the loader handed over, and the engine is moved to it
++	 * instead: the address it scans out is one page higher than the loader's, which shifts every
++	 * line by a thousand and twenty-four pixels, and both ways of closing that gap from the
++	 * kernel side have now been tried and both fail. Sliding fBase forward writes past the end of
++	 * a mapping that is sized for exactly base * pitch * height (video_console.c: round_page of
++	 * the height times the row bytes, no slack) and drawRows() takes a data abort; moving the
++	 * loader's own base up a page keeps the writes inside the region but the panel then dies of an
++	 * SError, the bus refusing the frame the engine is reading while it is overwritten.
++	 *
++	 * Pointing the engine's plane address down to the loader's base avoids both: nothing about the
++	 * kernel's mapping changes, and the one register that decides where the picture is read from
++	 * moves the read window onto the rows that are actually written. It is a single write to a
++	 * block that is already running, so it can be taken back by the same path, and fb_disp's dump
++	 * on the next swap says whether it took.
++	 */
+ 	fBase = (uint8_t *) vinfo.v_baseaddr;
++	if (gScanMove != 0 && fScannedBase != 0 && fScannedBase != DISP_LOADER_FB_PHYS) {
++		uint64_t target = (uint64_t) (uint32_t) DISP_LOADER_FB_PHYS;
++
++		if (ovlPointAt(target)) {
++			IOLog("MiniIOMobileFramebuffer: the engine scanned %#x, which is a page above the "
++			    "loader's %#x; the plane address has been moved down onto it\n",
++			    fScannedBase, DISP_LOADER_FB_PHYS);
++			fScannedBase = (uint32_t) DISP_LOADER_FB_PHYS;
++		} else {
++			IOLog("MiniIOMobileFramebuffer: the engine scans %#x and could not be moved to "
++			    "%#x; the picture will be shifted by %d bytes a row\n", fScannedBase,
++			    DISP_LOADER_FB_PHYS,
++			    (int) ((int32_t) fScannedBase - (int32_t) DISP_LOADER_FB_PHYS));
++		}
++	} else if (fScannedBase != DISP_LOADER_FB_PHYS) {
++		IOLog("MiniIOMobileFramebuffer: the engine scans %#x and the loader handed over %#x: "
++		    "the picture will be shifted by %d bytes a row\n", fScannedBase, DISP_LOADER_FB_PHYS,
++		    (int) ((int32_t) fScannedBase - (int32_t) DISP_LOADER_FB_PHYS));
++	}
+ 	fPanelWidth = vinfo.v_width;
+ 	fPanelHeight = vinfo.v_height;
+-	fRowBytes = vinfo.v_rowbytes;
++	fRowBytes = fScannedPitch != 0 ? fScannedPitch : vinfo.v_rowbytes;
+ 	fWidth = gFBWidth ? gFBWidth : fPanelWidth;
+ 	fHeight = gFBHeight ? gFBHeight : fPanelHeight;
+ 	/*
+@@ -658,6 +985,7 @@ IOMobileFramebuffer::start(IOService * provider)
  		    fWidth - 2 * fCropX, fWidth, (vinfo.v_height - fHeight) / 2);
  	}
  	flipStart();
@@ -14564,7 +15079,7 @@ index 5767e5c..1ea71c9 100644
  	fColumn = IONewZero(uint32_t, fPanelWidth);
  	fColumnWeight = IONewZero(uint16_t, fPanelWidth);
  	fDiff = gDiff != 0;
-@@ -1436,6 +1537,17 @@ IOMobileFramebuffer::show(const uint8_t * swap, MiniIOSurface ** surfaces)
+@@ -1436,6 +1764,17 @@ IOMobileFramebuffer::show(const uint8_t * swap, MiniIOSurface ** surfaces)
  		    swapWord(swap, SWAP_ID), fSwapsShown, swapWord(swap, SWAP_SURFACE(0)), swapWord(swap, SWAP_SURFACE(1)),
  		    swapWord(swap, SWAP_SURFACE(2)), swapWord(swap, SWAP_SURFACE(3)), set, swapWord(swap, SWAP_LAYERS_CLEARED));
  	}

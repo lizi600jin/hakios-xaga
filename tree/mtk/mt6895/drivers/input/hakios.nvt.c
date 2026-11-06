@@ -199,7 +199,11 @@ spi_xfer(const uint8_t *tx, uint8_t *rx, uint32_t len)
 #define NVT_READ_MASK   0x7f
 #define NVT_WRITE_MASK  0x80
 
-#define XFER_MAX        80              /* the widest transfer here is the 65-byte report */
+/*
+ * The widest transfer here is one report: 108 bytes plus the address byte and its dummy, so
+ * 110 on the bus. It was 80 when the report was believed to be 65 bytes long.
+ */
+#define XFER_MAX        128
 
 static bool
 nvt_set_page(uint32_t address)
@@ -264,9 +268,45 @@ nvt_read(uint32_t address, uint8_t *data, uint32_t len)
 
 /* ---- what a report holds ---- */
 
-#define POINT_DATA_LEN  65              /* the whole report, its last byte the checksum */
+/*
+ * How long one report is depends on the resolution mode the panel is wired for, and the two
+ * lengths are not interchangeable.
+ *
+ * The vendor driver carries both: nt36xxx.h:110 sets NVT_SUPER_RESOLUTION_10S to 10, and on the
+ * line after it POINT_DATA_LEN becomes 108 instead of 65. In the ten-times mode each finger is
+ * still six bytes, but x and y are sixteen bits wide and the pressure array moves to byte 98.
+ * This phone's panel is ten-times: Android registers ABS_MT_POSITION_X with a maximum of 10799,
+ * which is 1080 * 10 - 1, and the device tree asks for super-resolution-factor = <10>.
+ *
+ * Reading 65 bytes out of a 108-byte report is what made the vertical axis look unsolvable: the
+ * upper bits of y were never on the wire as far as this driver was concerned, so no amount of
+ * fitting could find them. Four corners pressed on the real panel and compared against Android
+ * left a least-squares slope of -9.15 that no flip or scale could explain.
+ */
+/*
+ * The read length and the decoding are separate questions and are answered separately here.
+ *
+ * The length is not in doubt: the vendor driver that is actually compiled on this phone
+ * (drivers/input/touchscreen/NVT36672C, selected by Makefile:122 through
+ * CONFIG_TOUCHSCREEN_NVT36672C_HOSTDL_SPI) sets NVT_SUPER_RESOLUTION_10S to 10 at nt36xxx.h:110,
+ * and the line under it makes POINT_DATA_LEN 108. So it asks the chip for 109 bytes on every
+ * interrupt, on every panel, whatever mode the coordinates then turn out to be in. This driver
+ * has been asking for sixty-six and reading the first sixty-five.
+ *
+ * Those extra bytes turned out to hold nothing this driver needs: bytes 65..107 were byte for
+ * byte identical across forty reports. What settled the decode was the image, not the length.
+ * With fw02 -- the file the device downloads on its own, which nvt_match_fw picks from the
+ * lockdown bytes -- the ten-times branch is the right one: five presses gave x 112, 969, 101,
+ * 999, 574 and y 2346, 2347, 110, 156, 1367 for physical (91,2363) (1003,2383) (91,157)
+ * (997,116) (573,1290), all within a fingertip. With novatek_ts_fw.bin the same branch gave
+ * 1568 pixels of x, which is why it was once rejected; that image simply reports differently.
+ */
+#define NVT_SUPER_10S   1               /* the chip reports tenths of a pixel, as Android sees it */
+#define POINT_DATA_LEN  108             /* what the vendor driver asks for, in every mode */
+#define POINT_DATA_CHECKSUM_LEN 65      /* the checksum still covers only the first sixty-five */
 #define FINGER_BYTES    6
 #define MAX_FINGERS     10
+#define FINGER_PRESSURE 98              /* the ten-times mode keeps pressures at 98 + i */
 
 /*
  * How often the line is sampled while waiting for a report, and for how long.
@@ -310,10 +350,17 @@ report_ok(const uint8_t *data)
 {
 	uint8_t sum = 0;
 
-	for (unsigned i = 0; i < POINT_DATA_LEN - 1; i++) {
+	/*
+	 * The checksum keeps its old extent in the ten-times mode: it sums the first sixty-four
+	 * report bytes and sits in byte sixty-four, while the report itself is a hundred and eight
+	 * bytes long. The vendor says the same thing twice -- POINT_DATA_CHECKSUM_LEN is 65 on both
+	 * sides of the #if that changes POINT_DATA_LEN -- and nvt_ts_point_data_checksum() sums
+	 * length - 1 bytes and compares against byte `length`.
+	 */
+	for (unsigned i = 0; i < POINT_DATA_CHECKSUM_LEN - 1; i++) {
 		sum = (uint8_t)(sum + data[i]);
 	}
-	return (uint8_t)(~sum + 1) == data[POINT_DATA_LEN - 1];
+	return (uint8_t)(~sum + 1) == data[POINT_DATA_CHECKSUM_LEN - 1];
 }
 
 static uint32_t fit;                    /* boot-arg fbfit: how the picture sits on the panel */
@@ -322,6 +369,12 @@ static uint32_t fit;                    /* boot-arg fbfit: how the picture sits 
 #define PICTURE_H_ON_W  (PANEL_W * PICTURE_H / PICTURE_W)
 #define PICTURE_TOP     ((PANEL_H - PICTURE_H_ON_W) / 2)
 
+/*
+ * No mirror. The earlier one was an artefact of the wrong image: with novatek_ts_fw.bin the chip
+ * reported a compressed four-bit x, and 1080 - x happened to fit four corners. With fw02, the
+ * image Android itself loads, the plain reading already runs the right way -- five presses gave
+ * x 112, 969, 101, 999, 574 for physical 91, 1003, 91, 997, 573.
+ */
 static uint32_t
 picture_x(uint32_t x)
 {
@@ -331,6 +384,11 @@ picture_x(uint32_t x)
 	return x * 65535 / (PANEL_W - 1);
 }
 
+/*
+ * The vertical axis reads straight through once the reports are decoded as tenths of a pixel:
+ * fw02 gave y 2346, 2347, 110, 156, 1367 for physical 2363, 2383, 157, 116, 1290. The compressed
+ * span that a flip could not explain was the four-bit decode, not the chip.
+ */
 static uint32_t
 picture_y(uint32_t y)
 {
@@ -373,8 +431,20 @@ report(const uint8_t *data)
 		if (what != 1 && what != 2) {
 			continue;               /* lifted, or a gloved touch: nothing this queue has a word for */
 		}
+#if NVT_SUPER_10S
+		/*
+		 * Ten-times mode: x and y are sixteen bits each and are already expressed in tenths
+		 * of a pixel, exactly as nvt_ts_work_func() reads them
+		 * (nt36xxx.c:1614-1616, point_data[position+1..4]).
+		 */
+		x = ((uint32_t)data[at + 1] << 8) | (uint32_t)data[at + 2];
+		y = ((uint32_t)data[at + 3] << 8) | (uint32_t)data[at + 4];
+		x /= 10;
+		y /= 10;
+#else
 		x = ((uint32_t)data[at + 1] << 4) | (data[at + 3] >> 4);
 		y = ((uint32_t)data[at + 2] << 4) | (data[at + 3] & 0x0f);
+#endif
 		if (x >= PANEL_W) {
 			x = PANEL_W - 1;
 		}
@@ -657,12 +727,13 @@ nvt_check_fw_reset_state(uint8_t want, uint8_t *last, uint8_t *raw)
 	uint8_t buf[8];
 	unsigned tries = want == NVT_RESET_STATE_INIT ? 10u : 50u;
 
+	/*
+	 * The page is latched once, outside the loop, the way nvt_check_fw_reset_state() does it in
+	 * the vendor driver. Latching it on every pass was a difference between the two, and the
+	 * baseline runs while this loop polls: page selects are not obviously free on this chip.
+	 */
+	nvt_set_page(NVT_EVENT_BUF_ADDR | NVT_EVENT_MAP_RESET_COMPLETE);
 	for (unsigned i = 0; i < tries; i++) {
-		/*
-		 * The vendor reads six bytes and looks at buf[1], which is the first byte of the
-		 * shifted stream. nvt_read() does that shifting, so the same byte is buf[0] here.
-		 */
-		nvt_set_page(NVT_EVENT_BUF_ADDR | NVT_EVENT_MAP_RESET_COMPLETE);
 		if (nvt_read(NVT_EVENT_MAP_RESET_COMPLETE, buf, 5)) {
 			*last = buf[0];
 			if (raw) {
@@ -744,11 +815,29 @@ find_fw_state(uint8_t *state, uint8_t *raw)
 	 * nvt_fw_recovery() names as "the firmware is not ready" and this driver kept reporting as a
 	 * bad report. Five seconds, in ten-millisecond steps, then the caller decides what to say.
 	 */
-	for (unsigned round = 0; round < 10; round++) {
-		if (nvt_check_fw_reset_state(NVT_RESET_STATE_REK_FINISH, state, raw)) {
+	uint8_t seen = 0;
+
+	/*
+	 * Sixty rounds of half a second is thirty seconds. The previous budget was five, which is
+	 * enough for one image and not for another -- so the budget was guessing. Every change of
+	 * state is printed instead: if the baseline is merely slow the log shows a1 then a2 then a3,
+	 * and if it is stuck the log shows one value for thirty seconds and says so.
+	 */
+	for (unsigned round = 0; round < 60; round++) {
+		uint8_t now = 0;
+
+		if (nvt_check_fw_reset_state(NVT_RESET_STATE_REK_FINISH, &now, raw)) {
+			printf("nvt: the baseline finished after %u rounds; state %02x\n", round, now);
+			*state = now;
 			return NVT_RESET_STATE_NORMAL_RUN;
 		}
+		if (now != seen) {
+			printf("nvt: the baseline is at %02x (round %u)\n", now, round);
+			seen = now;
+		}
+		*state = now;
 	}
+	printf("nvt: the baseline never left %02x in thirty seconds\n", seen);
 	return NVT_RESET_STATE_MAX;
 }
 
@@ -1347,11 +1436,50 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 				 */
 			} else {
 				idle_ok++;
-				if (raw && reports < 8) {
-					printf("nvt: report %02x %02x %02x %02x %02x %02x %02x %02x %02x "
-					    "%02x %02x %02x %02x\n",
-					    data[0], data[1], data[2], data[3], data[4], data[5], data[6],
-					    data[7], data[8], data[9], data[10], data[11], data[12]);
+				/*
+				 * Every report, not the first eight. The window was there to keep a busy log
+				 * small, but a run collects a few dozen reports at most, and any fixed head
+				 * count samples exactly the part of a session that nobody is asking about:
+				 * calibration taps arrive after the screen has settled, which is well past
+				 * eight. Decoded and raw together, so one line is enough to place a finger.
+				 */
+				if (raw) {
+					/*
+					 * Every slot, not only the first. The report carries MAX_FINGERS
+					 * six-byte records and nothing in this driver says which one a
+					 * resting finger lands in: the first slot is the one the vendor's
+					 * example reads, but a firmware that pages its report differently
+					 * puts the same finger in another record. Printing all of them
+					 * turns "the coordinates are wrong" into "the coordinates are in
+					 * slot n", which is a question one line of log can answer.
+					 *
+					 * Each record: [0] = (slot << 3) | state, [1] high x, [2] high y,
+					 * [3] low nibbles of both, [4] width, [5] pressure.
+					 */
+					printf("nvt: slots");
+					for (unsigned s = 0; s < MAX_FINGERS; s++) {
+						uint32_t at = FINGER_BYTES * s;
+						uint32_t id = data[at] >> 3;
+						uint32_t st = data[at] & 0x07;
+
+						if (st != 1 && st != 2) {
+							continue;
+						}
+#if NVT_SUPER_10S
+						printf(" %u:%u/%u,%u", id, st,
+						    (((uint32_t)data[at + 1] << 8) | data[at + 2]) / 10u,
+						    (((uint32_t)data[at + 3] << 8) | data[at + 4]) / 10u);
+#else
+						printf(" %u:%u/%u,%u", id, st,
+						    ((uint32_t)data[at + 1] << 4) | (data[at + 3] >> 4),
+						    ((uint32_t)data[at + 2] << 4) | (data[at + 3] & 0x0f));
+#endif
+					}
+					printf(" all");
+					for (unsigned b = 0; b < POINT_DATA_LEN; b++) {
+						printf(" %02x", data[b]);
+					}
+					printf("\n");
 				}
 				report(data);
 			}

@@ -38,15 +38,15 @@
 | 引导链 | ✅ | LK → `boot_a` 里的 mtkloader → XNU。不经 UEFI |
 | 自编译 XNU | ✅ | `Darwin Kernel Version 22.5.0`，`4 of 4 processors are running` |
 | UFS 读盘 | ✅ | HS-G4 双通道，2.32 GiB 的 `system.apfs` 读进内存 |
-| 分屏与显示 | ✅ | 1080×2460 全屏可写，60 fps |
+| 分屏与显示 | ✅ | 1080×2460 全屏可写，60 fps；画面右移已修 |
 | iOS 用户态 | ✅ | SpringBoard 起来了，状态栏、小组件、Dock 全部渲染 |
-| 触控（Novatek NT36672E） | ✅ | 单点/多点都报，backboardd 已 `create touch stream` |
+| 触控（Novatek NT36672E） | ✅ | 单点/多点、长按、点击图标都对得上，落点误差 < 100 px |
 | 按键（keypad + MT6363） | 🚧 | keypad 恒读 `ffff`；MT6363 走 SPMI 的读通路已写，待真机确认寄存器 |
 | USB（MTU3） | 🚧 | 控制器配置已与 Android 工作态逐位对齐，PHY 侧 D+ 仍不上拉 |
 | GPU（Mali-G610） | ⬜ | 走软件渲染，3~14 fps；驱动本身 1.5 ms/帧，瓶颈在 CPU 光栅化 |
 | Wi-Fi / 基带 / 音频 / 相机 | ⬜ | 未开始 |
 
-画面整体右移一个固定偏移，已定位到 OVL 层，见[画面右移](#画面右移)。
+画面右移已修（引擎 plane 地址对齐 kernel 写入地址），见[画面右移](#画面右移)。
 
 ---
 
@@ -238,19 +238,46 @@ check(synthetic_dir("/System/Library/Caches=/System/Cryptexes/OS/System/Library/
 6. `nvt_read()` 不设 page（厂商依赖 probe 时锁存），每个 CRC 读之前必须显式 `nvt_set_page()`。
 7. 指纹偏移是 `FINGER_BYTES * i`，不是 `1 + 6*i`。
 
+8. **固件要选 Android 自己加载的那一份，不是身份对得上的那一份**。这条最贵：`novatek_nt36672e_l16_fw01.bin` 的 FWINFO 是 `xnum 16 ynum 36 xmax 1080 ymax 2460`，跟 Android 报的一字不差，看着完美；灌进去基线卡 `a1` 三十秒不动，一个报告都不出。`novatek_ts_fw.bin` 的 FWINFO 是 `xnum 18 ymax 2400`，看着"错"，却能跑——我曾拿它当正确答案，就是它让 y 轴被压成 243 个码值。真相在开机 dmesg 里：
+
+```
+nvt_match_fw 1260: start match fw name
+nvt_get_panel_type 1240: match panle type, fw is [novatek_nt36672e_l16_fw02.bin]
+update_firmware_request 321: filename is novatek_nt36672e_l16_fw02.bin
+nvt_bin_header_parser 182: ovly_info = 1, ilm_dlm_num = 2, ovly_sec_num = 2, info_sec_num = 13, partition = 17
+nvt_update_firmware 1180: Update firmware success! <83891 us>
+nvt_get_fw_info 754: FW type is 0x01, fw_ver=22
+```
+
+`nvt_match_fw` 按 lockdown 字节 `0x53 0x42`（CSOT 面板）选了 cfg_1 → **fw02**。也就是说 `fw_ver=22` 不是芯片出厂固件，而是刚写进去的 fw02 报的版本 —— "12 个 bin 里没有 22 号版本"曾被我当成"Android 没灌固件"的证据，其实是版本号藏在固件内部的 info 区，跟 `nvt_get_fw_need_write_size` 取的那个字节不是一回事。
+
+9. **换对固件后，报点格式也变了：4bit 压缩 → 10× 十分之一像素**。旧固件下 `x=(b1<<4)|(b3>>4)`、`y=(b2<<4)|(b3&0xf)`，y 只有 8+4 位所以跨度只剩 243；fw02 下是 `x=(b1<<8)|b2 / 10`、`y=(b3<<8)|b4 / 10`，直接满量程。我曾用 10× 分支解出 x=1568（>1080）而否掉它 —— 那是旧固件下的数值，换了固件就对了。**x 也不需要镜像**：`1080−x` 同样是旧固件的假象。
+
 还有两个框架级的：XNU 的 `delay(int usec)` 收**微秒**，按毫秒写会短 1000 倍；logbook 是**环形缓冲**，判读前必须先按 header 的 `len` 截断，否则会把上一次启动的残留当成这一次的证据（我因此误判过两次）。
 
 打通后的日志：
 
 ```
 nvt: the image was accepted on attempt 1; the reset state reads a0
-nvt: crc flags 04 (done 1 ilm 0 dlm 0); ilm 8fbec5a6 vs 8fbec5a6 same; dlm 1c1345a0 vs 1c1345a0 same
-nvt: fw info ver c9 (~36) xnum 18 ynum 36 xmax 1080 ymax 2400 buttons 0; consistent
-nvt: report 0a 10 2d 23 12 01 ff ff ff ff ff ff ff
-nvt: 101 reports, 48 positions, 93 edges on the line, 19 bad; line idle
+nvt: crc flags 04 (done 1 ilm 0 dlm 0); ilm e970fade vs e970fade same; dlm c55414aa vs c55414aa same
+nvt: fw info ver 22 (~dd) xnum 16 ynum 36 xmax 1080 ymax 2460 buttons 0; consistent
+nvt: slots 1:2/103,2280 all 0a 04 08 59 17 07 ff ff ...
+nvt: 400 reports, 42 positions, 400 edges on the line, 0 bad; line idle
 ```
 
-`0a` = `(1<<3)|2`：手指 1、状态 2（按下/移动），`x=0x102`、`y=0xd23`。
+`0a` = `(1<<3)|2`：手指 1、状态 2（按下/移动）。`04 08 59` → `x=((0x04<<8)|0x08)/10 = 103`、`y=((0x59<<8)|0x17)/10 = 2280`。
+
+五点标定对照（fw02 + 10× 解码）：
+
+| 按的位置 | 驱动解出 | Android 同位置 | 差 |
+|---|---|---|---|
+| 左下 | (103, 2280) | (91, 2363) | +12, −83 |
+| 右下 | (981, 2360) | (1003, 2383) | −22, −23 |
+| 左上 | (113, 100) | (91, 157) | +22, −57 |
+| 右上 | (965, 134) | (997, 116) | −32, +18 |
+| 中心 | (535, 1385) | (573, 1290) | −38, +95 |
+
+最大误差 95 px，约半个指尖。实际点图标能打中。
 
 用户态侧不用改 —— 属性协商本来就是通的：
 
@@ -266,6 +293,41 @@ nvt: 101 reports, 48 positions, 93 edges on the line, 19 bad; line idle
 `sample type 1` = DOWN、`3` = UP。`create touch stream` 且 `pid: 6(vD); SpringBoard` 说明上层消费者已经订阅 —— 有些 MTK 移植停在「`digitizer attached` 之后没有 `create touch stream`」，那是 HID 服务属性（`bundleID`/`pid`/`PrimaryUsagePage`）没补全，让 backboardd 判成「matched 但不可用」。
 
 ---
+
+### 画面右移：引擎的 plane 地址比 kernel 写入地址高一页
+
+排错顺序是这样的，每一步都排掉一个嫌疑：
+
+- `MiniIOMobileFramebuffer: swap 7 layer 0: surface 3 (1080x2460 'BGRA') from 0,0 1080x2460 to 0,0 1080x2460` —— 合成器坐标完全恒等
+- `dsi size_con 0x99c0168`：`[31:16]=0x99c=2460`、`[15:0]=0x168=360`，而 `360 = 1080/3` 正是 DSC 3:1 压缩后的每行字节数，DSI 侧自洽
+- `panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080` —— XNU 侧几何全对
+
+dump OVL 还有一个坑：`src_con 0x2` 说明在用的是 **layer 1**，第一版只读 layer 0 的寄存器，全是 0、看着像"没配"。按 `src_con` 选层、扫全部 6 块之后才看到真相：
+
+```
+ovl4 l0 size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14f000
+ovl6 l0 size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14f870
+```
+
+`offset` 全 0、`size` 是完整的 2460×1080，但 **addr 是 `0xfe14f000`，而 loader 交给 kernel 的是 `0xfe14e000`** —— 差一页 `0x1000`，在 pitch 4352 下正好每行错开 1024 像素，看起来就是整体右移。
+
+两条从 kernel 侧闭合的路都试过，都不行：
+
+1. **驱动里把 `fBase` 往前挪一页** ⇒ 帧缓冲映射是 `round_page(height * rowbytes)`，没有余量，最后几行写到映射外，`drawRows()` data abort。
+2. **把 `LK_FB_BASE` 改成 `0xfe14f000`** ⇒ 写入仍在区域内，但面板打 SError（总线拒绝正在被覆盖的那帧）。
+
+最后反过来做：**把引擎的 plane 地址下移一页，对到 kernel 写入的地方**。不碰任何内存映射，只写一次寄存器，`fb_disp` 下一次 swap 就能验证。
+
+关键是那一次写要**给所有 plane 加同一个 delta**，而不是都设成同一个地址：
+
+| 做法 | 现象 |
+|---|---|
+| 两层都设成 target | 两层扫同一块内存 ⇒ 分块 + 横向撕裂 |
+| 保留相对偏移但参照点取最高层 | delta 差一个 DSC slice（540 px × 4 = `0x870`）⇒ 画面从正中裂开、左右互换 |
+| 只移动最低层 | 左半对、右半错 |
+| **所有 plane 加同一个 delta** | ✅ 正常 |
+
+`ovl6 - ovl4 = 0x870 = 540 像素 × 4`，而面板的 `DSC_SLICE_WIDTH` 正好是 540 —— 这不是巧合，两层扫的是同一幅画面的两个 slice。
 
 ## 正在卡的地方
 
@@ -316,25 +378,6 @@ SPMI 有几个必须先弄清楚的点，弄错了传输永远不完成：
 
 寄存器地址还有一处没定：我用 Android 侧 522 帧快照差分，定到 `0x001e`（bit1 电源、bit3 home，位清 0 = 按下）；但厂商 `mtk-pmic-keys` 在 mt6359 上读的是 `TOPSTATUS 0x2a`，位号却一样。两个都读、都打进日志，按一次键就知道哪个是真的。
 
-### 画面右移：在 OVL，不在 XNU，也不在 DSI
-
-这条排得比较干净：
-
-- `MiniIOMobileFramebuffer: swap 7 layer 0: surface 3 (1080x2460 'BGRA') from 0,0 1080x2460 to 0,0 1080x2460` —— 合成器坐标完全恒等
-- `dsi size_con 0x99c0168`：`[31:16]=0x99c=2460`、`[15:0]=0x168=360`，而 `360 = 1080/3` 正是 DSC 3:1 压缩后的每行字节数，DSI 侧自洽
-- `panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080` —— XNU 侧几何全对
-
-剩下的只有 OVL。这里有个坑：`src_con 0x2` 说明在用的是 **layer 1**，而第一版 dump 只读 layer 0 的寄存器，所以全是 0、看起来像"没配"。改成按 `src_con` 选层、并扫全部 6 块 OVL 之后拿到：
-
-```
-ovl0 src_con 0x2 datapath 0x7000005   l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb89000
-ovl1 src_con 0x2 datapath 0x7000005   l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb89870
-ovl4 src_con 0x1 datapath 0x7000001   l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14f000
-ovl6 src_con 0x1 datapath 0x7000001   l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14f870
-```
-
-`offset` 全是 0、`size` 全是 `0x99c021c`（2460 × 1080），pitch `0x10e0`=4320 / `0x1100`=4352 —— 也就是说 OVL 看到的源几何也是完整的，没有裁剪。下一步是往上游找：谁在配 `DISP_MUTEX` 与 `OVL` 的绑定关系，以及 DSI 的 `hsa/hbp/hfp`（`0x14/0x1c/0x3cc`）与面板驱动里那份时序对不对得上。
-
 ### 卡顿：软件渲染压在 4 个 999 MHz 核上
 
 ```
@@ -355,9 +398,9 @@ CoreAnimation: Failed to initialize Metal or OpenGLES contexts!
 
 - [ ] USB 枚举通过（D+ 上拉）
 - [ ] USB CDC-ECM 网络链路，接上 `sys/hakios.net.h`
-- [x] 触控（Novatek NT36672E）
+- [x] 触控（Novatek NT36672E）：固件选型 + 10× 解码
 - [ ] 按键：确认 MT6363 的键寄存器是 `0x1e` 还是 `0x2a`
-- [ ] 画面右移：OVL 源几何已确认无误，往 `DISP_MUTEX` 与面板时序查
+- [x] 画面右移（引擎 plane 地址与 kernel 写入地址差一页）
 - [ ] 卡顿：`cpus=8`、`XNU_BIG_CLOCK`、Mesa 软件 GL
 - [ ] Mali-G610 的 kernel 侧：电源域、时钟、MMU、job queue
 - [ ] Wi-Fi（CONNSYS）
