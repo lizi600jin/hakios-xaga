@@ -13,7 +13,7 @@
 
 </details>
 
-> 实验性的 bring-up 工作，不能日用。触控已可用，没有 GPU 加速（3~14 fps），按键、USB、Wi-Fi 还在修，重启后不保存任何设置。
+> 实验性的 bring-up 工作，不能日用。触控已可用，电源键可用，没有 GPU 加速（3~14 fps），USB、Wi-Fi、音频还在修，重启后不保存任何设置。
 
 **只想装上试试**：到 [Releases](../../releases) 下 `hakios-xaga-boot_a.img`，按 [INSTALL.md](INSTALL.md) 五步走。自己编译往下看。
 
@@ -43,7 +43,7 @@
 | 分屏与显示 | ✅ | 1080×2460 全屏可写，60 fps；画面右移已修 |
 | iOS 用户态 | ✅ | SpringBoard 起来了，状态栏、小组件、Dock 全部渲染 |
 | 触控（Novatek NT36672E） | ✅ | 单点/多点、长按、点击图标都对得上，落点误差 < 100 px |
-| 按键（keypad + MT6363） | 🚧 | keypad 恒读 `ffff`；MT6363 走 SPMI 的读通路已写，待真机确认寄存器 |
+| 按键（keypad + MT6363） | 🟡 | 电源键可用；音量上/下**内核与 HID 都通了**，卡在音频子系统没有输出路由 |
 | USB（MTU3） | 🚧 | 控制器配置已与 Android 工作态逐位对齐，PHY 侧 D+ 仍不上拉 |
 | GPU（Mali-G610） | ⬜ | 走软件渲染，3~14 fps；驱动本身 1.5 ms/帧，瓶颈在 CPU 光栅化 |
 | Wi-Fi / 基带 / 音频 / 相机 | ⬜ | 未开始 |
@@ -366,19 +366,63 @@ xaga 的键分在两处，这点很难从源码看出来：
 
 | 键 | 实际路由 | 说明 |
 |---|---|---|
-| 音量下 | keypad `1c00e000`（`mediatek,kp`） | `hw-init-map` 只有 key 0 = 114 |
+| 音量下 | keypad `1c00e000`（`mediatek,kp`） | `hw-init-map` 只有 key 0 = 114；只在 LK 里能读到 |
 | 音量上 | **MT6363** 的 home 键 | `linux,keycodes = <115>` |
 | 电源 | **MT6363** 的 power 键 | `linux,keycodes = <116>` |
 
-keypad 的五个状态寄存器在真机上恒读 `ffff`（Android 里也是），所以音量上/电源根本不在这块。它们挂在 `/spmi@1c804000/pmic@4/mt6363keys`，要走 SPMI 才能读。
+keypad 的五个 16 位状态寄存器在真机上恒读 `ffff`（Android 里也一样），所以音量上/电源根本不在这块。它们挂在 `/spmi@1c804000/pmic@4/mt6363keys`，要走 SPMI。
 
-SPMI 有几个必须先弄清楚的点，弄错了传输永远不完成：
+#### 先确定寄存器，再确定传输
 
-- **通道号是数组下标不是字节偏移**。DTS 的 `swinf_ch_start = 0x0a`，厂商算法是 `PMIF_CHAN_OFFSET(5) × soc_chan(2) = 10`，加在寄存器表的**下标**上。十个下标之后是 **SWINF_2**，即 `ACC 0x0c80 / WDATA 0x0c84 / RDATA 0x0c94 / VLD_CLR 0x0ca4 / STA 0x0ca8`。我第一版把 `0x0a` 加在 SWINF_0 的地址上（`0x0c0a`），落在 SWINF_0 自己的 dword 中间，传输永远等不到完成。
-- 命令字 `(opc << 30) | (sid << 24) | ((len-1) << 16) | addr`，写多 `BIT(29)`。`opc` 不是 SPMI opcode，是 arbiter 自己的（`1` = 普通寄存器读）。
-- 状态机 `GET_SWINF(STA) = (x >> 1) & 7`，`0` = idle、`6` = 有效待清除；读完写 1 到 `VLD_CLR`。
+`/sys/kernel/debug/regmap/0-04/registers` 就是 MT6363 的完整寄存器表（65536 行，需先挂 debugfs），既能看到真实值，也能在按键时抓差分。用它确认了三件事：
 
-寄存器地址还有一处没定：我用 Android 侧 522 帧快照差分，定到 `0x001e`（bit1 电源、bit3 home，位清 0 = 按下）；但厂商 `mtk-pmic-keys` 在 mt6359 上读的是 `TOPSTATUS 0x2a`，位号却一样。两个都读、都打进日志，按一次键就知道哪个是真的。
+- 键状态寄存器是 **`0x001e`**，不是厂商 mt6359 用的 `TOPSTATUS 0x2a`（本机 `0x2a` 恒 `0x88`，按键时不动）。
+- **bit 1 = 电源、bit 3 = 音量上**，位清 0 表示按下。
+- 按住音量上：`001e: 1e → 16`（异或 `0x08`）；按住电源：`001e: 1e → 1c`（异或 `0x02`）。
+
+先把这个定下来很关键：否则传输修通之后仍然读不到东西，会误以为是传输还没通。
+
+#### SPMI 的四道坎
+
+**一、通道号是数组下标，不是字节偏移。** DTS 的 `swinf_ch_start = 0x0a`，厂商算法是 `PMIF_CHAN_OFFSET(5) × soc_chan(2) = 10`，加在寄存器表的**下标**上。十个下标之后是 `SWINF_2`。第一版把 `0x0a` 直接加在 `SWINF_0` 的地址上（`0x0c0a`），落在 `SWINF_0` 自己的 dword 中间，传输永远等不到完成。
+
+**二、这块板的 PMIF 是 mt8195 那套布局，不是 mt6873 那套。** 用 `pmif_access` 逐个偏移扫出来对照：
+
+| 寄存器 | mt8195 | mt6873 | 实测 |
+|---|---|---|---|
+| `CMDISSUE_EN` | `0x03B8` | `0x03B4` | `0x3B8` 读得出 `0x1`，`0x3B4` 恒 `0` |
+| `TIMER_CTRL` | `0x03E4` | `0x03E0` | `0x3E4` 读得出 `0x3`，`0x3E0` 恒 `0` |
+| `SPI_MODE_CTRL` | `0x0408` | `0x0400` | `0x408` 读得出 `0x225d`，`0x400` 恒 `0` |
+| `SWINF_2_ACC` | `0x0880` | `0x0C80` | `0x880` 读得出 `0xc50011c4`，`0xC80` 恒 `0` |
+| `SWINF_2_STA` | `0x08A8` | `0x0CA8` | `0x8A8` 读得出 `0x8441`，`0xCA8` 恒 `0` |
+
+所以这套是 `SWINF_0: ACC 0x0800 / WDATA 0x0804 / RDATA 0x0814 / VLD_CLR 0x0824 / STA 0x0828`，每通道 `0x40`。
+
+**三、通道数只能开一个。** DTS 里 `pmif` 的窗口只有 `0x8ff` 字节，而 `SWINF_3` 在 `0x8C0`、之后的通道更远——**都在窗口外**。板上访问未映射地址是总线 abort，而且这块板没有异常向量，核心直接停死、看门狗来不及，于是反复重入同一镜像，看起来像"启动循环"。这个坑我踩了两次。改法是只用一个通道，把搜索循环整个去掉。
+
+**四、opcode 不是 SPMI opcode。** 命令字 `(opc << 30) | (sid << 24) | ((len-1) << 16) | addr` 里的 `opc` 是 arbiter 自己的编号，厂商映射是：SPMI `0x60..0x7f` → `PMIF_CMD_REG`（`1`）、SPMI `0x20..0x2f` / `0x38..0x3f` → `PMIF_CMD_EXT_REG_LONG`（`3`）。MT63xx 的 PMIC 是 **16 位扩展寄存器**，必须用 `3`。一直写 `1` 的话，状态机会停在 `4`（错误态）而不是 `WFVLDCLR(6)`，数据寄存器读回 `0`——于是所有位都被当成"按下"，日志里出现两个键同时按住的假象。
+
+#### 修通之后
+
+```
+mt6895-keys: 0x1e moved 0x1e 1e -> 16
+mt6895-keys: pmic bit 3 down (register 16)      ← 音量上
+mt6895-keys: 0x1e moved 0x1e 16 -> 1e
+mt6895-keys: pmic bit 3 up (register 1e)
+mt6895-keys: 0x1e moved 0x1e 1e -> 1c
+mt6895-keys: pmic bit 1 down (register 1c)      ← 电源
+```
+
+再到 backboardd：
+
+```
+[Button] VolumeIncrement page:0xC usage:0xE9 downEvent:1 down
+[Button]  0xC/0xE9/10201AB000002 began: ... destinations:<system; display: builtin; pid: 5
+[Button] VolumeIncrement page:0xC usage:0xE9 downEvent:0 up
+[Button]  0xC/0xE9/10201AB000002 finished: firstDown:0.142s ago
+```
+
+**电源键能熄屏**，说明内核 → HID → backboardd 这条链是完整的。音量键的 HID 事件也一样成对到达 backboardd，但系统音量不变、音量条不弹——backboardd 收到后要把音量转给音频系统，而这台机器的音频只有一个空壳驱动（`HakiosAudio.driver`）和 `/dev/hakios-audio`，没有当前输出路由，没有可调的音量。**所以音量键的剩余工作量属于音频子系统，不属于按键驱动。**
 
 ### 卡顿：软件渲染压在 4 个 999 MHz 核上
 
@@ -401,7 +445,7 @@ CoreAnimation: Failed to initialize Metal or OpenGLES contexts!
 - [ ] USB 枚举通过（D+ 上拉）
 - [ ] USB CDC-ECM 网络链路，接上 `sys/hakios.net.h`
 - [x] 触控（Novatek NT36672E）：固件选型 + 10× 解码
-- [ ] 按键：确认 MT6363 的键寄存器是 `0x1e` 还是 `0x2a`
+- [x] 按键：MT6363 `0x001e` + SPMI mt8195 布局 + `EXT_REG_LONG` opcode（电源键可用，音量键待音频）
 - [x] 画面右移（引擎 plane 地址与 kernel 写入地址差一页）
 - [ ] 卡顿：`cpus=8`、`XNU_BIG_CLOCK`、Mesa 软件 GL
 - [ ] Mali-G610 的 kernel 侧：电源域、时钟、MMU、job queue

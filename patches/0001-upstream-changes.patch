@@ -23,7 +23,7 @@ index 686124d..90a507d 100644
  	XL_SB_DELAY=8 $(RUNNER_BASE) tools/modem-cycle.sh "$(ARGS)" $(SECS)
  endif
 diff --git a/configs/boot-args.lst b/configs/boot-args.lst
-index e7a3f96..7fb8b9f 100644
+index e7a3f96..f3d0d07 100644
 --- a/configs/boot-args.lst
 +++ b/configs/boot-args.lst
 @@ -91,12 +91,14 @@ emmc_root	k
@@ -41,15 +41,16 @@ index e7a3f96..7fb8b9f 100644
  fb_queue	k
  fb_threads	k
  fbfit	k
-@@ -154,6 +156,7 @@ hakios_kver	k
+@@ -154,6 +156,8 @@ hakios_kver	k
  haptic	k
  haptic_effect	k
  hv_wdt_pet	k
 +key_poll_ms	k
++key_scan	k
  keylog	k
  loader_return_after	kl
  machine_name	k
-@@ -215,6 +218,7 @@ modem_wda_off	k
+@@ -215,6 +219,7 @@ modem_wda_off	k
  mtk_cpufreq	k
  net_names	k
  net_trace	k
@@ -57,7 +58,7 @@ index e7a3f96..7fb8b9f 100644
  pmic	k
  pmic_list	k
  privs	k
-@@ -274,10 +278,13 @@ thermal_tm1	k
+@@ -274,10 +279,13 @@ thermal_tm1	k
  torch	kl
  torch_max_s	k
  torch_secs	k
@@ -71,7 +72,7 @@ index e7a3f96..7fb8b9f 100644
  touch_spi_hz	k
  touchscreen	k
  ufs	l
-@@ -294,6 +301,7 @@ ufs_native_spin	k
+@@ -294,6 +302,7 @@ ufs_native_spin	k
  ufs_probe	l
  ufs_shared_pa	k
  ufs_write	kl
@@ -80,7 +81,7 @@ index e7a3f96..7fb8b9f 100644
  ustacks_at	k
  ustacks_count	k
 diff --git a/configs/symbols.tsv b/configs/symbols.tsv
-index aebb706..d0bac35 100644
+index aebb706..76f9d8c 100644
 --- a/configs/symbols.tsv
 +++ b/configs/symbols.tsv
 @@ -55,7 +55,7 @@ BATTERY	arg	battery	Audio and battery	kl	hakios.adsp.c,hakios.battery.c,loader.c
@@ -111,17 +112,18 @@ index aebb706..d0bac35 100644
  FBHEIGHT	arg	fbheight	GPU and display	k	MiniIOMobileFramebuffer.cpp	
  FBSCALE	arg	fbscale	GPU and display	k	MiniIOMobileFramebuffer.cpp	the same 375 x 812 points drawn at two pixels a point instead of three
  FBSHOT	arg	fbshot	GPU and display	k	MiniIOMobileFramebuffer.cpp	the frame, 60 pixels wide, red green blue, in base64 on lines that begin "fbshot N:" (tools/fbshot.py makes a picture of them): what the screen
-@@ -141,7 +143,8 @@ GPU_EXACT	arg	gpu_exact	GPU and display	k	hakios.adreno.c
+@@ -141,7 +143,9 @@ GPU_EXACT	arg	gpu_exact	GPU and display	k	hakios.adreno.c
  GPU_KEEP	arg	gpu_keep	GPU and display	k	hakios.gpu.cpp	
  GPU_LOG	arg	gpu_log	GPU and display	k	hakios.adreno.c	
  HAPTIC_EFFECT	arg	haptic_effect	Haptics and torch	k	hakios.haptic.c	
 -KEYLOG	arg	keylog	Touch and buttons	k	hakios.mtk_keys.c	a line for every change, to check the wiring against
 +KEY_POLL_MS	arg	key_poll_ms	User space	k	hakios.mt6895_keys.c	
++KEY_SCAN	arg	key_scan	User space	k	hakios.mt6895_keys.c	
 +KEYLOG	arg	keylog	Touch and buttons	k	hakios.mt6895_keys.c,hakios.mtk_keys.c	a line for every change, to check the wiring against
  MACHINE_NAME	arg	machine_name	CPU, memory and boot	k	GenericARMPE.cpp	
  MALI	arg	mali	GPU and display	k	hakios.mali.c	every address below belongs to this phone (the other phone's GPU is an Adreno, bsd/dev/hakios.adreno.c)
  MALI_FASTMAP	arg	mali_fastmap	GPU and display	k	hakios.mali.c	
-@@ -195,6 +198,7 @@ MODEM_STEP	arg	modem_step	Cellular	k	hakios.mpss.c	the steps once the root is th
+@@ -195,6 +199,7 @@ MODEM_STEP	arg	modem_step	Cellular	k	hakios.mpss.c	the steps once the root is th
  MODEM_WAIT	arg	modem_wait	Cellular	k	hakios.mpss.c	
  MODEM_WDA_OFF	arg	modem_wda_off	Cellular	k	hakios.mpss.c	
  MTK_CPUFREQ	arg	mtk_cpufreq	Touch and buttons	k	hakios.mtk_keys.c	
@@ -129,7 +131,7 @@ index aebb706..d0bac35 100644
  PMIC_LIST	arg	pmic_list	Chip, thermal and PMIC	k	hakios.pmic.c	only the clock, not the inventory of every block
  PRIVS	arg	privs	Security stand-ins	k	kern_minimac.c	
  RD	arg	rd	CPU, memory and boot	kl	(patch),loader.c	
-@@ -247,10 +251,13 @@ THERMAL_TM1	arg	thermal_tm1	Chip, thermal and PMIC	k	hakios.thermal.c
+@@ -247,10 +252,13 @@ THERMAL_TM1	arg	thermal_tm1	Chip, thermal and PMIC	k	hakios.thermal.c
  TORCH	arg	torch	Haptics and torch	kl	hakios.torch.c,loader.c	a look, reading only: the arbiter's channel for the module and who may write through it, the module's type, its registers, the PMIC's temperature
  TORCH_MAX_S	arg	torch_max_s	Haptics and torch	k	hakios.torch.c	
  TORCH_SECS	arg	torch_secs	Haptics and torch	k	hakios.torch.c	
@@ -144,7 +146,7 @@ index aebb706..d0bac35 100644
  TOUCH_SPI_HZ	arg	touch_spi_hz	Touch and buttons	k	hakios.goodix.c	the bus at N Hz (Android's device tree gives the chip 5 MHz)
  UFS_BENCH	arg	ufs_bench	Storage and APFS	k	hakios.ufs.c	what one request through the loader costs, by size
  UFS_CHECK	arg	ufs_check	Storage and APFS	k	hakios.ufs.c	
-@@ -263,6 +270,7 @@ UFS_NATIVE_LEAVE	arg	ufs_native_leave	Storage and APFS	k	hakios.ufshc.c
+@@ -263,6 +271,7 @@ UFS_NATIVE_LEAVE	arg	ufs_native_leave	Storage and APFS	k	hakios.ufshc.c
  UFS_NATIVE_SLOTS	arg	ufs_native_slots	Storage and APFS	k	hakios.ufshc.c	
  UFS_NATIVE_SPIN	arg	ufs_native_spin	Storage and APFS	k	hakios.ufshc.c	
  UFS_PROBE	arg	ufs_probe	Loader	l	loader.c	
@@ -174,7 +176,7 @@ index a413608..f3f4186 100644
  	repository  https://github.com/oosexgang/hakios-uefi.git
  	revision    a450a79a167fb25783fd0f0321478bbc171cae23
 diff --git a/docs/boot-args.md b/docs/boot-args.md
-index 6cbc16c..295df2a 100644
+index 6cbc16c..3e79f56 100644
 --- a/docs/boot-args.md
 +++ b/docs/boot-args.md
 @@ -2,13 +2,13 @@
@@ -182,7 +184,7 @@ index 6cbc16c..295df2a 100644
  Made by `tools/boot-args.py --markdown`; CI fails if it is out of date with the source (`tools/boot-args.py --check`).
  
 -Every argument that the kernel, the loader or user space of this port reads, and which file reads it. **342 arguments**: 292 read by the kernel, 14 by the loader, 46 by user space (one is read in more than one place).
-+Every argument that the kernel, the loader or user space of this port reads, and which file reads it. **350 arguments**: 300 read by the kernel, 14 by the loader, 46 by user space (one is read in more than one place).
++Every argument that the kernel, the loader or user space of this port reads, and which file reads it. **351 arguments**: 301 read by the kernel, 14 by the loader, 46 by user space (one is read in more than one place).
  
  This is a catalogue of what exists and who reads it, not a manual. What an argument means is in the head of the file that reads it. The stable switches have a symbol in the configuration (`tools/hakios-config.py help SYMBOL`, `docs/configs.md`); the rest are the knobs of bring-up (a driver's steps, pauses, traces, test modes) and can change with the driver. Any of them can be given in a configuration with `CONFIG_BOOTARGS="name=value ..."`, which checks that each name is in this list.
  
@@ -239,15 +241,16 @@ index 6cbc16c..295df2a 100644
  | `ufs_probe` | L | `loader.c` | `CONFIG_UFS_PROBE` |  |
  
 -## User space (16)
-+## User space (22)
++## User space (23)
  
  | Argument | Layer | Read by | Configuration | Set by |
  |---|---|---|---|---|
-@@ -424,8 +426,14 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
+@@ -424,8 +426,15 @@ Layers: **K** the kernel, **L** the loader, **U** user space (through `sysctl ke
  | `glno` | U | `inject.c` | `CONFIG_GLNO` |  |
  | `glsb3` | U | `inject.c` | `CONFIG_GLSB3` |  |
  | `glyes` | U | `inject.c` | `CONFIG_GLYES` |  |
 +| `key_poll_ms` | K | `hakios.mt6895_keys.c` | `CONFIG_KEY_POLL_MS` |  |
++| `key_scan` | K | `hakios.mt6895_keys.c` | `CONFIG_KEY_SCAN` |  |
 +| `nvt_page` | K | `hakios.nvt.c` | `CONFIG_NVT_PAGE` |  |
  | `root_apfs` | U | `init.c` | `CONFIG_ROOT_APFS` |  |
  | `sb_delay` | U | `inject_sb.c` |  | xl (XL_SB_DELAY) |
@@ -940,7 +943,7 @@ index ec3b553..abcef26 100644
  {
  	while (*s) {
 diff --git a/mtk/loader/mtkloader.c b/mtk/loader/mtkloader.c
-index 3abb684..11fdc83 100644
+index 3abb684..f608fd3 100644
 --- a/mtk/loader/mtkloader.c
 +++ b/mtk/loader/mtkloader.c
 @@ -1,5 +1,5 @@
@@ -3614,13 +3617,13 @@ index 3abb684..11fdc83 100644
  	return xnu;
  }
  
-@@ -3386,17 +5283,730 @@ rails_off:
+@@ -3386,17 +5283,788 @@ rails_off:
  }
  #endif /* GPU_PROBE */
  
 +/* ---- bare-metal USB attach probe ---- */
 +
-+#if BOARD_USB_PROBE || BOARD_DISP_PROBE
++#if BOARD_USB_PROBE || BOARD_DISP_PROBE || BOARD_PMIF_PROBE
 +#define USB_MAC         0x11201000ULL
 +#define USB_IPPC        0x11203e00ULL
 +#define USB_PHY         0x11e40000ULL
@@ -3838,7 +3841,7 @@ index 3abb684..11fdc83 100644
 +		__asm__ volatile("wfi");
 +	}
 +}
-+#endif /* BOARD_USB_PROBE || BOARD_DISP_PROBE */
++#endif /* BOARD_USB_PROBE || BOARD_DISP_PROBE || BOARD_PMIF_PROBE */
 +
 +#if BOARD_DISP_PROBE
 +/*
@@ -3903,6 +3906,64 @@ index 3abb684..11fdc83 100644
 +	probe_flash(10u);
 +}
 +#endif /* BOARD_DISP_PROBE */
++
++#if BOARD_PMIF_PROBE
++/*
++ * The SPMI arbiter as the boot chain left it, read before anything here touches it. XNU's own
++ * driver finds CMDISSUE_EN reading zero and cannot make it hold a one, and every software
++ * channel's state word reads zero too -- a write that is accepted would at least move a state
++ * machine. Reading the same registers at the earliest moment this program runs says whether LK
++ * handed over a live arbiter or whether the block is only readable.
++ *
++ * Each read is announced before it happens: this block sits next to guarded pages, and a bus
++ * abort with no exception vectors leaves only the last name written out.
++ */
++static void
++pmif_dump(void)
++{
++	static const struct { const char * what; uint32_t at; } rows[] = {
++		{ "pmif init_done  ", 0x1c804000u + 0x0000u },
++		{ "pmif inf_en      ", 0x1c804000u + 0x0024u },
++		{ "pmif arb_en      ", 0x1c804000u + 0x0150u },
++		{ "pmif cmdissue_en ", 0x1c804000u + 0x03b4u },
++		{ "pmif timer_ctrl  ", 0x1c804000u + 0x03e0u },
++		{ "pmif spi_mode    ", 0x1c804000u + 0x0400u },
++		{ "pmif sw0 acc     ", 0x1c804000u + 0x0c00u },
++		{ "pmif sw0 sta     ", 0x1c804000u + 0x0c28u },
++		{ "pmif sw2 acc     ", 0x1c804000u + 0x0c80u },
++		{ "pmif sw2 rdata   ", 0x1c804000u + 0x0c94u },
++		{ "pmif sw2 vldclr  ", 0x1c804000u + 0x0ca4u },
++		{ "pmif sw2 sta     ", 0x1c804000u + 0x0ca8u },
++		{ "pmif sw3 sta     ", 0x1c804000u + 0x0ce8u },
++		{ "spmi op_st_ctrl  ", 0x1c801000u + 0x0000u },
++		{ "spmi op_st_sta   ", 0x1c801000u + 0x0008u },
++		{ "spmi mst_sampl   ", 0x1c801000u + 0x000cu },
++		{ "spmi mst_req_en  ", 0x1c801000u + 0x0010u },
++	};
++
++	for (unsigned i = 0; i < sizeof(rows) / sizeof(rows[0]); i++) {
++		uint32_t v;
++
++		probe_say("pmif probe: ");
++		probe_say(rows[i].what);
++		probe_flash(9u);
++		v = rd32(rows[i].at);
++		probe_hex(v);
++		probe_say("\n");
++	}
++
++	probe_say("pmif probe: writing cmdissue_en, then sw2 acc\n");
++	probe_flash(9u);
++	wr32(0x1c804000u + 0x03b4u, 0xfu);
++	wr32(0x1c804000u + 0x0c80u, 0x40000000u | (4u << 24) | 0x1eu);
++	probe_say("pmif probe: cmdissue_en now ");
++	probe_hex(rd32(0x1c804000u + 0x03b4u));
++	probe_say(" sw2 sta now ");
++	probe_hex(rd32(0x1c804000u + 0x0ca8u));
++	probe_say("\n");
++	probe_flash(2u);
++}
++#endif /* BOARD_PMIF_PROBE */
 +
 +
 +
@@ -4345,7 +4406,7 @@ index 3abb684..11fdc83 100644
  		chain_android();
  	}
  	if (mark == MARK_RUNNING) {
-@@ -3406,6 +6016,9 @@ void mtkloader_main(uint64_t dtb)
+@@ -3406,6 +6074,9 @@ void mtkloader_main(uint64_t dtb)
  	}
  
  	plog_reset();
@@ -4355,7 +4416,7 @@ index 3abb684..11fdc83 100644
  #if TOUCH_PROBE
  	fb_rect(0, 0, PANEL_W, PANEL_H, 0xff000000u);
  	fbc.x = 0;
-@@ -3436,18 +6049,113 @@ void mtkloader_main(uint64_t dtb)
+@@ -3436,18 +6107,116 @@ void mtkloader_main(uint64_t dtb)
  	wdt_disable();
  	chain_android();
  #endif
@@ -4465,6 +4526,9 @@ index 3abb684..11fdc83 100644
 +#endif
 +#if BOARD_USB_PROBE
 +	usb_probe();
++#endif
++#if BOARD_PMIF_PROBE
++	pmif_dump();
 +#endif
 +#if BOARD_DISP_PROBE
 +	disp_dump();
@@ -8106,10 +8170,10 @@ index 0000000..5ea861f
 +	help    fw-touch/ file. Its interrupt line is GPIO135, polled rather than wired to a GIC SPI
 diff --git a/mtk/mt6895/drivers/input/hakios.mt6895_keys.c b/mtk/mt6895/drivers/input/hakios.mt6895_keys.c
 new file mode 100644
-index 0000000..4d9beb6
+index 0000000..f2ca666
 --- /dev/null
 +++ b/mtk/mt6895/drivers/input/hakios.mt6895_keys.c
-@@ -0,0 +1,494 @@
+@@ -0,0 +1,791 @@
 +/*
 + * The buttons of the Redmi Note 11T Pro (xaga), as a source of button presses for
 + * /dev/hakios-touch (sys/hakios.input.h). Only with boot-arg buttons=2: every address below belongs
@@ -8176,6 +8240,7 @@ index 0000000..4d9beb6
 +
 +static vm_offset_t kpd;
 +static vm_offset_t pmif;
++static vm_offset_t spmimst;
 +
 +/*
 + * The PMIC's own key registers, reached over SPMI rather than through the keypad block.
@@ -8214,13 +8279,63 @@ index 0000000..4d9beb6
 + * The first version of this file added ten to the SWINF_0 *addresses*, which lands in the middle
 + * of SWINF_0's dwords -- a transfer that could never complete.
 + */
-+#define PMIF_SWINF_ACC      0x0c80
-+#define PMIF_SWINF_WDATA    0x0c84
-+#define PMIF_SWINF_RDATA    0x0c94
-+#define PMIF_SWINF_VLDCLR   0x0ca4
-+#define PMIF_SWINF_STA      0x0ca8
++/*
++ * Two register layouts exist for this block and they differ exactly where it matters. mt6873's
++ * table puts the software channels at 0x0c00, mt8195's puts them at 0x0800, and CMDISSUE_EN at
++ * 0x03b4 versus 0x03b8 -- the two tables share only the first few registers, which is why
++ * INIT_DONE, INF_EN and ARB_EN read correctly on this SoC while every channel read returned zero
++ * and a write to TIMER_CTRL at the mt6873 offset did not stick. xaga is closer to the mt8195
++ * layout; the mt6873 offsets are kept as a fallback so a wrong guess costs a probe, not a port.
++ */
++/*
++ * Settled on hardware, not by guessing: the vendor kernel leaves the arbiter readable through
++ * /sys/bus/platform/drivers/spmi-mtk/pmif_access, which takes an offset and prints the word there.
++ * Sweeping it and comparing against the two mainline tables left no room for doubt --
++ *
++ *	0x3b8 = 0x00000001	mt8195's CMDISSUE_EN	(0x3b4, mt6873's, reads 0)
++ *	0x3e4 = 0x00000003	mt8195's TIMER_CTRL	(0x3e0 reads 0)
++ *	0x408 = 0x0000225d	mt8195's SPI_MODE_CTRL	(0x400 reads 0)
++ *	0x880 = 0xc50011c4	mt8195's SWINF_2_ACC	(0xc80 reads 0)
++ *	0x8a8 = 0x00008441	mt8195's SWINF_2_STA	(0xca8 reads 0)
++ *
++ * The device tree agrees from the other side: it declares the pmif window as 0x1c804000 for only
++ * 0x8ff bytes, so the mt6873 channel block at 0xc80 was never addressable from this window at all
++ * -- every transfer this driver attempted landed past the end of the region and the state machine
++ * stayed at IDLE forever.
++ */
++#define PMIF_LAYOUT_8195    1
 +
-+#define PMIF_CMD_REG        1u
++#define PMIF_SWINF_ACC      0x0880
++#define PMIF_SWINF_WDATA    0x0884
++#define PMIF_SWINF_RDATA    0x0894
++#define PMIF_SWINF_VLDCLR   0x08a4
++#define PMIF_SWINF_STA      0x08a8
++
++/*
++ * The four software channels, as offsets from the first one's ACC. Linux picks SWINF_2 from the
++ * There is exactly one channel to talk to, and walking the others is what crashed a build. The
++ * device tree names the pmif window as 0x1c804000 for 0x8ff bytes only. SWINF_2 there is at
++ * 0x880, so the next channel up would be 0x8c0 and the two after it 0x900 and 0x940 -- the last
++ * two are past the end of the window. On this board an access beyond a mapped window is a bus
++ * abort with no exception vectors: the core stops, the watcher never gets to run, and the board
++ * rebooted into the same image three times running. So this driver addresses SWINF_2 and nothing
++ * else, and PMIF_CHAN_COUNT is one so no loop can ever step outside the window again.
++ */
++#define PMIF_CHAN_STRIDE    0x40
++#define PMIF_CHAN_COUNT     1               /* SWINF_2 only: everything above it is unmapped */
++
++static unsigned pmif_chan;              /* index into the four, once one is known to work */
++
++/*
++ * The opcode that goes into bits 31..30 of the command word is not the SPMI opcode: the PMIF
++ * translates. Vendor code maps SPMI 0x60..0x7f to PMIF_CMD_REG (1) and SPMI 0x20..0x2f /
++ * 0x38..0x3f to PMIF_CMD_EXT_REG_LONG (3), and the MT63xx PMICs are addressed with sixteen-bit
++ * extended registers, so everything this driver sends has to be an extended transfer. Asking with
++ * PMIF_CMD_REG left the state machine at 4 instead of WFVLDCLR and made the data register read
++ * back zero, which then looked like both keys being held at once.
++ */
++#define PMIF_CMD_REG            1u      /* SPMI 0x60..0x7f, eight-bit register space */
++#define PMIF_CMD_EXT_REG_LONG   3u      /* SPMI 0x20..0x2f / 0x38..0x3f, what MT6363 uses */
 +#define SWINF_IDLE          0x00u
 +#define SWINF_WFVLDCLR      0x06u
 +#define PMIF_SPIN_LIMIT     200000u
@@ -8229,9 +8344,20 @@ index 0000000..4d9beb6
 +#define PMIF_INIT_DONE      0x0000
 +#define PMIF_INF_EN         0x0024
 +#define PMIF_ARB_EN         0x0150
++#define PMIF_CMDISSUE_EN    0x03b8          /* one bit per software channel: the gate */
++#define PMIF_TIMER_CTRL     0x03e4
++#define PMIF_SPI_MODE_CTRL  0x0408
++
++/* The block's second window, 1c801000, called "spmimst" in the device tree. */
++#define SPMIMST_BASE        0x1c801000
++#define SPMIMST_SIZE        0x100
++#define SPMI_OP_ST_STA      0x0008
++#define SPMI_MST_SAMPL      0x000c
++#define SPMI_MST_REQ_EN     0x0010
 +
 +#define PMIC_SID            4               /* mt6363 is "pmic@4" on the bus */
 +#define MT6363_KEYS_STATE   0x001e          /* bit 1 power, bit 3 home; clear means pressed */
++#define MT6363_KEYS_ALT     0x002a          /* TOPSTATUS on mt6359, same two bits: the vendor's pick */
 +#define MT6363_POWER_BIT    1
 +#define MT6363_HOME_BIT     3
 +
@@ -8255,6 +8381,15 @@ index 0000000..4d9beb6
 +
 +/* The arbiter is reached through its own window, so it needs its own pair. */
 +static inline uint32_t
++spmimst_rd(uint32_t at)
++{
++	uint32_t value = *(volatile uint32_t *)(spmimst + at);
++
++	__asm__ volatile ("dsb sy" ::: "memory");
++	return value;
++}
++
++static inline uint32_t
 +pmif_rd(uint32_t at)
 +{
 +	uint32_t value = *(volatile uint32_t *)(pmif + at);
@@ -8276,39 +8411,129 @@ index 0000000..4d9beb6
 + * transfer did not complete; nothing here retries, because a caller that is polling a key every
 + * twenty milliseconds has all the retries it needs.
 + */
++static unsigned pmif_chan_known;   /* zero until a channel has carried a transfer */
++
++/*
++ * One read on one channel. Split out so that the channel search can try each in turn without
++ * duplicating the sequence, and so that a failure says which channel it was on.
++ */
 +static bool
-+pmic_read(uint8_t addr, uint8_t *value)
++pmic_read_on(unsigned chan, uint8_t addr, uint8_t *value)
 +{
++	uint32_t acc = PMIF_SWINF_ACC + chan * PMIF_CHAN_STRIDE;
++	uint32_t rdata = PMIF_SWINF_RDATA + chan * PMIF_CHAN_STRIDE;
++	uint32_t vldclr = PMIF_SWINF_VLDCLR + chan * PMIF_CHAN_STRIDE;
++	uint32_t sta = PMIF_SWINF_STA + chan * PMIF_CHAN_STRIDE;
 +	uint32_t cmd;
 +	uint32_t spins;
 +
-+	/* Only proceed when the software interface is idle; a stuck one must not be driven anyway. */
 +	for (spins = 0; spins < PMIF_SPIN_LIMIT; spins++) {
-+		if (((pmif_rd(PMIF_SWINF_STA) >> 1) & 0x7u) == SWINF_IDLE) {
++		if (((pmif_rd(sta) >> 1) & 0x7u) == SWINF_IDLE) {
 +			break;
 +		}
 +	}
 +	if (spins == PMIF_SPIN_LIMIT) {
 +		return false;
 +	}
-+	cmd = (PMIF_CMD_REG << 30) | ((uint32_t)PMIC_SID << 24) | (0u << 16) | addr;
-+	pmif_wr(PMIF_SWINF_ACC, cmd);
++	cmd = (PMIF_CMD_EXT_REG_LONG << 30) | ((uint32_t)PMIC_SID << 24) | (0u << 16) | addr;
++	pmif_wr(acc, cmd);
 +	for (spins = 0; spins < PMIF_SPIN_LIMIT; spins++) {
-+		if (((pmif_rd(PMIF_SWINF_STA) >> 1) & 0x7u) == SWINF_WFVLDCLR) {
++		if (((pmif_rd(sta) >> 1) & 0x7u) == SWINF_WFVLDCLR) {
 +			break;
 +		}
 +	}
 +	if (spins == PMIF_SPIN_LIMIT) {
 +		return false;
 +	}
-+	*value = (uint8_t)(pmif_rd(PMIF_SWINF_RDATA) & 0xffu);
-+	pmif_wr(PMIF_SWINF_VLDCLR, 1u);
++	*value = (uint8_t)(pmif_rd(rdata) & 0xffu);
++	pmif_wr(vldclr, 1u);
 +	return true;
++}
++
++static bool
++pmic_read(uint8_t addr, uint8_t *value)
++{
++	/*
++	 * Once a channel has carried a transfer, stay on it: a completed transfer is proof of both
++	 * reachability and correct wiring, and re-searching on every poll would cost four failed
++	 * timeouts per key check.
++	 */
++	if (pmif_chan_known) {
++		return pmic_read_on(pmif_chan, addr, value);
++	}
++	for (unsigned chan = 0; chan < PMIF_CHAN_COUNT; chan++) {
++		if (pmic_read_on(chan, addr, value)) {
++			pmif_chan = chan;
++			pmif_chan_known = true;
++			printf("mt6895-keys: the PMIC answered on channel %u (ACC %#x)\n",
++			    chan, PMIF_SWINF_ACC + chan * PMIF_CHAN_STRIDE);
++			return true;
++		}
++	}
++	return false;
++}
++
++/*
++ * Every channel's state word, printed before and after a single write attempt. If a channel is
++ * merely mis-addressed the write will have done nothing and all four read the same; if one of them
++ * moves, that is the channel the hardware is listening on.
++ */
++static void
++pmic_channels(const char *when)
++{
++	printf("mt6895-keys: %s sta:", when);
++	for (unsigned chan = 0; chan < PMIF_CHAN_COUNT; chan++) {
++		printf(" %u=%#08x", chan,
++		    pmif_rd(PMIF_SWINF_STA + chan * PMIF_CHAN_STRIDE));
++	}
++	printf("\n");
++}
++
++/*
++ * Which register actually holds the keys is the one thing about this block that code cannot settle:
++ * the address 0x1e came from differencing five hundred Android snapshots, while mtk-pmic-keys
++ * reads TOPSTATUS at 0x2a on mt6359 with the same two bit numbers. Rather than guess, keep a
++ * shadow of the low page and, whenever either candidate moves, walk the whole page and print the
++ * addresses that changed. One press of one key then names the register, the bit and the polarity
++ * without a second run.
++ */
++#define PMIC_SCAN_LO    0x00
++#define PMIC_SCAN_HI    0x60
++
++static uint8_t pmic_shadow[PMIC_SCAN_HI - PMIC_SCAN_LO];
++static bool pmic_shadow_valid;
++
++static void
++pmic_scan(const char *why)
++{
++	bool first = !pmic_shadow_valid;
++
++	for (unsigned at = PMIC_SCAN_LO; at < PMIC_SCAN_HI; at++) {
++		uint8_t value = 0;
++
++		if (!pmic_read((uint8_t)at, &value)) {
++			continue;
++		}
++		if (first || pmic_shadow[at - PMIC_SCAN_LO] != value) {
++			if (!first) {
++				printf("mt6895-keys: %s moved %#04x %02x -> %02x\n", why, at,
++				    pmic_shadow[at - PMIC_SCAN_LO], value);
++			}
++			pmic_shadow[at - PMIC_SCAN_LO] = value;
++		}
++	}
++	if (first) {
++		printf("mt6895-keys: %s took a baseline of %#x..%#x\n", why,
++		    PMIC_SCAN_LO, PMIC_SCAN_HI - 1);
++		pmic_shadow_valid = true;
++	}
 +}
 +
 +static uint16_t state[KP_STATE_REGS];
 +static bool have_keypad;
 +static unsigned changes, keylog_level, reports;
++static unsigned scan_page;
++static uint8_t last_alt, last_keys_state;
 +
 +/* Which line a key of ours sits on, and whether the last poll saw it down. */
 +struct key {
@@ -8403,16 +8628,134 @@ index 0000000..4d9beb6
 +
 +	PE_parse_boot_argn("key_poll_ms", &poll_ms, sizeof(poll_ms));
 +	PE_parse_boot_argn("keylog", &keylog_level, sizeof(keylog_level));
++	PE_parse_boot_argn("key_scan", &scan_page, sizeof(scan_page));
 +	if (poll_ms < 5 || poll_ms > 500) {
 +		poll_ms = 20;
 +	}
 +	kpd = ml_io_map(KPD_PHYS, KPD_SIZE);
++	spmimst = ml_io_map(SPMIMST_BASE, SPMIMST_SIZE);
 +	pmif = ml_io_map(PMIF_BASE, PMIF_SIZE);
++	if (spmimst == 0) {
++		printf("mt6895-keys: the spmimst window at %#x will not map\n",
++		    (unsigned)SPMIMST_BASE);
++	}
 +	if (pmif == 0) {
 +		printf("mt6895-keys: the arbiter at %#x will not map; no key can be read\n",
 +		    (unsigned)PMIF_BASE);
 +		return;
 +	}
++	/*
++	 * Same reason as the touch driver's step lines: the ring buffer only keeps the tail of a run,
++	 * so the one-time report of what the arbiter does has to happen early and unconditionally,
++	 * not gated behind a debugging argument.
++	 */
++	/*
++	 * One write per channel, dumping every channel's state word around it. A write that lands on
++	 * the hardware moves the state machine out of IDLE for at least a few cycles; a write that
++	 * lands on a guarded page moves nothing. Doing all four here answers "which channel is this
++	 * block listening on" in a single boot, without needing the user to press anything.
++	 */
++	{
++		uint32_t cmd = (PMIF_CMD_EXT_REG_LONG << 30) | ((uint32_t)PMIC_SID << 24) |
++		    (0u << 16) | MT6363_KEYS_STATE;
++
++		/*
++		 * Everything the arbiter needs before it will accept a command. The mainline driver
++		 * never writes any of these -- it inherits them from the bootloader -- so if XNU has
++		 * lost them there is nothing that puts them back, and a command written to a channel
++		 * the arbiter considers disabled simply goes nowhere: the state machine stays at
++		 * IDLE and the poll below times out. CMDISSUE_EN in particular has one bit per
++		 * channel and is the gate in front of the whole thing.
++		 */
++		printf("mt6895-keys: pmif scaler: init_done %#x inf_en %#x arb_en %#x "
++		    "cmdissue %#x spi_mode %#x timer %#x\n",
++		    pmif_rd(PMIF_INIT_DONE), pmif_rd(PMIF_INF_EN), pmif_rd(PMIF_ARB_EN),
++		    pmif_rd(PMIF_CMDISSUE_EN), pmif_rd(PMIF_SPI_MODE_CTRL),
++		    pmif_rd(PMIF_TIMER_CTRL));
++		printf("mt6895-keys: spmimst region: op_st_sta %#x mst_req_en %#x samp %#x\n",
++		    spmimst_rd(SPMI_OP_ST_STA), spmimst_rd(SPMI_MST_REQ_EN),
++		    spmimst_rd(SPMI_MST_SAMPL));
++
++		/*
++		 * Write-prove three registers that are *known to read back non-zero* -- arb_en and
++		 * inf_en both do. cmdissue_en reads zero and stays zero, which is ambiguous on its
++		 * own: either the gate is shut by design and write-protected, or every write to this
++		 * block is being dropped. Writing to a register whose current value we can see, and
++		 * reading it back, separates those two without another round of guessing.
++		 */
++		{
++			uint32_t arb = pmif_rd(PMIF_ARB_EN);
++			uint32_t inf = pmif_rd(PMIF_INF_EN);
++			uint32_t tim = pmif_rd(PMIF_TIMER_CTRL);
++
++			pmif_wr(PMIF_ARB_EN, arb ^ 0x80000000u);
++			pmif_wr(PMIF_TIMER_CTRL, tim ^ 0x00010001u);
++			printf("mt6895-keys: write-prove arb_en %#x -> %#x (wanted %#x)\n",
++			    arb, pmif_rd(PMIF_ARB_EN), arb ^ 0x80000000u);
++			printf("mt6895-keys: write-prove timer %#x -> %#x (wanted %#x)\n",
++			    tim, pmif_rd(PMIF_TIMER_CTRL), tim ^ 0x00010001u);
++			printf("mt6895-keys: write-prove inf_en %#x (unchanged); cmdissue %#x\n",
++			    pmif_rd(PMIF_INF_EN), pmif_rd(PMIF_CMDISSUE_EN));
++			/* Put the two back so nothing downstream sees a stranger value. */
++			pmif_wr(PMIF_ARB_EN, arb);
++			pmif_wr(PMIF_TIMER_CTRL, tim);
++		}
++
++		/*
++		 * Both layouts, side by side. The mt8195 table puts the channels at 0x0800 and
++		 * CMDISSUE_EN at 0x03b8; the mt6873 table puts them at 0x0c00 and 0x03b4. Everything
++		 * up to INF_EN is shared, so those three registers reading correctly proves nothing
++		 * about which table this SoC follows -- only the channel window does. Whichever base
++		 * moves a state machine when a command is written is the real one.
++		 */
++		{
++			/*
++			 * Only the mt8195 layout is listed. The mt6873 one puts its channel window at
++			 * 0x0c00 and its CMDISSUE_EN at 0x03b4, and both are outside the 0x8ff window
++			 * the device tree declares: reading or writing them is a bus abort with no
++			 * vectors behind it, which is what put the board in a boot loop once already.
++			 * The layout question is settled by /sys/.../pmif_access on the Android side --
++			 * 0x3b8, 0x3e4, 0x408, 0x880 and 0x8a8 all read back non-zero, the mt6873
++			 * addresses all read zero -- so there is nothing left to compare against.
++			 */
++			static const struct { const char * name; uint32_t acc; uint32_t sta;
++			    uint32_t issue; uint32_t timer; } layouts[] = {
++				{ "8195", 0x0800, 0x08a8, 0x03b8, 0x03e4 },
++			};
++
++			for (unsigned l = 0; l < 1; l++) {
++				uint32_t issue_now = pmif_rd(layouts[l].issue);
++				uint32_t timer_now = pmif_rd(layouts[l].timer);
++
++				printf("mt6895-keys: layout %s: cmdissue %#x timer %#x\n",
++				    layouts[l].name, issue_now, timer_now);
++				/* Prove the timer register takes a write on this layout. */
++				pmif_wr(layouts[l].timer, timer_now ^ 0x10001u);
++				printf("mt6895-keys: layout %s: timer write-prove %#x\n",
++				    layouts[l].name, pmif_rd(layouts[l].timer));
++				pmif_wr(layouts[l].timer, timer_now);
++
++				/*
++				 * Only the one channel this SoC actually has. The loop that
++				 * walked four of them reached 0x900 and 0x940, both past the
++				 * end of the 0x8ff window, and took the core down with it.
++				 */
++				{
++					uint32_t before = pmif_rd(PMIF_SWINF_STA);
++					uint32_t after;
++
++					pmif_wr(PMIF_SWINF_ACC, cmd);
++					after = pmif_rd(PMIF_SWINF_STA);
++					printf("mt6895-keys: layout %s: sta %#08x -> %#08x "
++					    "(fsm %u)\n", layouts[l].name, before, after,
++					    (unsigned)((after >> 1) & 0x7u));
++					pmif_wr(PMIF_SWINF_VLDCLR, 1u);
++				}
++			}
++		}
++	}
++
++	pmic_scan("boot");
 +	{
 +		uint8_t keys_state = 0;
 +
@@ -8504,6 +8847,24 @@ index 0000000..4d9beb6
 +		{
 +			uint8_t keys_state = 0;
 +			bool have_pmic = pmic_read(MT6363_KEYS_STATE, &keys_state);
++			/*
++			 * The vendor's candidate is watched in the same breath as ours. Whichever one
++			 * moves is the real register, and the scan then says which bit and which way.
++			 */
++			uint8_t alt_state = 0;
++			bool have_alt = pmic_read(MT6363_KEYS_ALT, &alt_state);
++
++			if (have_alt && (alt_state != last_alt || keys_state != last_keys_state)) {
++				if (keylog_level != 0) {
++					printf("mt6895-keys: %#x %02x %#x %02x\n",
++					    MT6363_KEYS_STATE, keys_state, MT6363_KEYS_ALT, alt_state);
++				}
++				if (scan_page) {
++					pmic_scan(alt_state != last_alt ? "0x2a" : "0x1e");
++				}
++				last_alt = alt_state;
++				last_keys_state = keys_state;
++			}
 +
 +			for (unsigned i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
 +				bool down;
@@ -12070,10 +12431,10 @@ index 0000000..12a529c
 +}
 diff --git a/mtk/mt6895/loader/board.h b/mtk/mt6895/loader/board.h
 new file mode 100644
-index 0000000..2f2a5be
+index 0000000..c2a10b5
 --- /dev/null
 +++ b/mtk/mt6895/loader/board.h
-@@ -0,0 +1,702 @@
+@@ -0,0 +1,723 @@
 +/*
 + * mtk/mt6895/loader/board.h: what mtkloader has to be told for a phone with this SoC. The loader
 + * is one program for every MediaTek phone (mtk/loader/mtkloader.c); a board is this file, and
@@ -12601,6 +12962,16 @@ index 0000000..2f2a5be
 +#endif
 +
 +/*
++ * Read the SPMI arbiter from the loader, before XNU runs, to see what the boot chain left behind.
++ * XNU's key driver finds CMDISSUE_EN reading zero and cannot make it hold a one; that register has
++ * one bit per software channel and is the gate in front of every transfer, so a zero there would
++ * explain the whole thing -- but it needs to be compared against the value LK hands over.
++ */
++#ifndef BOARD_PMIF_PROBE
++#define BOARD_PMIF_PROBE        0
++#endif
++
++/*
 + * Dump the overlay and DSI registers into the logbook and stop before the kernel.
 + *
 + * The console draws into the framebuffer LK hands over, the kernel maps that framebuffer with an
@@ -12739,7 +13110,18 @@ index 0000000..2f2a5be
 + * loader adds itself (rd=md0 cpus=4 loader_return_after=900) take about 40.
 + */
 +#ifndef XNU_EXTRA_ARGS
-+#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 touch_raw=1 fbwidth=1080 fbheight=2460 fb_disp=1 usb=2"
++/*
++ * usb=2 is left out on purpose. The USB driver writes IP_PW_CTRL1's HOST_PDN and walks the PHY
++ * through the whole bring-up, and VBUS_VALID cannot be written back once it is lost; Android then
++ * boots into a controller it cannot re-initialise, and the only way back is a physical replug. For
++ * any run that is not itself about USB, staying out of those registers keeps the phone coming back
++ * on its own.
++ *
++ * touch_raw=1 is out for the same kind of reason: one line per finger report crowds the loader's
++ * four megabyte ring buffer until the drivers' own start-up lines are overwritten, and the keys
++ * driver prints its diagnostics once, twenty seconds in.
++ */
++#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1"
 +#endif
 +
 +/*

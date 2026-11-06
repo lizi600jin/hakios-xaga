@@ -525,6 +525,16 @@
 #endif
 
 /*
+ * Read the SPMI arbiter from the loader, before XNU runs, to see what the boot chain left behind.
+ * XNU's key driver finds CMDISSUE_EN reading zero and cannot make it hold a one; that register has
+ * one bit per software channel and is the gate in front of every transfer, so a zero there would
+ * explain the whole thing -- but it needs to be compared against the value LK hands over.
+ */
+#ifndef BOARD_PMIF_PROBE
+#define BOARD_PMIF_PROBE        0
+#endif
+
+/*
  * Dump the overlay and DSI registers into the logbook and stop before the kernel.
  *
  * The console draws into the framebuffer LK hands over, the kernel maps that framebuffer with an
@@ -663,7 +673,18 @@
  * loader adds itself (rd=md0 cpus=4 loader_return_after=900) take about 40.
  */
 #ifndef XNU_EXTRA_ARGS
-#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 touch_raw=1 fbwidth=1080 fbheight=2460 fb_disp=1 usb=2"
+/*
+ * usb=2 is left out on purpose. The USB driver writes IP_PW_CTRL1's HOST_PDN and walks the PHY
+ * through the whole bring-up, and VBUS_VALID cannot be written back once it is lost; Android then
+ * boots into a controller it cannot re-initialise, and the only way back is a physical replug. For
+ * any run that is not itself about USB, staying out of those registers keeps the phone coming back
+ * on its own.
+ *
+ * touch_raw=1 is out for the same kind of reason: one line per finger report crowds the loader's
+ * four megabyte ring buffer until the drivers' own start-up lines are overwritten, and the keys
+ * driver prints its diagnostics once, twenty seconds in.
+ */
+#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1"
 #endif
 
 /*
