@@ -2,7 +2,9 @@
 
 把 Apple 开源的 XNU 内核和 iOS 16.5 用户态跑在联发科天玑 8100 上。目标机 Redmi Note 11T Pro（`xaga`，MT6895），已点亮桌面。
 
-![iOS 桌面跑在 Redmi Note 11T Pro 上](screenshots/02-springboard.jpg)
+<p align="center">
+  <img src="docs/hero.png" alt="HakiOS on MT6895：iOS 16.5 桌面真的跑在 Redmi Note 11T Pro 上" width="100%">
+</p>
 
 <details>
 <summary>开机画面（同一台机，苹果 logo）</summary>
@@ -46,7 +48,7 @@
 | GPU（Mali-G610） | ⬜ | 走软件渲染，3~14 fps；驱动本身 1.5 ms/帧，瓶颈在 CPU 光栅化 |
 | Wi-Fi / 基带 / 音频 / 相机 | ⬜ | 未开始 |
 
-画面右移已修（引擎 plane 地址对齐 kernel 写入地址），见[画面右移](#画面右移)。
+画面右移已修（引擎 plane 地址对齐 kernel 写入地址），见[画面右移](#画面右移引擎的-plane-地址比-kernel-写入地址高一页)。
 
 ---
 
