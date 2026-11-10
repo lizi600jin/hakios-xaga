@@ -553,6 +553,167 @@
 #endif
 
 /*
+ * The GPU's power and clock state, read from the loader before XNU runs.
+ *
+ * The Mali-G610 at 0x13000000 answers no register until its power domains are on, and on this SoC
+ * those live in the SPM at 0x1c001000, in the same MTCMOS bank every other MediaTek block uses.
+ * Android's own power-domain driver reports twelve domains for the GPU (mfg1 to mfg12, chained
+ * mfg1 -> mfg2 -> mfg3..6 -> mfg7/8 -> ...), and the offsets of their control and status registers
+ * are the one thing that cannot be guessed: MT6895 is not in the mainline tables (mt6893 and mt8195
+ * are the nearest, and their offsets differ), and the vendor tree that would have them is not on
+ * this machine.
+ *
+ * So this reads the whole candidate range instead: every dword of the SPM page, plus the GPU's
+ * identification registers and the MFG clock gate block, and writes it all to the logbook. A
+ * domain that is off reads a zero control word and a zero status bit; the two that are on read what
+ * a powered domain reads. Comparing the two gives the offsets without a document.
+ *
+ * Off in normal builds.
+ */
+#ifndef BOARD_MALI_PROBE
+#define BOARD_MALI_PROBE        0
+#endif
+
+/*
+ * Power the Mali-G610 and put it on its 300 MHz PLL before XNU starts, from here.
+ *
+ * The kernel cannot do it. The twelve MFG domains, topckgen's mfg_ref_sel and the MFGPLL were all
+ * worked out from this loader, and repeating the same writes from XNU cost three boot loops in a
+ * row that left no log at all: those blocks fault when they are written while their own clock is
+ * stopped, and a bus fault with no vector taken stops the core where it stands, so nothing is ever
+ * printed and the loader's logbook stays empty too. Up here the MMU is off, the mapping is flat and
+ * the exception vectors are still the ones LK installed, so a mistake still says something.
+ *
+ * What is left for the kernel is the part that has no business in a bootloader: handing the MCU
+ * its firmware, building the address space and talking to the global interface.
+ */
+#ifndef BOARD_MALI_POWER
+#define BOARD_MALI_POWER        1
+#endif
+
+/*
+ * Power the GPU up before XNU, or leave it to the kernel.
+ *
+ * This is separate from BOARD_MALI_POWER for one reason: BOARD_MALI_POWER also guards the cleanup
+ * in chain_android(), and the cleanup has to stay. Every build that left the GPU powered and then
+ * started Android reloaded this same image instead -- Android's gpufreq looks at the sleep
+ * controller, finds a domain on in a state it never creates, and resets the board before adb
+ * appears. Stage eight proved it from the other side: raise mfg1, put it straight back, and
+ * Android boots in thirty seconds.
+ *
+ * Turning that macro off to get a cold start therefore also removed the cleanup, which is exactly
+ * the loop this header warns about elsewhere. With this one at 0 the loader skips only the
+ * pre-power and still hands the domains back, so the kernel can walk the vendor's POWER_ON from a
+ * block that has never been powered -- which is the state Android reaches the MCU from, and the
+ * only variable this work has never been able to compare.
+ */
+#ifndef BOARD_MALI_PREPOWER
+#define BOARD_MALI_PREPOWER     1
+#endif
+
+/*
+ * Power the GPU up, write what happened to flash, and go back to Android instead of on to XNU.
+ *
+ * The stop-and-photograph build was the wrong instrument: the panel goes black as soon as the
+ * bring-up runs on this path, so there is nothing to photograph, and a finished bring-up that
+ * halted looks exactly like one that took a bus fault. A flash record written before every step
+ * separates them -- the last record present names the step that was running -- and returning to
+ * Android is what makes the record reachable, because adb only answers there.
+ *
+ * This borrows the same logbook save_log_to_flash() writes for the kernel, so the fetch is the
+ * usual mtk/tools/xaga-pull-log.sh, and reason 36 in the header says this was the GPU bring-up.
+ */
+#ifndef BOARD_MALI_RETURN
+#define BOARD_MALI_RETURN       0
+#endif
+
+/*
+ * How far to take the GPU before handing the board back to Android.
+ *
+ * The flash record settled that the bring-up itself is clean: all twelve domains, the crystal, the
+ * identifiers and the MFGPLL are on the platter with reason 36 after them, so nothing in that
+ * sequence faults. What breaks comes after it, and this narrows down which part of "after it" it
+ * is by stopping at a chosen point and going back to Android, which is the only state in which the
+ * board answers at all. Whether Android comes back is the answer; the panel is not consulted.
+ *
+ *   0  the real path: promote and jump to XNU
+ *   1  after the twelve domains
+ *   2  after the 26 MHz crystal
+ *   3  after the identification registers
+ *   4  after the MFGPLL and the mux
+ *   5  control: not one GPU register is touched
+ *
+ * Stage five is the one that has to go first. If the control build also fails to come back then
+ * the return path is broken on its own -- the watcher core is still turning, and chain_android()
+ * copies the Android image over the loader's own text, which is where that core is executing --
+ * and no result from stages one to four means anything until that is settled.
+ */
+#ifndef BOARD_MALI_STAGE
+#define BOARD_MALI_STAGE        0
+#endif
+
+/*
+ * How many of the twelve MFG domains to raise by hand: 1, 2 or 12.
+ *
+ * MTK's own driver does not raise them. With GPUFREQ_PDCv2_ENABLE it brings up mfg1 through the
+ * clock framework -- which switches mfg_ref_ck on before the domain, the order that matters -- and
+ * then only checks that MFG0-1 report powered at SPM+0xF3C. Everything from mfg2 up is left to the
+ * power domain controller in hardware, which is also why all twelve carry MTK_SCPD_BYPASS_INIT_ON:
+ * scpsys is telling us it does not power them at init either.
+ *
+ * Raising them by hand gets mfg1..mfg4 up and then stops: mfg5 onwards keep PWR_ON and ON_2ND set
+ * with the acknowledge never coming back (0x111e), which is a request the SPM has taken and will
+ * not complete. A pending request holds the domain half-switched long enough that the board does
+ * not come back to Android at all, so the number here is not a detail -- twelve is what broke every
+ * build so far.
+ *
+ *   1   what Android does on every boot, and therefore the safe default
+ *   2   mfg1 and mfg2, which is what the L2 needs: prove it on the board
+ *   12  the original attempt, kept so the failure stays reproducible
+ *
+ * Two is the default now, and the reason is a measurement rather than a guess. With one domain the
+ * kernel's L2 power-on request is accepted and never completes -- PWRTRANS goes to one and stays
+ * there, PWRACTIVE never sets, and the kernel stops with "the L2 never became ready". With two,
+ * mfg2 joins it: "L2 up: trans 0 active 0 ready 0x1" on the first poll, the firmware loads, address
+ * space zero goes live, and the MCU comes back enabled. mfg2 is the L2's own domain, so a request
+ * that never completes with it off is what one would expect from a cache whose power is not there.
+ */
+#ifndef BOARD_MALI_DOMAINS
+#define BOARD_MALI_DOMAINS      2
+#endif
+
+/*
+ * Bring the GPU up right after the framebuffer is found, which is where the probe build did it and
+ * where it never failed, instead of on the way into XNU.
+ *
+ * This exists only to move one variable. The same twelve domains, crystal and PLL that come up
+ * cleanly at the probe's position leave four of twelve raised and GPU_ID reading zero a few
+ * thousand instructions later in run_xnu(), so the difference is in what ran in between --
+ * watcher_start(), touch_bring_up(), big_cores_clock() -- and not in the power-up code, which does
+ * not change. Stage five proved the return path itself is sound with the GPU untouched.
+ */
+#ifndef BOARD_MALI_EARLY
+#define BOARD_MALI_EARLY        0
+#endif
+
+/*
+ * Stop after powering the GPU up, instead of jumping to XNU.
+ *
+ * Every build that has touched the GPU has ended in a boot loop with nothing on the screen and no
+ * log, and two very different failures look identical from the outside: the power-up itself can
+ * fault, or it can succeed and the jump to a kernel that does not expect a running GPU can fault.
+ * This settles which without a serial port -- the bring-up prints every domain as it goes, so a
+ * screen that shows all twelve and the identifier line means the loader finished and the loop is
+ * the kernel's; a screen that stops partway means the loop is this loader's.
+ *
+ * It ends in an infinite halt rather than a reset, because a reset would reload this same image
+ * and there would be nothing to photograph.
+ */
+#ifndef BOARD_MALI_STOP
+#define BOARD_MALI_STOP         0
+#endif
+
+/*
  * Paging the kernel log across the screen is for a person watching the phone. Here the phone is
  * expected to finish on its own and start Android, and the log is already in the flash by then,
  * so paging only delays that: this board's 400 KB log at scale 3 is 172 pages held 20 seconds
@@ -684,7 +845,7 @@
  * four megabyte ring buffer until the drivers' own start-up lines are overwritten, and the keys
  * driver prints its diagnostics once, twenty seconds in.
  */
-#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1"
+#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0"
 #endif
 
 /*

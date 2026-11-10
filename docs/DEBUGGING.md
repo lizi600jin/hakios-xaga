@@ -47,7 +47,26 @@ lines = [l.decode('utf-8', 'replace') for l in data[72:72 + length].split(b'\n')
 
 **头部是 72 字节，不是 64。** 按 64 解析会 `IndexError`，这个坑很浪费时间。
 
-也不能用 `strings` 直接扫 —— 分区里留着上一次运行的内容，`strings` 会把新旧混在一起。必须按头部里的 `len` 截断。
+也不能用 `strings` 直接扫 —— 分区里留着上一次运行的内容，`strings` 会把新旧混在一起。
+
+**但按 `len` 截断也可能一份日志都看不到。** 头部只在「loader 准备跳进 XNU」和「内核交回控制权」这两个时刻写，如果这中间内核自己又把 logbook 后面的区域用掉了（或者这一轮 loader 从没走到写头部那一步），头部声明的有效区只有几百字节，而真正的内核输出全在区外。踩过好几次：`len` 报 399、`reason` 报 `0xfeedface`（"boot note"，跳转前写的那条），内核几十秒的输出一条都不在区里。
+
+所以两种读法都要会，先按头部截，看不到东西就全文件搜：
+
+```python
+raw = open('xaga-logbook.bin', 'rb').read()
+txt = raw.decode('utf-8', 'replace')
+
+# 头部有效区
+import struct
+head = struct.unpack('<IIQQQQQQQQ', raw[:72])
+inside = [l for l in txt[:72 + head[2]].split('\n') if l.strip()]
+
+# 全文件（忽略头部声明）
+everywhere = [l for l in txt.split('\n') if 'mali:' in l and l.strip().startswith('[')]
+```
+
+`reason` 的几个取值值得记：`0xfeedface` = 跳转前写的 boot note，`36`/`37`/`38` = GPU 上电各阶段的探针，`0` = 内核正常交回。
 
 ### 为什么会丢日志
 

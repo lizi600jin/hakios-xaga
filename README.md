@@ -14,6 +14,8 @@
 </details>
 
 > 实验性的 bring-up 工作，不能日用。触控已可用，电源键可用，没有 GPU 加速（3~14 fps），USB、Wi-Fi、音频还在修，重启后不保存任何设置。
+>
+> GPU 的 kernel 侧已经推进到「CSF 固件装好、页表建好、MCU 收到启动请求」这一步，卡在 MCU 一个指令都不执行——细节见 [Mali-G610：CSF 固件与 MCU](#mali-g610csf-固件与-mcu)。
 
 **只想装上试试**：到 [Releases](../../releases) 下 `hakios-xaga-boot_a.img`，按 [INSTALL.md](INSTALL.md) 五步走。自己编译往下看。
 
@@ -45,7 +47,7 @@
 | 触控（Novatek NT36672E） | ✅ | 单点/多点、长按、点击图标都对得上，落点误差 < 100 px |
 | 按键（keypad + MT6363） | 🟡 | 电源键可用；音量上/下**内核与 HID 都通了**，卡在音频子系统没有输出路由 |
 | USB（MTU3） | 🚧 | 控制器配置已与 Android 工作态逐位对齐，PHY 侧 D+ 仍不上拉 |
-| GPU（Mali-G610） | ⬜ | 走软件渲染，3~14 fps；驱动本身 1.5 ms/帧，瓶颈在 CPU 光栅化 |
+| GPU（Mali-G610） | 🟡 | 上电、时钟、识别、固件装载、AS0 页表全部在真机跑通；CSF MCU 仍未开始执行，仍走软件渲染 3~14 fps |
 | Wi-Fi / 基带 / 音频 / 相机 | ⬜ | 未开始 |
 
 画面右移已修（引擎 plane 地址对齐 kernel 写入地址），见[画面右移](#画面右移引擎的-plane-地址比-kernel-写入地址高一页)。
@@ -91,11 +93,14 @@ tree/            直接落到上游 hakios-xnu-kernel mtk 分支上的新文件
   mtk/mt6895/drivers/input/hakios.nvt.c       Novatek NT36672E 触控
   mtk/mt6895/drivers/input/hakios.mt6895_keys.c  keypad + MT6363 按键
   mtk/mt6895/drivers/usb/hakios.mt6895_usb.c  MTU3 设备模式 gadget
+  mtk/mt6895/drivers/gpu/hakios.mali610.c    Mali-G610：电源、时钟、CSF 固件、AS0 页表
   mtk/mt6895/configs/mt6895.config            SoC 层配置
   mtk/tools/xaga-{cycle,carve,auto}.sh        xaga 专用的刷机 / 刻分区 / 自动化
   mtk/tools/xaga-pull-log.sh                  从 Android 里拉内核 logbook
   mtk/tools/mknvtfw.py                        厂商触控固件转 C 头
   mtk/tools/mkfont8x16.py                     点阵字体生成（替代 swift 版）
+  mtk/tools/mkmalifw.py                       厂商 CSF 固件转 C 头
+  mtk/tools/nvt-slots.py                      触控报告槽位对照
 patches/
   0001-upstream-changes.patch                 对上游已有文件的修改
 docs/
@@ -105,9 +110,9 @@ docs/
 screenshots/     真机照片
 ```
 
-`tree/` 按原路径拷进上游工作树，`patches/0001-upstream-changes.patch` 用 `git apply` 打。patch 覆盖 40 个文件。
+`tree/` 按原路径拷进上游工作树，`patches/0001-upstream-changes.patch` 用 `git apply` 打。patch 覆盖 46 个文件。
 
-`drivers/input/hakios.nvt_fw.h` 是厂商触控固件转出来的 C 头（847 KB），不入库，用 `mtk/tools/mknvtfw.py` 从厂商 bin 生成。
+两个厂商固件头都不入库，用脚本从厂商 bin 生成：`drivers/input/hakios.nvt_fw.h`（847 KB，`mtk/tools/mknvtfw.py`）和`drivers/gpu/hakios.mali610_fw.h`（1.3 MB，`mtk/tools/mkmalifw.py`）。
 
 ---
 
@@ -146,6 +151,25 @@ python3 mtk/loader/build_flashed.py     # → xnu-flashed-slot_a.img（约 22.9 
 ```
 
 上面这组参数就是 Release 用的。调试时把 `-DXNU_RETURN_AFTER='"0"'` 换成 `'"70"'`，XNU 跑 70 秒后交回 loader，loader 自动 `chain_android()` 回 Android，再用 `sh mtk/tools/xaga-pull-log.sh $S` 取日志。
+
+两个厂商固件头要先生成：
+
+```bash
+mtk/tools/mknvtfw.py <厂商触控 bin>        # → drivers/input/hakios.nvt_fw.h
+mtk/tools/mkmalifw.py /path/to/mali_csffw.bin  # → drivers/gpu/hakios.mali610_fw.h
+```
+
+`mali_csffw.bin` 从手机的 `/vendor/firmware/` 取（`adb pull`，`su`）。它必须是**这颗 SoC 自己的那份**：不同 SoC 的 CSF 构建不可互换，RK3588 的是 274432 字节、sha256 `8e7c821a…`，MT6895 的是 258048 字节、sha256 `de22d2fc…`。
+
+GPU 的上电由 loader 做、内核只负责固件与页表，这是有意的分工：
+
+| 宏 | 默认 | 作用 |
+|---|---|---|
+| `BOARD_MALI_POWER` | `1` | loader 进入 XNU 前给十二个域上电；也守卫 `chain_android()` 里的清理 |
+| `BOARD_MALI_PREPOWER` | `1` | 单独关掉「预先上电」，保留清理 |
+| `BOARD_MALI_DOMAINS` | `2` | `1` 只上 mfg1，`2` 上 mfg1+mfg2 |
+
+`-DBOARD_MALI_POWER=0` 看起来像"让 loader 完全不管 GPU"，但它**同时会把清理编掉**——域留在开着的状态交给 Android 的 gpufreq，那块板会在 adb 出现之前复位，表现成一遍遍重刷同一个镜像。要做冷启动对照就用 `-DBOARD_MALI_PREPOWER=0`。
 
 ### 刷入
 
@@ -331,6 +355,99 @@ ovl6 l0 size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14f870
 
 `ovl6 - ovl4 = 0x870 = 540 像素 × 4`，而面板的 `DSC_SLICE_WIDTH` 正好是 540 —— 这不是巧合，两层扫的是同一幅画面的两个 slice。
 
+### Mali-G610：CSF 固件与 MCU
+
+这颗 GPU 和 Adreno 完全不是一个结构。Valhall 之后的 Mali 把调度搬到了一颗**片上 Cortex-M7**（CSF 固件）里：AP 侧只负责上电、建页表、把固件映像装进共享内存，然后把 `MCU_CONTROL` 写 `AUTO`，之后所有 job 都靠门铃和共享接口跟它说话。所以「GPU 驱动」在这台机器上是两段完全不同的活：一段是电源与时钟，一段是跟 M7 的握手。
+
+#### 电源：十二个域，缺一个都不行
+
+MT6895 的 MFG 电源域是 **十二个**（`mtk-scpsys-mt6895.c`，`ctl_offs 0xEBC..0xEE8`，步长 4），依赖链是 `mfg1→mfg2→{mfg3..mfg6}`、`mfg3→mfg7→mfg9`、`mfg4→mfg8`、`mfg5→mfg10→mfg12`、`mfg6→mfg11`。`mfg1` 在厂商头文件里就标注着 `/* MPU, CM7 */`——**M7 就在第一个域里**。
+
+踩的第一个坑是「ACK 不可靠」：`.sta_mask = GENMASK(31,30)` 这两位在真机上经常只回 `01` 而不是 `11`，但域其实已经起来了。按 ACK 做 early-return 会留下半开的域，所以改成「写完之后按 `0x1C001F34` 的实际状态统计，ACK 只当参考」。
+
+踩的第二个坑更贵：`0x1C001F3C` 这个偏移在厂商 `gpufreq_mt6895.h` 里叫 `PWR_STATUS_OFS`，但 `clkchk-mt6895.c` 里 `0xF34` 才叫 `PWR_STATUS`、`0xF3C` 是 `XPU_PWR_STATUS`。**照抄厂商那份判定会永远读到 `0x4`。**
+
+踩的第三个坑是 SRAM：十二个域**每个都带 `sram_pdn_bits GENMASK(8,8)` / `sram_pdn_ack_bits GENMASK(12,12)`**，包括 mfg1 和 mfg2。只做「置 `PWR_ON`+`PWR_ON_2ND`、清 `ISO`/`CLK_DIS`、置 `RST_B`」而不清 SRAM 掉电位，域会漂亮地报 `ACK=3`，然后 M7 **一条指令都取不到、也不报 fault**。控制字长这样：
+
+```
+0xc000110d   bit8=1 SRAM_PDN  bit12=1 SRAM_ACK   ← M7 的 SRAM 还在掉电
+0xc000000d   bit8=0          bit12=0            ← 正常
+```
+
+这个坑的样子值得记下来：EPU 状态一切正常、`MCU_STATUS` 停在 `ENABLED`、`AS_FAULTSTATUS` 恒 0、MMU 无页错、写 `DISABLE` 也不回落。看起来像「固件有 bug」，实际是**核没电**。
+
+#### 时钟
+
+两路要分开看：
+
+- `mfg_sel_0`（`CLK_CFG_30` bit16）走 `mfg_ref_ck`（26 MHz 晶振）或 `mfgpll_ck`
+- `mfg_sel_1`（`CLK_CFG_30` bit17）走 `mfgsc_ref_ck` 或 `mfgscpll_ck`，而 `mfgsc_ref_sel`（`CLK_CFG_5` bit1:0）又能在 `{26 MHz, univpll_d6, mainpll_d5_d2}` 里选
+
+先切 **26 MHz 晶振**再上 PLL，是个有用的排错顺序：晶振在全 SoC 常开，选它不可能让 GPU 完全没时钟。如果 26 MHz 下 `GPU_ID` 能答（`0xa8670004`），就说明供电一直是对的、只缺时钟；若仍为 0，问题在别处，再怎么调 PLL 也找不到。
+
+MFGPLL 300 MHz 是厂商表里最低的一档：`26M × 0x1713b1 / 2^14 / 8`，VCO 2400 MHz 落在 1500..3800 窗口里。寄存器顺序是 `CON3` 置 `PWR_ON` → 清 `ISO_EN` → `CON1` 写 `PCW_CHG|POSDIV_8|PCW` → `CON0` 置 `PLL_EN` → 最后才 `CLK_CFG_30_SET` 切 `mfg_sel_0`。这样 PLL 失败也还留在晶振上跑。
+
+#### 两段容易漏的厂商代码
+
+`gpufreq/v1` 有、`v2`（mt6895）**没有**的两段，正是最容易漏的：
+
+```c
+/* MFG_ASYNC_CON 0x13FBF020：v2 只开 [23]/[25] 的 SLV 侧，master 侧没人开 */
+val |= (1 << 22) | (1 << 23) | (1 << 24) | (1 << 25);
+/* MFG_QCHANNEL_CON 0x13FBF0B4 [4] QCHANNEL_ENABLE */
+/* MFG_ASYNC_CON_1 0x13FBF024 [0] FAXI_CK_SOC_IN_EN */
+```
+
+以及一个**观测窗口**，厂商自己在 `__gpufreq_check_bus_idle()` 里用：
+
+```c
+writel(0x1,  mfg + 0xB4);    /* MFG_ACTIVE_SEL */
+writel(0x3,  mfg + 0x170);   /* MFG_DEBUG_TOP_SEL */
+/* 0x13FBF178 bit2: 1 = 总线空闲, 0 = 有事务 */
+```
+
+这是判断「MFG 的 AXI 上到底有没有东西在跑」的唯一现成出口，比猜寄存器有用。
+
+#### 页表与地址空间
+
+CSF 的 MMU 和我们熟悉的 ARM SMMU 不是一回事，它是 Mali 自己那套：`AS0` 归 MCU，`AS1..AS7` 给 context。MCU 的地址空间号是 **0**（`mali_kbase_csf_firmware.h` 里 `#define MCU_AS_NR 0`），不是 1。
+
+三个容易写错的地方：
+
+| 项 | 正确值 | 说明 |
+|---|---|---|
+| 表指针（L0–L2）编码 | `3` | 不是 `1`；`1` 是 L0–L2 的 block 映射 |
+| 叶页（L3）编码 | `3` | |
+| `AS_TRANSCFG` | `0x42000006` | `ADRMODE_AARCH64_4K(6)` + `PTW_MEMATTR_WB(2<<24)` + `PTW_RA(1<<30)` |
+| `AS_MEMATTR` | `0x00084c8d888d8f88` | kbase 的固定索引表，不是 panthor 那套 `mair_to_memattr` |
+
+`AS_COMMAND` 只有 `UPDATE(1)` 会真正触发走查。**它可能立刻抬 `MMU_IRQ_RAWSTAT` 的 `MMU_BUS_ERROR(0)`（bit16）**，而 CSF 构建下的 kbase 把 bus-error 的处理全包在 `#if !MALI_USE_CSF` 里——也就是说这个位在 Android 上大概率也一直挂着，只是没人读。判据要用 `AS_FAULTSTATUS`/`AS_FAULTADDRESS`，不是 bus-error 位。
+
+#### 固件容器
+
+`/vendor/firmware/mali_csffw.bin` 是 258048 字节的自描述容器，magic `0xc3f13a6e`。头里两个字段容易混：
+
+```
+off 16 = 0x300 = 768   ← entry 表尾（不是文件长度！）
+off 20 = 0x2000 = 8192
+```
+
+按 768 解析，21 条 entry 干净收尾：10 条 iface（其中 3 条是 protected-mode、2 条 size 0）+ type1×4 + type3×5 + type6×1 + type5×1。
+
+向量表在 section 0，头两个字是 `0x02040000`（初始 MSP）和 `0x010018ed`（Reset_Handler，Thumb 位）。**VTOR 必须是 0，固件自己不设**；而 `MSP = 0x02040000` 落在 section 2 上界 `0x203e000` 之外 0x2000 字节——这条到现在还没修，等 MCU 真能跑起来再说。
+
+#### Google 与 MTK 在这里的分叉
+
+`/proc/gpufreqv2/gpufreq_status` 是很值得翻的东西，它一句话说清了为什么「照抄厂商 gpufreq 的上电九步」是死路：
+
+```
+[Common-Status] GPUEB Support: On
+```
+
+`gpueb-support = <1>` 意味着 `gpufreq_mt6895.c` 的 probe 直接 `goto register_fp`，**整段跳过 `__gpufreq_power_control()`**——那条九步 POWER_ON 在 xaga 上根本不执行，GPU 的电源和时钟由一颗独立的 GPUEB 协处理器自己管。所以 AP 侧看到的 SPM 十二域状态，不一定是 GPUEB 认的那份。
+
+---
+
 ## 正在卡的地方
 
 ### USB：PHY 的 D+ 拉不起来
@@ -424,6 +541,85 @@ mt6895-keys: pmic bit 1 down (register 1c)      ← 电源
 
 **电源键能熄屏**，说明内核 → HID → backboardd 这条链是完整的。音量键的 HID 事件也一样成对到达 backboardd，但系统音量不变、音量条不弹——backboardd 收到后要把音量转给音频系统，而这台机器的音频只有一个空壳驱动（`HakiosAudio.driver`）和 `/dev/hakios-audio`，没有当前输出路由，没有可调的音量。**所以音量键的剩余工作量属于音频子系统，不属于按键驱动。**
 
+### GPU：M7 收到了启动请求，但一个指令都没执行
+
+上电、时钟、识别都通了：
+
+```
+mali: mfg1  MPU on: 0xc000000d
+mali: mfg2  L2 on: 0xc000000d
+mali: gpu_id 0xa8670004 l2 0x7130306 shader 0x130013
+mali: pll: con0 0x15445 con1 0x31713b1 con3 0x80000001 cfg5 0x1010182 cfg30 0xff010000
+mali: this is GPU 0xa8670004, CSF 0x40a0412
+mali: mmu 0x2830 (va 48 bits, pa 40 bits) address spaces 0xff
+mali: power settle: found 0x600 (all 1 single 1)
+```
+
+固件装载、页表走查、AS0 使能也是干净的：
+
+```
+mali: firmware 258048 bytes, header 0.1, entry table ends at 768
+mali: 7 sections, 8 page tables
+mali: walk 0:        L0 0x50008403 L1 0x5000c403 L2 0x50010403 L3 0x40000050004fc3 page
+mali: walk 0x1000000: ... page
+mali: AS0 readback: transtab 0x50000000 memattr 0x84c8d888d8f88 transcfg 0x42000006
+```
+
+然后就没有然后了。判据是一个**哨兵**：把 `0xff5aa5f0` 写进共享页的 `version` 字（CSF 固件启动后第一件事就是把版本号写在那儿），启动 MCU，等一秒，再读回来：
+
+```
+mali: sentinel 0xff5aa5f0 written to the version word
+mali: MCU status 0 before the start request
+mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+...
+mali: the start loop ended after 1000000 spins (halt seen 0, fatal seen 0)
+mali: MCU status 1 (enabled and running), job irq 0
+mali: version word 0xff5aa5f0 (untouched, so no instruction ran)
+```
+
+**核一个指令都没执行。** 而且：
+
+- `AS_FAULTSTATUS`/`AS_FAULTADDRESS` 恒 0 ⇒ 不是取指 fault
+- `JOB_INT_STATUS` 的 `GLOBAL_IF(bit31)` 从未升起
+- 百万次自旋里 `MCU_STATUS` 从未变成 `2`（HALT）或 `3`（FATAL）——而 Android 每一轮都能读到 `2`
+- 写 `MCU_CONTROL = DISABLE` 之后状态仍停在 `1`，状态机出不来
+- MFG 的 AXI 从启动那一刻起就 `0x1b`（非空闲），一直不回落，且**关掉核也不回落**
+
+为了排除「是不是固件有问题」，做过一个决定性实验：**把固件入口换成自己写的 32 字节 Cortex-M7 桩**——三条 `str` 到共享页，分别是 `0x11`、`0x22`、`0xdeadbeef`，不需要栈、不碰共享接口、不碰 `0x40000000` 那组内部寄存器：
+
+```asm
+movw r0, #0x0000 ; movt r0, #0x0400   ; r0 = 0x04000000
+movw r1, #0x0011 ; str  r1, [r0]
+movw r1, #0x0022 ; str  r1, [r0, #4]
+movw r1, #0xbeef ; movt r1, #0xdead
+str  r1, [r0]     ; b .
+```
+
+结果一样：`version word 0xff5aa5f0 untouched`。**换成自己写的桩都不跑，所以问题不在固件。**
+
+已排除的（每条都有真机读数或源码对照，不是推测）：
+
+| 假设 | 排除依据 |
+|---|---|
+| 固件与 Android 不同 | `sha256` 逐字节相同（`de22d2fc…`） |
+| 固件段载入有缺口 | 7 段全部映射成功，叶描述符低两位 `11` |
+| 页表编码错 | 表指针 `3` / 叶页 `3` / block `1`，与 kbase 一致 |
+| `ASN_HASH` 未配 | G610（arch 10）根本没有这组寄存器，回读全 0 |
+| 硬件 issue 寄存器非零 | 上电默认就是 `shader 0 tiler 0 l2mmu 0 csf 0` |
+| MFG1 的 AXI 总线保护 | 四条全部释放，释放前后结果相同 |
+| `PWR_ACTIVE` 未升起 | panthor 有这个位但全树零使用，kbase 无定义 |
+| MFG0 域没开 | mt6895 域表里没有 MFG0（只有 mfg1..mfg12） |
+| `0x40000000` 未映射 | 那是 GPU 内部固定译码窗口，本来就不该映射 |
+| 页表落在 8.5 GiB 超范围 | 搬到 1.25 GiB 后结果不变 |
+| AS 配置写不进 | 三份配置回读逐字正确 |
+| 电源没 settle | `POWER_CHANGED_ALL` 已在，`found 0x600` |
+| `mfg_sel_1` 时钟 | `cfg5 0x1010182` = `mainpll_d5_d2`，与 Android 一致 |
+| VSTACK 没开 | 已打开（`status 0x6e enabled 1`） |
+| master 侧 AXI 门没开 | 六项寄存器读时就已经是目标值 |
+| 冷路径 vs 热路径 | 两条路径结果完全一样 |
+
+目前最强的一条线索是 **GPUEB**：`/proc/gpufreqv2/gpufreq_status` 报 `GPUEB Support: On`，而 `gpufreq_mt6895.c:5166` 在 `g_gpueb_support` 为真时直接 `goto register_fp`，**整段跳过 `__gpufreq_power_control()`**。也就是说厂商那条九步 POWER_ON 在这台机器上根本不执行——GPU 的电源域和时钟由一颗独立的 GPUEB 协处理器自己管，AP 侧的写可能只落在影子寄存器里。下一步要验证的就是这条：AP 写的十二个域，GPUEB 认不认。
+
 ### 卡顿：软件渲染压在 4 个 999 MHz 核上
 
 ```
@@ -448,7 +644,11 @@ CoreAnimation: Failed to initialize Metal or OpenGLES contexts!
 - [x] 按键：MT6363 `0x001e` + SPMI mt8195 布局 + `EXT_REG_LONG` opcode（电源键可用，音量键待音频）
 - [x] 画面右移（引擎 plane 地址与 kernel 写入地址差一页）
 - [ ] 卡顿：`cpus=8`、`XNU_BIG_CLOCK`、Mesa 软件 GL
-- [ ] Mali-G610 的 kernel 侧：电源域、时钟、MMU、job queue
+- [x] Mali-G610：十二个电源域（含 mfg1/mfg2 的 SRAM）
+- [x] Mali-G610：26 MHz 晶振 → MFGPLL 300 MHz，两路 mux 都切对
+- [x] Mali-G610：CSF 固件装载（258048 B，7 段）+ AS0 页表 + `MCU_CONTROL=AUTO`
+- [ ] Mali-G610：**MCU 一个指令都不执行**——最强线索是 GPUEB 接管了电源与时钟
+- [ ] Mali-G610：M2 及以后（命令流、CSG/CS 调度、IOKit 服务）
 - [ ] Wi-Fi（CONNSYS）
 - [ ] 音频、相机
 
