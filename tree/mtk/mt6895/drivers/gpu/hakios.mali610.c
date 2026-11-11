@@ -168,6 +168,17 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
  */
 #define MALI_MFGRPC_PHYS        0x13f91000ULL
 #define MALI_MFGRPC_SIZE        0x1000u
+
+/* g3d_mpu: the GPU's own protection unit, and g3d_brisket next to it. No driver claims either. */
+#define MALI_G3D_MPU_PHYS       0x13bff000ULL
+#define MALI_G3D_MPU_SIZE       0x1000u
+#define MALI_G3D_BRISKET_PHYS   0x13bfee00ULL
+#define MALI_G3D_BRISKET_SIZE   0x200u
+
+/* mfg_cpe_control: the second GPU coprocessor block, at the vendor's 0x13FB9C00. */
+#define MALI_MFG_CPE_PHYS       0x13fb9c00ULL
+#define MALI_MFG_CPE_SIZE       0x100u
+
 #define MALI_BP_MD0_MFG1        0x10001ca8u        /* clr_ofs 0x0ca8 in infracfg */
 #define MALI_BP_MD0_MFG1_MASK   0x0000000fu
 #define MALI_BP_MFGRPC_MFG1     0x13f91044u        /* clr_ofs 0x0044 in mfgrpc */
@@ -197,6 +208,27 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
 #define MALI_MFG_AXCOHERENCE    0x0168u
 
 /*
+ * MFG_I2M_PROTECTOR: the initiator-to-memory protector, which sits between every master in the
+ * MFG block and DRAM. This is step nine of the vendor's power-on and it is not optional: the
+ * vendor sets g_gpm_enable = true before it ever reaches power control (gpufreq_mt6895.c:5196,
+ * "default enable GPM 1.0, before power control") and only then guards the call with that flag
+ * (gpufreq_mt6895.c:814). The block is named for di/dt shaping, which is what the vendor's
+ * comment calls it, but a protector that is never programmed is a gate with an undefined answer,
+ * and the one thing every failed run here agrees on is that the GPU's own reads never complete.
+ *
+ * The four values and the ordering are copied from __gpufreq_gpm_control()
+ * (gpufreq_mt6895.c:3347-3367) verbatim: three configuration words, the fourth register, a one
+ * microsecond wait, and then the first word again with bit 0 set, which is what arms it. Reading
+ * them back afterwards matters because nothing in this block has ever been read here.
+ */
+#define MALI_MFG_I2M_CFG_00     0x0f60u         /* 0x13FBFF60 */
+#define MALI_MFG_I2M_CFG_01     0x0f64u         /* 0x13FBFF64 */
+#define MALI_MFG_I2M_CFG_02     0x0f68u         /* 0x13FBFF68 */
+#define MALI_MFG_I2M_CFG_03     0x0fa8u         /* 0x13FBFFA8 */
+/* Unnamed in every source read so far; sits in the same page and is only ever read here. */
+#define MALI_MFG_I2M_OSTD       0x0f40u         /* 0x13FBFF40 */
+
+/*
  * GPUEB: a separate Cortex-M4-ish coprocessor at 0x13C40000 that the vendor firmware leaves in
  * charge of the GPU's own power and clock sequencing on this SoC (the DTS says
  * `gpueb-support = <1>`, and gpufreq_mt6895.c:5166 jumps over its entire power_control path
@@ -215,6 +247,7 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
 #define MALI_GPUEB_WDT_CON      0x20618u
 #define MALI_GPUEB_IRQ_RAW      0x2033cu
 #define MALI_GPUEB_MBOX_RECV    0x22078u
+#define MALI_GPUEB_GPR          0x1fd1cu        /* gpr_offset from the allocator's node */
 /*
  * The MFG interconnect's own clock gates.
  *
@@ -442,6 +475,21 @@ static unsigned gMaliEarlyAs0;                  /* set once the early path has a
  * Switching it off puts the old sequence back, so the two can be compared in one line.
  */
 static unsigned gMaliCold = 1;                  /* mali_cold=0 restores the reset-path writes */
+/*
+ * mali_gpm=0 skips the initiator-to-memory protector step.
+ *
+ * On by default because the vendor has it on by default: gpufreq_mt6895.c:5196 sets
+ * g_gpm_enable = true unconditionally before power control can ever run, so no phone reaches a
+ * powered GPU without those five writes. This is the one step of the vendor's nine that this
+ * driver has never performed, and the only one whose absence leaves a master gate unprogrammed.
+ */
+static unsigned gMaliGpm = 1;                   /* mali_gpm=0 skips the I2M protector */
+/*
+ * mali_ostd=1 reads 0x13FBFF40 twice, in the same page as the protector words, described second
+ * hand as MFG_MAX_OSTD_R_CON_0. Off by default: nothing in the vendor tree names it, and an
+ * undecoded word in this block hangs the bus rather than returning.
+ */
+static unsigned gMaliOstd;                      /* mali_ostd=1 samples the outstanding counter */
 static bool gMaliDone;
 
 #define mrd(at)                 (*(volatile uint32_t *)(gGpu + (at)))
@@ -904,10 +952,22 @@ load_firmware(void)
 				printf("mali: corrupt firmware section at %u\n", offset);
 				return false;
 			}
+			/*
+			 * The three PROT entries are the firmware's .bss: 256KB covering VA
+			 * 0x3000000-0x3040000 with no data in the image at all. kbase does not
+			 * skip them -- it allocates them through the protected memory allocator
+			 * (csf/mali_kbase_csf_firmware.c:537 kbase_csf_protected_memory_alloc)
+			 * and maps them, and only gives up if the allocator is missing. There is
+			 * no allocator here, so they get ordinary pages: the MCU only needs the
+			 * memory to exist, and leaving them unmapped means the first store to a
+			 * global variable lands on nothing. That is a plausible reason for a core
+			 * that reports ENABLED, never writes its version word and never faults.
+			 */
 			if (flags & SEC_PROT) {
-				printf("mali: section %#llx-%#llx is protected-mode only, skipped\n",
-				    va_start, va_end);
-			} else if (va_end > va_start) {
+				printf("mali: section %#llx-%#llx is protected-mode, "
+				    "mapped with ordinary memory\n", va_start, va_end);
+			}
+			if (va_end > va_start) {
 				struct mali_section *s;
 				bool cached;
 				unsigned index;
@@ -1638,6 +1698,21 @@ gpueb_watch(const char *when)
 	con = reg_rd(gGpueb, MALI_GPUEB_WDT_CON);
 	printf("mali: gpueb %s: kick %#x -> %#x (%s), irq raw %#x, wdt_con %#x\n",
 	    when, a, b, a == b ? "frozen" : "running", raw, con);
+	/*
+	 * The GPR word the protected-memory-allocator node points at.
+	 *
+	 * protected-memory-allocator in the device tree (xaga_live.dts) gives gpueb_base
+	 * 0x13c40000, gpr_offset 0x1fd1c and gpr_id 6, so the word is at
+	 * 0x13c40000 + 0x1fd1c + 6*4 = 0x13c5fd34. The MTK patch that implements the allocator
+	 * computes the page table base from it as (value << PAGE_SHIFT) + gmpu_table_size, which
+	 * means a non-zero value there is proof the GPU memory protection unit has been given a
+	 * table, and zero means it never was. On xaga the table area is me_GPUmputab_PMA at
+	 * 0x78c00000, so a programmed word should read 0x78c00 or thereabouts.
+	 */
+	printf("mali: gpueb %s: gpr[6] %#x (gmpu table %s at %#llx)\n", when,
+	    reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u),
+	    reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u) != 0 ? "programmed" : "never programmed",
+	    (unsigned long long)((uint64_t)reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u) << 12));
 }
 
 static void
@@ -1656,6 +1731,84 @@ mfg_bus_watch(const char *when)
 	    when, a, b, c, d,
 	    a & MALI_MFG_DEBUG_TOP_BUSY, b & MALI_MFG_DEBUG_TOP_BUSY,
 	    c & MALI_MFG_DEBUG_TOP_BUSY, d & MALI_MFG_DEBUG_TOP_BUSY);
+}
+
+/*
+ * The GPU's own memory protection unit.
+ *
+ * Two nodes in the device tree belong to nothing: g3d_mpu@13bff000 and g3d_brisket@13bfee00. No
+ * driver in the vendor tree claims either compatible string, the kernel never touches them, and
+ * the reserved-memory node me_GPUmputab_PMA hands the GPU twenty megabytes at 0x78c00000 with
+ * no-map -- a page table area for something. A region that exists to hold translations is a
+ * region that something consults before a GPU access is allowed to reach DRAM, and neither this
+ * driver nor any run has ever read a single register out of it.
+ *
+ * Whether it gates the MCU is a separate question and one register dump will not settle it, but
+ * an all-zero block and a programmed block look completely different and the answer decides
+ * whether there is a second MMU in the path at all.
+ */
+static void
+gmpu_probe(const char *when)
+{
+	vm_offset_t mpu;
+	unsigned i;
+
+	mpu = ml_io_map(MALI_G3D_MPU_PHYS, MALI_G3D_MPU_SIZE);
+	if (mpu == 0) {
+		printf("mali: gmpu %s: the block will not map\n", when);
+		return;
+	}
+	printf("mali: gmpu %s:", when);
+	for (i = 0; i < 64u; i++) {
+		uint32_t v = reg_rd(mpu, i * 4u);
+
+		if (v != 0u) {
+			printf(" %#x:%#x", i * 4u, v);
+		}
+	}
+	printf(" (nonzero words above; the rest read 0)\n");
+	/*
+	 * g3d_brisket@13bfee00, the 0x200 bytes directly below this block, is not read here.
+	 *
+	 * It cost a whole run to find out. The first attempt at this function ended with the
+	 * g3d_mpu line and nothing after it: the read of 0x13bfee00 never completed, the core
+	 * sat waiting on it, and the log stopped at 33.287 seconds with the address space work,
+	 * the page table fix and the MCU start all still ahead of it. Reading a gated MTK
+	 * peripheral does not fault -- it hangs -- and this one hangs in a register that looks
+	 * like it belongs to the GPU.
+	 *
+	 * The same hazard the GPUEB window has, one page lower, and the same rule applies: it
+	 * only gets touched when there is an independently opened clock behind it, and there is
+	 * no such clock in this kernel.
+	 */
+}
+
+/*
+ * The other coprocessor block in the MFG window, asked last.
+ *
+ * The vendor's gpufreq driver maps a "mfg_cpe_control" resource at 0x13FB9C00 and writes
+ * 0x0901031f to offset 0 and 0x0000ffff to offset 4 before it reads aging data out of a separate
+ * sensor block. Two words, written unconditionally, and nothing here has ever touched them.
+ *
+ * It is called only from the tail of a failed run, after everything about the GPU has already
+ * been printed, because a block in this window that is not decoded behaves like g3d_brisket did:
+ * the read never returns and the log simply stops. Losing a run to learn that this address is
+ * also undecoded is an acceptable trade; losing the run before the MCU start is not.
+ */
+static void
+cpe_probe(void)
+{
+	vm_offset_t cpe;
+
+	cpe = ml_io_map(MALI_MFG_CPE_PHYS, MALI_MFG_CPE_SIZE);
+	if (cpe == 0) {
+		printf("mali: cpe: the block will not map\n");
+		return;
+	}
+	printf("mali: cpe: %#x %#x %#x %#x (ctrlen %s)\n",
+	    reg_rd(cpe, 0x00), reg_rd(cpe, 0x04),
+	    reg_rd(cpe, 0x08), reg_rd(cpe, 0x0c),
+	    (reg_rd(cpe, 0x04) & 0xffffu) != 0 ? "programmed" : "never programmed");
 }
 
 /*
@@ -1788,6 +1941,64 @@ mali_acp_up(void)
 }
 
 /*
+ * Arm the initiator-to-memory protector, which has never been programmed on this board.
+ *
+ * The vendor does four plain writes, waits a microsecond, and then re-writes the first word with
+ * bit 0 set. It never reads any of them back and it never checks a status bit, which is the
+ * honest shape of the thing: whatever this protector does, it does it without telling anyone.
+ * Copying the sequence exactly is the only defensible starting point -- the values are not
+ * documented anywhere, and "0x20300316 then 0x20300317" is not a pattern one invents.
+ *
+ * The readback is added here because it costs one register access and answers whether this block
+ * is decoded at all. If the four words do not hold the values just written, the block is either
+ * gated or not decoded, and both of those change what the next run should try.
+ */
+static void
+mfg_gpm_arm(const char *when)
+{
+	reg_wr(gMfgcfg, MALI_MFG_I2M_CFG_00, 0x20300316u);
+	reg_wr(gMfgcfg, MALI_MFG_I2M_CFG_01, 0x1800000cu);
+	reg_wr(gMfgcfg, MALI_MFG_I2M_CFG_02, 0x01010802u);
+	reg_wr(gMfgcfg, MALI_MFG_I2M_CFG_03, 0x000227f3u);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	delay(1);
+	reg_wr(gMfgcfg, MALI_MFG_I2M_CFG_00, 0x20300317u);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	delay(2);
+
+	printf("mali: i2m protector %s: %#x %#x %#x %#x\n", when,
+	    reg_rd(gMfgcfg, MALI_MFG_I2M_CFG_00), reg_rd(gMfgcfg, MALI_MFG_I2M_CFG_01),
+	    reg_rd(gMfgcfg, MALI_MFG_I2M_CFG_02), reg_rd(gMfgcfg, MALI_MFG_I2M_CFG_03));
+}
+
+/*
+ * The outstanding-transaction counter some notes point at, gated behind a boot argument.
+ *
+ * The address (0x13FBFF40, in the same page as the protector words above) comes from a second
+ * hand report of a register called MFG_MAX_OSTD_R_CON_0, and no source in this tree mentions it:
+ * a grep for FF40 and for OSTD across the vendor gpufreq tree returns nothing. Reading a word in
+ * this block that turns out not to be decoded does not fault -- it parks the transaction and the
+ * watchdog takes the board, which is exactly what 0x13F91034 and 0x13BFEE00 did here. A register
+ * that answers tells us whether reads are queued on the bus; a register that hangs costs a run.
+ * That trade is not worth making by default, so it is opt in: mali_ostd=1.
+ */
+static void
+mfg_ostd_probe(const char *when)
+{
+	uint32_t a, b;
+
+	if (!gMaliOstd) {
+		return;
+	}
+	a = reg_rd(gMfgcfg, MALI_MFG_I2M_OSTD);
+	delay(50);
+	b = reg_rd(gMfgcfg, MALI_MFG_I2M_OSTD);
+	printf("mali: ostd %s: %#x -> %#x (%s)\n", when, a, b,
+	    a == b ? (a != 0u ? "stuck, reads are queued and not draining" : "zero") :
+	    "moving");
+}
+
+/*
  * The GPU timestamp counter, which has read zero on every run of this driver.
  *
  * gpufreq_mt6895.c:1240-1247 __gpufreq_set_timestamp() writes 0x00000003 to 0x13FBF130:
@@ -1861,6 +2072,19 @@ as_command(unsigned as, uint32_t cmd)
 		return false;
 	}
 	mwr(asReg(as, kAsCommand), cmd);
+	/*
+	 * And wait for it to finish.
+	 *
+	 * panthor_mmu.c:556-568 as_send_cmd_and_wait() brackets the write with wait_ready() on both
+	 * sides: AS_STATUS bit0 is set while the command is outstanding and the hardware clears it
+	 * when the command retires. Waiting only before the write, which is what this function used
+	 * to do, cannot tell a command that completed from one that was never accepted, and the
+	 * caller then reads AS_FAULTSTATUS on a space that may still be mid-update.
+	 */
+	if (!as_ready(as)) {
+		printf("mali: AS%u never finished command %#x\n", as, cmd);
+		return false;
+	}
 	return true;
 }
 
@@ -1988,8 +2212,14 @@ as_enable(unsigned as, uint64_t transtab)
 	    (unsigned long long)gpu_rd64(asReg(as, kAsMemattr)),
 	    (unsigned long long)gpu_rd64(asReg(as, kAsTranscfg)));
 	AS_STEP("update", mwr(asReg(as, kAsCommand), kAsCmdUpdate));
-	(void)as_ready(as);
-	if (!as_command(as, kAsCmdUpdate) || !as_ready(as)) {
+	/*
+	 * One UPDATE, not two.
+	 *
+	 * This used to follow the step with a second one through as_command(), so every space took
+	 * the command twice and the second one raced the first one's completion bit in the interrupt
+	 * latch. The reply is already visible in the step line above.
+	 */
+	if (!as_ready(as)) {
 		printf("mali: AS%u did not take the update\n", as);
 		return false;
 	}
@@ -3213,23 +3443,27 @@ mali_bring_up(void)
 		printf("mali: the loader left it powered and clocked; not touching the SPM\n");
 	}
 	/*
-	 * The master-side clock gates, opened in both branches.
+	 * The last three steps of the vendor's nine, in the vendor's order.
 	 *
-	 * Deliberately outside the cold-start test. The loader powers the block and leaves it
-	 * running, and it gates the interconnect the way the vendor driver for this part gates it --
-	 * the slave side only. A run reached from that state is exactly the run that has to have the
-	 * master side opened, so this cannot live in the branch that only executes when the loader
-	 * left the GPU cold.
-	 */
-	mfg_master_gates("before the firmware");
-	/*
-	 * The coherence port, likewise in both branches. The loader opens it today, which is why no
-	 * run of this driver has ever exercised the code path that opens it -- and the M7 fetches its
-	 * instructions through that port. Opening it here as well costs nothing on the path where it
-	 * is already open (the reads come back with the bits set) and is the only way to find out
-	 * whether it was ever the difference.
+	 * __gpufreq_power_control() runs acp at :806, hwdcm at :810 and gpm at :815, and this driver
+	 * had the first two the other way round and the third not at all. That ordering was never
+	 * argued for; it accumulated. The vendor's is the one that leaves a phone with a working GPU,
+	 * so it is the one to follow, and putting the protector last matches the sequence the
+	 * firmware itself uses in its own power path.
+	 *
+	 * All three are outside the cold-start test. The loader powers the block and leaves it
+	 * running on some boots and not others, and none of these three steps is conditioned on which
+	 * happened there: a gate that was opened is opened again harmlessly, and a protector that was
+	 * never armed is armed.
 	 */
 	mali_acp_up();
+	mfg_master_gates("before the firmware");
+	if (gMaliGpm) {
+		mfg_gpm_arm("before the firmware");
+	} else {
+		printf("mali: i2m protector skipped (mali_gpm=0)\n");
+	}
+	mfg_ostd_probe("before the firmware");
 	gMaliProgress = 1;
 
 	printf("mali: this is GPU %#x, CSF %#x\n", mrd(kGpuId), mrd(kCsfId));
@@ -3313,6 +3547,7 @@ mali_bring_up(void)
 	 * contaminated by anything it does later.
 	 */
 	gpueb_watch("before the address spaces");
+	gmpu_probe("before the address spaces");
 	as_park_unused();
 	/*
 	 * The masks go on before the L2 is asked to come up, not inside start_mcu().
@@ -3562,6 +3797,8 @@ mali_bring_up(void)
 		 * reads non-idle and the core has done nothing, the two facts are about each other.
 		 */
 		gpueb_watch("after the failed start");
+		gmpu_probe("after the failed start");
+		cpe_probe();
 		return;
 	}
 	if (gMaliWitness) {
@@ -3687,6 +3924,24 @@ hakios_mali610_init(void)
 
 		if (PE_parse_boot_argn("mali_low", &low, sizeof(low))) {
 			gMaliLowMem = low ? 1u : 0u;
+		}
+	}
+	/*
+	 * mali_gpm=0 skips the I2M protector, mali_ostd=1 samples the outstanding counter.
+	 *
+	 * Both are new in the run that adds the protector: one turns the new step off again without a
+	 * rebuild, the other turns on a register read that may hang the block, so neither can be a
+	 * default.
+	 */
+	{
+		unsigned gpm = 1;
+		unsigned ostd = 0;
+
+		if (PE_parse_boot_argn("mali_gpm", &gpm, sizeof(gpm))) {
+			gMaliGpm = gpm ? 1u : 0u;
+		}
+		if (PE_parse_boot_argn("mali_ostd", &ostd, sizeof(ostd))) {
+			gMaliOstd = ostd ? 1u : 0u;
 		}
 	}
 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {

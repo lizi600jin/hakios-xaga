@@ -15,7 +15,7 @@
 
 > 实验性的 bring-up 工作，不能日用。触控已可用，电源键可用，没有 GPU 加速（3~14 fps），USB、Wi-Fi、音频还在修，重启后不保存任何设置。
 >
-> GPU 的 kernel 侧已经推进到「CSF 固件装好、页表建好、MCU 收到启动请求」这一步，卡在 MCU 一个指令都不执行——细节见 [Mali-G610：CSF 固件与 MCU](#mali-g610csf-固件与-mcu)。
+> GPU 的 kernel 侧已经推进到「CSF 固件装好、页表建好、MCU 收到启动请求」这一步，卡在 MCU 一个指令都不执行——细节见 [Mali-G610：CSF 固件与 MCU](#mali-g610csf-固件与-mcu)。最近一轮推翻了一个用了十几轮的归因（那一位不是 bus error，是命令完成回执），并补上了厂商九步里唯一漏掉的 `MFG_I2M_PROTECTOR`。
 
 **只想装上试试**：到 [Releases](../../releases) 下 `hakios-xaga-boot_a.img`，按 [INSTALL.md](INSTALL.md) 五步走。自己编译往下看。
 
@@ -47,7 +47,7 @@
 | 触控（Novatek NT36672E） | ✅ | 单点/多点、长按、点击图标都对得上，落点误差 < 100 px |
 | 按键（keypad + MT6363） | 🟡 | 电源键可用；音量上/下**内核与 HID 都通了**，卡在音频子系统没有输出路由 |
 | USB（MTU3） | 🚧 | 控制器配置已与 Android 工作态逐位对齐，PHY 侧 D+ 仍不上拉 |
-| GPU（Mali-G610） | 🟡 | 上电、时钟、识别、固件装载、AS0 页表全部在真机跑通；CSF MCU 仍未开始执行，仍走软件渲染 3~14 fps |
+| GPU（Mali-G610） | 🟡 | 上电、时钟、识别、固件装载、AS0 页表、I2M 保护器全部在真机跑通；CSF MCU 仍未开始执行（`JOB_INT_STATUS` bit31 不升），仍走软件渲染 3~14 fps |
 | Wi-Fi / 基带 / 音频 / 相机 | ⬜ | 未开始 |
 
 画面右移已修（引擎 plane 地址对齐 kernel 写入地址），见[画面右移](#画面右移引擎的-plane-地址比-kernel-写入地址高一页)。
@@ -585,7 +585,7 @@ mali: version word 0xff5aa5f0 (untouched, so no instruction ran)
 - 写 `MCU_CONTROL = DISABLE` 之后状态仍停在 `1`，状态机出不来
 - MFG 的 AXI 从启动那一刻起就 `0x1b`（非空闲），一直不回落，且**关掉核也不回落**
 
-为了排除「是不是固件有问题」，做过一个决定性实验：**把固件入口换成自己写的 32 字节 Cortex-M7 桩**——三条 `str` 到共享页，分别是 `0x11`、`0x22`、`0xdeadbeef`，不需要栈、不碰共享接口、不碰 `0x40000000` 那组内部寄存器：
+为了排除「是不是固件有问题」，做过一个决定性实验：**把固件入口换成自己写的 32 字节 Thumb 桩**（按 Cortex-M 的假设写的；G610 的 CSF 核到底是哪一颗 ARM 核，公开资料里查不到，这也是这个实验的一个弱点）——三条 `str` 到共享页，分别是 `0x11`、`0x22`、`0xdeadbeef`，不需要栈、不碰共享接口、不碰 `0x40000000` 那组内部寄存器：
 
 ```asm
 movw r0, #0x0000 ; movt r0, #0x0400   ; r0 = 0x04000000
@@ -602,7 +602,7 @@ str  r1, [r0]     ; b .
 | 假设 | 排除依据 |
 |---|---|
 | 固件与 Android 不同 | `sha256` 逐字节相同（`de22d2fc…`） |
-| 固件段载入有缺口 | 7 段全部映射成功，叶描述符低两位 `11` |
+| 固件段载入有缺口 | 10 段全部映射成功（含三节 `.bss`），叶描述符低两位 `11` |
 | 页表编码错 | 表指针 `3` / 叶页 `3` / block `1`，与 kbase 一致 |
 | `ASN_HASH` 未配 | G610（arch 10）根本没有这组寄存器，回读全 0 |
 | 硬件 issue 寄存器非零 | 上电默认就是 `shader 0 tiler 0 l2mmu 0 csf 0` |
@@ -619,38 +619,121 @@ str  r1, [r0]     ; b .
 | 冷路径 vs 热路径 | 两条路径结果完全一样 |
 | AS0 使能在 L2 上电之前/之后 | 顺序换过，`0x10000` 照旧 |
 | 页表内容 | `transtab=0`、`transcfg=0x42000001`（UNMAPPED）也报同样的错 |
+| 固件 `.bss` 未映射 | 三节 `flags & PROTECTED` 改成普通页映射后（10 段 / 9 张表）结果不变 |
+| `MFG_I2M_PROTECTOR` 未编程 | 补上 vendor 四条 + arm 位，回读 `0x20300317 0x1800000c 0x1010802 0x227f3`，结果不变 |
+| `g3d_mpu` 未初始化 | 读通，64 字里五个非零且不随状态变化，从未被软件编程 |
+| 时钟/计数器死了 | `cycle` 与 `timestamp` 在长轮询期间都在涨（约 340M tick/s） |
 
-### 一个被用错了十几轮的前提：`MMU_BUS_ERROR` 不是 AS0 独有的
+### 一个被用错了十几轮的前提：那一位根本不是 bus error
 
-上面那张表里有一条长期被当作「已排除」的推理根据，其实是错的，这里单独写清楚。
+很长一段时间里，所有分析都建立在两句话上：*AS0 的 `AS_COMMAND=UPDATE` 会报 `MMU_BUS_ERROR(0)`*，而且*这个错误是 AS0 特有的，因为 AS2 到 AS7 用一模一样的写法从不报错*。
 
-曾经有很长一段时间，所有分析都建立在这句话上：*AS0 的 `AS_COMMAND=UPDATE` 会报 `MMU_BUS_ERROR(0)`，而 AS2 到 AS7 用一模一样的写法从不报错，所以这个错误是 AS0 特有的。*
+第一句来自 `mali_kbase_gpu_regmap.h:248`：`#define MMU_BUS_ERROR(n) (1UL << ((n) + MMU_PAGE_FAULT_FLAGS))`，`MMU_PAGE_FAULT_FLAGS = 16`。按这个定义，bit16 就是 `MMU_BUS_ERROR(0)`，看起来完全对得上。
 
-这句话**从来没有被测量过**。`as_park_unused()` 里的循环写完就直接进入下一轮，既没有清中断锁存，也没有读过它——只有 AS0 的锁存被真正读过。
+**两句话都是错的。**
 
-补上那次测量之后（每个空间 `clear → write → read`）：
+先说第二句：它从来没有被测量过。`as_park_unused()` 的循环写完就进下一轮，既不清中断锁存也不读回，只有 AS0 的锁存被真正读过。补上测量之后（每个空间 `clear → write → read`），七个空间各占一位、一一对应：
 
 ```
-mali: AS2 parked, mmu irq 0x40000      bit18 = MMU_BUS_ERROR(2)
-mali: AS3 parked, mmu irq 0x80000      bit19 = MMU_BUS_ERROR(3)
-mali: AS4 parked, mmu irq 0x100000     bit20 = MMU_BUS_ERROR(4)
-mali: AS5 parked, mmu irq 0x200000     bit21 = MMU_BUS_ERROR(5)
-mali: AS6 parked, mmu irq 0x400000     bit22 = MMU_BUS_ERROR(6)
-mali: AS7 parked, mmu irq 0x800000     bit23 = MMU_BUS_ERROR(7)
-mali: AS0 step update    mmu irq 0x10000    bit16 = MMU_BUS_ERROR(0)
+mali: AS2 parked, mmu irq 0x40000      bit18
+mali: AS3 parked, mmu irq 0x80000      bit19
+mali: AS4 parked, mmu irq 0x100000     bit20
+mali: AS5 parked, mmu irq 0x200000     bit21
+mali: AS6 parked, mmu irq 0x400000     bit22
+mali: AS7 parked, mmu irq 0x800000     bit23
+mali: AS0 step update    mmu irq 0x10000    bit16
 ```
 
-`MMU_BUS_ERROR(n) = BIT(n + MMU_PAGE_FAULT_FLAGS)`、`MMU_PAGE_FAULT_FLAGS = 16`（`mali_kbase_gpu_regmap.h:242-248`），所以七个空间各占一位、一一对应，不是巧合。
+第一句错得更彻底。同一批位在 arch 10 上有另一套含义，panthor 写得很直白：
 
-**七个地址空间，七次 `AS_COMMAND=UPDATE`，七次 bus error。** 连 `transtab=0`、`transcfg=0x42000001`（UNMAPPED，根本不该走查）也一样报错。
+```c
+/* drivers/gpu/drm/panthor/panthor_mmu.c:655 */
+static u32 panthor_mmu_fault_mask(struct panthor_device *ptdev, u32 value)
+{
+	/* Bits 16 to 31 mean REQ_COMPLETE. */
+	return value & GENMASK(15, 0);
+}
+```
 
-这把问题改写成完全不同的一句话：**GPU 的 MMU 在每一次 UPDATE 动作上都读不到存储，与页表内容无关。** 而寄存器读写（走配置通路）一切正常——`gpu_id`、17 个识别字、`0x3090` 那个 300 MHz 自由运行计数器都答得对。这两条通路在 GPU 内部是分开的，坏的正是走 AXI 的那条。
+**bit16..31 是 `REQ_COMPLETE`——每个地址空间的命令完成回执，不是错误。** panthor 全树 `grep BUS_ERROR` 是 0 命中；kbase 那份定义则整体包在 `#if !MALI_USE_CSF` 里（`mali_kbase_mmu_hw_direct.c:229`、`:261`），CSF 构建下从来不用它，也从来不清它——所以它只增不减、看着像"永不回落"，只是因为没人清。
 
-这也顺带解释了为什么核一条指令都不执行，而 `MCU_STATUS` 停在 1（ENABLED）不变 2（HALT）、`faultstatus` 恒 0——核在取第一条指令时就撞在这条断掉的通路上，硬件没有把它当成可上报的 fault。
+于是七次 UPDATE 全部**成功**了，七位是七张回执。连 `transtab=0`、`transcfg=0x42000001`（UNMAPPED，物理上根本不走表）也报一位，正是回执该有的样子。`AS_FAULTSTATUS` 恒 0 也不是"bus error 不留痕"，而是**真的没有 fault**。
 
-顺带一条方法学：`AS_FAULTSTATUS`/`AS_FAULTADDRESS` 恒 0 曾经被当作「不是 fault」的证据，实际上它只对**页错误**有意义，对 bus error 没有。kbase 在 CSF 构建下把这些处理全包在 `#if !MALI_USE_CSF` 里（`mali_kbase_mmu_hw_direct.c:229/261`），从来不开也不清 bus error 中断，所以 Android 侧这个位大概率也一直挂着，只是没人读。
+这条错误归因把工作带偏了很久：它让「GPU 的 AXI 读不到 DRAM」变成一个看似已被证实的结论，于是所有精力都花在总线上。真实情况简单得多——**固件一条指令都没跑**。哨兵 `0xff5aa5f0` 原样读回就是最直接的证据：什么都没写过。
 
-目前最强的一条线索是 **GPUEB**：`/proc/gpufreqv2/gpufreq_status` 报 `GPUEB Support: On`，而 `gpufreq_mt6895.c:5166` 在 `g_gpueb_support` 为真时直接 `goto register_fp`，**整段跳过 `__gpufreq_power_control()`**。也就是说厂商那条九步 POWER_ON 在这台机器上根本不执行——GPU 的电源域和时钟由一颗独立的 GPUEB 协处理器自己管，AP 侧的写可能只落在影子寄存器里。下一步要验证的就是这条：AP 写的十二个域，GPUEB 认不认。
+### 现在的判断：`MCU_CONTROL=AUTO` 之后，核一次都没取指
+
+真正的判据只有一个，panthor 的实现写得最清楚（`panthor_fw.c:1104-1125`）：
+
+```c
+if (!ptdev->fw->booted && (status & JOB_INT_GLOBAL_IF))
+	ptdev->fw->booted = true;
+```
+
+**`JOB_INT_STATUS` 的 bit31。** 不是 `MCU_STATUS`。Android 冷启动的 2460 条寄存器轨迹里，`MCU_CONTROL=2` 之后 27 条记录内 bit31 就升起来了；这台机器上自旋一百万次也见不到。
+
+失败时的全套读数（每轮都一样）：
+
+```
+mali: MCU status 0 before the start request
+mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+mali: the start loop ended after 1000000 spins (halt seen 0, fatal seen 0)
+mali: MCU status 1 (enabled and running), job irq 0, gpu irq 0
+mali: clock check: cycle 0x99f31ca0 -> 0x99f850de, timestamp 0x207a50df -> 0x207a8a98
+mali: version word 0xff5aa5f0 (untouched, so no instruction ran)
+mali: bus idle after the failed start: ... debug_top 0x1b (still busy after 100000 spins)
+mali: MCU control written 0, status now 1, control reads 0
+```
+
+三条值得注意的：
+
+- **时钟是活的。** `cycle` 和 `timestamp` 两个计数器在长轮询期间都在涨（约 340M tick/s），所以"没时钟"解释不了一切。
+- **`MCU_STATUS` 对控制寄存器完全不响应。** 写 `MCU_CONTROL=0`（DISABLE）之后状态仍读 1，控制字回读 0。这不是"核起来后停等"，是更早的一层。
+- **`debug_top` 从 0x4（idle）变成 0x1b 并永不回落。** MT6895 的 v2 语义是 `bit0 = 1 → bus busy`（旧平台 v1 用 bit2 且相反，抄错平台会得出反向结论）。
+
+### 一条刚补上的、vendor 从不省略的步骤：`MFG_I2M_PROTECTOR`
+
+厂商九步上电的第九步是 `__gpufreq_gpm_control()`，而它是**无条件**执行的：
+
+```c
+/* gpufreq_mt6895.c:5195 */
+/* default enable GPM 1.0, before power control */
+g_gpm_enable = true;
+...
+/* gpufreq_mt6895.c:3347-3367 */
+writel(0x20300316, g_mfg_top_base + 0xF60);   /* MFG_I2M_PROTECTOR_CFG_00 */
+writel(0x1800000C, g_mfg_top_base + 0xF64);
+writel(0x01010802, g_mfg_top_base + 0xF68);
+writel(0x000227F3, g_mfg_top_base + 0xFA8);
+udelay(1);
+writel(0x20300317, g_mfg_top_base + 0xF60);   /* bit0 置上 = arm */
+```
+
+这是 vendor 九步里本驱动唯一完全没有落地的一步：一个 `initiator-to-memory` 保护器，名字取自动机 di/dt 整形，但从未编程的门就是一个答案未定义的门。同一段里还有一处顺序错：vendor 是 `acp`(:806) → `hwdcm`(:810) → `gpm`(:815)，本驱动原来是 `dcm` → `acp`，且从来没有 `gpm`——那个顺序是累积出来的，不是论证出来的。
+
+补上之后，四条全部可写可读：
+
+```
+mali: i2m protector before the firmware: 0x20300317 0x1800000c 0x1010802 0x227f3
+```
+
+**这证明 `0x13FBFF60` 那一页在裸机上是完全可写、且 arm 位确实置上的**——但 MCU 依然一条指令都没跑。所以这个保护器不是卡点，它可以被划掉了。
+
+### 顺手确认的两件小事
+
+- **固件里三节 `flags & PROTECTED` 的 `.bss`（VA `0x3000000`–`0x3040000`，256 KB）此前被直接跳过、在 AS0 里完全没有映射。** kbase 的做法不是跳过而是走 protected memory allocator 分配并建映射（`mali_kbase_csf_firmware.c:521-537`），所以在裸机上改成用普通页映射。验证到了：`10 sections, 9 page tables`（原为 7 / 8），三节各自打印 `is protected-mode, mapped with ordinary memory`。**这也不是卡点。**
+- **`g3d_mpu@13bff000` 可读**，64 个字里只有五个非零：`0x1c:0x11f00`、`0x48:0x1000`、`0x4c:0xff020f00`、`0x60:0x21800000`、`0xc0:0x30`，且不随 GPU 状态变化——没有被任何软件编程过。**`g3d_brisket@13bfee00` 一读就挂死总线**（整轮日志停在那里），这是第三个"未译码窗口读取永不返回"的实例，前两个是 GPUEB `0x13c40000` 和 `0x13F91034`。
+
+### 下一个要试的：`GLB_REQ.HALT`
+
+共享接口页里的 `GLB_REQ` 有一位 `HALT`（`mali_gpu_csf_registers.h:1105-1106`，`GLB_REQ_HALT_MASK = 1<<0`）。2025 版 kbase 在启动 MCU 之前会先清它，注释写得很硬：
+
+> Clear the HALT bit before triggering the boot of MCU firmware, regardless of FW I/O status.
+
+而 r32p1（这台机器对应的版本）没有这一步——`GLB_REQ_HALT_MASK` 全树只在停机方向出现一次（`mali_kbase_csf_firmware.c:2084`），`kbase_csf_firmware_enable_mcu()` 只有一行写 `MCU_CONTROL=AUTO`（`mali_kbase_csf_firmware.h:479`）。
+
+HALT 没清的症状与本机完全一致：核起来就停等，`MCU_STATUS` 停 1 不进 2，`GLB_VERSION` 永不写。**这是下一步要试的第一件事。**
+
 
 ### 卡顿：软件渲染压在 4 个 999 MHz 核上
 
@@ -678,8 +761,10 @@ CoreAnimation: Failed to initialize Metal or OpenGLES contexts!
 - [ ] 卡顿：`cpus=8`、`XNU_BIG_CLOCK`、Mesa 软件 GL
 - [x] Mali-G610：十二个电源域（含 mfg1/mfg2 的 SRAM）
 - [x] Mali-G610：26 MHz 晶振 → MFGPLL 300 MHz，两路 mux 都切对
-- [x] Mali-G610：CSF 固件装载（258048 B，7 段）+ AS0 页表 + `MCU_CONTROL=AUTO`
-- [ ] Mali-G610：**每个地址空间的 `AS_COMMAND=UPDATE` 都抬 `MMU_BUS_ERROR(n)`**——GPU 的 AXI 读不到 DRAM，寄存器通路却一切正常；核因此取不到第一条指令
+- [x] Mali-G610：CSF 固件装载（258048 B，10 段含三节 `.bss`）+ AS0 页表 + `MCU_CONTROL=AUTO`
+- [x] Mali-G610：厂商九步里漏掉的 `MFG_I2M_PROTECTOR` 四条 + arm 位（`0x13FBFF60` 回读 `0x20300317`），并把 `acp → hwdcm → gpm` 的顺序改对
+- [x] Mali-G610：推翻「`MMU_BUS_ERROR`」归因——bit16..31 是 `REQ_COMPLETE`，七次 UPDATE 全部成功
+- [ ] Mali-G610：**`MCU_CONTROL=AUTO` 之后 `JOB_INT_STATUS` bit31 从不升起**——核一次都没取指；下一步试清 `GLB_REQ.HALT`
 - [ ] Mali-G610：M2 及以后（命令流、CSG/CS 调度、IOKit 服务）
 - [ ] Wi-Fi（CONNSYS）
 - [ ] 音频、相机
