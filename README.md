@@ -724,7 +724,7 @@ mali: i2m protector before the firmware: 0x20300317 0x1800000c 0x1010802 0x227f3
 - **固件里三节 `flags & PROTECTED` 的 `.bss`（VA `0x3000000`–`0x3040000`，256 KB）此前被直接跳过、在 AS0 里完全没有映射。** kbase 的做法不是跳过而是走 protected memory allocator 分配并建映射（`mali_kbase_csf_firmware.c:521-537`），所以在裸机上改成用普通页映射。验证到了：`10 sections, 9 page tables`（原为 7 / 8），三节各自打印 `is protected-mode, mapped with ordinary memory`。**这也不是卡点。**
 - **`g3d_mpu@13bff000` 可读**，64 个字里只有五个非零：`0x1c:0x11f00`、`0x48:0x1000`、`0x4c:0xff020f00`、`0x60:0x21800000`、`0xc0:0x30`，且不随 GPU 状态变化——没有被任何软件编程过。**`g3d_brisket@13bfee00` 一读就挂死总线**（整轮日志停在那里），这是第三个"未译码窗口读取永不返回"的实例，前两个是 GPUEB `0x13c40000` 和 `0x13F91034`。
 
-### 下一个要试的：`GLB_REQ.HALT`
+### 试过并划掉的：`GLB_REQ.HALT`
 
 共享接口页里的 `GLB_REQ` 有一位 `HALT`（`mali_gpu_csf_registers.h:1105-1106`，`GLB_REQ_HALT_MASK = 1<<0`）。2025 版 kbase 在启动 MCU 之前会先清它，注释写得很硬：
 
@@ -732,8 +732,45 @@ mali: i2m protector before the firmware: 0x20300317 0x1800000c 0x1010802 0x227f3
 
 而 r32p1（这台机器对应的版本）没有这一步——`GLB_REQ_HALT_MASK` 全树只在停机方向出现一次（`mali_kbase_csf_firmware.c:2084`），`kbase_csf_firmware_enable_mcu()` 只有一行写 `MCU_CONTROL=AUTO`（`mali_kbase_csf_firmware.h:479`）。
 
-HALT 没清的症状与本机完全一致：核起来就停等，`MCU_STATUS` 停 1 不进 2，`GLB_VERSION` 永不写。**这是下一步要试的第一件事。**
+于是在裸机里、写 `MCU_CONTROL=AUTO` 之前，直接打开共享接口页清这一位：
 
+```
+mali: glb req 0 -> 0 (halt was already clear)
+```
+
+**它本来就是 0。** 固件映像里 `GLB_REQ` 这个字初值就是 0，从来没人置过它——这条假设当场被否掉，其余读数与上一轮逐字相同（`MCU status 0` → `spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b` → `version word 0xff5aa5f0 (untouched, so no instruction ran)`）。
+
+### 现在的唯一假设：GPU 的 AXI 事务在 SoC 侧被挡住
+
+到这一步，MCU 启动**之前**的寄存器状态已经和 Android 冷启动轨迹逐条对齐了：
+
+| 项 | Android 冷启动 | 本机 |
+|---|---|---|
+| `GPU_IRQ_MASK` (0x028) | `0x00080503` | `0x00080503` |
+| `JOB_IRQ_MASK` (0x1008) | `0xffffffff`（**未解开**，但 `0x100c` 仍能读到 bit31） | `0xffffffff` |
+| `MMU_IRQ_MASK` (0x2008) | `0x0000ffff` | `0x0000ffff` |
+| `L2_READY` (0x160) | 1 | 1 |
+| `SHADER_READY` (0x140) | 0 | 0 |
+| `GPU_ID` (0x000) | `0xa8670004` | `0xa8670004` |
+| IPA 序列 | `0x40010=20181004` → `0x40014..2c=0` → `0x40000=1` → `=3` → `0x40008=0` | 逐条相同 |
+| AS0 编程 | `TRANSCFG=0x42000006`, `TRANSTAB=0x44b49000`, UPDATE 前后 `AS_STATUS=0` | 相同（`0x42000006` / `0x50000000`） |
+| 写 `MCU_CONTROL` 前的其它写 | 无（不写 `0x030`/`0x050`/`0x048`/`0x304`） | 冷路径也不写 |
+| 写 `MCU_CONTROL=2` 之后 | **12～27 条记录内 `0x100c` 读到 `0x80000000`** | 百万次自旋 0 |
+
+（`Android` 那 2879 条 reset 轨迹里，`0x700=2` 出现在记录 648，`0x100c=0x80000000` 出现在 660；2460 条冷启动轨迹里分别是 136 和 163。）
+
+所以差异不在 GPU 内部，而在**GPU 发出的 AXI 读请求有没有被 SoC 侧放行**。剩下的候选都在 SoC 侧，按"拒绝时不会产生 AXI error、只会挂住"这个特征排序：
+
+1. **EMI MPU**（`emimpu@10226000`）。`emi_mpu_v2` 在 Android 上是活的（`dmesg` 里三条加载记录），但没有任何 debugfs/proc 出口，`/tmp/xagaoss` 与 `/tmp/mtkpd` 都不含它的源码。GPU 固件页现在放在 `0x50000000`——这是 loader 保留区之外的一个空洞，**未必落在任何 EMI MPU region 里**。
+2. **`me_GPUmputab_PMA` 保护区**（`0x78800000` 页表块 4 MiB + `0x78c00000` 保护区 16 MiB，`GPR[6]` 存 PFN）。这三个地址（`0x13bff000`/`0x13bfee00`/`0x78c00000`）在 GPUEB 固件、LK、所有 `.ko` 里都是 0 命中，谁都没编程过——但"没编程"也可能意味着"用默认"，而默认未必是放行。
+3. `g3d_mpu@13bff000` 的 `0x4c=0xff020f00` / `0x60=0x21800000` 这两个字看起来像地址窗口/权限位，但布局公开渠道 0 命中。
+
+两条可执行的验证路线，都不改 GPU 侧：
+
+- **A（只读，最快）**：裸机读 EMI MPU region 表。基址 `0x10226000`（Android `/proc/iomem` 的 `emimpu@10226000`），看 `0x50000000` 落在哪个 region、权限向量里 GPU 那一位是什么。风险：和 `0x13bfee00` 一样，未译码窗口可能挂死总线，所以要放在失败路径尾部只读一次。
+- **B（改配置）**：把 MCU 页表与固件页整体从 `0x50000000` 挪进 `me_GPUmputab_PMA` 那 20 MiB（`0x78800000` 起）。如果 GMPU/EMI MPU 只放行这一块，那么搬过去就能起来。
+
+先做 A：一次读就能定方向，而且不改任何布局。
 
 ### 卡顿：软件渲染压在 4 个 999 MHz 核上
 
@@ -764,7 +801,8 @@ CoreAnimation: Failed to initialize Metal or OpenGLES contexts!
 - [x] Mali-G610：CSF 固件装载（258048 B，10 段含三节 `.bss`）+ AS0 页表 + `MCU_CONTROL=AUTO`
 - [x] Mali-G610：厂商九步里漏掉的 `MFG_I2M_PROTECTOR` 四条 + arm 位（`0x13FBFF60` 回读 `0x20300317`），并把 `acp → hwdcm → gpm` 的顺序改对
 - [x] Mali-G610：推翻「`MMU_BUS_ERROR`」归因——bit16..31 是 `REQ_COMPLETE`，七次 UPDATE 全部成功
-- [ ] Mali-G610：**`MCU_CONTROL=AUTO` 之后 `JOB_INT_STATUS` bit31 从不升起**——核一次都没取指；下一步试清 `GLB_REQ.HALT`
+- [x] 试清清 `GLB_REQ.HALT`（真机回读 `glb req 0 -> 0`，本来就是 0 —— 否掉）
+- [ ] Mali-G610：**`MCU_CONTROL=AUTO` 之后 `JOB_INT_STATUS` bit31 从不升起**——启动前寄存器状态已与 Android 冷启动逐条对齐，差异只能在 SoC 侧（EMI MPU / me_GPUmputab_PMA）；下一步裸机读 EMI MPU region 表
 - [ ] Mali-G610：M2 及以后（命令流、CSG/CS 调度、IOKit 服务）
 - [ ] Wi-Fi（CONNSYS）
 - [ ] 音频、相机

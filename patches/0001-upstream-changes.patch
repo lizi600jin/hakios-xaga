@@ -9481,10 +9481,10 @@ index 0000000..5c08db8
 +	help    mtk/tools/mkmalifw.py from the phone's own /vendor/firmware/mali_csffw.bin
 diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/hakios.mali610.c
 new file mode 100644
-index 0000000..d8873d5
+index 0000000..f99b381
 --- /dev/null
 +++ b/mtk/mt6895/drivers/gpu/hakios.mali610.c
-@@ -0,0 +1,3952 @@
+@@ -0,0 +1,4002 @@
 +/*
 + * The GPU of the Redmi Note 11T Pro (xaga), a Mali-G610 MC6: a Valhall part with a Command Stream
 + * Front end, which means it runs firmware the host has to load before it will do anything at all.
@@ -11536,6 +11536,11 @@ index 0000000..d8873d5
 +	kGlbPing        = 1u << 8,
 +	kGlbIdleEn      = 1u << 10,
 +	kGlbIdle        = 1u << 26,
++	/*
++	 * GLB_REQ.HALT, bit zero of the request word (mali_gpu_csf_registers.h:1105-1106,
++	 * GLB_REQ_HALT_SHIFT 0 / GLB_REQ_HALT_MASK (0x1 << 0)).
++	 */
++	kGlbReqHalt     = 1u << 0,
 +};
 +
 +static bool
@@ -12460,6 +12465,51 @@ index 0000000..d8873d5
 +	__asm__ volatile ("dsb sy" ::: "memory");
 +	printf("mali: mmu irq %#x with the latch freshly cleared, just before the start request\n",
 +	    mrd(kMmuIntRaw));
++	/*
++	 * Clear GLB_REQ.HALT before the core is told to run.
++	 *
++	 * This is the one start-up precondition that the firmware's own request word carries, and
++	 * every source that mentions it says the same thing. The 2025 kbase does it unconditionally,
++	 * with the comment "Clear the HALT bit before triggering the boot of MCU firmware, regardless
++	 * of FW I/O status" (kbase_csf_fw_io_global_write_mask(fw_io, GLB_REQ, 0, GLB_REQ_HALT_MASK)).
++	 * An Arm engineer on the list put the consequence in words: leaving HALT set can in certain
++	 * cases make the MCU fail to boot.
++	 *
++	 * r32p1 -- the version this phone's own driver is built from -- does not have this step. A
++	 * grep finds GLB_REQ_HALT_MASK exactly once in the whole tree, at
++	 * mali_kbase_csf_firmware.c:2084, and that is the halt direction. enable_mcu() is a single
++	 * store of AUTO (csf/mali_kbase_csf_firmware.h:479). So on a phone whose GPU works, the bit
++	 * happens to be clear already, which is why the omission never shows there: the request word
++	 * is part of the shared interface, and the firmware image carries it as zero.
++	 *
++	 * Here the shared page is ours. It was filled from the image, so HALT should read zero --
++	 * but "should" is the word that has cost every run so far, and the field is writable by this
++	 * side. Clearing it costs two accesses and removes a whole class of explanation: a core that
++	 * comes up, sees HALT in its own request word, and waits for a handshake that nothing on this
++	 * machine is going to send. That is precisely the shape of what is observed -- status one,
++	 * never two, no version word, no fault.
++	 *
++	 * The readback is printed because the value before the write matters: if it was already zero,
++	 * this whole theory is dead on the spot and one run says so.
++	 */
++	if (gShared != NULL) {
++		volatile struct glb_control *control =
++		    (volatile struct glb_control *)gShared->mem.kva;
++		volatile struct glb_input *input =
++		    (volatile struct glb_input *)shared_at(control->input_va);
++
++		if (input != NULL) {
++			uint32_t before = input->req;
++
++			input->req = before & ~kGlbReqHalt;
++			mem_flush(&gShared->mem);
++			__asm__ volatile ("dsb sy" ::: "memory");
++			printf("mali: glb req %#x -> %#x (halt was %s)\n", before, input->req,
++			    (before & kGlbReqHalt) ? "set, now cleared" : "already clear");
++		} else {
++			printf("mali: the input block is outside the shared section\n");
++		}
++	}
 +	mwr(kMcuControl, kMcuControlAuto);
 +	/*
 +	 * And ring the doorbell.
