@@ -147,7 +147,26 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
  */
 #define MALI_INFRACFG_PHYS      0x10001000ULL
 #define MALI_INFRACFG_SIZE      0x1000u
-#define MALI_MFGRPC_PHYS        0x13f91000ULL      /* not g3d_config's 0x13f90000; differs by 0x1000 */
+/*
+ * The mfg_rpc bus: two device tree nodes, one address.
+ *
+ * xaga_live.dts declares them separately. g3d_config@13f90000 (line 4905) is a hundred kilobytes
+ * covering the whole subsystem; syscon@13f91000 (line 4910) is our own four kilobytes inside it,
+ * named "mediatek,mt6895-gpu_eb_rpc_bus". The vendor's gpufreq driver takes the outer window and
+ * addresses 0x13F91034 as 0x13f90000 + 0x1034; we take the inner one, so the same register is
+ * 0x13f91000 + 0x34.
+ *
+ * Both spell the same address, and only one of them is mapped here. Widening this to the outer
+ * window was tried and cost a boot loop: 0x13f90000-0x13f90fff is not in the phone's own iomem
+ * at all -- nothing on Android ever maps it -- and on this part touching an undriven MFG window
+ * does not fault, it hangs the bus until the watchdog takes the board.
+ *
+ * So the base stays, and the offset is what was wrong. It used to be 0x1034 here, copied from the
+ * vendor's numbering without adjusting for the different base: 0x13f91000 + 0x1034 is 0x13f92034,
+ * past the end of this window. That write never landed anywhere, which is why the interconnect
+ * gates below always read back exactly what they already were.
+ */
+#define MALI_MFGRPC_PHYS        0x13f91000ULL
 #define MALI_MFGRPC_SIZE        0x1000u
 #define MALI_BP_MD0_MFG1        0x10001ca8u        /* clr_ofs 0x0ca8 in infracfg */
 #define MALI_BP_MD0_MFG1_MASK   0x0000000fu
@@ -176,6 +195,26 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
 #define MALI_MFG_DEBUG_TOP_IDLE (1u << 2)       /* v1 drivers poll this: 1 = idle, 0 = non-idle */
 /* MFG_AXCOHERENCE: bit 3 is M3_coherence_enable, the port the M7 fetches through. */
 #define MALI_MFG_AXCOHERENCE    0x0168u
+
+/*
+ * GPUEB: a separate Cortex-M4-ish coprocessor at 0x13C40000 that the vendor firmware leaves in
+ * charge of the GPU's own power and clock sequencing on this SoC (the DTS says
+ * `gpueb-support = <1>`, and gpufreq_mt6895.c:5166 jumps over its entire power_control path
+ * because of that flag).
+ *
+ * Its watchdog kick register is the cheapest liveness probe there is: the firmware rewrites it
+ * continuously, so two reads a millisecond apart that differ mean the coprocessor is still
+ * running -- in Android or in here. What that implies for a core that will not fetch is the
+ * question this whole probe exists to answer: if GPUEB is alive while XNU owns the GPU, then it
+ * may be the one holding the MFG bus, and no amount of registering from the AP side would show
+ * up as anything but "busy".
+ */
+#define MALI_GPUEB_PHYS         0x13c40000ULL
+#define MALI_GPUEB_SIZE         0x24000u
+#define MALI_GPUEB_WDT_KICK     0x2061cu
+#define MALI_GPUEB_WDT_CON      0x20618u
+#define MALI_GPUEB_IRQ_RAW      0x2033cu
+#define MALI_GPUEB_MBOX_RECV    0x22078u
 /*
  * The MFG interconnect's own clock gates.
  *
@@ -205,7 +244,7 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
 #define MALI_MFG_QCHANNEL_EN    (1u << 4)
 #define MALI_MFG_DCM_CON_0      0x0010u
 #define MALI_MFG_GLOBAL_CON     0x00b0u
-#define MALI_MFG_RPC_AO_CLK_CFG 0x1034u
+#define MALI_MFG_RPC_AO_CLK_CFG 0x0034u     /* 0x13F91034 from this base, not the vendor's 0x13f90000 */
 
 /*
  * PDC: the shader cores' own power controller, in the same mfgcfg block.
@@ -360,11 +399,31 @@ enum : uint32_t { kAsCmdUpdate = 1, kAsCmdLock = 2, kAsCmdFlushMem = 5, kAsCmdUp
 
 /* ------------------------------------------------------------------ state */
 
-static vm_offset_t gSpm, gTopckgen, gMfgcfg, gMfgpll, gGpu, gInfracfg, gMfgrpc;
+static vm_offset_t gSpm, gTopckgen, gMfgcfg, gMfgpll, gGpu, gInfracfg, gMfgrpc, gGpueb;
 static unsigned gMaliProgress;                  /* how far bring-up got; 1 and 2 are the milestones */
 static unsigned gMaliLevel = 2;                 /* the boot-arg's number: 1 power, 2 all, 3..5 stop earlier */
 static unsigned gMaliAsnHash = 1;               /* mali_asn=0 turns off the custom ASN hash */
 static unsigned gMaliWitness;                   /* mali_witness=1 runs 32 bytes of our own code instead */
+static unsigned gMaliGpueb;                     /* mali_gpueb=1 maps a block whose clock is off */
+static unsigned gMaliRpc;                       /* mali_rpc=1 touches mfg_rpc, 2 reads it only */
+/*
+ * mali_as0=1 parks address space 0 the way the other seven are parked, instead of giving it the
+ * firmware's table. Nothing else changes: same clear, same three writes, same UPDATE.
+ *
+ * This is the one comparison that separates the two halves of a question every run so far has
+ * answered ambiguously. AS0 is handed an AArch64 table and its UPDATE raises MMU_BUS_ERROR(0);
+ * AS2 through AS7 are handed a zero table with ADRMODE_UNMAPPED and their UPDATEs raise nothing,
+ * on every single boot, seven times over. Two readings, two outcomes, four candidate causes: the
+ * granule, the table contents, the root address, or address space zero itself.
+ *
+ * Parking AS0 collapses it. If a parked AS0 also raises the bus error, the fault is in the slot
+ * or in how it is being addressed and no amount of table work will move it. If a parked AS0 is
+ * silent -- as its seven neighbours are -- then the slot is fine and the error comes from the
+ * walk over what was written into TRANSTAB, which leaves the table as the only thing to fix.
+ */
+static unsigned gMaliAs0;                       /* mali_as0=1 parks AS0 as a control */
+static unsigned gMaliPreAs0;                    /* mali_preas0=1 updates AS0 before the L2 comes up */
+static unsigned gMaliEarlyAs0;                  /* set once the early path has already done it */
 /*
  * mali_cold=1 walks the path the phone's own driver walks when the machine boots, and nothing else.
  *
@@ -1549,6 +1608,38 @@ mfg_debug_top(void)
 	return reg_rd(gMfgcfg, MALI_MFG_DEBUG_TOP);
 }
 
+/*
+ * Is the GPUEB coprocessor still running?
+ *
+ * Two reads of its watchdog kick register, one millisecond apart. The firmware rewrites that word
+ * continuously while it is alive, so a difference is proof it is still executing and a match is
+ * strong evidence it is not. The interrupt raw status is read alongside because a live coprocessor
+ * that is talking to the AP leaves bits set in it.
+ *
+ * This matters here for one specific reason: if GPUEB survives the jump to XNU and keeps driving
+ * the GPU's power and clock sequencing, then it owns the MFG bus. That would explain, in one
+ * stroke, the two things this driver cannot otherwise reconcile -- a bus that reads non-idle from
+ * the instant the MCU is enabled and never falls back, and a core that fetches nothing at all
+ * while every register the AP can see looks correct.
+ */
+static void
+gpueb_watch(const char *when)
+{
+	uint32_t a, b, raw, con;
+
+	if (gGpueb == 0) {
+		printf("mali: gpueb %s: not mapped\n", when);
+		return;
+	}
+	a = reg_rd(gGpueb, MALI_GPUEB_WDT_KICK);
+	delay(1000);
+	b = reg_rd(gGpueb, MALI_GPUEB_WDT_KICK);
+	raw = reg_rd(gGpueb, MALI_GPUEB_IRQ_RAW);
+	con = reg_rd(gGpueb, MALI_GPUEB_WDT_CON);
+	printf("mali: gpueb %s: kick %#x -> %#x (%s), irq raw %#x, wdt_con %#x\n",
+	    when, a, b, a == b ? "frozen" : "running", raw, con);
+}
+
 static void
 mfg_bus_watch(const char *when)
 {
@@ -1594,7 +1685,29 @@ mfg_master_gates(const char *when)
 	async1 = reg_rd(gMfgcfg, MALI_MFG_ASYNC_CON_1);
 	glob = reg_rd(gMfgcfg, MALI_MFG_GLOBAL_CON);
 	qchan = reg_rd(gMfgcfg, MALI_MFG_QCHANNEL_CON);
-	rpc = reg_rd(gMfgrpc, MALI_MFG_RPC_AO_CLK_CFG);
+	/*
+	 * mfg_rpc is off by default, and that is a result rather than caution.
+	 *
+	 * Two builds that touch this register both put the board into the three-minute preloader
+	 * loop; the build immediately before them differs in nothing else and returns to Android
+	 * every time. One of those two builds mapped the wider g3d_config window to reach it, the
+	 * other kept the four-kilobyte window and only corrected the offset, so the window size is
+	 * not the variable -- reading or writing 0x13F91034 is.
+	 *
+	 * The neighbouring register in the same page, the mfgrpc bus-protect clear at 0x13F91044, is
+	 * read and written a few lines above on every boot without incident, so the page is not
+	 * simply unreachable. Something about this one register needs a clock that is not running
+	 * when this driver gets to it, and on this part a read of a register behind a stopped clock
+	 * does not fault: it parks the AXI transaction and the watchdog takes the board long before
+	 * anything can print.
+	 *
+	 * mali_rpc=2 reads it and does not write; mali_rpc=1 reads and writes. Both are opt-in so
+	 * that the default image is the one that boots.
+	 */
+	rpc = 0;
+	if (gMaliRpc) {
+		rpc = reg_rd(gMfgrpc, MALI_MFG_RPC_AO_CLK_CFG);
+	}
 
 	dcm |= 0x3fu;
 	dcm &= ~(1u << 6);
@@ -1617,8 +1730,10 @@ mfg_master_gates(const char *when)
 	qchan |= MALI_MFG_QCHANNEL_EN;
 	reg_wr(gMfgcfg, MALI_MFG_QCHANNEL_CON, qchan);
 
-	rpc &= ~(1u << 0);
-	reg_wr(gMfgrpc, MALI_MFG_RPC_AO_CLK_CFG, rpc);
+	if (gMaliRpc > 1) {
+		rpc &= ~(1u << 0);
+		reg_wr(gMfgrpc, MALI_MFG_RPC_AO_CLK_CFG, rpc);
+	}
 
 	delay(2);
 
@@ -1630,7 +1745,7 @@ mfg_master_gates(const char *when)
 	    async1, reg_rd(gMfgcfg, MALI_MFG_ASYNC_CON_1),
 	    glob, reg_rd(gMfgcfg, MALI_MFG_GLOBAL_CON),
 	    qchan, reg_rd(gMfgcfg, MALI_MFG_QCHANNEL_CON),
-	    rpc, reg_rd(gMfgrpc, MALI_MFG_RPC_AO_CLK_CFG));
+	    rpc, gMaliRpc ? reg_rd(gMfgrpc, MALI_MFG_RPC_AO_CLK_CFG) : 0u);
 }
 
 /* ------------------------------------------------------------------ register access */
@@ -2356,14 +2471,30 @@ as_park_unused(void)
 	 * then zeroes into AS2 through AS7 -- an unmapped space with a live memory-attribute policy
 	 * is a state neither driver produces.
 	 */
+	/*
+	 * Measure each space's UPDATE, one at a time.
+	 *
+	 * Every argument about MMU_BUS_ERROR(0) so far rested on the claim that spaces two through
+	 * seven take the same write without raising it, and that claim was never measured: the loop
+	 * below wrote and moved on, and only AS0's latch was ever read. If those spaces raise the
+	 * error too then it belongs to the block, not to the address space, and the whole line of
+	 * reasoning that treats zero as an AS0-specific wall is wrong.
+	 *
+	 * So: clear, write, read, per space. Seven extra register accesses and the claim becomes a
+	 * fact either way.
+	 */
 	for (as = 2; as < 8u; as++) {
 		if ((present & (1u << as)) == 0u) {
 			continue;
 		}
+		mwr(kMmuIntClear, 0xffffffffu);
+		__asm__ volatile ("dsb sy" ::: "memory");
 		gpu_wr64(asReg(as, kAsTranstab), 0);
 		gpu_wr64(asReg(as, kAsMemattr), 0);
 		gpu_wr64(asReg(as, kAsTranscfg), kAsTranscfgUnmapped);
 		(void)as_command(as, kAsCmdUpdate);
+		__asm__ volatile ("dsb sy" ::: "memory");
+		printf("mali: AS%u parked, mmu irq %#x\n", as, mrd(kMmuIntRaw));
 	}
 	printf("mali: address spaces 2 to 7 are unmapped, 1 is left for the firmware (present %#x)\n",
 	    present);
@@ -2950,6 +3081,17 @@ mali_bring_up(void)
 	gInfracfg = ml_io_map(MALI_INFRACFG_PHYS, MALI_INFRACFG_SIZE);
 	gMfgrpc = ml_io_map(MALI_MFGRPC_PHYS, MALI_MFGRPC_SIZE);
 	/*
+	 * GPUEB is behind its own clock gate. The phone's gpueb driver opens it through the clock
+	 * framework; nothing in this kernel does. Reading a gated MTK peripheral does not return an
+	 * error -- the access never completes, the core waits, and the hardware watchdog resets the
+	 * board. A diagnostic that produces a boot loop is worse than no diagnostic, so the block is
+	 * only mapped when mali_gpueb=1, and only after the gate has been opened by whoever turns it
+	 * on. Left off, every read here reports "not mapped" and costs nothing.
+	 */
+	if (gMaliGpueb) {
+		gGpueb = ml_io_map(MALI_GPUEB_PHYS, MALI_GPUEB_SIZE);
+	}
+	/*
 	 * mfgcfg is mapped here rather than inside the cold-start branch, because the interconnect
 	 * gates below are opened on both paths. Mapping does not touch the device -- the first read
 	 * does -- and every read of it in this function happens after the block has a clock.
@@ -3165,6 +3307,12 @@ mali_bring_up(void)
 	 *
 	 * AS0 is not among them -- it needs the firmware's table, so it comes after load_firmware().
 	 */
+	/*
+	 * Before anything is programmed: is the coprocessor that owns this block's power still
+	 * running? Asked at the earliest point this driver touches the block, so the answer is not
+	 * contaminated by anything it does later.
+	 */
+	gpueb_watch("before the address spaces");
 	as_park_unused();
 	/*
 	 * The masks go on before the L2 is asked to come up, not inside start_mcu().
@@ -3183,6 +3331,31 @@ mali_bring_up(void)
 	 * gives the run a second answer to the question MCU_STATUS cannot answer.
 	 */
 	gpu_ipa_arm();
+	/*
+	 * mali_preas0=1 puts AS0's update where the phone's trace has it: before the L2 request.
+	 *
+	 * Record seven of that trace is AS0's AS_COMMAND=UPDATE and record ninety-eight is
+	 * L2_PWRON. This driver has always done it the other way round, and after the page tables
+	 * and the walk were cleared one by one that order is the only structural difference left.
+	 * The parked spaces AS2..AS7 are written before the L2 comes up and raise no interrupt at
+	 * all; AS0 is written after it and raises MMU_BUS_ERROR(0) every single run. Two facts, one
+	 * variable, never separated.
+	 */
+	if (gMaliPreAs0 && !gMaliAs0 && gMaliLevel > 4) {
+		if (!load_firmware()) {
+			return;
+		}
+		mwr(kMmuIntClear, 0xffffffffu);
+		printf("mali: mmu irq %#x after the clear, before AS0 and before the L2\n",
+		    mrd(kMmuIntRaw));
+		if (!as_enable(0, gMcuRootPa)) {
+			return;
+		}
+		printf("mali: mmu irq %#x after AS0 took the update, before the L2\n",
+		    mrd(kMmuIntRaw));
+		mfg_bus_idle("after the early table walk");
+		gMaliEarlyAs0 = 1u;
+	}
 	if (!gpu_l2_power_on()) {
 		return;
 	}
@@ -3213,7 +3386,7 @@ mali_bring_up(void)
 	 * image has to be in before there is a root to point at -- and the L2 has to be up before
 	 * that, because the MCU reads the image through it.
 	 */
-	if (!load_firmware()) {
+	if (!gMaliEarlyAs0 && !load_firmware()) {
 		return;
 	}
 	printf("mali: firmware loaded; %s\n",
@@ -3252,13 +3425,39 @@ mali_bring_up(void)
 	 * reading back right away turns the question into a single step: whatever is latched after
 	 * the clear was raised by as_enable() and by nothing else.
 	 */
-	mwr(kMmuIntClear, 0xffffffffu);
-	printf("mali: mmu irq %#x just after the clear, before AS0\n", mrd(kMmuIntRaw));
-	if (!as_enable(0, gMcuRootPa)) {
+	if (gMaliAs0) {
+		/*
+		 * The control run: AS0 gets exactly what AS2..AS7 got, and nothing else changes.
+		 *
+		 * Written as its own branch rather than as a flag inside as_enable() so that the three
+		 * register writes and the one UPDATE are textually the same shape as the parking loop
+		 * that has never raised an error. If this is silent and the real path is not, the
+		 * difference between the two is the table and only the table.
+		 */
+		mwr(kMmuIntClear, 0xffffffffu);
+		printf("mali: mmu irq %#x just after the clear, AS0 parked as a control\n",
+		    mrd(kMmuIntRaw));
+		gpu_wr64(asReg(0, kAsTranstab), 0);
+		gpu_wr64(asReg(0, kAsMemattr), 0);
+		gpu_wr64(asReg(0, kAsTranscfg), kAsTranscfgUnmapped);
+		(void)as_command(0, kAsCmdUpdate);
+		printf("mali: AS0 parked: transtab %#llx memattr %#llx transcfg %#llx mmu irq %#x\n",
+		    (unsigned long long)gpu_rd64(asReg(0, kAsTranstab)),
+		    (unsigned long long)gpu_rd64(asReg(0, kAsMemattr)),
+		    (unsigned long long)gpu_rd64(asReg(0, kAsTranscfg)), mrd(kMmuIntRaw));
+		mfg_bus_idle("after the parked AS0");
+		gMaliProgress = 2;
 		return;
 	}
-	printf("mali: mmu irq %#x just after AS0 took the update\n", mrd(kMmuIntRaw));
-	mfg_bus_idle("after the table walk");
+	if (!gMaliEarlyAs0) {
+		mwr(kMmuIntClear, 0xffffffffu);
+		printf("mali: mmu irq %#x just after the clear, before AS0\n", mrd(kMmuIntRaw));
+		if (!as_enable(0, gMcuRootPa)) {
+			return;
+		}
+		printf("mali: mmu irq %#x just after AS0 took the update\n", mrd(kMmuIntRaw));
+		mfg_bus_idle("after the table walk");
+	}
 	/*
 	 * Read the MMU latch before the start request, not only after it.
 	 *
@@ -3357,6 +3556,12 @@ mali_bring_up(void)
 		mcu_window_dump("after the core was switched off");
 		mfg_bus_idle("after the core was switched off");
 		mfg_bus_watch("after the core was switched off");
+		/*
+		 * And the other candidate owner of the bus, asked at the moment when it would have to
+		 * be the one holding it. If GPUEB is still kicking its watchdog while the MFG channel
+		 * reads non-idle and the core has done nothing, the two facts are about each other.
+		 */
+		gpueb_watch("after the failed start");
 		return;
 	}
 	if (gMaliWitness) {
@@ -3433,6 +3638,28 @@ hakios_mali610_init(void)
 
 		if (PE_parse_boot_argn("mali_witness", &witness, sizeof(witness))) {
 			gMaliWitness = witness ? 1u : 0u;
+		}
+	}
+	{
+		int gpueb = 0;
+
+		if (PE_parse_boot_argn("mali_gpueb", &gpueb, sizeof(gpueb))) {
+			gMaliGpueb = gpueb ? 1u : 0u;
+		}
+	}
+	{
+		int rpc = 0;
+		int as0 = 0;
+		int preas0 = 0;
+
+		if (PE_parse_boot_argn("mali_as0", &as0, sizeof(as0))) {
+			gMaliAs0 = (as0 > 0) ? 1u : 0u;
+		}
+		if (PE_parse_boot_argn("mali_preas0", &preas0, sizeof(preas0))) {
+			gMaliPreAs0 = (preas0 > 0) ? 1u : 0u;
+		}
+		if (PE_parse_boot_argn("mali_rpc", &rpc, sizeof(rpc))) {
+			gMaliRpc = (rpc > 0) ? (unsigned)rpc : 0u;
 		}
 	}
 	/*

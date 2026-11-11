@@ -421,7 +421,7 @@ CSF 的 MMU 和我们熟悉的 ARM SMMU 不是一回事，它是 Mali 自己那�
 | `AS_TRANSCFG` | `0x42000006` | `ADRMODE_AARCH64_4K(6)` + `PTW_MEMATTR_WB(2<<24)` + `PTW_RA(1<<30)` |
 | `AS_MEMATTR` | `0x00084c8d888d8f88` | kbase 的固定索引表，不是 panthor 那套 `mair_to_memattr` |
 
-`AS_COMMAND` 只有 `UPDATE(1)` 会真正触发走查。**它可能立刻抬 `MMU_IRQ_RAWSTAT` 的 `MMU_BUS_ERROR(0)`（bit16）**，而 CSF 构建下的 kbase 把 bus-error 的处理全包在 `#if !MALI_USE_CSF` 里——也就是说这个位在 Android 上大概率也一直挂着，只是没人读。判据要用 `AS_FAULTSTATUS`/`AS_FAULTADDRESS`，不是 bus-error 位。
+`AS_COMMAND` 只有 `UPDATE(1)` 会真正触发走查。**每一次 UPDATE 都会抬 `MMU_IRQ_RAWSTAT` 里对应的 `MMU_BUS_ERROR(n)`（bit `n+16`）**——七个地址空间各一位，一个不漏，详见下面「一个被用错了十几轮的前提」。CSF 构建下的 kbase 把 bus-error 的处理全包在 `#if !MALI_USE_CSF` 里，也就是说这个位在 Android 上大概率也一直挂着，只是没人读。**`AS_FAULTSTATUS`/`AS_FAULTADDRESS` 只对页错误有意义，对 bus error 没有**——它们恒 0 不能当作「没有 fault」的证据。
 
 #### 固件容器
 
@@ -617,6 +617,38 @@ str  r1, [r0]     ; b .
 | VSTACK 没开 | 已打开（`status 0x6e enabled 1`） |
 | master 侧 AXI 门没开 | 六项寄存器读时就已经是目标值 |
 | 冷路径 vs 热路径 | 两条路径结果完全一样 |
+| AS0 使能在 L2 上电之前/之后 | 顺序换过，`0x10000` 照旧 |
+| 页表内容 | `transtab=0`、`transcfg=0x42000001`（UNMAPPED）也报同样的错 |
+
+### 一个被用错了十几轮的前提：`MMU_BUS_ERROR` 不是 AS0 独有的
+
+上面那张表里有一条长期被当作「已排除」的推理根据，其实是错的，这里单独写清楚。
+
+曾经有很长一段时间，所有分析都建立在这句话上：*AS0 的 `AS_COMMAND=UPDATE` 会报 `MMU_BUS_ERROR(0)`，而 AS2 到 AS7 用一模一样的写法从不报错，所以这个错误是 AS0 特有的。*
+
+这句话**从来没有被测量过**。`as_park_unused()` 里的循环写完就直接进入下一轮，既没有清中断锁存，也没有读过它——只有 AS0 的锁存被真正读过。
+
+补上那次测量之后（每个空间 `clear → write → read`）：
+
+```
+mali: AS2 parked, mmu irq 0x40000      bit18 = MMU_BUS_ERROR(2)
+mali: AS3 parked, mmu irq 0x80000      bit19 = MMU_BUS_ERROR(3)
+mali: AS4 parked, mmu irq 0x100000     bit20 = MMU_BUS_ERROR(4)
+mali: AS5 parked, mmu irq 0x200000     bit21 = MMU_BUS_ERROR(5)
+mali: AS6 parked, mmu irq 0x400000     bit22 = MMU_BUS_ERROR(6)
+mali: AS7 parked, mmu irq 0x800000     bit23 = MMU_BUS_ERROR(7)
+mali: AS0 step update    mmu irq 0x10000    bit16 = MMU_BUS_ERROR(0)
+```
+
+`MMU_BUS_ERROR(n) = BIT(n + MMU_PAGE_FAULT_FLAGS)`、`MMU_PAGE_FAULT_FLAGS = 16`（`mali_kbase_gpu_regmap.h:242-248`），所以七个空间各占一位、一一对应，不是巧合。
+
+**七个地址空间，七次 `AS_COMMAND=UPDATE`，七次 bus error。** 连 `transtab=0`、`transcfg=0x42000001`（UNMAPPED，根本不该走查）也一样报错。
+
+这把问题改写成完全不同的一句话：**GPU 的 MMU 在每一次 UPDATE 动作上都读不到存储，与页表内容无关。** 而寄存器读写（走配置通路）一切正常——`gpu_id`、17 个识别字、`0x3090` 那个 300 MHz 自由运行计数器都答得对。这两条通路在 GPU 内部是分开的，坏的正是走 AXI 的那条。
+
+这也顺带解释了为什么核一条指令都不执行，而 `MCU_STATUS` 停在 1（ENABLED）不变 2（HALT）、`faultstatus` 恒 0——核在取第一条指令时就撞在这条断掉的通路上，硬件没有把它当成可上报的 fault。
+
+顺带一条方法学：`AS_FAULTSTATUS`/`AS_FAULTADDRESS` 恒 0 曾经被当作「不是 fault」的证据，实际上它只对**页错误**有意义，对 bus error 没有。kbase 在 CSF 构建下把这些处理全包在 `#if !MALI_USE_CSF` 里（`mali_kbase_mmu_hw_direct.c:229/261`），从来不开也不清 bus error 中断，所以 Android 侧这个位大概率也一直挂着，只是没人读。
 
 目前最强的一条线索是 **GPUEB**：`/proc/gpufreqv2/gpufreq_status` 报 `GPUEB Support: On`，而 `gpufreq_mt6895.c:5166` 在 `g_gpueb_support` 为真时直接 `goto register_fp`，**整段跳过 `__gpufreq_power_control()`**。也就是说厂商那条九步 POWER_ON 在这台机器上根本不执行——GPU 的电源域和时钟由一颗独立的 GPUEB 协处理器自己管，AP 侧的写可能只落在影子寄存器里。下一步要验证的就是这条：AP 写的十二个域，GPUEB 认不认。
 
@@ -647,7 +679,7 @@ CoreAnimation: Failed to initialize Metal or OpenGLES contexts!
 - [x] Mali-G610：十二个电源域（含 mfg1/mfg2 的 SRAM）
 - [x] Mali-G610：26 MHz 晶振 → MFGPLL 300 MHz，两路 mux 都切对
 - [x] Mali-G610：CSF 固件装载（258048 B，7 段）+ AS0 页表 + `MCU_CONTROL=AUTO`
-- [ ] Mali-G610：**MCU 一个指令都不执行**——最强线索是 GPUEB 接管了电源与时钟
+- [ ] Mali-G610：**每个地址空间的 `AS_COMMAND=UPDATE` 都抬 `MMU_BUS_ERROR(n)`**——GPU 的 AXI 读不到 DRAM，寄存器通路却一切正常；核因此取不到第一条指令
 - [ ] Mali-G610：M2 及以后（命令流、CSG/CS 调度、IOKit 服务）
 - [ ] Wi-Fi（CONNSYS）
 - [ ] 音频、相机

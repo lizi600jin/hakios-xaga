@@ -845,7 +845,17 @@
  * four megabyte ring buffer until the drivers' own start-up lines are overwritten, and the keys
  * driver prints its diagnostics once, twenty seconds in.
  */
-#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0"
+/*
+ * mali_cold=0 is written back on purpose. The driver defaults to one -- the cold path, the one
+ * the phone's own driver walks -- and that default was tried on hardware this evening: with the
+ * cold path and nothing else changed, the board came back as a preloader every three minutes
+ * instead of returning to Android. The reset path had returned on the same build one day earlier.
+ *
+ * So the boot path is not simply better, or one of the writes it omits is load-bearing for the
+ * handover rather than for the firmware. Either way the cold path is now a separate question from
+ * the one being chased, and it stays off until there is a reason to open it again.
+ */
+#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0 mali_preas0=1"
 #endif
 
 /*
