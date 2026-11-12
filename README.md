@@ -795,7 +795,20 @@ mali: bus protect sta before the start request: md0 en 0 sta 0xffffffef,
 
 这条不能简单归给 `BUS_PROT_IGN`。mt6895 的四个元组确实全是 `ignore_clr_ack = true`（`scpsys.h` 的 `BUS_PROT_IGN`），`clear_bus_protection()` 写完 `CLR` 就直接 `return 0`，从不等 ack —— 但"没等"和"没生效"是两件事，而现在手里这个读数是唯一能区分它们的东西，且它指向后者。
 
-**新线索（下一轮第一件事）**：`MD_MFGSYS_PROTECT_EN_STA_0` 的 bit0..3 一直是 1。如果这不是采样滞后，就说明 `md0` 这条 AXI 保护从来没被真正撤下来过 —— 而它管的正是 MFG 到 `md0`（主 DRAM 通路）的事务。
+**这个读数是误读，已经划掉。** `clkchk-mt6895.c:178` 把这个偏移的名字写得很清楚：
+
+```c
+REGNAME(infracfg, 0x0CAC, MD_MFGSYS_PROTECT_RDY_STA_0),
+```
+
+它是 **RDY_STA**（ready status），不是 `EN_STA`。而且 `gpufreq_mt6895.c:1350-1351` 是把它和 `EN_STA_0` 分开列的（`0x0CA0` 是 EN，`0x0CAC` 是 RDY）。所以：
+
+- 原厂 Android：`ca0 = 0`（保护没开）、`cac = 0xffffffe0`（低 4 位 = 0）
+- 本机：`ca0 = 0`（保护也没开）、`cac = 0xffffffef`（低 4 位 = 1）
+
+两侧的 `EN` 都是 0 —— **保护在两边都没有开启**。`cac` 低 4 位的差异只是"mfg1 那颗域有没有上电、通路 ready 没 ready"的反映：本机把它开起来了，所以 ready 位置位。**这是结果，不是原因。**
+
+顺带把 `bus_protect_release()` 挪到了 `power_on()` 之后（vendor 的 `scpsys_power_on()` 也是最后一步才 `bus_protect_disable()`），刷入后结果完全一致 —— 这条线彻底关掉。
 
 **二、`mfg5..mfg12` 确实没有上电，而且现在会明说。** `domain_on()` 的判定改成三值（`(sta & GENMASK(31,30)) == GENMASK(31,30)` 且 `SRAM_PDN`/`SRAM_ACK` 都清零）之后：
 
@@ -812,6 +825,14 @@ mali: pwr status 0x1fc / 0x1fc (F34/F38), gpufreq 0x4 (F3C); want 0x3ffc
 同一份原厂机器上连采 12 次 `pm_genpd_summary`，覆盖 `echo 1 > mali0/reset` 全程，`mfg1..mfg12` 全部停在 `off-0`，一个都没变；而同一段 reset 的寄存器轨迹里 `MCU_CONTROL=2` 之后 12 条记录内就升起了 `JOB_INT_STATUS bit31`。
 
 → 结论：**在 EB 模式（`gpueb-support = <1>`）下，这 12 个 genpd 只是给软件看的 view，真实供电由 GPUEB 固件接管。** 我们驱动 `power_on()` 手工去写这 12 个域的控制字，既不是 Android 做的事，也不是必需的 —— 但它也**不是**卡点（mfg1..mfg4 的 ack 是拿到的，GPU 寄存器块整块可读、`gpu_id 0xa8670004` 十七个识别字全对、`cycle counter` 一直在跑）。
+
+### 本轮第三个坑：`mali_cold=0` 也不回 Android
+
+补上 `bus_protect_release()` 之后 MCU 仍不启动（`spin 0..500000` 全是 `status 1 job 0`，`version word 0xff5aa5f0`），于是想换个角度：既然本机 `GPU_STATUS` 恒 `0x1`（`GPU_STATUS_ACTIVE`）而 Android 四条轨迹里全是 `0`，那可能是冷路径**没写 `GPU_COMMAND=0x101`（SOFT_RESET）**造成的。`mali_cold=0` 走的正是 reset 路径，会执行 `gpu_soft_reset()` + `gpu_hw_issues()` + `PWR_KEY` + `COHERENCY=0x1f`。
+
+结果：**刷入后设备停在 fastboot（`idProduct=d00d`），不回 Android。** 也就是说 `mali_cold=0` 这条路本身是死的 —— 它写的那一整套（`0x030`/`0x050`/`0x304`/`0xf00-f0c`）正是 2460 条冷启动轨迹里**一条都不出现**的东西。这反过来强化了"冷路径不写这些是对的"这个判断，但也说明 `GPU_STATUS=0x1` 这个差异**不能靠切成 reset 路径来消除**。
+
+（顺带确认：`mali_cold` 这个 boot-arg 在 `mtkloader.bin` 里能查到 3 处命中，`-DXNU_EXTRA_ARGS` 的透传是有效的 —— 不是参数没送到。）
 
 ### 本轮踩掉的两个坑（都花了刷机周期）
 

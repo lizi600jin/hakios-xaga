@@ -3616,6 +3616,30 @@ mali_bring_up(void)
 			return;
 		}
 		/*
+		 * Release the AXI protections again, and this time where the vendor does it.
+		 *
+		 * bus_protect_release() already ran at the top of this function, before any domain had a
+		 * rail. The status word now says that was too early: on this board
+		 * MD_MFGSYS_PROTECT_EN_STA_0 (0x10001CAC) still reads 0xFFFFFFEF, i.e. bits 0..3 -- the
+		 * whole MT6895_TOP_AXI_PROT_EN_MD0_MFG1 mask -- are still set, while emisys0 and emisys1
+		 * read their masked bits as zero. The stock phone reads 0xFFFFFFE0 in that same register,
+		 * with the low four bits clear.
+		 *
+		 * The vendor's order says the same thing. scpsys_power_on() only reaches
+		 * scpsys_bus_protect_disable() after PWR_RST_B, subsys_clk and scpsys_sram_enable()
+		 * (mtk-scpsys.c:44-67 of that function, scpsys_bus_protect_disable() being the last
+		 * call), and scpsys_power_off() re-arms it before dropping the rail. The protection is
+		 * therefore armed for exactly as long as the domain is down, and clearing it while the
+		 * domain is still down is a write into a block that will re-assert it on the way up.
+		 *
+		 * That matters here because md0 is the MFG-to-main-memory port. A GPU whose reads are
+		 * still behind that protection issues an AXI transaction that is never answered -- no
+		 * data, no error, no fault status -- which is precisely the shape of the failure this
+		 * driver has been chasing: debug_top goes to busy and never returns, MCU_STATUS stays at
+		 * 1, AS_FAULTSTATUS stays 0, and the firmware's version word is never written.
+		 */
+		bus_protect_release();
+		/*
 		 * The stack rail, which the vendor enables before the domains and this driver never has.
 		 *
 		 * POWER_CHANGED_SINGLE without POWER_CHANGED_ALL is the signature of a rail that is
