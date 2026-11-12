@@ -1,0 +1,5 @@
+Command executed separately: fastboot -s GAJZ4HIN99AQ69Y9 reboot
+Rebooting OKAY [ 0.016s]
+Finished. Total time: 0.073s
+Exit code: 0
+Copied from tool execution output. Timestamp is in trial metadata.

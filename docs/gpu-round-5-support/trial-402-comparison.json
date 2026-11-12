@@ -1,0 +1,45 @@
+{
+  "trial": 402,
+  "stores": 80,
+  "expected_stores": 80,
+  "matches_expected": true,
+  "vs_236": {
+    "base_stores": 82,
+    "sequence_identical_after_removal": true,
+    "removed_indices": [
+      79,
+      80
+    ],
+    "diff_ops": [
+      {
+        "tag": "delete",
+        "removed": [
+          [
+            "0x00024",
+            "0x600"
+          ],
+          [
+            "0x00024",
+            "0x600"
+          ]
+        ],
+        "added": []
+      }
+    ],
+    "multiset_removed": {
+      "0x00024:0x600": 2
+    },
+    "multiset_added": {}
+  },
+  "irq_init_six_writes_present": true,
+  "android_boot_completed": true,
+  "mcu_booted": false,
+  "version_word_untouched": true,
+  "debug_top_stable": "0x1b at spin 0/1000/100000/500000",
+  "gpu_status_before_after": [
+    "0x0",
+    "0x1"
+  ],
+  "pwr_status": "0x1fc / 0x1fc (want 0x3ffc), 7 of twelve domains",
+  "note": "nopwrclear=1 also changes the power-settle wait semantics: first clear skipped, the pre-existing ALL latch satisfies the exit condition, so the block is not re-waited for a new ALL. Not a pure 'two fewer writes' experiment."
+}

@@ -1,0 +1,114 @@
+{
+  "historical236_stores": 82,
+  "historical400_stores": 82,
+  "actual_stores": 69,
+  "expected_stores": 69,
+  "removed_236_indices": [
+    0,
+    8,
+    16,
+    24,
+    32,
+    40,
+    65,
+    66,
+    67,
+    70,
+    73,
+    76,
+    81
+  ],
+  "removed_236_stores": [
+    {
+      "index": 0,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 8,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 16,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 24,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 32,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 40,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 65,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 66,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 67,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 70,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 73,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 76,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    },
+    {
+      "index": 81,
+      "offset": "0x2004",
+      "value": "0xffffffff"
+    }
+  ],
+  "sequence_equals_236_minus_target_clears": true,
+  "from400_operation": "restore AS0 block from [0:13] to after [13:78], then remove target stores in normalized236 indices",
+  "multiset_removed": [
+    {
+      "offset": "0x2004",
+      "value": "0xffffffff",
+      "count": 13
+    }
+  ],
+  "multiset_added": [],
+  "irq_initialization_six_preserved": true,
+  "removed_400_indices_before_order_restore": [
+    13,
+    21,
+    29,
+    37,
+    45,
+    53,
+    0,
+    1,
+    2,
+    5,
+    8,
+    11,
+    81
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "checked_at": "2026-11-12T23:11:57.716990+08:00",
+  "repository": "/home/lizi/IOS/repo/hakios-mt6895",
+  "source_path": "/home/lizi/IOS/hakios-mtk/mtk/mt6895/drivers/gpu/hakios.mali610.c",
+  "source_sha256": "81db05720a2b6587fa121f2aa573f726946a0fe8cf72d43bd68c039304778c9a",
+  "source_bytes": 197858,
+  "source_lines": 4333,
+  "source_git_blob": "9e3ef6ea735c057dad12f5a089e4fa99c40ed6a9",
+  "tree_source_equal": true,
+  "patch_extracted_source_equal": true,
+  "non_gpu_patch_blocks_unchanged": true,
+  "changed_patch_blocks": [
+    "mtk/mt6895/drivers/gpu/hakios.mali610.c"
+  ],
+  "patch_before_sha256": "b86ca65316083b762767e685439962d8a5b92fd3e372679a6ab534a43c349eb8",
+  "patch_after_sha256": "27424531f585e1152f8a9573b6dd875c9b6913d9588dbf981d3e66066dfa19aa",
+  "patch_prefix_sha256": "54ed107c6d97d9b0aa100057bc05926cd3163eb5eab66a1cb07a88a5e2020c8a",
+  "patch_suffix_sha256": "2e81c10b8ca335af010f5ac31724d35a1257f9c02f6a1c595b77858c7ec98743",
+  "patch_before_bytes": 953483,
+  "patch_after_bytes": 954086,
+  "gpu_patch_before_bytes": 201806,
+  "gpu_patch_after_bytes": 202409,
+  "git_diff_check_exit_code": 0,
+  "git_diff_check_output": "",
+  "git_apply_numstat_exit_code": 0,
+  "git_apply_numstat_files": 46,
+  "git_apply_numstat_stderr": "",
+  "repository_paths_written": [
+    "tree/mtk/mt6895/drivers/gpu/hakios.mali610.c",
+    "patches/0001-upstream-changes.patch"
+  ],
+  "committed": false,
+  "pushed": false
+}

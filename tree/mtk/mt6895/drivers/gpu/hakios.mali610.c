@@ -480,6 +480,8 @@ static unsigned gMaliRpc;                       /* mali_rpc=1 touches mfg_rpc, 2
  */
 static unsigned gMaliAs0;                       /* mali_as0=1 parks AS0 as a control */
 static unsigned gMaliPreAs0;                    /* mali_preas0=1 updates AS0 before the L2 comes up */
+static unsigned gMaliNoApClear;                 /* mali_noapclear=1 skips 13 diagnostic MMU clears */
+static unsigned gMaliNoPwrClear;                /* mali_nopwrclear=1 skips two L2 power IRQ clears */
 static unsigned gMaliAs0First;                  /* mali_as0first=1 moves the pre-AS0 block before AS2..7 */
 static unsigned gMaliEarlyAs0;                  /* set once the early path has already done it */
 /*
@@ -564,9 +566,10 @@ mali_write_trace(const char *when)
 {
 	unsigned i;
 
-	printf("mali: trial %u %s: level %u cold %u low %u preas0 %u freerun %u parkattrs %u trace %u as0first %u\n",
+	printf("mali: trial %u %s: level %u cold %u low %u preas0 %u freerun %u parkattrs %u trace %u as0first %u noapclear %u nopwrclear %u\n",
 	    gMaliTrial, when, gMaliLevel, gMaliCold, gMaliLowMem, gMaliPreAs0,
-	    gMaliFreeRun, gMaliParkAttrs, gMaliTrace, gMaliAs0First);
+	    gMaliFreeRun, gMaliParkAttrs, gMaliTrace, gMaliAs0First,
+	    gMaliNoApClear, gMaliNoPwrClear);
 	if (!gMaliTrace || gMaliWritesPrinted) {
 		return;
 	}
@@ -2426,7 +2429,7 @@ as_enable(unsigned as, uint64_t transtab)
 	 * accesses, and they answer a question that has been guessed at across a dozen runs.
 	 */
 #define AS_STEP(name, expr)	do { \
-		mwr(kMmuIntClear, 0xffffffffu); \
+		if (!gMaliNoApClear) { mwr(kMmuIntClear, 0xffffffffu); } \
 		__asm__ volatile ("dsb sy" ::: "memory"); \
 		expr; \
 		__asm__ volatile ("dsb sy" ::: "memory"); \
@@ -2805,7 +2808,9 @@ gpu_l2_power_on(void)
 		 * printed here instead: the latch as it was found, and the masked view, because whether
 		 * GPU_IRQ_MASK hides this bit on this part is exactly what nobody here knows.
 		 */
-		mwr(kIntClear, kGpuIrqPowerChangedAll | kGpuIrqPowerChangedSingle);
+		if (!gMaliNoPwrClear) {
+			mwr(kIntClear, kGpuIrqPowerChangedAll | kGpuIrqPowerChangedSingle);
+		}
 		for (spins = 0; spins < 20000u; spins++) {
 			raw = mrd(kIntRaw);
 			if (raw & kGpuIrqPowerChangedAll) {
@@ -2822,7 +2827,9 @@ gpu_l2_power_on(void)
 		    ((stale | raw) & kGpuIrqPowerChangedAll) ?
 		    "the whole block settled, so power and clocks are not the problem" :
 		    "no ALL either side of the request, so a transition never finished");
-		mwr(kIntClear, kGpuIrqPowerChangedAll | kGpuIrqPowerChangedSingle);
+		if (!gMaliNoPwrClear) {
+			mwr(kIntClear, kGpuIrqPowerChangedAll | kGpuIrqPowerChangedSingle);
+		}
 	}
 	/*
 	 * The shader and tiler cores are deliberately not touched here.
@@ -2948,7 +2955,7 @@ as_park_unused(void)
 		if ((present & (1u << as)) == 0u) {
 			continue;
 		}
-		mwr(kMmuIntClear, 0xffffffffu);
+		if (!gMaliNoApClear) { mwr(kMmuIntClear, 0xffffffffu); }
 		__asm__ volatile ("dsb sy" ::: "memory");
 		gpu_wr64(asReg(as, kAsTranstab), 0);
 		gpu_wr64(asReg(as, kAsMemattr),
@@ -3220,7 +3227,7 @@ start_mcu(void)
 	 * been indistinguishable at that register. What the walk's fault means and what a fetch fault
 	 * would mean are different questions; separating them costs one write.
 	 */
-	mwr(kMmuIntClear, 0xffffffffu);
+	if (!gMaliNoApClear) { mwr(kMmuIntClear, 0xffffffffu); }
 	__asm__ volatile ("dsb sy" ::: "memory");
 	printf("mali: mmu irq %#x with the latch freshly cleared, just before the start request\n",
 	    mrd(kMmuIntRaw));
@@ -3598,7 +3605,7 @@ mali_early_as0(void)
 	if (!load_firmware()) {
 		return false;
 	}
-	mwr(kMmuIntClear, 0xffffffffu);
+	if (!gMaliNoApClear) { mwr(kMmuIntClear, 0xffffffffu); }
 	printf("mali: mmu irq %#x after the clear, before AS0 and before the L2\n",
 	    mrd(kMmuIntRaw));
 	if (!as_enable(0, gMcuRootPa)) {
@@ -4316,6 +4323,8 @@ hakios_mali610_init(void)
 	PE_parse_boot_argn("mali_parkattrs", &gMaliParkAttrs, sizeof(gMaliParkAttrs));
 	PE_parse_boot_argn("mali_trace", &gMaliTrace, sizeof(gMaliTrace));
 	PE_parse_boot_argn("mali_trial", &gMaliTrial, sizeof(gMaliTrial));
+	PE_parse_boot_argn("mali_noapclear", &gMaliNoApClear, sizeof(gMaliNoApClear));
+	PE_parse_boot_argn("mali_nopwrclear", &gMaliNoPwrClear, sizeof(gMaliNoPwrClear));
 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {
 		thread_deallocate(thread);
 	} else {

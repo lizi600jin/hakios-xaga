@@ -1,0 +1,73 @@
+{
+  "built_at": "2026-11-12T23:11:18.937820+08:00",
+  "kernel_build_count": 1,
+  "payload_build_count": 1,
+  "artifacts": {
+    "hakios-kernel": {
+      "sha256": "cc7e15998d98feb6e9ab15f72741dba0cf293dac70218e49d7bed74e1bb84254",
+      "bytes": 15268872
+    },
+    "build-payload.bin": {
+      "sha256": "3832e803bc4cb1ccb6b109e8d35c6880133a290224c21894c331bfef0bc157c6",
+      "bytes": 19463336
+    },
+    "mtk/mt6895/drivers/gpu/hakios.mali610.c": {
+      "sha256": "81db05720a2b6587fa121f2aa573f726946a0fe8cf72d43bd68c039304778c9a",
+      "bytes": 197858
+    },
+    "drivers/gpu/hakios.mali610_fw.h": {
+      "sha256": "ccdd7ba351a3f3d10f883b4f0de2abc58bbadf7758d5ea68214e01cdf7c28cf7",
+      "bytes": 1323077
+    },
+    "drivers/input/hakios.nvt_fw.h": {
+      "sha256": "25374f076335b205c6085774659635de4ca28c7de00309a73e77262c8fb77dda",
+      "bytes": 847130
+    }
+  },
+  "trial": 401,
+  "args": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=1 mali_preas0=1 mali_low=1 mali_freerun=1 mali_parkattrs=1 mali_trace=1 mali_trial=401 mali_as0first=0 mali_noapclear=1 mali_nopwrclear=0",
+  "as0first": 0,
+  "trace": 1,
+  "noapclear": 1,
+  "nopwrclear": 0,
+  "image": "/tmp/hakios-round5-images/trial-401.img",
+  "image_bytes": 22974464,
+  "image_md5": "e0807148aa0a4c4357cdb0e8572323ca",
+  "image_sha256": "480154b3c06ab0116487d8bdabbd176b45bf22bffbac46f17f94f7f330062a40",
+  "packed_at": "2026-11-12T23:12:33.796142+08:00",
+  "flashed": true,
+  "reboot_requested_at": "2026-11-12T23:13:37.050557+08:00",
+  "logbook_bytes": 4198400,
+  "logbook_sha256": "14eb202140f24bba62ee9e833395ef9195204f7618677c17bb51dc308380602c",
+  "mali_rows": 210,
+  "time_breaks": [],
+  "trial_markers": [
+    "mali: trial 401 after AUTO (stores captured before AUTO): level 6 cold 1 low 1 preas0 1 freerun 1 parkattrs 1 trace 1 as0first 0 noapclear 1 nopwrclear 0"
+  ],
+  "stores": 69,
+  "android_boot_completed": true,
+  "android_verified_at": "2026-11-12T23:17:22+08:00",
+  "global_if_failure_logged": true,
+  "sequence_verified": true,
+  "sentinel_unchanged": true,
+  "gpu_status_before": [
+    "mali: views before AUTO: gpu status 0/0 irq raw 0/0x600 mcu control 0 status 0"
+  ],
+  "gpu_status_after": [
+    "mali: after the start request: gpu status 0x1, gpu irq status 0, job irq status 0, mmu irq 0x10000, as0 status 0 faultstatus 0 faultaddress 0"
+  ],
+  "spin_readings": {
+    "0": [
+      "mali: spin 0: status 1 job 0 mmu 0x10000 fault 0 at 0 top 0x1b"
+    ],
+    "1000": [
+      "mali: spin 1000: status 1 job 0 mmu 0x10000 fault 0 at 0 top 0x1b"
+    ],
+    "100000": [
+      "mali: spin 100000: status 1 job 0 mmu 0x10000 fault 0 at 0 top 0x1b"
+    ],
+    "500000": [
+      "mali: spin 500000: status 1 job 0 mmu 0x10000 fault 0 at 0 top 0x1b"
+    ]
+  }
+}
