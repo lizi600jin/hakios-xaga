@@ -880,6 +880,15 @@ AP raw 已清 0 而 0x3020 保持 0x600，支持独立目的端锁存解释。
 启动尝试后打印，trace=0 还关闭新增包围采样；这个低干扰版本仅完成本地构建，**用户结束本轮，
 尚未刷入**。不能把它写成已验证通过，也不能把带诊断开销的结论扩大为所有启动时序均已排除。
 
+### GPU round-4：AS0-first 已实测，仍无 GLOBAL_IF
+
+trial246低干扰trace=0已于round-3刷入并返回Android，仍未启动MCU。随后本轮加入默认0的
+`mali_as0first`，只移动完整AS0块；trial400开启该开关及trace=1，返回Android且boot_completed=1。
+实录82 stores，相对236精确只有13条AS0块位置变化，offset/value多重集不变。GPU_STATUS为
+AUTO前0、后1；四个spin节点均top=0x1b，哨兵0xff5aa5f0未改，仍无GLOBAL_IF。
+用户额度限制取消本轮as0first=0重刷。206仅作历史参考，内核及free-run/MEMATTR配置不同；
+不称同内核单变量对照。详见 [round-4报告及完整文本证据](docs/GPU-ROUND-4.md)。本轮结束，等待指令。
+
 ### 卡顿：软件渲染压在 4 个 999 MHz 核上
 
 ```
@@ -910,7 +919,7 @@ CoreAnimation: Failed to initialize Metal or OpenGLES contexts!
 - [x] Mali-G610：厂商九步里漏掉的 `MFG_I2M_PROTECTOR` 四条 + arm 位（`0x13FBFF60` 回读 `0x20300317`），并把 `acp → hwdcm → gpm` 的顺序改对
 - [x] Mali-G610：推翻「`MMU_BUS_ERROR`」归因——bit16..31 是 `REQ_COMPLETE`，七次 UPDATE 全部成功
 - [x] 试清清 `GLB_REQ.HALT`（真机回读 `glb req 0 -> 0`，本来就是 0 —— 否掉）
-- [ ] Mali-G610：**`MCU_CONTROL=AUTO` 之后 `JOB_INT_STATUS` bit31 从不升起**——五次真机对照见 round-2；下一步先验证未刷的低干扰版本，再分别测试 AS0-first 顺序与附加 IRQ clear，当前尚不能限定为 SoC 原因
+- [ ] Mali-G610：**`MCU_CONTROL=AUTO` 之后 `JOB_INT_STATUS` bit31 从不升起**——五次真机对照见 round-2；低干扰246及AS0-first 400均已返回Android但仍失败；round-4记录历史对照边界，当前停下待命
 - [ ] Mali-G610：M2 及以后（命令流、CSG/CS 调度、IOKit 服务）
 - [ ] Wi-Fi（CONNSYS）
 - [ ] 音频、相机

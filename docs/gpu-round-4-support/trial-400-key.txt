@@ -1,0 +1,18 @@
+33.102915 mali: interconnect before the firmware: dcm0 0xc03f->0xc03f async 0x3c00000->0x3c00000 async1 0xf7->0xf7 global 0x3281701->0x30e7701 qchannel 0x10->0x10 rpc 0->0
+33.209192 mali: bus idle after the early table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)
+33.523353 mali: MCU status 0 before the start request
+33.523444 mali: views before AUTO: gpu status 0/0 irq raw 0/0x600 mcu control 0 status 0
+34.032543 mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+34.038676 mali: spin 1000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+34.734377 mali: spin 100000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+37.720722 mali: spin 500000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+43.093717 mali: the start loop ended after 1000000 spins (halt seen 0, fatal seen 0)
+43.094490 mali: trial 400 after AUTO (stores captured before AUTO): level 6 cold 1 low 1 preas0 1 freerun 1 parkattrs 1 trace 1 as0first 1
+43.095126 mali: write trace: 82 completed GPU stores (capacity 128)
+43.138036 mali: MCU status 1 (enabled), job irq 0, gpu irq 0
+43.138864 mali: after the start request: gpu status 0x1, gpu irq status 0, job irq status 0, mmu irq 0, as0 status 0 faultstatus 0 faultaddress 0
+43.143450 mali: version word 0xff5aa5f0 (untouched; no firmware version published)
+43.144344 mali: the global interface never raised; the MCU did not boot
+44.204915 mali: bus idle after the failed start: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)
+44.209000 mali: MCU control written 0, status now 1, control reads 0
+45.279657 mali: bus idle after the core was switched off: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)

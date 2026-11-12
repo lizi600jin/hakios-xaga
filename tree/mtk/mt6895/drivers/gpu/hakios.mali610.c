@@ -480,6 +480,7 @@ static unsigned gMaliRpc;                       /* mali_rpc=1 touches mfg_rpc, 2
  */
 static unsigned gMaliAs0;                       /* mali_as0=1 parks AS0 as a control */
 static unsigned gMaliPreAs0;                    /* mali_preas0=1 updates AS0 before the L2 comes up */
+static unsigned gMaliAs0First;                  /* mali_as0first=1 moves the pre-AS0 block before AS2..7 */
 static unsigned gMaliEarlyAs0;                  /* set once the early path has already done it */
 /*
  * mali_cold=1 walks the path the phone's own driver walks when the machine boots, and nothing else.
@@ -563,9 +564,9 @@ mali_write_trace(const char *when)
 {
 	unsigned i;
 
-	printf("mali: trial %u %s: level %u cold %u low %u preas0 %u freerun %u parkattrs %u trace %u\n",
+	printf("mali: trial %u %s: level %u cold %u low %u preas0 %u freerun %u parkattrs %u trace %u as0first %u\n",
 	    gMaliTrial, when, gMaliLevel, gMaliCold, gMaliLowMem, gMaliPreAs0,
-	    gMaliFreeRun, gMaliParkAttrs, gMaliTrace);
+	    gMaliFreeRun, gMaliParkAttrs, gMaliTrace, gMaliAs0First);
 	if (!gMaliTrace || gMaliWritesPrinted) {
 		return;
 	}
@@ -3591,6 +3592,25 @@ global_interface(void)
 
 /* ------------------------------------------------------------------ bring-up */
 
+static bool
+mali_early_as0(void)
+{
+	if (!load_firmware()) {
+		return false;
+	}
+	mwr(kMmuIntClear, 0xffffffffu);
+	printf("mali: mmu irq %#x after the clear, before AS0 and before the L2\n",
+	    mrd(kMmuIntRaw));
+	if (!as_enable(0, gMcuRootPa)) {
+		return false;
+	}
+	printf("mali: mmu irq %#x after AS0 took the update, before the L2\n",
+	    mrd(kMmuIntRaw));
+	mfg_bus_idle("after the early table walk");
+	gMaliEarlyAs0 = 1u;
+	return true;
+}
+
 static void
 mali_bring_up(void)
 {
@@ -3887,6 +3907,11 @@ mali_bring_up(void)
 	 */
 	gpueb_watch("before the address spaces");
 	gmpu_probe("before the address spaces");
+	if (gMaliPreAs0 && !gMaliAs0 && gMaliLevel > 4 && gMaliAs0First) {
+		if (!mali_early_as0()) {
+			return;
+		}
+	}
 	as_park_unused();
 	/*
 	 * The masks go on before the L2 is asked to come up, not inside start_mcu().
@@ -3915,20 +3940,10 @@ mali_bring_up(void)
 	 * all; AS0 is written after it and raises MMU_BUS_ERROR(0) every single run. Two facts, one
 	 * variable, never separated.
 	 */
-	if (gMaliPreAs0 && !gMaliAs0 && gMaliLevel > 4) {
-		if (!load_firmware()) {
+	if (gMaliPreAs0 && !gMaliAs0 && gMaliLevel > 4 && !gMaliAs0First) {
+		if (!mali_early_as0()) {
 			return;
 		}
-		mwr(kMmuIntClear, 0xffffffffu);
-		printf("mali: mmu irq %#x after the clear, before AS0 and before the L2\n",
-		    mrd(kMmuIntRaw));
-		if (!as_enable(0, gMcuRootPa)) {
-			return;
-		}
-		printf("mali: mmu irq %#x after AS0 took the update, before the L2\n",
-		    mrd(kMmuIntRaw));
-		mfg_bus_idle("after the early table walk");
-		gMaliEarlyAs0 = 1u;
 	}
 	if (!gpu_l2_power_on()) {
 		return;
@@ -4230,12 +4245,16 @@ hakios_mali610_init(void)
 		int rpc = 0;
 		int as0 = 0;
 		int preas0 = 0;
+		int as0first = 0;
 
 		if (PE_parse_boot_argn("mali_as0", &as0, sizeof(as0))) {
 			gMaliAs0 = (as0 > 0) ? 1u : 0u;
 		}
 		if (PE_parse_boot_argn("mali_preas0", &preas0, sizeof(preas0))) {
 			gMaliPreAs0 = (preas0 > 0) ? 1u : 0u;
+		}
+		if (PE_parse_boot_argn("mali_as0first", &as0first, sizeof(as0first))) {
+			gMaliAs0First = (as0first > 0) ? 1u : 0u;
 		}
 		if (PE_parse_boot_argn("mali_rpc", &rpc, sizeof(rpc))) {
 			gMaliRpc = (rpc > 0) ? (unsigned)rpc : 0u;

@@ -1,0 +1,46 @@
+{
+  "built_at": "2026-11-12T22:58:43.038450+08:00",
+  "kernel_build_count": 1,
+  "payload_build_count": 1,
+  "artifacts": {
+    "hakios-kernel": {
+      "sha256": "fb30fd7fc5db3227ab785ac4c5613e71801bf16ea5d9bf9366c0621e599eea20",
+      "bytes": 15268808
+    },
+    "build-payload.bin": {
+      "sha256": "b4723dfe7ac82f310b4c68f4bfd8437be642efb147b1e464b7611ae425924578",
+      "bytes": 19463272
+    },
+    "mtk/mt6895/drivers/gpu/hakios.mali610.c": {
+      "sha256": "283a45a8eab3a29becbcdcb803e8b07a7236c1575c47ddde41ead2735ce44af8",
+      "bytes": 197264
+    },
+    "drivers/gpu/hakios.mali610_fw.h": {
+      "sha256": "ccdd7ba351a3f3d10f883b4f0de2abc58bbadf7758d5ea68214e01cdf7c28cf7",
+      "bytes": 1323077
+    },
+    "drivers/input/hakios.nvt_fw.h": {
+      "sha256": "25374f076335b205c6085774659635de4ca28c7de00309a73e77262c8fb77dda",
+      "bytes": 847130
+    }
+  },
+  "trial": 400,
+  "as0first": 1,
+  "trace": 1,
+  "image": "/tmp/hakios-round4-images/trial-400-as0first-1.img",
+  "image_bytes": 22974464,
+  "image_md5": "b19da29b3134b06d501036f24540b83c",
+  "image_sha256": "6c7945824b9710254233468b38ebdff389a0e9c62d6bead4119cfa570a5c55fc",
+  "flashed": true,
+  "reboot_requested_at": "2026-11-12T23:02:08.517386+08:00",
+  "logbook_bytes": 4198400,
+  "logbook_sha256": "bcde6c5384b0f590835f7592361316ea063ac9e17e25d5cde13743eb378a6b1c",
+  "mali_rows": 223,
+  "time_breaks": [],
+  "trial_markers": [
+    "mali: trial 400 after AUTO (stores captured before AUTO): level 6 cold 1 low 1 preas0 1 freerun 1 parkattrs 1 trace 1 as0first 1"
+  ],
+  "stores": 82,
+  "android_boot_completed": true,
+  "mcu_booted": false
+}

@@ -1,0 +1,47 @@
+{
+  "206": {
+    "historical_stores": 82,
+    "current_stores": 82,
+    "offset_multiset_equal": true,
+    "offset_value_multiset_equal": false,
+    "block_move_exact": false,
+    "differences_after_block_move": [
+      {
+        "index": 16,
+        "old_offset": "0x2488",
+        "new_offset": "0x2488",
+        "old_value": "0x0",
+        "new_value": "0x888d8f88"
+      },
+      {
+        "index": 17,
+        "old_offset": "0x248c",
+        "new_offset": "0x248c",
+        "old_value": "0x0",
+        "new_value": "0x84c8d"
+      },
+      {
+        "index": 24,
+        "old_offset": "0x24c8",
+        "new_offset": "0x24c8",
+        "old_value": "0x0",
+        "new_value": "0x888d8f88"
+      },
+      {
+        "index": 25,
+        "old_offset": "0x24cc",
+        "new_offset": "0x24cc",
+        "old_value": "0x0",
+        "new_value": "0x84c8d"
+      }
+    ]
+  },
+  "236": {
+    "historical_stores": 82,
+    "current_stores": 82,
+    "offset_multiset_equal": true,
+    "offset_value_multiset_equal": true,
+    "block_move_exact": true,
+    "differences_after_block_move": []
+  }
+}

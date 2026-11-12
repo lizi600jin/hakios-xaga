@@ -1,0 +1,6 @@
+2026-11-12T23:05:41+08:00
+List of devices attached
+GAJZ4HIN99AQ69Y9	device
+
+sys.boot_completed=1
+ro.boot.slot_suffix=_a

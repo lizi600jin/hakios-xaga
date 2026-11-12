@@ -1,0 +1,223 @@
+00054ac1 27.973090 mali: mfg5  ST4 no ack after 2000000 reads (0x4000000d), continuing anyway
+00054b1c 27.973108 mali: mfg5  ST4 did NOT come up: 0x4000000d (sta 0x1, sram pdn 0 ack 0)
+000551b5 28.696695 mali: mfg6  ST5 no ack after 2000000 reads (0x4000000d), continuing anyway
+00055210 28.696703 mali: mfg6  ST5 did NOT come up: 0x4000000d (sta 0x1, sram pdn 0 ack 0)
+00055724 29.419980 mali: mfg7  ST0T0 no ack after 2000000 reads (0xd), continuing anyway
+0005577a 29.419999 mali: mfg7  ST0T0 did NOT come up: 0xd (sta 0, sram pdn 0 ack 0)
+00055d45 30.143154 mali: mfg8  ST1T0 no ack after 2000000 reads (0xd), continuing anyway
+00055d9b 30.143162 mali: mfg8  ST1T0 did NOT come up: 0xd (sta 0, sram pdn 0 ack 0)
+00056372 30.866327 mali: mfg9  ST0T1 no ack after 2000000 reads (0xd), continuing anyway
+000563c8 30.866345 mali: mfg9  ST0T1 did NOT come up: 0xd (sta 0, sram pdn 0 ack 0)
+000567a6 31.589508 mali: mfg10 ST4T0 no ack after 2000000 reads (0xd), continuing anyway
+000567fc 31.589515 mali: mfg10 ST4T0 did NOT come up: 0xd (sta 0, sram pdn 0 ack 0)
+00056dd3 32.314600 mali: mfg11 ST5T0 no ack after 2000000 reads (0xd), continuing anyway
+00056e29 32.317494 mali: mfg11 ST5T0 did NOT come up: 0xd (sta 0, sram pdn 0 ack 0)
+00057465 33.042467 mali: mfg12 ST4T1 no ack after 2000000 reads (0xd), continuing anyway
+000574bb 33.045012 mali: mfg12 ST4T1 did NOT come up: 0xd (sta 0, sram pdn 0 ack 0)
+0005750c 33.047512 mali: 7 of twelve domains answered
+0005753f 33.050018 mali: bus protect top axi md0 0 -> 0 (mask 0xf)
+0005757f 33.052519 mali: bus protect mfgrpc 0xf -> 0xf (mask 0xf0000)
+000575c2 33.055017 mali: bus protect emisys0 0 -> 0 (mask 0xc0000)
+00057602 33.057488 mali: bus protect emisys1 0 -> 0 (mask 0xc0000)
+00057642 33.060002 mali: bus protect sta: md0 en 0 sta 0xffffffef (mask 0xf)
+0005768c 33.062505 mali: bus protect sta: emisys0 en 0 sta 0xff000020 (mask 0xc0000)
+000576de 33.064977 mali: bus protect sta: emisys1 en 0 sta 0xff002020 (mask 0xc0000)
+00057730 33.067426 mali: bus protect sta: mfgrpc not read (mali_rpc=0)
+00057774 33.069886 mali: stack rail: v buck2 status 0x6a (enabled 0), vsel 0x58
+000577c1 33.074119 mali: stack rail: status 0x6e after the enable (enabled 1)
+0005780c 33.076550 mali: clock: cfg4 0x101 cfg30 0xff000000 mfgcfg 0x2
+00057850 33.078977 mali: pdc enabled on 17 registers
+00057882 33.081395 mali: pdc: sc0 0x2000001 sc9 0 cg 0x2000001 st0 0x2000001 st4 0x2000001 st6 0
+000578e0 33.083781 mali: after pdc: mfg5 0x100d mfg6 0x100d mfg10 0x100d mfg12 0x100d
+00057933 33.086187 mali: pwr status 0x1fc / 0x1fc (scpsys 0xF34/0xF38), gpufreq 0x4 (0xF3C); want 0x3ffc
+00057999 33.088574 mali: gpu_id 0xa8670004 l2 0x7130306 shader 0x130013
+000579de 33.091058 mali: pll: con0 0x15445 con1 0x31713b1 con3 0x80000001 cfg5 0x1010182 cfg30 0xff010000
+00057a45 33.093449 mali: timestamp register 0x3 (was 0 before the write)
+00057af0 33.098165 mali: coherence 0xf gals0 0xffc855 gals4 0xffc055
+00057b32 33.102915 mali: interconnect before the firmware: dcm0 0xc03f->0xc03f async 0x3c00000->0x3c00000 async1 0xf7->0xf7 global 0x3281701->0x30e7701 qchannel 0x10->0x10 rpc 0->0
+00057be4 33.105297 mali: i2m protector before the firmware: 0x20300317 0x1800000c 0x1010802 0x227f3
+00057c45 33.107631 mali: this is GPU 0xa8670004, CSF 0x40a0412
+00057c81 33.109972 mali: mmu 0x2830 (va 48 bits, pa 40 bits) address spaces 0xff
+00057ccf 33.112285 mali: shader 0x130013 tiler 0x1 l2 0x1 stack 0x33 thread_max 0x800
+00057d22 33.114585 mali: gpueb before the address spaces: not mapped
+00057d64 33.114616 mali: gmpu before the address spaces: 0x1c:0x11f00 0x48:0x1000 0x4c:0xff020f00 0x60:0x21800000 0xc0:0x30 (nonzero words above; the rest read 0)
+00057e04 33.121587 mali: firmware 258048 bytes, header 0.1, entry table ends at 768
+00057e55 33.123920 mali: section 0: va 0-0x1000 flags 0x9 (r-- cached) 2836 bytes
+00057ea4 33.126176 mali: section 0: memattr index 0
+00057ed5 33.128506 mali: section 1: va 0x1000000-0x1010000 flags 0xd (r-x cached) 63560 bytes
+00057f30 33.130765 mali: section 1: memattr index 0
+00057f61 33.133112 mali: section 2: va 0x2000000-0x203e000 flags 0x8000000b (rw- cached) 180752 bytes
+00057fc4 33.135326 mali: section 2: memattr index 0
+00057ff5 33.137576 mali: section 3: va 0x203e000-0x203f000 flags 0x8000000b (rw- cached) 0 bytes
+000580b8 33.142055 mali: section 3: memattr index 0
+000580e9 33.144282 mali: section 4: va 0x203f000-0x2040000 flags 0x8000000b (rw- cached) 0 bytes
+00058147 33.146449 mali: section 4: memattr index 0
+00058178 33.148715 mali: section 5: va 0x2800000-0x2840000 flags 0x80000009 (r-- cached) 180752 bytes
+000581db 33.150855 mali: section 5: memattr index 0
+0005820c 33.153043 mali: section 0x3000000-0x303e000 is protected-mode, mapped with ordinary memory
+0005826d 33.155237 mali: section 6: va 0x3000000-0x303e000 flags 0x2b (rw- cached) 0 bytes
+000582c5 33.157367 mali: section 6: memattr index 0
+000582f6 33.159524 mali: section 0x303e000-0x303f000 is protected-mode, mapped with ordinary memory
+00058357 33.161675 mali: section 7: va 0x303e000-0x303f000 flags 0x2b (rw- cached) 0 bytes
+000583af 33.163763 mali: section 7: memattr index 0
+000583e0 33.165891 mali: section 0x303f000-0x3040000 is protected-mode, mapped with ordinary memory
+00058441 33.167983 mali: section 8: va 0x303f000-0x3040000 flags 0x2b (rw- cached) 0 bytes
+00058499 33.170050 mali: section 8: memattr index 0
+000584ca 33.172209 mali: section 9: va 0x4000000-0x4094000 flags 0xc000001b (rw- nc shared) 8192 bytes
+0005852e 33.174244 mali: section 9: memattr index 5
+0005855f 33.174256 mali: walk 0: L0 0x50008403 L1 0x5000c403 L2 0x50010403 L3 0x40000050004fc3 page
+000585c0 33.176367 mali: walk 0x1000000: L0 0x50008403 L1 0x5000c403 L2 0x50024403 L3 0x50014fc3 page
+00058623 33.178460 mali: walk 0x2000000: L0 0x50008403 L1 0x5000c403 L2 0x50068403 L3 0x40000050028f43 page
+0005868c 33.180509 mali: walk 0x4000000: L0 0x50008403 L1 0x5000c403 L2 0x50198403 L3 0x40000050104e57 page
+000586f5 33.182556 mali: walk 0x40000000: L0 0x50008403 L1 0 table unset
+0005873b 33.184560 mali: walk 0x40022000: L0 0x50008403 L1 0 table unset
+000587e6 33.190452 mali: 10 sections, 9 page tables
+00058817 33.192405 mali: mmu irq 0 after the clear, before AS0 and before the L2
+00058865 33.194337 mali: AS0 step idle      mmu irq 0
+00058898 33.196215 mali: AS0 step transtab  mmu irq 0
+000588cb 33.198085 mali: AS0 step memattr   mmu irq 0
+000588fe 33.199932 mali: AS0 step transcfg  mmu irq 0
+00058931 33.201810 mali: AS0 readback: transtab 0x50000000 memattr 0x84c8d888d8f88 transcfg 0x42000006
+00058995 33.203643 mali: AS0 step update    mmu irq 0x10000
+000589ce 33.205468 mali: AS0 enabled: root 0x50000000 transcfg 0x42000006
+00058a15 33.207311 mali: mmu irq 0x10000 after AS0 took the update, before the L2
+00058a64 33.209192 mali: bus idle after the early table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)
+00058ade 33.210992 mali: AS2 parked, mmu irq 0x40000
+00058b10 33.212769 mali: AS3 parked, mmu irq 0x80000
+00058b42 33.214533 mali: AS4 parked, mmu irq 0x100000
+00058b75 33.216282 mali: AS5 parked, mmu irq 0x200000
+00058ba8 33.218016 mali: AS6 parked, mmu irq 0x400000
+00058bdb 33.219755 mali: AS7 parked, mmu irq 0x800000
+00058c0e 33.221512 mali: address spaces 2 to 7 are unmapped, 1 is left for the firmware (present 0xff)
+00058c72 33.223205 mali: ipa armed; 0 0 0 0
+00058c9b 33.223236 mali: l2_config before 0x7130000; asn_hash 0 0 0process lsd[20] denied attempt to escape CPU monitor (missing required entitlement).
+00058d4d 33.226676 mali: l2_config after 0x7130000; asn_hash 0 0 0
+00058d8d 33.230075 mali: L2 up: trans 0 active 0 ready 0x1
+0005ab22 33.486100 mali: power settle: found 0x600 (all 1 single 1), now raw 0 status 0
+0005ab77 33.523260 mali: the whole block settled, so power and clocks are not the problem
+0005abce 33.523274 mali: firmware loaded; enabling the address spaces
+0005ac11 33.523297 mali: bus idle before the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)
+0005ac86 33.523312 mali: mmu irq 0 before the start request (page faults 0, request completions 0)
+0005ace6 33.523320 mali: address space 0 is live; starting the MCU
+0005ad26 33.523329 mali: sentinel 0xff5aa5f0 written to the version word
+0005ad6c 33.523341 mali: bus protect sta before the start request: md0 en 0 sta 0xffffffef, emisys0 en 0 sta 0xff000020, emisys1 en 0 sta 0xff002020
+0005adfe 33.523353 mali: MCU status 0 before the start request
+0005ae3a 33.523360 mali: MCU control reads 0 before the start request (doorbell disable clear)
+0005ae96 33.523369 mali: gpu irq status 0 before the start request (mcu attention quiet)
+0005aeec 33.523376 mali: MCU control reads 0 before the start request
+0005af2f 33.523383 mali: MCU window before the start request:
+0005af9b 33.523444 mali: views before AUTO: gpu status 0/0 irq raw 0/0x600 mcu control 0 status 0
+0005affa 33.523460 mali: views before AUTO 0: cycle 0x39d702/0x39d743/0x39d785 enclosed 1 timestamp 0x19f9daeb/0x19f9daec/0x19f9daf0 enclosed 1
+0005b370 34.032479 mali: views before AUTO 1: cycle 0x39edd3/0x39ee15/0x39ee56 enclosed 1 timestamp 0x19fa15c7/0x19fa15c8/0x19fa15cc enclosed 1
+0005b3fd 34.032516 mali: mmu irq 0 with the latch freshly cleared, just before the start request
+0005b45b 34.032529 mali: glb req 0 -> 0 (halt was already clear)
+0005b499 34.032543 mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+0005b4e2 34.038676 mali: spin 1000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+0005b8bb 34.734377 mali: spin 100000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+0005cf86 37.720722 mali: spin 500000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+0005eef3 43.093717 mali: the start loop ended after 1000000 spins (halt seen 0, fatal seen 0)
+0005ef4e 43.094490 mali: trial 400 after AUTO (stores captured before AUTO): level 6 cold 1 low 1 preas0 1 freerun 1 parkattrs 1 trace 1 as0first 1
+0005efdf 43.095126 mali: write trace: 82 completed GPU stores (capacity 128)
+0005f029 43.095671 mali: write[0] 0x2004=0xffffffff
+0005f05a 43.096167 mali: write[1] 0x2004=0xffffffff
+0005f08b 43.096608 mali: write[2] 0x2004=0xffffffff
+0005f0bc 43.097057 mali: write[3] 0x2400=0x50000000
+0005f0ed 43.097495 mali: write[4] 0x2404=0
+0005f115 43.097945 mali: write[5] 0x2004=0xffffffff
+0005f146 43.098402 mali: write[6] 0x2408=0x888d8f88
+0005f177 43.098857 mali: write[7] 0x240c=0x84c8d
+0005f1a5 43.099322 mali: write[8] 0x2004=0xffffffff
+0005f1d6 43.099792 mali: write[9] 0x2430=0x42000006
+0005f207 43.100269 mali: write[10] 0x2434=0
+0005f230 43.100731 mali: write[11] 0x2004=0xffffffff
+0005f262 43.101159 mali: write[12] 0x2418=0x1
+0005f28d 43.101601 mali: write[13] 0x2004=0xffffffff
+0005f2bf 43.102031 mali: write[14] 0x2480=0
+0005f2e8 43.102463 mali: write[15] 0x2484=0
+0005f311 43.102911 mali: write[16] 0x2488=0x888d8f88
+0005f343 43.103363 mali: write[17] 0x248c=0x84c8d
+0005f372 43.103821 mali: write[18] 0x24b0=0x42000001
+0005f3a4 43.104268 mali: write[19] 0x24b4=0
+0005f3cd 43.104718 mali: write[20] 0x2498=0x1
+0005f3f8 43.105182 mali: write[21] 0x2004=0xffffffff
+0005f42a 43.105640 mali: write[22] 0x24c0=0
+0005f453 43.106095 mali: write[23] 0x24c4=0
+0005f47c 43.106569 mali: write[24] 0x24c8=0x888d8f88
+0005f4ae 43.107039 mali: write[25] 0x24cc=0x84c8d
+0005f4dd 43.107522 mali: write[26] 0x24f0=0x42000001
+0005f50f 43.107994 mali: write[27] 0x24f4=0
+0005f538 43.108468 mali: write[28] 0x24d8=0x1
+0005f563 43.108965 mali: write[29] 0x2004=0xffffffff
+0005f595 43.109445 mali: write[30] 0x2500=0
+0005f5be 43.109925 mali: write[31] 0x2504=0
+0005f5e7 43.110407 mali: write[32] 0x2508=0
+0005f610 43.110886 mali: write[33] 0x250c=0
+0005f639 43.111383 mali: write[34] 0x2530=0x42000001
+0005f66b 43.111871 mali: write[35] 0x2534=0
+0005f694 43.112363 mali: write[36] 0x2518=0x1
+0005f6bf 43.112876 mali: write[37] 0x2004=0xffffffff
+0005f6f1 43.113381 mali: write[38] 0x2540=0
+0005f71a 43.113876 mali: write[39] 0x2544=0
+0005f743 43.114375 mali: write[40] 0x2548=0
+0005f76c 43.114872 mali: write[41] 0x254c=0
+0005f795 43.115394 mali: write[42] 0x2570=0x42000001
+0005f7c7 43.115903 mali: write[43] 0x2574=0
+0005f7f0 43.116415 mali: write[44] 0x2558=0x1
+0005f81b 43.116959 mali: write[45] 0x2004=0xffffffff
+0005f84d 43.117476 mali: write[46] 0x2580=0
+0005f876 43.117990 mali: write[47] 0x2584=0
+0005f89f 43.118505 mali: write[48] 0x2588=0
+0005f8c8 43.119020 mali: write[49] 0x258c=0
+0005f8f1 43.119559 mali: write[50] 0x25b0=0x42000001
+0005f923 43.120084 mali: write[51] 0x25b4=0
+0005f94c 43.120617 mali: write[52] 0x2598=0x1
+0005f977 43.121166 mali: write[53] 0x2004=0xffffffff
+0005f9a9 43.121702 mali: write[54] 0x25c0=0
+0005f9d2 43.122239 mali: write[55] 0x25c4=0
+0005f9fb 43.122772 mali: write[56] 0x25c8=0
+0005fa24 43.123310 mali: write[57] 0x25cc=0
+0005fa4d 43.123867 mali: write[58] 0x25f0=0x42000001
+0005fa7f 43.124411 mali: write[59] 0x25f4=0
+0005faa8 43.124960 mali: write[60] 0x25d8=0x1
+0005fad3 43.125518 mali: write[61] 0x24=0x80503
+0005fb00 43.126079 mali: write[62] 0x28=0x80503
+0005fb2d 43.126653 mali: write[63] 0x1004=0xffffffff
+0005fb5f 43.127224 mali: write[64] 0x1008=0xffffffff
+0005fb91 43.127798 mali: write[65] 0x2004=0xffffffff
+0005fbc3 43.128370 mali: write[66] 0x2008=0xffff
+0005fbf1 43.128959 mali: write[67] 0x40010=0x20181004
+0005fc24 43.129533 mali: write[68] 0x40014=0
+0005fc4e 43.130084 mali: write[69] 0x40018=0
+0005fc78 43.130604 mali: write[70] 0x4001c=0
+0005fca2 43.131123 mali: write[71] 0x40020=0
+0005fccc 43.131647 mali: write[72] 0x40024=0
+0005fcf6 43.132169 mali: write[73] 0x40028=0
+0005fd20 43.132692 mali: write[74] 0x4002c=0
+0005fdaf 43.133850 mali: write[75] 0x40000=0x1
+0005fddb 43.134436 mali: write[76] 0x40000=0x3
+0005fe07 43.135011 mali: write[77] 0x40008=0
+0005fe31 43.135600 mali: write[78] 0x1a0=0x1
+0005fe5b 43.136190 mali: write[79] 0x24=0x600
+0005fe86 43.136776 mali: write[80] 0x24=0x600
+0005feb1 43.137382 mali: write[81] 0x2004=0xffffffff
+0005fee3 43.138036 mali: MCU status 1 (enabled), job irq 0, gpu irq 0
+0005ff26 43.138864 mali: after the start request: gpu status 0x1, gpu irq status 0, job irq status 0, mmu irq 0, as0 status 0 faultstatus 0 faultaddress 0
+0005ffbe 43.139683 mali: gpu irq raw 0 (reset 0 single 0 all 0 caches 0 mcu 0); shader trans 0 tiler trans 0 l2 trans 0
+00060033 43.140481 mali: gpu fault 0 at 0; shader ready 0 tiler ready 0 l2 ready 0x1
+00060085 43.142543 mali: clock check: cycle 0xa33b2927 -> 0xa34065a1, timestamp 0x216d87d4 -> 0x216dc1eb
+000600eb 43.143450 mali: version word 0xff5aa5f0 (untouched; no firmware version published)
+00060144 43.144344 mali: the global interface never raised; the MCU did not boot
+00060192 43.145240 mali: ipa after the failed start: 0 0 0 0 0 0 0 0
+000601d4 43.146216 mali: gpu status 0x1 (active 1, prfcnt 0, cycle count 0, protected 0); mfg1 0xc000000d
+0006023b 43.147145 mali: gpu fault 0 at 0 0; timestamp 0x3
+0006085e 44.204915 mali: bus idle after the failed start: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)
+000608e0 44.209000 mali: MCU control written 0, status now 1, control reads 0
+0006092b 44.209096 mali: MCU window after the core was switched off:
+000609ab 44.214634 mali: views after DISABLE: gpu status 0x1/0x1 irq raw 0/0x600 mcu control 0 status 0x1
+00060a12 44.216754 mali: views after DISABLE 0: cycle 0xb6704540/0xb6704581/0xb67045c3 enclosed 1 timestamp 0x22429afb/0x22429aff/0x22429b00 enclosed 1
+00060aa7 44.217910 mali: views after DISABLE 1: cycle 0xb67f2e1b/0xb67f2e5d/0xb67f2e9e enclosed 1 timestamp 0x22434060/0x22434064/0x22434067 enclosed 1
+00061256 45.279657 mali: bus idle after the core was switched off: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)
+000612e1 45.285205 mali: bus watch after the core was switched off: 0x1b 0x1b 0x1b 0x1b (busy 1111)
+00061342 45.287206 mali: gpueb after the failed start: not mapped
+00061381 45.287267 mali: gmpu after the failed start: 0x1c:0x11f00 0x48:0x1000 0x4c:0xff020f00 0x60:0x21800000 0xc0:0x30 (nonzero words above; the rest read 0)
+0006141e 45.293486 mali: cpe: 0 0 0 0 (ctrlen never programmed)

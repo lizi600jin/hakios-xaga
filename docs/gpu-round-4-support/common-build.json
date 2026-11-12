@@ -1,0 +1,27 @@
+{
+  "built_at": "2026-11-12T22:58:43.038450+08:00",
+  "kernel_build_count": 1,
+  "payload_build_count": 1,
+  "artifacts": {
+    "hakios-kernel": {
+      "sha256": "fb30fd7fc5db3227ab785ac4c5613e71801bf16ea5d9bf9366c0621e599eea20",
+      "bytes": 15268808
+    },
+    "build-payload.bin": {
+      "sha256": "b4723dfe7ac82f310b4c68f4bfd8437be642efb147b1e464b7611ae425924578",
+      "bytes": 19463272
+    },
+    "mtk/mt6895/drivers/gpu/hakios.mali610.c": {
+      "sha256": "283a45a8eab3a29becbcdcb803e8b07a7236c1575c47ddde41ead2735ce44af8",
+      "bytes": 197264
+    },
+    "drivers/gpu/hakios.mali610_fw.h": {
+      "sha256": "ccdd7ba351a3f3d10f883b4f0de2abc58bbadf7758d5ea68214e01cdf7c28cf7",
+      "bytes": 1323077
+    },
+    "drivers/input/hakios.nvt_fw.h": {
+      "sha256": "25374f076335b205c6085774659635de4ca28c7de00309a73e77262c8fb77dda",
+      "bytes": 847130
+    }
+  }
+}
