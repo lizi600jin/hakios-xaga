@@ -9481,10 +9481,10 @@ index 0000000..5c08db8
 +	help    mtk/tools/mkmalifw.py from the phone's own /vendor/firmware/mali_csffw.bin
 diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/hakios.mali610.c
 new file mode 100644
-index 0000000..dab011c
+index 0000000..99756f3
 --- /dev/null
 +++ b/mtk/mt6895/drivers/gpu/hakios.mali610.c
-@@ -0,0 +1,4217 @@
+@@ -0,0 +1,4305 @@
 +/*
 + * The GPU of the Redmi Note 11T Pro (xaga), a Mali-G610 MC6: a Valhall part with a Command Stream
 + * Front end, which means it runs firmware the host has to load before it will do anything at all.
@@ -9883,7 +9883,7 @@ index 0000000..dab011c
 + * MCU_STATUS_GPU_IRQ, which reads as if it belonged to 0x704; it does not. 0x704 is a three-value
 + * enum and this bit lives in the GPU interrupt block. */
 +#define kGpuIrqMcuAttention     (1u << 19)
-+#define kMcuStatusEnabled       1u              /* MCU_STATUS_ENABLED: the firmware is running */
++#define kMcuStatusEnabled       1u              /* MCU_STATUS_ENABLED, not proof of firmware boot */
 +#define kGpuCmdSoftReset        0x101u          /* GPU_CMD_DEF(1, 1), panthor_gpu_regs.h */
 +#define kGpuCmdFlushCaches      0x3304u         /* GPU_CMD_DEF(4, 0x33): clean+inv l2 and lsc */
 +#define kGpuIrqResetCompleted   (1u << 8)       /* GPU_IRQ_RESET_COMPLETED */
@@ -10011,10 +10011,59 @@ index 0000000..dab011c
 + * the reads alone are what the booting image did, so that is where it starts.
 + */
 +static unsigned gMaliSema;                      /* mali_sema=1 writes the semaphore request */
++/* Round comparisons keep these independent and opt in. */
++static unsigned gMaliFreeRun;                   /* mali_freerun=1 sets four GLOBAL_CON free-run bits */
++static unsigned gMaliParkAttrs;                 /* mali_parkattrs=1 matches cold AS2/AS3 MEMATTR */
++static unsigned gMaliTrace;                     /* mali_trace=1 records actual GPU stores */
++static unsigned gMaliTrial;                     /* numeric experiment identifier */
++static unsigned gMaliLowMem = 1;
 +static bool gMaliDone;
 +
 +#define mrd(at)                 (*(volatile uint32_t *)(gGpu + (at)))
-+#define mwr(at, v)              do { *(volatile uint32_t *)(gGpu + (at)) = (v); __asm__ volatile ("dsb sy" ::: "memory"); } while (0)
++/* Record completed stores without issuing extra MMIO or printing between stores. */
++static struct {
++	uint32_t at, value;
++} gMaliWrites[128];
++static unsigned gMaliWriteCount;
++static bool gMaliWritesFrozen;
++static bool gMaliWritesPrinted;
++
++static void
++mali_gpu_write(uint32_t at, uint32_t value)
++{
++	*(volatile uint32_t *)(gGpu + at) = value;
++	__asm__ volatile ("dsb sy" ::: "memory");
++	if (gMaliTrace && !gMaliWritesFrozen) {
++		unsigned n = gMaliWriteCount++;
++
++		if (n < sizeof(gMaliWrites) / sizeof(gMaliWrites[0])) {
++			gMaliWrites[n].at = at;
++			gMaliWrites[n].value = value;
++		}
++	}
++}
++
++#define mwr(at, v)              mali_gpu_write((at), (v))
++
++static void
++mali_write_trace(const char *when)
++{
++	unsigned i;
++
++	printf("mali: trial %u %s: level %u cold %u low %u preas0 %u freerun %u parkattrs %u trace %u\n",
++	    gMaliTrial, when, gMaliLevel, gMaliCold, gMaliLowMem, gMaliPreAs0,
++	    gMaliFreeRun, gMaliParkAttrs, gMaliTrace);
++	if (!gMaliTrace || gMaliWritesPrinted) {
++		return;
++	}
++	gMaliWritesFrozen = true;
++	gMaliWritesPrinted = true;
++	printf("mali: write trace: %u completed GPU stores (capacity %u)\n", gMaliWriteCount,
++	    (unsigned)(sizeof(gMaliWrites) / sizeof(gMaliWrites[0])));
++	for (i = 0; i < gMaliWriteCount && i < sizeof(gMaliWrites) / sizeof(gMaliWrites[0]); i++) {
++		printf("mali: write[%u] %#x=%#x\n", i, gMaliWrites[i].at, gMaliWrites[i].value);
++	}
++}
 +
 +static uint32_t
 +reg_rd(vm_offset_t base, uint32_t at)
@@ -10085,7 +10134,6 @@ index 0000000..dab011c
 +#define MALI_LOW_BASE   0x50000000ULL
 +#define MALI_LOW_END    0x5c000000ULL
 +static uint64_t gLowNext = MALI_LOW_BASE;
-+static unsigned gMaliLowMem = 1;
 +
 +static bool
 +mem_alloc_low(struct mali_mem *m, size_t size)
@@ -11467,12 +11515,13 @@ index 0000000..dab011c
 +static void
 +mfg_master_gates(const char *when)
 +{
-+	uint32_t dcm, async0, async1, glob, qchan, rpc;
++	uint32_t dcm, async0, async1, glob, glob_before, qchan, rpc;
 +
 +	dcm = reg_rd(gMfgcfg, MALI_MFG_DCM_CON_0);
 +	async0 = reg_rd(gMfgcfg, MALI_MFG_ASYNC_CON);
 +	async1 = reg_rd(gMfgcfg, MALI_MFG_ASYNC_CON_1);
 +	glob = reg_rd(gMfgcfg, MALI_MFG_GLOBAL_CON);
++	glob_before = glob;
 +	qchan = reg_rd(gMfgcfg, MALI_MFG_QCHANNEL_CON);
 +	/*
 +	 * mfg_rpc is off by default, and that is a result rather than caution.
@@ -11514,6 +11563,9 @@ index 0000000..dab011c
 +	glob &= ~(1u << 10);
 +	glob |= (1u << 13) | (1u << 14) | (1u << 17) | (1u << 18);
 +	glob &= ~(1u << 21);
++	if (gMaliFreeRun) {
++		glob |= (1u << 8) | (1u << 9) | (1u << 10) | (1u << 19);
++	}
 +	reg_wr(gMfgcfg, MALI_MFG_GLOBAL_CON, glob);
 +
 +	qchan |= MALI_MFG_QCHANNEL_EN;
@@ -11532,7 +11584,7 @@ index 0000000..dab011c
 +	    dcm, reg_rd(gMfgcfg, MALI_MFG_DCM_CON_0),
 +	    async0, reg_rd(gMfgcfg, MALI_MFG_ASYNC_CON),
 +	    async1, reg_rd(gMfgcfg, MALI_MFG_ASYNC_CON_1),
-+	    glob, reg_rd(gMfgcfg, MALI_MFG_GLOBAL_CON),
++	    glob_before, reg_rd(gMfgcfg, MALI_MFG_GLOBAL_CON),
 +	    qchan, reg_rd(gMfgcfg, MALI_MFG_QCHANNEL_CON),
 +	    rpc, gMaliRpc ? reg_rd(gMfgrpc, MALI_MFG_RPC_AO_CLK_CFG) : 0u);
 +}
@@ -11779,6 +11831,36 @@ index 0000000..dab011c
 +		printf(" nothing but zeros and ones");
 +	}
 +	printf("\n");
++}
++
++/* All words here were already read by the existing GPU and MCU-window dumps.
++ * Bracketing separates a counter view from a coincidentally changing word. */
++static void
++mcu_view_sample(const char *when)
++{
++	unsigned i;
++
++	if (!gMaliTrace) {
++		return;
++	}
++	printf("mali: views %s: gpu status %#x/%#x irq raw %#x/%#x mcu control %#x status %#x\n",
++	    when, mrd(kGpuStatus), mrd(0x3034u), mrd(kIntRaw), mrd(0x3020u),
++	    mrd(kMcuControl), mrd(kMcuStatus));
++	for (i = 0; i < 2; i++) {
++		uint32_t c0 = mrd(kGpuCycleCount);
++		uint32_t cm = mrd(0x3090u);
++		uint32_t c1 = mrd(kGpuCycleCount);
++		uint32_t t0 = mrd(kGpuTimestamp);
++		uint32_t tm = mrd(0x3098u);
++		uint32_t t1 = mrd(kGpuTimestamp);
++
++		printf("mali: views %s %u: cycle %#x/%#x/%#x enclosed %u timestamp %#x/%#x/%#x enclosed %u\n",
++		    when, i, c0, cm, c1, (uint32_t)(cm - c0) <= (uint32_t)(c1 - c0),
++		    t0, tm, t1, (uint32_t)(tm - t0) <= (uint32_t)(t1 - t0));
++		if (i == 0) {
++			delay(1000);
++		}
++	}
 +}
 +
 +static bool
@@ -12330,17 +12412,11 @@ index 0000000..dab011c
 +	unsigned as;
 +
 +	/*
-+	 * From AS2, not AS1, and with a zero attribute word rather than the live one.
-+	 *
-+	 * The phone's cold-start prologue programmes AS0 and then skips straight to AS2, leaving the
-+	 * second address space alone entirely -- and it comes back for AS1 later, at records 207 to
-+	 * 215, with a real translation table for a context the firmware itself asks for. Writing
-+	 * AS1 down to UNMAPPED here would make that request unsatisfiable, which is why this loop
-+	 * starts one higher than it used to.
-+	 *
-+	 * The attribute word goes with it. The trace writes 0x888d8f88 and 0x84c8d into AS0 and
-+	 * then zeroes into AS2 through AS7 -- an unmapped space with a live memory-attribute policy
-+	 * is a state neither driver produces.
++	 * AS1 is absent from the cold-start prologue. Record 9 addresses AS2, and record 18
++	 * addresses AS3. Both get MALI_MEMATTR; AS4 through AS7 get zero. mali_parkattrs changes
++	 * exactly those four AS2/AS3 words, leaving the earlier all-zero baseline available for a
++	 * direct comparison. All six spaces remain UNMAPPED, so a trace difference alone does not
++	 * establish that their attributes are required for the MCU's AS0 fetches.
 +	 */
 +	/*
 +	 * Measure each space's UPDATE, one at a time.
@@ -12361,7 +12437,8 @@ index 0000000..dab011c
 +		mwr(kMmuIntClear, 0xffffffffu);
 +		__asm__ volatile ("dsb sy" ::: "memory");
 +		gpu_wr64(asReg(as, kAsTranstab), 0);
-+		gpu_wr64(asReg(as, kAsMemattr), 0);
++		gpu_wr64(asReg(as, kAsMemattr),
++		    (gMaliParkAttrs && as <= 3u) ? MALI_MEMATTR : 0);
 +		gpu_wr64(asReg(as, kAsTranscfg), kAsTranscfgUnmapped);
 +		(void)as_command(as, kAsCmdUpdate);
 +		__asm__ volatile ("dsb sy" ::: "memory");
@@ -12606,6 +12683,7 @@ index 0000000..dab011c
 +	    (mrd(kIntStatus) & kGpuIrqMcuAttention) ? "RAISED" : "quiet");
 +	printf("mali: MCU control reads %u before the start request\n", mrd(kMcuControl));
 +	mcu_window_dump("before the start request");
++	mcu_view_sample("before AUTO");
 +	/*
 +	 * No doorbell is cleared here, and the comment that used to say Panthor does it was wrong.
 +	 *
@@ -12677,6 +12755,8 @@ index 0000000..dab011c
 +			printf("mali: the input block is outside the shared section\n");
 +		}
 +	}
++	/* Freeze before AUTO, then print after the attempt so tracing cannot delay the request. */
++	gMaliWritesFrozen = true;
 +	mwr(kMcuControl, kMcuControlAuto);
 +	/*
 +	 * And ring the doorbell.
@@ -12759,6 +12839,7 @@ index 0000000..dab011c
 +	}
 +	printf("mali: the start loop ended after %u spins (halt seen %u, fatal seen %u)\n",
 +	    spins, sawHalt ? 1u : 0u, sawFatal ? 1u : 0u);
++	mali_write_trace("after AUTO (stores captured before AUTO)");
 +
 +	/*
 +	 * The version word is the harder of the two proofs, so ask it even when the loop timed out.
@@ -12813,7 +12894,7 @@ index 0000000..dab011c
 +	 * that at zero.
 +	 */
 +	printf("mali: MCU status %u (%s), job irq %#x, gpu irq %#x\n", mrd(kMcuStatus),
-+	    mrd(kMcuStatus) == 1u ? "enabled and running" : mrd(kMcuStatus) == 2u ? "halted" :
++	    mrd(kMcuStatus) == 1u ? "enabled" : mrd(kMcuStatus) == 2u ? "halted" :
 +	    mrd(kMcuStatus) == 3u ? "fatal" : "disabled", mrd(kJobIntStatus), mrd(kIntRaw));
 +	/*
 +	 * What the block itself says about the attempt.
@@ -12898,7 +12979,7 @@ index 0000000..dab011c
 +		uint32_t version = ((volatile struct glb_control *)gShared->mem.kva)->version;
 +
 +		printf("mali: version word %#x (%s)\n", version,
-+		    version == kSentinelVersion ? "untouched, so no instruction ran" :
++		    version == kSentinelVersion ? "untouched; no firmware version published" :
 +		    version == 0u ? "zero, the firmware never wrote it either" :
 +		    "written by the firmware");
 +	}
@@ -13372,6 +13453,8 @@ index 0000000..dab011c
 +	printf("mali: firmware loaded; %s\n",
 +	    gMaliLevel <= 3 ? "stopping here because mali=3" : "enabling the address spaces");
 +	if (gMaliLevel <= 3) {
++		mcu_view_sample("firmware loaded, MCU not started");
++		mali_write_trace("mali=3 stop");
 +		gMaliProgress = 2;
 +		return;
 +	}
@@ -13447,7 +13530,7 @@ index 0000000..dab011c
 +	 * which half of the address space setup to look at, and a single reading taken afterwards
 +	 * cannot tell the two apart.
 +	 */
-+	printf("mali: mmu irq %#x before the start request (page faults %#x, bus errors %#x)\n",
++	printf("mali: mmu irq %#x before the start request (page faults %#x, request completions %#x)\n",
 +	    mrd(kMmuIntRaw), mrd(kMmuIntRaw) & 0xffu, (mrd(kMmuIntRaw) >> 16) & 0xffu);
 +	printf("mali: address space 0 is live; %s\n",
 +	    gMaliLevel <= 4 ? "stopping here because mali=4" : "starting the MCU");
@@ -13534,6 +13617,7 @@ index 0000000..dab011c
 +		printf("mali: MCU control written %u, status now %u, control reads %u\n",
 +		    kMcuControlDisable, mrd(kMcuStatus), mrd(kMcuControl));
 +		mcu_window_dump("after the core was switched off");
++		mcu_view_sample("after DISABLE");
 +		mfg_bus_idle("after the core was switched off");
 +		mfg_bus_watch("after the core was switched off");
 +		/*
@@ -13696,6 +13780,10 @@ index 0000000..dab011c
 +			gMaliSema = sema ? 1u : 0u;
 +		}
 +	}
++	PE_parse_boot_argn("mali_freerun", &gMaliFreeRun, sizeof(gMaliFreeRun));
++	PE_parse_boot_argn("mali_parkattrs", &gMaliParkAttrs, sizeof(gMaliParkAttrs));
++	PE_parse_boot_argn("mali_trace", &gMaliTrace, sizeof(gMaliTrace));
++	PE_parse_boot_argn("mali_trial", &gMaliTrial, sizeof(gMaliTrial));
 +	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {
 +		thread_deallocate(thread);
 +	} else {

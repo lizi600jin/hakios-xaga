@@ -861,6 +861,25 @@ reset 轨迹的 0 都在启动前；本机 reset 后也读 0。启动失败后�
 还需与 AP 侧计数器包围读取对照，不能据其跳动推断 MCU 已运行。后续先固定显式 cold=1 的
 真机基线，再单独验证 free-run 与 AS2/AS3 属性；不重试已知不能回 Android 的 cold=0/low=0。
 
+### Codex round-2：五次真机对照均回 Android，MCU 仍未启动
+
+完整日志、镜像 MD5 与差分见 [GPU round-2](docs/GPU-ROUND-2.md)。五次分别是 mali=3 基线、
+完整 cold=1、仅 free-run、仅 AS2/AS3 MEMATTR、两项组合，全部确认回到 Android。
+完整启动四轮均无 GLOBAL_IF、哨兵未改、debug_top 保持 0x1b。free-run 目标
+`GLOBAL_CON=0x030e7701` 已回读；属性实验的实录恰好只改四字，两项单开/组合均不足以修复。
+
+新冷路径实录 82 次启动前 GPU 写，与 round-1 的 94 次模型逐项相比恰好少 12 次 reset 分支操作。
+当前比 Android 多 13 次诊断 MMU clear、2 次 power IRQ clear，AS0 仍在 IRQ/IPA 后，不能称作
+整条 prologue 相同。下一步应分别验证 AS0 放置顺序和两组附加 clear。
+
+GPU_STATUS 已直接采到 AUTO 前 0、失败后 1，因此本轮没有“启动前 ACTIVE=1”这一障碍。
+MCU 尚未启动时 0x3090/0x3098 就与 AP cycle/timestamp 同步，不能将其跳动当固件运行证据。
+AP raw 已清 0 而 0x3020 保持 0x600，支持独立目的端锁存解释。
+
+五轮全部带 AUTO 前 trace 打印，部分轮次增加 0.1～0.37 秒启动间隔。当前提交已将 trace 移到
+启动尝试后打印，trace=0 还关闭新增包围采样；这个低干扰版本仅完成本地构建，**用户结束本轮，
+尚未刷入**。不能把它写成已验证通过，也不能把带诊断开销的结论扩大为所有启动时序均已排除。
+
 ### 卡顿：软件渲染压在 4 个 999 MHz 核上
 
 ```
@@ -891,7 +910,7 @@ CoreAnimation: Failed to initialize Metal or OpenGLES contexts!
 - [x] Mali-G610：厂商九步里漏掉的 `MFG_I2M_PROTECTOR` 四条 + arm 位（`0x13FBFF60` 回读 `0x20300317`），并把 `acp → hwdcm → gpm` 的顺序改对
 - [x] Mali-G610：推翻「`MMU_BUS_ERROR`」归因——bit16..31 是 `REQ_COMPLETE`，七次 UPDATE 全部成功
 - [x] 试清清 `GLB_REQ.HALT`（真机回读 `glb req 0 -> 0`，本来就是 0 —— 否掉）
-- [ ] Mali-G610：**`MCU_CONTROL=AUTO` 之后 `JOB_INT_STATUS` bit31 从不升起**——启动前寄存器状态已与 Android 冷启动逐条对齐，差异只能在 SoC 侧（EMI MPU / me_GPUmputab_PMA）；下一步裸机读 EMI MPU region 表
+- [ ] Mali-G610：**`MCU_CONTROL=AUTO` 之后 `JOB_INT_STATUS` bit31 从不升起**——五次真机对照见 round-2；下一步先验证未刷的低干扰版本，再分别测试 AS0-first 顺序与附加 IRQ clear，当前尚不能限定为 SoC 原因
 - [ ] Mali-G610：M2 及以后（命令流、CSG/CS 调度、IOKit 服务）
 - [ ] Wi-Fi（CONNSYS）
 - [ ] 音频、相机
