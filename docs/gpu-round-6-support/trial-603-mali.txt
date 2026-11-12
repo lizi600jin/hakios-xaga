@@ -1,0 +1,48 @@
+000572c7 21.088017 mali: bus protect top axi md0 0 -> 0 (mask 0xf)
+00057307 21.088040 mali: bus protect mfgrpc 0xf000f -> 0xf (mask 0xf0000)
+0005734e 21.088051 mali: bus protect emisys0 0xc0000 -> 0 (mask 0xc0000)
+00057394 21.088062 mali: bus protect emisys1 0xc0000 -> 0 (mask 0xc0000)
+000573da 21.088067 mali: bus protect sta: md0 en 0 sta 0xffffffe0 (mask 0xf)
+00057424 21.088071 mali: bus protect sta: emisys0 en 0 sta 0xff000020 (mask 0xc0000)
+00057476 21.088075 mali: bus protect sta: emisys1 en 0 sta 0xff002020 (mask 0xc0000)
+000574c8 21.088078 mali: bus protect sta: mfgrpc not read (mali_rpc=0)
+0005750c 21.088080 mali: gpu_id as the loader left it 0
+00057541 21.122972 mali: aoc: semaphore 0 after 100000 spins, iso_con 0x1701
+0005758b 21.122978 mali: aoc: released, iso_con now 0x1101
+000575c3 21.122986 mali: mfg1  MPU on: 0xc000000d
+000575f2 21.122990 mali: pdc auto: mfg1 up (PDC deferred until after clock_26m)
+00057717 21.326639 mali: pdc auto: 0xF3C 0x4 (want 0x3ffe) 0xF40 0x4 0xF34 0x1fc
+00057765 21.328711 mali: pdc auto: 7 of twelve answered by scpsys before PDC
+000577af 21.330730 mali: 7 of twelve domains answered
+000577e2 21.332739 mali: bus protect top axi md0 0 -> 0 (mask 0xf)
+00057822 21.334738 mali: bus protect mfgrpc 0xf -> 0xf (mask 0xf0000)
+00057865 21.336729 mali: bus protect emisys0 0 -> 0 (mask 0xc0000)
+000578a5 21.338692 mali: bus protect emisys1 0 -> 0 (mask 0xc0000)
+000578e5 21.340657 mali: bus protect sta: md0 en 0 sta 0xffffffef (mask 0xf)
+0005792f 21.342636 mali: bus protect sta: emisys0 en 0 sta 0xff000020 (mask 0xc0000)
+00057981 21.344594 mali: bus protect sta: emisys1 en 0 sta 0xff002020 (mask 0xc0000)
+000579d3 21.346524 mali: bus protect sta: mfgrpc not read (mali_rpc=0)
+00057a17 21.348507 mali: stack rail: v buck2 status 0x6a (enabled 0), vsel 0x58
+00057a64 21.360442 mali: stack rail: status 0x6e after the enable (enabled 1)
+00057aaf 21.362446 mali: clock: cfg4 0x101 cfg30 0xff000000 mfgcfg 0x2
+00057af3 21.364415 mali: pdc auto: 17 pdc words written (gate open)
+00057b34 21.366375 mali: pdc: sc0 0x2000001 sc9 0 cg 0x2000001 st0 0x2000001 st4 0x2000001 st6 0
+00057d44 21.572587 mali: pdc auto: 0xF3C 0x4 (want 0x3ffe) 0xF40 0x4 0xF34 0x1fc
+00057d92 21.577675 mali: pdc auto: 1 of twelve domains up via PDC
+00057dd1 21.582814 mali: pwr raw: 0xF3C 0x7 0xF40 0x7 0xF34 0xde0001fd 0xF38 0xde0001fc
+00057e26 21.588009 mali: pdc readback: sc0=0x1 sc1=0x1 sc2=0x1 sc3=0x1 sc4=0x1 sc5=0x1 sc6=0 sc7=0 sc8=0 sc9=0
+00057e92 21.593196 mali: shader/bus: present 0x130013 ready 0 pwron 0 pwrtran 0 l2pwron 0 l2active 0
+00057ef4 21.598312 mali: pdc enabled on 17 registers
+00057f26 21.603538 mali: pdc: sc0 0x2000001 sc9 0 cg 0x2000001 st0 0x2000001 st4 0x2000001 st6 0
+00057f84 21.608724 mali: after pdc: mfg5 0x1112 mfg6 0x1112 mfg10 0x1112 mfg12 0x1112
+00057fd7 21.613979 mali: pwr status 0x1fc / 0x1fc (scpsys 0xF34/0xF38), gpufreq 0x4 (0xF3C); want 0x3ffc
+0005803d 21.619181 mali: gpu_id 0xa8670004 l2 0x7130306 shader 0x130013
+00058082 21.621715 mali: pll: con0 0x15445 con1 0x31713b1 con3 0x80000001 cfg5 0x1010182 cfg30 0xff010000
+000580e9 21.623825 mali: timestamp register 0x3 (was 0 before the write)
+0005812f 21.625941 mali: coherence 0xf gals0 0xffc855 gals4 0xffc055
+00058171 21.630174 mali: interconnect before the firmware: dcm0 0xc03f->0xc03f async 0x3c00000->0x3c00000 async1 0xf7->0xf7 global 0x3281701->0x30e7201 qchannel 0x10->0x10 rpc 0->0
+00058223 21.632318 mali: i2m protector before the firmware: 0x20300317 0x1800000c 0x1010802 0x227f3
+00058284 21.634411 mali: this is GPU 0xa8670004, CSF 0x40a0412
+000582c0 21.636503 mali: mmu 0x2830 (va 48 bits, pa 40 bits) address spaces 0xff
+0005830e 21.638628 mali: shader 0x130013 tiler 0x1 l2 0x1 stack 0x33 thread_max 0x800
+00058361 21.640760 mali: stopping here because mali=1: the block is powered, clocked and identified
