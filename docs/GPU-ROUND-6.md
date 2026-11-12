@@ -697,3 +697,154 @@ trial 401 日志 `bus watch after the core was switched off: 0x1b 0x1b 0x1b 0x1b
 
 **不建议**现在就去改 `EN` 寄存器（`0xCA0`）试图强行打开：
 手机读数也是 `0`，强行改成 1 与手机不一致，风险高于收益。
+
+---
+
+## 18. trial 612：MD0 四字全读——**AP 能写进去，但 STA 纹丝不动**
+
+镜像 md5 `1cbf08ab4f3f08e3a2f310613d721ee1`，回 Android 正常。
+
+### 18.1 实测
+
+```text
+33.023584 mali: bp raw md0: en 0 set 0 clr 0 sta 0xffffffef
+33.183642 mali: bpverify md0: sta 0xffffffef -> 0xffffffef after 10000 polls (STILL SET -- clear did not land)
+33.183673 mali: bpverify md0: EN route 0 -> 0xf, sta now 0xffffffef (still set)
+33.183686 mali: bp raw emisys0: en 0 set 0 clr 0 sta 0xff000020
+33.183697 mali: bpverify emisys0: sta 0xff000020 -> 0xff000020 after 0 polls (OPENED)
+```
+
+### 18.2 这条数据把"写不进去"排除了
+
+| 步骤 | 结果 |
+|---|---|
+| 读 `0xCA0`(EN) | `0x0` |
+| 写 `0xCA0 = 0xF` | 读回 **`0xF`** ← **写进去了** |
+| 读 `0xCA4`(SET) | `0x0`（从未被任何人写过） |
+| 写 `0xCA8`(CLR) = 0xF | 轮询 100 ms → STA 仍 `0xffffffef` |
+
+**EN 能写能读回，证明 AP 对 infracfg 的写权限和写通路完全正常。**
+所以 MD0 的 `STA` 不动**不是写失败**，而是这组位**不受 AP 侧 CLR 控制**。
+
+### 18.3 方向 B 的结论：MD0 应当关闭
+
+三条理由：
+
+1. **官方命名是 `MD_MFGSYS_PROTECT_*`**（`clkchk-mt6895.c:177-178`），**`MD` = Modem**。
+   这组位保护的是 **Modem 访问 MFG** 的通路，不是 AP 访问 DRAM。
+2. **vendor 自己也只读不写它**：整个 `gpufreq_mt6895.c` 里 `0xCA0/0xCAC` 只出现在
+   `__gpufreq_dump_infra_status()`（:1350-1351）——**一个诊断 dump 函数**，从不写。
+3. **`0xCA4`(SET) 从读到写全程为 0**，没有任何人显式布防 md0。
+   一个"s 侧锁存、AP 只读"的位，CLR 不生效是**设计如此**，不是缺陷。
+
+**可以解释"手机通、我们不通"**：手机在 Android 里 modem 可能处于不同状态，该位反映的是 modem 侧所有权，不是 GPU 能不能取指。
+
+### 18.4 对 witness 结果的影响：没有影响
+
+witness 证明 MCU 一条指令没执行这个事实**依然成立且未被动摇**。
+MD0 只是被排除为解释它的候选。所以还要继续找。
+
+### 18.5 从 kbase 源码得到的**新的、更硬的**排除项
+
+读 `backend/gpu/mali_kbase_pm_driver.c:975-1070` 的 L2 状态机：
+
+```c
+case KBASE_L2_PEND_ON:
+    if (!l2_trans && l2_ready == l2_present) {     /* ← 上电判据 */
+        kbase_pm_cache_snoop_enable(kbdev);        /* 只在 COHERENCY_ACE 下动作 */
+        backend->l2_state = KBASE_L2_ON;
+    }
+```
+
+**我们的实测 `L2 up: trans 0 active 0 ready 0x1` 完全满足这个判据**
+（`!l2_trans` ✓，`l2_ready == l2_present` ✓，l2_present 也是 `0x1`）。
+所以 **L2 上电这一关我们和 kbase 是等价的**。
+
+同一段代码上方有一段注释，非常重要：
+
+> With CSF firmware, Host driver doesn't need to handle power management with both shader
+> and tiler cores. **The CSF firmware will power up the cores appropriately.
+> So only power the l2 cache explicitly.**
+
+**这是 vendor 自己说的：shader 核由固件负责上电，host 只管 L2。**
+所以：
+- 我们花在 `power_on()` 上拉 12 个域的努力，**方向本身就不对**（kbase 在 PCSF 下根本不这么做）
+- `SHADER_READY=0` 再次被确认是**结果**
+
+### 18.6 现在真正的未知项（收敛到很窄）
+
+kbase 的启动顺序（`csf/mali_kbase_csf_firmware.c:1925-1933`）只有四步：
+
+```c
+kbase_pm_wait_for_l2_powered(kbdev);   /* ① 等 L2 —— 我们等价满足 */
+load_mmu_tables(kbdev);                 /* ② 写 AS0 页表 + UPDATE + wait_ready */
+boot_csf_firmware(kbdev);               /* ③ 写 MCU_CONTROL=AUTO + 等中断 */
+```
+
+我们 ① 满足、② 做了（`10 sections, 9 page tables`、AS0 UPDATE 完成）、③ 做了（写 `0x700=2`）。
+
+**所以差异只剩在"写 AUTO 之后硬件行为"这一层，而我们已经证明那不是固件问题（witness）。**
+
+剩下的可能：
+1. **MCU 需要一个 AP 侧看不到的复位释放**（不在 GPU aperture 里）
+2. **MCU 的时钟在 AUTO 时刻没有真正到它**（`timestamp register 0x3` 只证明时钟到 timestamp 逻辑，不证明到 MCU core）
+3. **witness 实验本身有一个盲点**：我们用 WCOMB 映射读回，若 MCU 真的写了但 CPU 读到旧值，会误判为"没执行"
+
+### 18.7 第 3 条是最该先排除的（成本最低）
+
+`mem_alloc_low()` 用 `ml_io_map_unmappable(pa, size, MALI_WIMG_WCOMB)`。
+`WCOMB` = write-combining。**读方向在 ARM 上允许 speculative / 可能命中合并缓冲。**
+
+**验证方法（不用刷机，只加一行）**：在 `read_witness()` 读 `words[0]` 之前插入
+`__asm__ volatile ("dmb sy" ::: "memory")` 并**重复读三次**，若三次都不同或后值非零，
+说明是读路径问题；若三次都稳定为 `0xff5aa5f0`，witness 结论坐实。
+
+---
+
+## 19. 交接记录
+
+2026-11-13 02:29（Asia/Shanghai），本节由恢复额度后的 Sol 会话追加。
+用户已将设备正式交给 Astra / ultra，handle `term_47a95bf3-2040-4f7d-a3f7-98697b29ba3e`。
+**本会话已停止全部 adb / fastboot 操作，不再持有手机。**
+
+### 做到哪
+
+- 已完整读交接文件与本报告，并静态检查时钟路径、`loader_return.c` 和 `psci_smp.c`。
+- 操作手机前已读屏确认旧 Astra 停在额度提示、旧 Sol 已停止，随后收到 DSH 正式移交。
+  本会话唯一设备命令是只读 `fastboot devices -l`，确认 `GAJZ4HIN99AQ69Y9 fastboot`。
+  **没有调用 adb、没有构建、没有刷机、没有修改驱动或 loader。**
+- 手机状态以最新移交为准：613 曾卡在 “starting Android”，用户手动回到 fastboot；
+  不能沿用前文“613 已回 Android”的状态描述。613 镜像 MD5 仍为
+  `5ddeb1a0963d89d0e1e2e97236a7e5ee`。用户要求不刷救砖包。
+- 移交前驱动与 XNU 编译树副本 SHA256 相同：
+  `403e91cd7d9a63083a487736b21f994ada9074050f396529091a8a8f6d6f1a13`。
+
+### 给 Astra 的新提示：时钟字段存在可核实的命名与操作差异
+
+`hakios.mali610.c:120-123, 2110-2125` 把 `CLK_CFG_5[1:0]` 称为 `mfg_sel_1_sel`，
+并写 parent=2 后声称无需 update。vendor `clk-mt6895.c` 的定义却是：
+
+| 字段 | vendor 定义 | 位置 |
+|---|---|---|
+| `CLK_CFG_5[1:0]` | `mfgsc_ref_sel`，parent 2 为 `mainpll_d5_d2` | :1243-1247, :1918-1921 |
+| `CLK_CFG_5[7]` | `mfgsc_ref_sel` 的 PDN 门 | :2279-2283 |
+| `CLK_CFG_UPDATE[20]` | `mfgsc_ref_sel` 的提交位 | :142, :1921 |
+| `CLK_CFG_30[17]` | 真正的 `mfg_sel_1_sel`，0=ref，1=MFGSCPLL | :1779-1782, :2167-2170 |
+
+613 已有原始日志：`pll: ... cfg5 0x1010182 cfg30 0xff010000`。
+按上述字段解码，**参考时钟 PDN bit7 为 1，栈选择器 bit17 为 0**。
+当前 `pll_300mhz()` 仅改 CFG5 的 parent 位，未清 bit7，也未写 UPDATE bit20。
+因此先前“mfg_sel_1 已试过 / 两路 mux 都切对”的表述不足以排除此处；
+应先核对实际时钟链，再设计有开关的独立对照。
+**这是静态差异，不是 MCU 根因的实验证明；栈时钟是否供应 MCU 仍未建立。**
+原文摘录与来源哈希见 `round-6-support/sol-handoff-clock-audit.md`。
+
+### 未完成
+
+- 尚未验证任何时钟修复；未增加探针或试验开关，无新 trial、store 轨迹或启动结果。
+- 只读检查确认 `loader_return_timer()` 支持 `return_cpu=0`（:448-449）；
+  `psci_smp_stop_others()` 的非主核路径会把返回请求移交主核（:305-329）。
+  613 保存的 logbook 中可见不同片段分别由 CPU 1/3/2 发起返回，**不能混作同一次启动**。
+  可先用已有 `return_cpu=0` 参数做返回路径对照，再单独测试时钟；本会话没有实施。
+- AP aperture 外的 MCU 复位释放、witness 目标是否同一物理页仍未继续查证。
+- 保留 witness 与 MD0 的既有结论，不重做；禁读地址及禁用配置继续有效。
