@@ -840,6 +840,27 @@ mali: pwr status 0x1fc / 0x1fc (F34/F38), gpufreq 0x4 (F3C); want 0x3ffc
 
 2. **把 `mali_vstack_rail()` / `clock_26m()` 提到 `power_on()` 之前，设备根本不回 Android。** `clock_26m()` 写的是 `mfgcfg`（`0x13FBF000`），物理上在 mfg1 域内；mfg1 没上电就写它 → 总线故障、无异常向量、核心停在原地 → 看门狗复位循环。`scpsys_power_on()` 里"先 clk 后 PWR_ON"的那一步，对 MFG 是空操作（十二个域的 `basic_clk_name` 全为空），不能拿来当顺序依据。
 
+### Codex round-1：冷启动写操作对账，先纠正证据错位
+
+完整分析与逐条差分见 [GPU round-1](docs/GPU-ROUND-1.md)。缺失的 2460 条冷轨迹从手机已有
+`/data/local/tmp/hist_before.txt` 恢复，rec136 的 AUTO 与 rec163 的 GLOBAL_IF 均对上。前文
+“启动前已经逐条对齐、只可能是 SoC 侧”的结论需要收回：rec0..135 有 67 次写，所给 logbook
+对应源码路径重建出 94 次写，其中 61 次同值、6 次值不同、27 次附加写。
+
+四个真实漏对齐的字是 AS2/AS3 MEMATTR：`0x2488/0x24c8=0x888d8f88`、
+`0x248c/0x24cc=0x00084c8d`，本机全写 0。另两个差异是 AS0 根表 PA 的高低字，属于各自
+实际内存分配，不能直接抄 Android 地址。轨迹跳过 AS1；rec9 是 AS2，不是 AS1。AS4..AS7
+MEMATTR 原本就是 0。四字出现于冷路径，但 parked AS 是 UNMAPPED，因此因果必要性仍待独立对照。
+
+所给 logbook 的原始 boot-args 明确含 `mali_cold=0`，其 reset、PWR_KEY、ASN、cache flush
+打印也互相印证。不能拿这份日志作为纯冷路径失败证据。冷轨迹从未读取 GPU_STATUS，三份
+reset 轨迹的 0 都在启动前；本机 reset 后也读 0。启动失败后的 ACTIVE=1 不能直接当作启动前置障碍。
+
+`0x3090/0x3098` 的偏移与 GPU cycle/timestamp 相同，两次 dump 的增量分别对应约 300 MHz、
+13 MHz；`0x3020=0x600` 又与电源变化 IRQ 位吻合。现阶段更像 MCU 侧的硬件寄存器视图，
+还需与 AP 侧计数器包围读取对照，不能据其跳动推断 MCU 已运行。后续先固定显式 cold=1 的
+真机基线，再单独验证 free-run 与 AS2/AS3 属性；不重试已知不能回 Android 的 cold=0/low=0。
+
 ### 卡顿：软件渲染压在 4 个 999 MHz 核上
 
 ```
