@@ -754,6 +754,7 @@ mali: glb req 0 -> 0 (halt was already clear)
 | `GPU_ID` (0x000) | `0xa8670004` | `0xa8670004` |
 | IPA 序列 | `0x40010=20181004` → `0x40014..2c=0` → `0x40000=1` → `=3` → `0x40008=0` | 逐条相同 |
 | AS0 编程 | `TRANSCFG=0x42000006`, `TRANSTAB=0x44b49000`, UPDATE 前后 `AS_STATUS=0` | 相同（`0x42000006` / `0x50000000`） |
+| `MD_MFGSYS_PROTECT_EN_STA_0`(0x10001CAC) bit0..3 | 未采 | **`0xffffffef` → 四位全 1（保护仍在？）** |
 | 写 `MCU_CONTROL` 前的其它写 | 无（不写 `0x030`/`0x050`/`0x048`/`0x304`） | 冷路径也不写 |
 | 写 `MCU_CONTROL=2` 之后 | **12～27 条记录内 `0x100c` 读到 `0x80000000`** | 百万次自旋 0 |
 
@@ -771,6 +772,52 @@ mali: glb req 0 -> 0 (halt was already clear)
 - **B（改配置）**：把 MCU 页表与固件页整体从 `0x50000000` 挪进 `me_GPUmputab_PMA` 那 20 MiB（`0x78800000` 起）。如果 GMPU/EMI MPU 只放行这一块，那么搬过去就能起来。
 
 先做 A：一次读就能定方向，而且不改任何布局。
+
+
+### 本轮三个新读数（都来自真机，且都在同一份日志里）
+
+**一、`bus protect` 的四个状态位，第一次真正读到了。** 之前的 `bus_protect_release()` 在 bring-up 最顶端，ring buffer 只留尾部，那几行每次都被冲掉；把读取挪到 `MCU_CONTROL` 写入之前再读一次，拿到了：
+
+```
+mali: bus protect sta before the start request: md0 en 0 sta 0xffffffef,
+      emisys0 en 0 sta 0xff000020, emisys1 en 0 sta 0xff002020
+```
+
+把掩码对上去看：
+
+| 组 | en | sta | 掩码 | 掩码内的 sta 位 |
+|---|---|---|---|---|
+| md0 (`0x0CA0`/`0x0CAC`) | `0` | `0xffffffef` | `0xf` (bit0..3) | **全是 1** |
+| emisys0 (`0x0C60`/`0x0C6C`) | `0` | `0xff000020` | `0xc0000` (bit18,19) | 0 |
+| emisys1 (`0x0C70`/`0x0C7C`) | `0` | `0xff002020` | `0xc0000` (bit18,19) | 0 |
+
+按 MTK 的语义，`sta` 位为 1 表示该端口**正处于保护中**。所以 `emisys0`/`emisys1` 是真的撤掉了（bit18/19 读 0），而 **`md0` 的四个位在 `CLR` 写完之后几十毫秒仍然读回全 1**。
+
+这条不能简单归给 `BUS_PROT_IGN`。mt6895 的四个元组确实全是 `ignore_clr_ack = true`（`scpsys.h` 的 `BUS_PROT_IGN`），`clear_bus_protection()` 写完 `CLR` 就直接 `return 0`，从不等 ack —— 但"没等"和"没生效"是两件事，而现在手里这个读数是唯一能区分它们的东西，且它指向后者。
+
+**新线索（下一轮第一件事）**：`MD_MFGSYS_PROTECT_EN_STA_0` 的 bit0..3 一直是 1。如果这不是采样滞后，就说明 `md0` 这条 AXI 保护从来没被真正撤下来过 —— 而它管的正是 MFG 到 `md0`（主 DRAM 通路）的事务。
+
+**二、`mfg5..mfg12` 确实没有上电，而且现在会明说。** `domain_on()` 的判定改成三值（`(sta & GENMASK(31,30)) == GENMASK(31,30)` 且 `SRAM_PDN`/`SRAM_ACK` 都清零）之后：
+
+```
+mfg1..mfg4  on: 0xc000000d          （bit31:30 = 11 = ack ✅）
+mfg5        did NOT come up: 0xd    （sta 0）❌
+mfg6        did NOT come up: 0x4000000d （sta 1）❌
+mfg7..mfg12 did NOT come up: 0xd    ❌
+mali: 7 of twelve domains answered
+mali: pwr status 0x1fc / 0x1fc (F34/F38), gpufreq 0x4 (F3C); want 0x3ffc
+```
+
+**三、Android 在 genpd 全 off 时照样能启动 MCU —— 所以这 12 个域不是 GPU 的真实供电开关。**
+同一份原厂机器上连采 12 次 `pm_genpd_summary`，覆盖 `echo 1 > mali0/reset` 全程，`mfg1..mfg12` 全部停在 `off-0`，一个都没变；而同一段 reset 的寄存器轨迹里 `MCU_CONTROL=2` 之后 12 条记录内就升起了 `JOB_INT_STATUS bit31`。
+
+→ 结论：**在 EB 模式（`gpueb-support = <1>`）下，这 12 个 genpd 只是给软件看的 view，真实供电由 GPUEB 固件接管。** 我们驱动 `power_on()` 手工去写这 12 个域的控制字，既不是 Android 做的事，也不是必需的 —— 但它也**不是**卡点（mfg1..mfg4 的 ack 是拿到的，GPU 寄存器块整块可读、`gpu_id 0xa8670004` 十七个识别字全对、`cycle counter` 一直在跑）。
+
+### 本轮踩掉的两个坑（都花了刷机周期）
+
+1. **`mali_low=0` 会让设备死在 preloader 循环里。** 把 GPU 的所有内存从 `0x50000000` 的低窗口改成 `mem_alloc_high()`（内核普通 DRAM），构建成功、boot-arg 用 `strings` 核验确实进了 commandLine（`rd=md0 -v cpus=1 mali_low=0 loader_return_after=150`），刷入后两次都是同一个结果：`idProduct=2000`（MT65xx Preloader）每 2~3 秒枚举又断开，adb/fastboot 都不出现。**原因未明，先记下来：这条路上有东西在 XNU 还没跑到 GPU 之前就挂了。**
+
+2. **把 `mali_vstack_rail()` / `clock_26m()` 提到 `power_on()` 之前，设备根本不回 Android。** `clock_26m()` 写的是 `mfgcfg`（`0x13FBF000`），物理上在 mfg1 域内；mfg1 没上电就写它 → 总线故障、无异常向量、核心停在原地 → 看门狗复位循环。`scpsys_power_on()` 里"先 clk 后 PWR_ON"的那一步，对 MFG 是空操作（十二个域的 `basic_clk_name` 全为空），不能拿来当顺序依据。
 
 ### 卡顿：软件渲染压在 4 个 999 MHz 核上
 

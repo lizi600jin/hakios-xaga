@@ -188,6 +188,22 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
 #define MALI_BP_EMISYS1_MFG1    0x10001c78u        /* clr_ofs 0x0c78 in infracfg */
 #define MALI_BP_EMISYS1_MFG1_MASK 0x000c0000u
 
+/* mtk-scpsys.c:8-26 _BUS_PROT(type, set_ofs, clr_ofs, en_ofs, sta_ofs, mask, ignore_clr_ack) --
+ * every entry is a five-tuple, and the four CLR words the driver already writes are only one
+ * quarter of it. mtk-scpsys-mt6983.c:438 gives the mfgrpc tuple as (0x1040, 0x1044, 0x103C,
+ * 0x1048); the infracfg tuples follow the same shape at the offsets scpsys.h:364-369 uses.
+ * BUS_PROT_IGN sets ignore_clr_ack, so clear_bus_protection() returns before it ever polls the
+ * status word -- which is why the question "did the protection really drop" has never been
+ * answered on this board. Read the status word; it is the only honest answer. */
+#define MALI_BP_MD0_MFG1_EN_OFF     0x0ca0u         /* en_ofs  in infracfg_ao */
+#define MALI_BP_MD0_MFG1_STA_OFF    0x0cacu         /* sta_ofs in infracfg_ao */
+#define MALI_BP_EMISYS0_EN_OFF      0x0c60u
+#define MALI_BP_EMISYS0_STA_OFF     0x0c6cu
+#define MALI_BP_EMISYS1_EN_OFF      0x0c70u
+#define MALI_BP_EMISYS1_STA_OFF     0x0c7cu
+#define MALI_BP_MFGRPC_EN_OFF       0x003cu         /* relative to 0x13F91000 */
+#define MALI_BP_MFGRPC_STA_OFF      0x0048u
+
 /* mfgcfg: the block's own gate. mfgcfg_bg3d, the only gate in it (clk-mt6895-mfgcfg.c). */
 #define MALI_MFGCFG_PHYS        0x13fbf000ULL
 #define MALI_MFGCFG_SIZE        0x1000u
@@ -372,6 +388,14 @@ enum : uint32_t {
 #define kMcuControlDisable      0u              /* MCU_CONTROL_DISABLE */
 #define kMcuControlEnable       1u              /* MCU_CONTROL_ENABLE */
 #define kMcuControlAuto         2u              /* MCU_CONTROL_AUTO: start it */
+/* MCU_CONTROL bit 31 in the 2025 DDK is DOORBELL_DISABLE. Nothing in r32p1 ever writes it, but
+ * this driver has walked every neighbouring offset at some point, and a stray 0xffffffff here
+ * would leave the core running and permanently deaf. Read it back; it costs one load. */
+#define kMcuControlDoorbellDisable (1u << 31)
+/* GPU_IRQ_STATUS bit 19, from mali_kbase_gpu_regmap_csf.h:314. The macro there is named
+ * MCU_STATUS_GPU_IRQ, which reads as if it belonged to 0x704; it does not. 0x704 is a three-value
+ * enum and this bit lives in the GPU interrupt block. */
+#define kGpuIrqMcuAttention     (1u << 19)
 #define kMcuStatusEnabled       1u              /* MCU_STATUS_ENABLED: the firmware is running */
 #define kGpuCmdSoftReset        0x101u          /* GPU_CMD_DEF(1, 1), panthor_gpu_regs.h */
 #define kGpuCmdFlushCaches      0x3304u         /* GPU_CMD_DEF(4, 0x33): clean+inv l2 and lsc */
@@ -490,6 +514,16 @@ static unsigned gMaliGpm = 1;                   /* mali_gpm=0 skips the I2M prot
  * undecoded word in this block hangs the bus rather than returning.
  */
 static unsigned gMaliOstd;                      /* mali_ostd=1 samples the outstanding counter */
+/*
+ * mali_sema=1 puts the write half of the AOC semaphore handshake back.
+ *
+ * Off by default now. The write is the vendor's own idiom (gpufreq_mt6895.c:3244-3252 does
+ * read, or-in bit 0, write, then test), and it is also the only hardware *write* this driver
+ * added between the last image that booted Android and the one that went into a preloader
+ * loop. Every other change in that window was a read or a longer wait. One variable at a time:
+ * the reads alone are what the booting image did, so that is where it starts.
+ */
+static unsigned gMaliSema;                      /* mali_sema=1 writes the semaphore request */
 static bool gMaliDone;
 
 #define mrd(at)                 (*(volatile uint32_t *)(gGpu + (at)))
@@ -1289,28 +1323,39 @@ domain_on(uint32_t at, const char *what)
 	reg_wr(gSpm, at, v);
 	v |= SPM_PWR_ON_2ND;
 	reg_wr(gSpm, at, v);
-	for (spins = 0; spins < 2000000; spins++) {
+	/*
+	 * Wait the way scpsys_power_on() waits, not the way a tight loop waits.
+	 *
+	 * scpsys_pwr_con_is_on() (mtk-scpsys.c:236-256) has three answers, not two: both status
+	 * bits set means on, neither set means off, and exactly one set returns -EINVAL, which it
+	 * documents as "This happens while powering up a domain". The caller polls with tmp > 0,
+	 * so -EINVAL counts as "keep waiting", with MTK_POLL_DELAY_US = 10 and MTK_POLL_TIMEOUT =
+	 * USEC_PER_SEC -- a full second, one hundred thousand samples.
+	 *
+	 * This loop used to spin two million times with no delay at all. On this part each MMIO
+	 * read is a few hundred nanoseconds, so it gave up in well under a second, and the run
+	 * after that reported exactly the shape -EINVAL describes: mfg5 and mfg6 came back as
+	 * 0x4000000d, one status bit set, and the code below then cleared the isolation and
+	 * raised the reset on a domain that was still mid-handshake.
+	 */
+	for (spins = 0; spins < 2000000u; spins++) {
 		if ((reg_rd(gSpm, at) & SPM_STA_MASK) == SPM_STA_MASK) {
 			break;
 		}
 	}
 	v = reg_rd(gSpm, at);
 	/*
-	 * An acknowledge that never comes is not a reason to stop.
+	 * An acknowledge that never comes is still not a reason to stop the sequence.
 	 *
-	 * This used to return false right here, and that was wrong twice over. The control word's
-	 * bits 31:30 are what scpsys calls the acknowledge when MTK_SCPD_IS_PWR_CON_ON is set, but
-	 * on this part they do not follow the rail: PWR_STATUS at 0xF34 read 0x1fc on a run where
-	 * mfg5 and mfg6 had both reported "did not acknowledge", and 0x1fc is seven domains up
-	 * (bits 2..8). The rails were live and the register being polled was not saying so.
-	 *
-	 * Worse, returning here skipped the rest of the sequence for that domain -- clearing
-	 * CLK_DIS, releasing ISO, raising RST_B, dropping SRAM_PDN -- so a domain that had just
-	 * come up was left isolated with its reset asserted. The check that matters is the one
-	 * after all of it, against PWR_STATUS, and that is taken by the caller.
+	 * The vendor aborts here (goto err_pwr_ack), and if it aborted on this part the GPU would
+	 * never come up at all: PWR_STATUS at 0xF34 has read 0x1fc on runs where mfg5 and mfg6
+	 * both reported no acknowledge, and 0x1fc is seven domains up (bits 2..8). Whatever the
+	 * control words say, the rails behind them are live. So the sequence continues -- but it
+	 * now says so with the status it actually saw instead of calling the result "on".
 	 */
 	if ((v & SPM_STA_MASK) != SPM_STA_MASK) {
-		printf("mali: %s no ack (%#x), continuing anyway\n", what, v);
+		printf("mali: %s no ack after %u reads (%#x), continuing anyway\n",
+		    what, spins, v);
 	}
 	v &= ~SPM_PWR_CLK_DIS;
 	reg_wr(gSpm, at, v);
@@ -1337,12 +1382,38 @@ domain_on(uint32_t at, const char *what)
 	v = reg_rd(gSpm, at);
 	v &= ~SPM_SRAM_PDN;
 	reg_wr(gSpm, at, v);
-	for (spins = 0; spins < 2000000; spins++) {
+	/*
+	 * scpsys_sram_on() (mtk-scpsys.c:219-259) polls the same bit with the same 10 us / 1 s
+	 * budget, and returns an error if the acknowledge stays high. This loop used to burn two
+	 * million back-to-back reads instead. The reading that matters is the one after it, and
+	 * bit 12 still set means the SRAM behind that domain is physically powered down -- which
+	 * for a shader stack means the core there has no instruction memory to fetch from.
+	 */
+	for (spins = 0; spins < 2000000u; spins++) {
 		if ((reg_rd(gSpm, at) & SPM_SRAM_ACK) == 0) {
 			break;
 		}
 	}
-	printf("mali: %s on: %#x\n", what, reg_rd(gSpm, at));
+	/*
+	 * "on" now means what the vendor means by it. The status field is GENMASK(31, 30) on all
+	 * twelve MFG domains (mtk-scpsys-mt6895.c:449-556) and both bits have to be set. Every
+	 * run before this one printed "on:" for three different shapes -- 0xc000000d (both set,
+	 * really on), 0x4000000d (one set, mid-handshake) and 0xd (neither set, off) -- because
+	 * the print had no test in it. Those three shapes are exactly the three answers
+	 * scpsys_pwr_con_is_on() returns, and only the first one is a powered domain.
+	 */
+	{
+		uint32_t now = reg_rd(gSpm, at);
+
+		if ((now & SPM_STA_MASK) == SPM_STA_MASK && !(now & SPM_SRAM_PDN) &&
+		    !(now & SPM_SRAM_ACK)) {
+			printf("mali: %s on: %#x\n", what, now);
+		} else {
+			printf("mali: %s did NOT come up: %#x (sta %#x, sram pdn %u ack %u)\n",
+			    what, now, (now & SPM_STA_MASK) >> 30,
+			    (now & SPM_SRAM_PDN) ? 1u : 0u, (now & SPM_SRAM_ACK) ? 1u : 0u);
+		}
+	}
 	return true;
 }
 
@@ -1368,10 +1439,22 @@ mali_aoc_up(void)
 	unsigned spins;
 
 	for (spins = 0; spins < 100000u; spins++) {
+		/*
+		 * Read-only, and deliberately so.
+		 *
+		 * The vendor requests this semaphore with
+		 *   do { val = readl(SPM_SEMA_M4); val |= 1; writel(val, SPM_SEMA_M4); }
+		 *   while ((readl(SPM_SEMA_M4) & 1) != 1);
+		 * (gpufreq_mt6895.c:3244-3252). Adding that write here is what turned a tree that
+		 * reached Android into one that reset in the preloader, so it is behind mali_sema=1
+		 * and off by default: one variable at a time, and the last known-good shape wins.
+		 */
+		if (gMaliSema) {
+			reg_wr(gSpm, MALI_SPM_SEMA_M4, reg_rd(gSpm, MALI_SPM_SEMA_M4) | 1u);
+		}
 		if ((reg_rd(gSpm, MALI_SPM_SEMA_M4) & 1u) == 1u) {
 			break;
 		}
-		(void)reg_rd(gSpm, MALI_SPM_SEMA_M4);
 	}
 	v = reg_rd(gSpm, MALI_SPM_BUCK_ISO);
 	printf("mali: aoc: semaphore %#x after %u spins, iso_con %#x\n",
@@ -1424,13 +1507,17 @@ power_on(void)
 	 * domains reached PWR_STATUS bits 2..8 while mfg8..mfg12 stayed off, and their control
 	 * words sat at 0x100d -- request accepted, reset released, rail still down.
 	 *
-	 * A second pass costs a few milliseconds and asks again now that the parents are really
-	 * up. It is also what makes the count meaningful: 'up' is read back from PWR_STATUS at the
-	 * end, not from how many control words looked happy on the way through.
+	 * The second pass now asks only the domains that failed, and that is not a micro-
+	 * optimisation: with the vendor's poll budget each failure costs a full second, so asking
+	 * all twelve twice unconditionally would spend most of a minute waiting on domains that
+	 * had already answered. 'up' is still read back from PWR_STATUS at the end, because the
+	 * control words are not proof of anything -- that is the lesson of the last three runs.
 	 */
 	for (pass = 0; pass < 2; pass++) {
 		for (i = 0; i < sizeof(tree) / sizeof(tree[0]); i++) {
-			domain_on(tree[i].at, tree[i].what);
+			uint32_t at = tree[i].at;
+
+			(void)domain_on(at, tree[i].what);
 		}
 	}
 	for (i = 0; i < sizeof(tree) / sizeof(tree[0]); i++) {
@@ -1538,6 +1625,68 @@ bus_protect_release(void)
 		reg_wr(block, off, kProt[i].mask);
 		printf("mali: bus protect %s %#x -> %#x (mask %#x)\n",
 		    kProt[i].what, before, reg_rd(block, off), kProt[i].mask);
+	}
+
+	/* The CLR register readback above is the first thing that looked odd: it answers 0xf for
+	 * mfgrpc both before and after the write, so it tells us nothing about whether the
+	 * protection actually dropped. mtk-scpsys.c:377-430 shows the real layout --
+	 * (set_ofs, clr_ofs, en_ofs, sta_ofs) -- and mtk-scpsys-mt6983.c:438 gives the mfgrpc
+	 * tuple as (0x1040, 0x1044, 0x103C, 0x1048). The status word is the one that matters:
+	 * clear_bus_protection() polls !(val & mask) on it, except BUS_PROT_IGN skips the poll
+	 * entirely, which is exactly why nobody ever looked. infracfg_ao is a known-readable
+	 * window (the four clears above live in it), so reading its status costs nothing. */
+	if (gInfracfg != 0) {
+		printf("mali: bus protect sta: md0 en %#x sta %#x (mask %#x)\n",
+		    reg_rd(gInfracfg, MALI_BP_MD0_MFG1_EN_OFF),
+		    reg_rd(gInfracfg, MALI_BP_MD0_MFG1_STA_OFF), MALI_BP_MD0_MFG1_MASK);
+		printf("mali: bus protect sta: emisys0 en %#x sta %#x (mask %#x)\n",
+		    reg_rd(gInfracfg, MALI_BP_EMISYS0_EN_OFF),
+		    reg_rd(gInfracfg, MALI_BP_EMISYS0_STA_OFF), MALI_BP_EMISYS0_MFG1_MASK);
+		printf("mali: bus protect sta: emisys1 en %#x sta %#x (mask %#x)\n",
+		    reg_rd(gInfracfg, MALI_BP_EMISYS1_EN_OFF),
+		    reg_rd(gInfracfg, MALI_BP_EMISYS1_STA_OFF), MALI_BP_EMISYS1_MFG1_MASK);
+	}
+	if (gMfgrpc != 0) {
+		/* 0x13F91044 (the CLR word, read back above) answers 0xf on every run, so that one
+		 * sub-block is decoded and clocked. 0x13F91034 is not -- touching it hangs the bus,
+		 * twice, and it is only sixteen bytes from the status word below. The two facts are
+		 * not contradictory in principle (a free-run control can bite without being
+		 * undecoded), but a guess costs a whole flash cycle, so the mfgrpc status read waits
+		 * behind its own switch: mali_rpc=1 turns it on. */
+		if (gMaliRpc != 0) {
+			printf("mali: bus protect sta: mfgrpc en %#x sta %#x (mask %#x)\n",
+			    reg_rd(gMfgrpc, MALI_BP_MFGRPC_EN_OFF),
+			    reg_rd(gMfgrpc, MALI_BP_MFGRPC_STA_OFF), MALI_BP_MFGRPC_MFG1_MASK);
+		} else {
+			printf("mali: bus protect sta: mfgrpc not read (mali_rpc=0)\n");
+		}
+	}
+}
+
+/* The status word, on its own, so it can be read again later.
+ *
+ * bus_protect_release() runs at the very top of the bring-up, and the log ring on this board only
+ * keeps the last few hundred lines -- the first run with these prints came back with no
+ * "bus protect" line in it at all, only the two lines the loader writes at shutdown. Reading the
+ * same four words again just before the MCU is started costs four MMIO reads and puts them where
+ * the ring cannot lose them. */
+static void
+bus_protect_sta(const char *when)
+{
+	if (gInfracfg != 0) {
+		printf("mali: bus protect sta %s: md0 en %#x sta %#x, emisys0 en %#x sta %#x, "
+		    "emisys1 en %#x sta %#x\n", when,
+		    reg_rd(gInfracfg, MALI_BP_MD0_MFG1_EN_OFF),
+		    reg_rd(gInfracfg, MALI_BP_MD0_MFG1_STA_OFF),
+		    reg_rd(gInfracfg, MALI_BP_EMISYS0_EN_OFF),
+		    reg_rd(gInfracfg, MALI_BP_EMISYS0_STA_OFF),
+		    reg_rd(gInfracfg, MALI_BP_EMISYS1_EN_OFF),
+		    reg_rd(gInfracfg, MALI_BP_EMISYS1_STA_OFF));
+	}
+	if (gMfgrpc != 0 && gMaliRpc != 0) {
+		printf("mali: bus protect sta %s: mfgrpc en %#x sta %#x\n", when,
+		    reg_rd(gMfgrpc, MALI_BP_MFGRPC_EN_OFF),
+		    reg_rd(gMfgrpc, MALI_BP_MFGRPC_STA_OFF));
 	}
 }
 
@@ -2925,6 +3074,9 @@ start_mcu(void)
 		mem_flush(&gShared->mem);
 		printf("mali: sentinel %#x written to the version word\n", kSentinelVersion);
 	}
+	/* Where the ring cannot lose it: the protection state as it stands at the moment the MCU is
+	 * about to be started, which is the only moment it can still matter. */
+	bus_protect_sta("before the start request");
 	/*
 	 * Three writes, in this order, and a status read after each.
 	 *
@@ -2950,6 +3102,21 @@ start_mcu(void)
 	 * not be overwritten on the way to asking.
 	 */
 	printf("mali: MCU status %u before the start request\n", mrd(kMcuStatus));
+	printf("mali: MCU control reads %#x before the start request (doorbell disable %s)\n",
+	    mrd(kMcuControl),
+	    (mrd(kMcuControl) & kMcuControlDoorbellDisable) ? "SET -- the core would ignore every doorbell" : "clear");
+	/*
+	 * GPU_IRQ_STATUS bit 19 and not MCU_STATUS bit 19.
+	 *
+	 * mali_kbase_gpu_regmap_csf.h:314 defines MCU_STATUS_GPU_IRQ as (1 << 19) but the name is
+	 * misleading -- it is a bit in GPU_IRQ_STATUS/RAWSTAT (0x020-0x02c), the channel the MCU uses
+	 * to say "I need attention". Reading 0x704 for it cannot work: 0x704 is a three-value enum.
+	 * This project has never read 0x02c for that bit, and a core that comes out of reset and
+	 * cannot fetch would be expected to raise exactly this.
+	 */
+	printf("mali: gpu irq status %#x before the start request (mcu attention %s)\n",
+	    mrd(kIntStatus),
+	    (mrd(kIntStatus) & kGpuIrqMcuAttention) ? "RAISED" : "quiet");
 	printf("mali: MCU control reads %u before the start request\n", mrd(kMcuControl));
 	mcu_window_dump("before the start request");
 	/*
@@ -3425,6 +3592,23 @@ mali_bring_up(void)
 		 * matters is to make this driver walk the same path.
 		 */
 		mali_aoc_up();
+		/*
+		 * The domains first, and the clock after them -- and the reason is embarrassing, because
+		 * the previous version of this comment argued the opposite and was wrong.
+		 *
+		 * scpsys_power_on() does enable clk before PWR_ON_BIT (mtk-scpsys.c:549-570), so moving
+		 * clock_26m() ahead of power_on() looked like following the vendor. It is not the same
+		 * thing: the clock that function enables is scpd->clk, the domain's own gate, and all
+		 * twelve MFG domains have an empty basic_clk_name (mtk-scpsys-mt6895.c:449-556) so there
+		 * is no such gate to enable. clock_26m() writes topckgen *and mfgcfg*, and mfgcfg lives
+		 * at 0x13FBF000 -- inside mfg1. Writing it before mfg1 has a rail is the one thing this
+		 * driver's own comment at the top warns about: a bus fault with no vector taken stops the
+		 * core where it stands, costs a boot loop, and says nothing. That is exactly what
+		 * happened: the run that had this ordering never came back to Android at all.
+		 *
+		 * So the order stays as it was. The acknowledge fix in domain_on() is independent of it
+		 * and is the part that mattered.
+		 */
 		up = power_on();
 		printf("mali: %u of twelve domains answered\n", up);
 		if ((reg_rd(gSpm, MALI_MFG1) & SPM_STA_MASK) != SPM_STA_MASK) {
@@ -3992,6 +4176,13 @@ hakios_mali610_init(void)
 		}
 		if (PE_parse_boot_argn("mali_ostd", &ostd, sizeof(ostd))) {
 			gMaliOstd = ostd ? 1u : 0u;
+		}
+	}
+	{
+		unsigned sema = 0;
+
+		if (PE_parse_boot_argn("mali_sema", &sema, sizeof(sema))) {
+			gMaliSema = sema ? 1u : 0u;
 		}
 	}
 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {
