@@ -1,0 +1,19 @@
+trial 690: previous log backed up; reserved logbook slot zeroed and verified
+trial 690: prepared hashes verified; entering fastboot
+< waiting for GAJZ4HIN99AQ69Y9>
+Sending 'boot_a' (22440 KB)                        OKAY [  1.069s]
+Writing 'boot_a'                                   OKAY [  0.070s]
+Finished. Total time: 1.231s
+
+Rebooting                                          OKAY [  0.010s]
+Finished. Total time: 0.060s
+
+trial 690: waiting for adbd; log pull does not require boot_completed
+38.560144 mali: coverage: every section fully mapped
+38.575317 mali: AS0 step update    mmu irq 0x10000
+38.576740 mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 690
+38.585465 mali: witness: vector was sp 0x2040000 reset 0x10018ed
+38.586982 mali: witness: code at 0x1000000, reset vector now 0x1000001
+38.588492 mali: sentinel 0xff5aa5f0 written to the version word
+trial 690: captured current log; boot_completed=False; restoring stock boot_a
+trial 690: stock Android boot_completed=1, stock MD5 verified

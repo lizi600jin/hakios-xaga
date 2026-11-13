@@ -1,0 +1,91 @@
+{
+  "trial": 691,
+  "args": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=1 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=0 mali_mcuwin=0 mali_mcuseq=0 mali_doorbell=0 mali_pdcsettle=0 mali_statussem=0 mali_assorder=1 mali_trial=691",
+  "build": {
+    "trial": 691,
+    "verified_args": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=1 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=0 mali_mcuwin=0 mali_mcuseq=0 mali_doorbell=0 mali_pdcsettle=0 mali_statussem=0 mali_assorder=1 mali_trial=691",
+    "arg_occurrences": 3,
+    "files": [
+      {
+        "path": "mtk/mt6895/drivers/gpu/hakios.mali610.c",
+        "bytes": 236705,
+        "sha256": "611adac6a49c0f8cecab09ee5e29352146b291825757f3446fc58e389cc9d53c",
+        "md5": "bf933b5ad8f63ba0f2cd0187995e2c76"
+      },
+      {
+        "path": "hakios-kernel",
+        "bytes": 15286040,
+        "sha256": "cdc9e38282d2258fb8fd7743a32a9b1c3b13ae6f8c30a9ed55dd9d6c0c5a49a3",
+        "md5": "407e972202168f865dc2368ae7ef9bbe"
+      },
+      {
+        "path": "build-payload.bin",
+        "bytes": 19480504,
+        "sha256": "20509da6253da0c6361d52983601a197e9be02221f1d5346fe539ad5d58c3cf9",
+        "md5": "295f9f7ee90ffcb90e1f701d4bb0c8a6"
+      },
+      {
+        "path": "mtk/loader/mtkloader.bin",
+        "bytes": 48208,
+        "sha256": "4a3a285de45a6fcc5597c1b2f3c3a544adfb16a4c180fbb4f922a9dc63d618f7",
+        "md5": "adb60e20fe3bb8ff0c554904971ab5e9"
+      },
+      {
+        "path": "xnu-flashed-slot_a.img",
+        "bytes": 22978560,
+        "sha256": "e23f1ab6bb7abd8e3f87014cfa660a5a2f8896625e957d9c39ba787ae659a623",
+        "md5": "effd256c1bf6801a0904edd32c0014c6"
+      }
+    ]
+  },
+  "started_at": "2026-11-13T17:29:45.345825+08:00",
+  "steps": [
+    {
+      "command": [
+        "fastboot",
+        "-s",
+        "GAJZ4HIN99AQ69Y9",
+        "flash",
+        "boot_a",
+        "/home/lizi/IOS/hakios-mtk/xnu-flashed-slot_a.img"
+      ],
+      "exit": 0,
+      "output": "< waiting for GAJZ4HIN99AQ69Y9>\nSending 'boot_a' (22440 KB)                        OKAY [  1.088s]\nWriting 'boot_a'                                   OKAY [  0.050s]\nFinished. Total time: 1.239s\n"
+    },
+    {
+      "command": [
+        "fastboot",
+        "-s",
+        "GAJZ4HIN99AQ69Y9",
+        "reboot"
+      ],
+      "exit": 0,
+      "output": "Rebooting                                          OKAY [  0.010s]\nFinished. Total time: 0.063s\n"
+    }
+  ],
+  "attempt": 1,
+  "logbook_preclear": {
+    "partition_bytes": 2685370368,
+    "offset_bytes": 2676981760,
+    "bytes": 4198400,
+    "previous_sha256": "3b86e80ba594ca4398e8ae08bf3c26446bd871c02f46259484b71631c367e1a2",
+    "zero_md5_verified": "34987ee855d45be16fbfd8c3f6f7827f"
+  },
+  "experiment_reboot_at": "2026-11-13T17:30:11.660188+08:00",
+  "completion_markers_seen": {
+    "start_complete": true,
+    "status_probe_required": false,
+    "status_probe_complete": false,
+    "witness_required": true,
+    "witness_complete": true
+  },
+  "completion_checked_at": "2026-11-13T17:33:39.494127+08:00",
+  "log_complete": true,
+  "current_trial_marker_present": true,
+  "logbook_sha256": "737251df4c6d372b4c83bcf39f89f3ef556f9d9b3e7a252bea62b9d36af98525",
+  "android_completed_before_stock_restore": false,
+  "stock_restore_method": "root_dd_fsync_verify_sync_then_sysrq_restart",
+  "stock_android_boot_completed": true,
+  "stock_boot_a_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+  "outcome": "experiment_captured_and_stock_restored"
+}

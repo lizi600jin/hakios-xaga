@@ -1,0 +1,28 @@
+trial 691: previous log backed up; reserved logbook slot zeroed and verified
+trial 691: prepared hashes verified; entering fastboot
+< waiting for GAJZ4HIN99AQ69Y9>
+Sending 'boot_a' (22440 KB)                        OKAY [  1.088s]
+Writing 'boot_a'                                   OKAY [  0.050s]
+Finished. Total time: 1.239s
+
+Rebooting                                          OKAY [  0.010s]
+Finished. Total time: 0.063s
+
+trial 691: waiting for adbd; log pull does not require boot_completed
+trial 691: root adbd returned; waiting up to 150s for required log markers
+38.562926 mali: coverage: every section fully mapped
+38.562994 mali: AS0 step update    mmu irq 0x10000
+38.562999 mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 691
+38.563030 mali: witness: vector was sp 0x2040000 reset 0x10018ed
+38.563061 mali: witness: code at 0x1000000, reset vector now 0x1000001
+38.563075 mali: sentinel 0xff5aa5f0 written to the version word
+48.032810 mali: version word 0xff5aa5f0 (untouched; no firmware version published) trial 691
+48.033724 mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0
+48.034632 mali: round7 CSG0: in 0x4004000 out 0x400c000 streams 8 stride 0xc
+48.035568 mali: the global interface never raised; the MCU did not boot
+48.038544 mali: witness: read1 0xff5aa5f0 0 read2 0xff5aa5f0 0 read3 0xff5aa5f0 0 trial 691
+48.039595 mali: witness: verdict trial 691 -- no completed first store observed (not an instruction trace)
+50.170119 mali: shared probe trial 691: failed-start tail, level 5; global_interface skipped
+50.183552 mali: shared probe trial 691: completed; returning before global_interface
+trial 691: captured current log; boot_completed=False; restoring stock boot_a
+trial 691: stock Android boot_completed=1, stock MD5 verified

@@ -1,0 +1,14 @@
+{
+  "trial": 691,
+  "runner_sha256": "4f61f9d26c626eba7afcb21cf44aa5f7dbff7a6d7866982f77d3f4662bbd3062",
+  "wait_budget_seconds": 150,
+  "requires_current_trial_witness_readback": true,
+  "completion_markers_seen": {
+    "start_complete": true,
+    "status_probe_required": false,
+    "status_probe_complete": false,
+    "witness_required": true,
+    "witness_complete": true
+  },
+  "log_complete": true
+}

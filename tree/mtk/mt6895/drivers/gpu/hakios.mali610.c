@@ -521,6 +521,8 @@ static unsigned gMaliHwIssues;                  /* mali_hwissues=1 zeroes the fo
 static unsigned gMaliStackPwrOn;                /* mali_stackpwron=1 requests core-stack power and observes READY */
 static unsigned gMaliDoorbell;                  /* mali_doorbell=1 rings doorbell 0 once after AUTO */
 static unsigned gMaliPdcSettle;                 /* mali_pdcsettle=1 waits for eight equal 1-ms SPM samples */
+static unsigned gMaliStatusSem;                 /* mali_statussem=1 observes the existing failed-start DISABLE tail */
+static unsigned gMaliAssOrder;                  /* mali_assorder=1 uses Android's AS0 register order */
 /*
  * mali_gpm=0 skips the initiator-to-memory protector step.
  *
@@ -2921,9 +2923,17 @@ as_enable(unsigned as, uint64_t transtab)
 		printf("mali: AS%u step %-9s mmu irq %#x\n", as, name, mrd(kMmuIntRaw)); \
 	} while (0)
 	AS_STEP("idle", (void)0);
-	AS_STEP("transtab", gpu_wr64(asReg(as, kAsTranstab), transtab));
-	AS_STEP("memattr", gpu_wr64(asReg(as, kAsMemattr), MALI_MEMATTR));
-	AS_STEP("transcfg", gpu_wr64(asReg(as, kAsTranscfg), transcfg));
+	if (gMaliAssOrder && as == 0) {
+		AS_STEP("transcfg", gpu_wr64(asReg(as, kAsTranscfg), transcfg));
+		AS_STEP("transtab", gpu_wr64(asReg(as, kAsTranstab), transtab));
+		AS_STEP("memattr", gpu_wr64(asReg(as, kAsMemattr), MALI_MEMATTR));
+		printf("mali: as_enable trial %u: AS%u applied Android order (CFG->TAB->ATTR)\n",
+		    gMaliTrial, as);
+	} else {
+		AS_STEP("transtab", gpu_wr64(asReg(as, kAsTranstab), transtab));
+		AS_STEP("memattr", gpu_wr64(asReg(as, kAsMemattr), MALI_MEMATTR));
+		AS_STEP("transcfg", gpu_wr64(asReg(as, kAsTranscfg), transcfg));
+	}
 	/*
 	 * Read back what the three writes actually left in the registers.
 	 *
@@ -4883,6 +4893,32 @@ mali_bring_up(void)
 		delay(2000);
 		printf("mali: MCU control written %u, status now %u, control reads %u\n",
 		    kMcuControlDisable, mrd(kMcuStatus), mrd(kMcuControl));
+		if (gMaliStatusSem) {
+			uint32_t control = mrd(kMcuControl);
+			uint32_t first = mrd(kMcuStatus);
+			uint32_t again, status;
+			unsigned spins;
+
+			__asm__ volatile ("dsb sy" ::: "memory");
+			again = mrd(kMcuStatus);
+			printf("mali: status semantics trial %u: after DISABLE ctl %#x st %u | after re-read st %u | gpu_status %#x debug_top %#x\n",
+			    gMaliTrial, control, first, again, mrd(kGpuStatus), mfg_debug_top());
+			mwr(kMcuControl, kMcuControlDisable);
+			delay(1000);
+			status = mrd(kMcuStatus);
+			printf("mali: status semantics trial %u: second DISABLE ctl %#x st %u (after 1000 us)\n",
+			    gMaliTrial, mrd(kMcuControl), status);
+			/* Panthor allows 100 ms to stop. Bound reads; record departure from raw 1. */
+			for (spins = 0; spins < 10000u; spins++) {
+				status = mrd(kMcuStatus);
+				if (status != 1u) {
+					break;
+				}
+				delay(10);
+			}
+			printf("mali: status semantics trial %u: bounded re-read ctl %#x st %u after %u polls (delay 10 us, limit 10000)\n",
+			    gMaliTrial, mrd(kMcuControl), status, spins);
+		}
 		if (!gMaliMcuWin) {
 			mcu_window_dump("after the core was switched off");
 		}
@@ -5125,6 +5161,8 @@ hakios_mali610_init(void)
 	PE_parse_boot_argn("mali_mcuseq", &gMaliMcuSeq, sizeof(gMaliMcuSeq));
 	PE_parse_boot_argn("mali_doorbell", &gMaliDoorbell, sizeof(gMaliDoorbell));
 	PE_parse_boot_argn("mali_pdcsettle", &gMaliPdcSettle, sizeof(gMaliPdcSettle));
+	PE_parse_boot_argn("mali_statussem", &gMaliStatusSem, sizeof(gMaliStatusSem));
+	PE_parse_boot_argn("mali_assorder", &gMaliAssOrder, sizeof(gMaliAssOrder));
 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {
 		thread_deallocate(thread);
 	} else {

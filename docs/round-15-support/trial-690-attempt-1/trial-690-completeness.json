@@ -1,0 +1,17 @@
+{
+  "trial": 690,
+  "outcome": "inconclusive_missing_failed_start_tail",
+  "logbook_bytes": 4198400,
+  "logbook_sha256": "3780bbd3a7e93b0f16f88ca9bae8efa2e2fd2d369ada69af5d5e557cf5166fb5",
+  "only_trial_marker": 690,
+  "last_mali_timestamp": 39.175237,
+  "last_any_timestamp": 41.497561,
+  "last_nonzero_end": 393216,
+  "status_probe_rows": 0,
+  "witness_read_rows": 0,
+  "trace_rows": 0,
+  "repull_identical": true,
+  "stock_android_boot_completed": true,
+  "stock_boot_a_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+  "next": "691 repeats identical driver/kernel/payload and options; only numeric trial argument changes"
+}

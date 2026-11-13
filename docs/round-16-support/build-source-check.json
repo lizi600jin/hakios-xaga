@@ -1,0 +1,9 @@
+{
+  "trial": 691,
+  "source_sync_matches": true,
+  "kernel_contains_assorder_marker": true,
+  "driver_sha256": "611adac6a49c0f8cecab09ee5e29352146b291825757f3446fc58e389cc9d53c",
+  "build_gate": "make-kernel: the log shows a built kernel; only the kext symbol-set checks failed",
+  "hashes_verified": true,
+  "boot_image_md5": "effd256c1bf6801a0904edd32c0014c6"
+}

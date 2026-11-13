@@ -1,0 +1,39 @@
+--- trial-690/hakios.mali610.c
++++ trial-691/hakios.mali610.c
+@@ -522,6 +522,7 @@
+ static unsigned gMaliDoorbell;                  /* mali_doorbell=1 rings doorbell 0 once after AUTO */
+ static unsigned gMaliPdcSettle;                 /* mali_pdcsettle=1 waits for eight equal 1-ms SPM samples */
+ static unsigned gMaliStatusSem;                 /* mali_statussem=1 observes the existing failed-start DISABLE tail */
++static unsigned gMaliAssOrder;                  /* mali_assorder=1 uses Android's AS0 register order */
+ /*
+  * mali_gpm=0 skips the initiator-to-memory protector step.
+  *
+@@ -2922,9 +2923,17 @@
+ 		printf("mali: AS%u step %-9s mmu irq %#x\n", as, name, mrd(kMmuIntRaw)); \
+ 	} while (0)
+ 	AS_STEP("idle", (void)0);
+-	AS_STEP("transtab", gpu_wr64(asReg(as, kAsTranstab), transtab));
+-	AS_STEP("memattr", gpu_wr64(asReg(as, kAsMemattr), MALI_MEMATTR));
+-	AS_STEP("transcfg", gpu_wr64(asReg(as, kAsTranscfg), transcfg));
++	if (gMaliAssOrder && as == 0) {
++		AS_STEP("transcfg", gpu_wr64(asReg(as, kAsTranscfg), transcfg));
++		AS_STEP("transtab", gpu_wr64(asReg(as, kAsTranstab), transtab));
++		AS_STEP("memattr", gpu_wr64(asReg(as, kAsMemattr), MALI_MEMATTR));
++		printf("mali: as_enable trial %u: AS%u applied Android order (CFG->TAB->ATTR)\n",
++		    gMaliTrial, as);
++	} else {
++		AS_STEP("transtab", gpu_wr64(asReg(as, kAsTranstab), transtab));
++		AS_STEP("memattr", gpu_wr64(asReg(as, kAsMemattr), MALI_MEMATTR));
++		AS_STEP("transcfg", gpu_wr64(asReg(as, kAsTranscfg), transcfg));
++	}
+ 	/*
+ 	 * Read back what the three writes actually left in the registers.
+ 	 *
+@@ -5153,6 +5162,7 @@
+ 	PE_parse_boot_argn("mali_doorbell", &gMaliDoorbell, sizeof(gMaliDoorbell));
+ 	PE_parse_boot_argn("mali_pdcsettle", &gMaliPdcSettle, sizeof(gMaliPdcSettle));
+ 	PE_parse_boot_argn("mali_statussem", &gMaliStatusSem, sizeof(gMaliStatusSem));
++	PE_parse_boot_argn("mali_assorder", &gMaliAssOrder, sizeof(gMaliAssOrder));
+ 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {
+ 		thread_deallocate(thread);
+ 	} else {

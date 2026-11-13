@@ -1,0 +1,11 @@
+{
+  "trial": 690,
+  "attempt": 2,
+  "runner_sha256": "cbeb4b2076d5aefdc2ce81aef145b013fa8d0b8493c9e6378a9e3dcc31210827",
+  "uses_user_completion_fix": true,
+  "status_probe_requires_all_three_tail_markers": true,
+  "wait_budget_seconds": 150,
+  "previous_attempt_archive": "/home/lizi/IOS/work-xaga/codex/out/round-15-support/trial-690-attempt-1",
+  "unflashed_691": true,
+  "exact_same_image_as_attempt_1": true
+}

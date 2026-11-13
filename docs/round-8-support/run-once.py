@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a prepared experiment; pull logs as soon as adbd returns, then restore stock.
+"""Run an experiment; wait for required log markers after adbd returns, then restore stock.
 
 User authorized device control/flashing on 2026-11-13. Only boot_a is flashed;
 the dedicated xnusys logbook slot is backed up and cleared before each run.
@@ -16,6 +16,7 @@ trial = int(sys.argv[1])
 build = json.loads((OUT / f'trial-{trial}-build.json').read_text())
 meta = {'trial': trial, 'args': build['verified_args'], 'build': build,
         'started_at': datetime.datetime.now().astimezone().isoformat(), 'steps': []}
+meta['attempt'] = build.get('attempt', 1)
 assert not (OUT / f'trial-{trial}.json').exists(), 'Trial metadata already exists'
 
 
@@ -102,6 +103,42 @@ try:
     save()
     print(f'trial {trial}: waiting for adbd; log pull does not require boot_completed', flush=True)
     wait_adb()
+    print(f'trial {trial}: root adbd returned; waiting up to 150s for required log markers', flush=True)
+    # Trial 690 attempt 1 was truncated at "spin 100000" and lacked all tail
+    # evidence. Its cause is unproven; do not accept adbd availability as proof
+    # of a complete log. Require the requested experiment's markers in the slot,
+    # within a bounded budget; otherwise pull for diagnosis and flag it incomplete.
+    def _has_completion_marker(seconds=150):
+        deadline = time.monotonic() + seconds
+        while time.monotonic() < deadline:
+            probe = adb('shell',
+                f'dd if=/dev/block/by-name/xnusys bs=4096 skip=653560 count=1025 2>/dev/null | strings',
+                timeout=30, check=False)
+            start_complete = ('the start loop ended' in probe) or ('witness: read1' in probe)
+            status_required = 'mali_statussem=1' in build['verified_args'].split()
+            status_markers = [f'status semantics trial {trial}: {step}' for step in
+                              ('after DISABLE', 'second DISABLE', 'bounded re-read')]
+            status_complete = all(marker in probe for marker in status_markers)
+            witness_required = 'mali_witness=1' in build['verified_args'].split()
+            witness_complete = bool(re.search(rf'witness: read1[^\n]*\btrial {trial}\b', probe))
+            meta['completion_markers_seen'] = {'start_complete': start_complete,
+                                                'status_probe_required': status_required,
+                                                'status_probe_complete': status_complete,
+                                                'witness_required': witness_required,
+                                                'witness_complete': witness_complete}
+            meta['completion_checked_at'] = datetime.datetime.now().astimezone().isoformat()
+            save()
+            if (start_complete and (not status_required or status_complete)
+                    and (not witness_required or witness_complete)):
+                return True
+            time.sleep(5)
+        return False
+
+    meta['log_complete'] = _has_completion_marker()
+    if not meta['log_complete']:
+        print(f'trial {trial}: completion marker never appeared within budget; '
+              f'the pull below is likely short and must not be read as a result', flush=True)
+    save()
     adb('shell', f'dd if=/dev/block/by-name/xnusys of=/data/local/tmp/round8-{trial}.bin bs=4096 skip=653560 count=1025')
     logbook = OUT / f'trial-{trial}-logbook.bin'
     adb('pull', f'/data/local/tmp/round8-{trial}.bin', str(logbook), timeout=30)

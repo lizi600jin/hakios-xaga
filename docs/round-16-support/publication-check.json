@@ -1,0 +1,19 @@
+{
+  "trial": 691,
+  "mali_rows": 263,
+  "stores": 82,
+  "android_as0_order_verified": true,
+  "complete_sequence_matches_expected_group_permutation": true,
+  "raw_and_source_hashes_verified": true,
+  "log_complete": true,
+  "stock_restored_and_independently_checked": true,
+  "stock_final_check": {
+    "trial": 691,
+    "serial": "GAJZ4HIN99AQ69Y9",
+    "checked_at": "2026-11-13T17:36:48.298001+08:00",
+    "boot_completed": "1",
+    "boot_a_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+    "runner_outcome": "experiment_captured_and_stock_restored",
+    "log_complete": true
+  }
+}

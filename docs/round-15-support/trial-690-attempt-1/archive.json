@@ -1,0 +1,58 @@
+{
+  "attempt": 1,
+  "trial": 690,
+  "outcome": "inconclusive_missing_failed_start_tail",
+  "archived_at": "2026-11-13T17:07:47.755556+08:00",
+  "files": [
+    {
+      "name": "trial-690-build.json",
+      "bytes": 1523,
+      "sha256": "0713ad6e529a87b4448a9e2e9eda28e6abbdca6f41d0d4935b0cb187ac05be28"
+    },
+    {
+      "name": "trial-690-mali.txt",
+      "bytes": 12879,
+      "sha256": "22573c9290f920007b3b87ae7731edc17c883e648085f92251db27b4ee0ef3c0"
+    },
+    {
+      "name": "trial-690.json",
+      "bytes": 3522,
+      "sha256": "c899b54940fae3a5eed0794952d5ca53d9b6f2f16e720ebd0e88187f633c8887"
+    },
+    {
+      "name": "trial-690-pack.log",
+      "bytes": 135,
+      "sha256": "c74a4d18de54b2055ef47a1425c0b22ac1614eec031a1b6398341c5f5a05924a"
+    },
+    {
+      "name": "trial-690-logbook.bin",
+      "bytes": 4198400,
+      "sha256": "3780bbd3a7e93b0f16f88ca9bae8efa2e2fd2d369ada69af5d5e557cf5166fb5"
+    },
+    {
+      "name": "trial-690-loader-build.log",
+      "bytes": 2684,
+      "sha256": "b5f42707d2baea904ea827128b8f6d433c173be72226dcf6caa9aceddfd643f4"
+    },
+    {
+      "name": "trial-690-arg-delivery.json",
+      "bytes": 2464,
+      "sha256": "97d83401cd3e672fc8050a5dd3e57fa39a3fb3d70adeab39a73256070f4e69a7"
+    },
+    {
+      "name": "trial-690-run.log",
+      "bytes": 1038,
+      "sha256": "d1934aec691139478ccbb0fb35f76055c1dd5391b2533cdfd4c726b4a46e3846"
+    },
+    {
+      "name": "trial-690-loader-strings.txt",
+      "bytes": 9317,
+      "sha256": "2beff37dac5b0cf160e999c57f9626a96335c072378bca2fa4fad4ee3d01ac26"
+    },
+    {
+      "name": "pre-trial-690-logbook.bin",
+      "bytes": 4198400,
+      "sha256": "8483d099444977e82c9f20e60fe38c3f8a47f523b9850bb0d483c058c5cc7dbd"
+    }
+  ]
+}

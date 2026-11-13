@@ -1,0 +1,39 @@
+{
+  "trial": 690,
+  "verified_args": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=1 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=0 mali_mcuwin=0 mali_mcuseq=0 mali_doorbell=0 mali_pdcsettle=0 mali_statussem=1 mali_trial=690",
+  "arg_occurrences": 3,
+  "files": [
+    {
+      "path": "mtk/mt6895/drivers/gpu/hakios.mali610.c",
+      "bytes": 236165,
+      "sha256": "0d3c32cea9159e6991796e9586a3518c791b35bc1fc6e15249301d89222b85b6",
+      "md5": "553a6a1ee610108bea032093d274f494"
+    },
+    {
+      "path": "hakios-kernel",
+      "bytes": 15286008,
+      "sha256": "04e66412e2cdba1223c709cfec6773c517ae5dd3501d0bbc6fcd9b3b3b3d2852",
+      "md5": "ec7b5d33941cf16dff745d0573e728e5"
+    },
+    {
+      "path": "build-payload.bin",
+      "bytes": 19480472,
+      "sha256": "b29690cc8cbca4737dfb3f34a2c3144155ed2aa9ebf9cdd34614674c4ab4f1f7",
+      "md5": "ae19629f8946106c1b806c65f492c4b7"
+    },
+    {
+      "path": "mtk/loader/mtkloader.bin",
+      "bytes": 48160,
+      "sha256": "436e433ec27c10dbf88394d1a8d4249cb517cec36fd466a61fcaff705482b44b",
+      "md5": "2f4eddfa5260fe9cae241a9b0f6ce472"
+    },
+    {
+      "path": "xnu-flashed-slot_a.img",
+      "bytes": 22978560,
+      "sha256": "8ddbfad508bfc3735f25ab23d61432d5cdb807bf5f78dbdd899f4e5fcdcb2183",
+      "md5": "49ca1e2e25bce54b7fed488273335dcd"
+    }
+  ],
+  "attempt": 2,
+  "previous_attempt_archive": "/home/lizi/IOS/work-xaga/codex/out/round-15-support/trial-690-attempt-1"
+}

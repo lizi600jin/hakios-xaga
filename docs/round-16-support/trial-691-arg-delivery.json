@@ -1,0 +1,45 @@
+{
+  "trial": 691,
+  "full_token_occurrences": {
+    "cpus=4": 3,
+    "buttons=2": 3,
+    "touchscreen=3": 3,
+    "keylog=1": 3,
+    "key_scan=1": 3,
+    "fbwidth=1080": 3,
+    "fbheight=2460": 3,
+    "fb_disp=1": 3,
+    "mali=5": 3,
+    "mali_cold=1": 3,
+    "mali_preas0=0": 3,
+    "mali_low=0": 3,
+    "mali_trace=1": 3,
+    "mali_witness=1": 3,
+    "mali_ptvendor=1": 3,
+    "mali_scclk=1": 3,
+    "mali_scupd=1": 3,
+    "mali_sc26=0": 3,
+    "mali_cacheflush=0": 3,
+    "mali_resetonly=0": 3,
+    "mali_cohnone=0": 3,
+    "mali_hwissues=0": 3,
+    "mali_stackpwron=0": 3,
+    "mali_mcuwin=0": 3,
+    "mali_mcuseq=0": 3,
+    "mali_doorbell=0": 3,
+    "mali_pdcsettle=0": 3,
+    "mali_statussem=0": 3,
+    "mali_assorder=1": 3,
+    "mali_trial=691": 3
+  },
+  "baseline_681_differences_with_new_defaults_zero": {
+    "mali_assorder": {
+      "baseline": "0",
+      "trial": "1"
+    },
+    "mali_trial": {
+      "baseline": "681",
+      "trial": "691"
+    }
+  }
+}

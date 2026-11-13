@@ -1,0 +1,9 @@
+{
+  "trial": 691,
+  "serial": "GAJZ4HIN99AQ69Y9",
+  "checked_at": "2026-11-13T17:36:48.298001+08:00",
+  "boot_completed": "1",
+  "boot_a_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+  "runner_outcome": "experiment_captured_and_stock_restored",
+  "log_complete": true
+}

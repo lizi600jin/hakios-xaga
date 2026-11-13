@@ -1,0 +1,137 @@
+{
+  "a": 681,
+  "b": 691,
+  "normalization": "Only AS0 TRANSTAB LO/HI (0x2400/0x2404) values set to 0 for allocator PAs",
+  "a_stores": 82,
+  "b_stores": 82,
+  "differences": [
+    {
+      "operation": "insert",
+      "a_index": [
+        71,
+        71
+      ],
+      "b_index": [
+        71,
+        74
+      ],
+      "a": [],
+      "b": [
+        [
+          "0x2430",
+          "0x42000006"
+        ],
+        [
+          "0x2434",
+          "0x0"
+        ],
+        [
+          "0x2004",
+          "0xffffffff"
+        ]
+      ]
+    },
+    {
+      "operation": "delete",
+      "a_index": [
+        77,
+        80
+      ],
+      "b_index": [
+        80,
+        80
+      ],
+      "a": [
+        [
+          "0x2430",
+          "0x42000006"
+        ],
+        [
+          "0x2434",
+          "0x0"
+        ],
+        [
+          "0x2004",
+          "0xffffffff"
+        ]
+      ],
+      "b": []
+    }
+  ],
+  "unnormalized_differences": [
+    {
+      "operation": "replace",
+      "a_index": [
+        71,
+        72
+      ],
+      "b_index": [
+        71,
+        75
+      ],
+      "a": [
+        [
+          "0x2400",
+          "0xee5b0000"
+        ]
+      ],
+      "b": [
+        [
+          "0x2430",
+          "0x42000006"
+        ],
+        [
+          "0x2434",
+          "0x0"
+        ],
+        [
+          "0x2004",
+          "0xffffffff"
+        ],
+        [
+          "0x2400",
+          "0xa02fc000"
+        ]
+      ]
+    },
+    {
+      "operation": "delete",
+      "a_index": [
+        77,
+        80
+      ],
+      "b_index": [
+        80,
+        80
+      ],
+      "a": [
+        [
+          "0x2430",
+          "0x42000006"
+        ],
+        [
+          "0x2434",
+          "0x0"
+        ],
+        [
+          "0x2004",
+          "0xffffffff"
+        ]
+      ],
+      "b": []
+    }
+  ],
+  "expected_permutation": {
+    "baseline_CFG_group": [
+      76,
+      79
+    ],
+    "baseline_TAB_and_ATTR_groups": [
+      70,
+      76
+    ],
+    "AS0_PA_normalization_only": true,
+    "all_82_normalized_stores_match": true,
+    "unexpected_differences": []
+  }
+}

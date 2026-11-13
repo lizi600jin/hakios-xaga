@@ -1,0 +1,11 @@
+{
+  "trial": 690,
+  "accepted_attempt": 2,
+  "attempt_1_invalid_missing_tail": true,
+  "exact_same_retry_image_and_args": true,
+  "complete_status_rows": 3,
+  "mali_rows": 281,
+  "stores": 82,
+  "raw_and_source_hashes_verified": true,
+  "stock_restored_and_independently_checked": true
+}

@@ -1,0 +1,313 @@
+{
+  "result": {
+    "trial": 691,
+    "logbook_bytes": 4198400,
+    "logbook_sha256": "737251df4c6d372b4c83bcf39f89f3ef556f9d9b3e7a252bea62b9d36af98525",
+    "parsed_entire_window": true,
+    "trial_markers": [
+      691
+    ],
+    "mali_rows": 263,
+    "stores": 82,
+    "coverage": {
+      "time": 38.562926,
+      "line": "mali: coverage: every section fully mapped"
+    },
+    "l2": {
+      "time": 38.124276,
+      "line": "mali: L2 up: trans 0 active 0 ready 0x1"
+    },
+    "hwissues": null,
+    "protocol": {
+      "time": 38.124227,
+      "line": "mali: protocol trial 691: features 0x1 before 0 after 0 wrote 0"
+    },
+    "stack_before": null,
+    "as0_update": {
+      "time": 38.562994,
+      "line": "mali: AS0 step update    mmu irq 0x10000"
+    },
+    "as0_probe": {
+      "time": 38.562999,
+      "line": "mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 691"
+    },
+    "before_auto": {
+      "time": 38.563153,
+      "line": "mali: views before AUTO: gpu status 0/0 irq raw 0/0x600 mcu control 0 status 0"
+    },
+    "after_auto": {
+      "time": 48.028377,
+      "line": "mali: after the start request: gpu status 0x1, gpu irq status 0, job irq status 0, mmu irq 0, as0 status 0 faultstatus 0 faultaddress 0"
+    },
+    "version": {
+      "time": 48.03281,
+      "line": "mali: version word 0xff5aa5f0 (untouched; no firmware version published) trial 691"
+    },
+    "glb": {
+      "time": 48.033724,
+      "line": "mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0"
+    },
+    "witness_entry": {
+      "time": 38.563061,
+      "line": "mali: witness: code at 0x1000000, reset vector now 0x1000001"
+    },
+    "witness_reads": {
+      "time": 48.038544,
+      "line": "mali: witness: read1 0xff5aa5f0 0 read2 0xff5aa5f0 0 read3 0xff5aa5f0 0 trial 691"
+    },
+    "witness_verdict": {
+      "time": 48.039595,
+      "line": "mali: witness: verdict trial 691 -- no completed first store observed (not an instruction trace)"
+    },
+    "failed_tail_return": {
+      "time": 50.183552,
+      "line": "mali: shared probe trial 691: completed; returning before global_interface"
+    },
+    "as0_steps": [
+      {
+        "time": 38.562968,
+        "step": "idle",
+        "mmu_irq": "0x0",
+        "line": "mali: AS0 step idle      mmu irq 0"
+      },
+      {
+        "time": 38.562973,
+        "step": "transcfg",
+        "mmu_irq": "0x0",
+        "line": "mali: AS0 step transcfg  mmu irq 0"
+      },
+      {
+        "time": 38.562977,
+        "step": "transtab",
+        "mmu_irq": "0x0",
+        "line": "mali: AS0 step transtab  mmu irq 0"
+      },
+      {
+        "time": 38.562982,
+        "step": "memattr",
+        "mmu_irq": "0x0",
+        "line": "mali: AS0 step memattr   mmu irq 0"
+      },
+      {
+        "time": 38.562994,
+        "step": "update",
+        "mmu_irq": "0x10000",
+        "line": "mali: AS0 step update    mmu irq 0x10000"
+      }
+    ],
+    "assorder_observations": [
+      {
+        "time": 38.562984,
+        "line": "mali: as_enable trial 691: AS0 applied Android order (CFG->TAB->ATTR)"
+      }
+    ],
+    "as0_readback": {
+      "time": 38.562989,
+      "line": "mali: AS0 readback: transtab 0x1a02fc000 memattr 0x84c8d888d8f88 transcfg 0x42000006"
+    },
+    "android_as0_order_verified": true,
+    "debug_top": [
+      {
+        "time": 38.562957,
+        "line": "mali: bus idle before the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)"
+      },
+      {
+        "time": 38.563019,
+        "line": "mali: bus idle after the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)"
+      },
+      {
+        "time": 49.092313,
+        "line": "mali: bus idle after the failed start: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)"
+      },
+      {
+        "time": 50.154065,
+        "line": "mali: bus idle after the core was switched off: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)"
+      }
+    ],
+    "mcuseq_observations": [],
+    "trace_excludes_ENABLE_and_AUTO_requests": true,
+    "trace_excludes_doorbell_request": true,
+    "mcu_status_samples": [
+      {
+        "time": 38.563098,
+        "line": "mali: MCU status 0 before the start request",
+        "raw_status": 0
+      },
+      {
+        "time": 48.027579,
+        "line": "mali: MCU status 1 (raw state 1; boot unproven), job irq 0, gpu irq 0",
+        "raw_status": 1
+      }
+    ],
+    "status_semantics_observations": [],
+    "doorbell_observations": [],
+    "pdcsettle_observations": [],
+    "stack_observations": [],
+    "power_domain_observations": [
+      {
+        "time": 35.017938,
+        "line": "mali: mfg8  ST1T0 did NOT come up: 0xd (sta 0, sram pdn 0 ack 0)"
+      },
+      {
+        "time": 38.123883,
+        "line": "mali: pwr status 0x1fc / 0x1fc (scpsys 0xF34/0xF38), gpufreq 0x4 (0xF3C); want 0x3ffc"
+      }
+    ],
+    "spin_samples": [
+      {
+        "time": 38.746944,
+        "line": "mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+      },
+      {
+        "time": 38.758278,
+        "line": "mali: spin 1000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+      },
+      {
+        "time": 39.41594,
+        "line": "mali: spin 100000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+      },
+      {
+        "time": 42.652469,
+        "line": "mali: spin 500000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+      }
+    ],
+    "l2_precedes_as0_update": true
+  },
+  "write_diff": {
+    "a": 681,
+    "b": 691,
+    "normalization": "Only AS0 TRANSTAB LO/HI (0x2400/0x2404) values set to 0 for allocator PAs",
+    "a_stores": 82,
+    "b_stores": 82,
+    "differences": [
+      {
+        "operation": "insert",
+        "a_index": [
+          71,
+          71
+        ],
+        "b_index": [
+          71,
+          74
+        ],
+        "a": [],
+        "b": [
+          [
+            "0x2430",
+            "0x42000006"
+          ],
+          [
+            "0x2434",
+            "0x0"
+          ],
+          [
+            "0x2004",
+            "0xffffffff"
+          ]
+        ]
+      },
+      {
+        "operation": "delete",
+        "a_index": [
+          77,
+          80
+        ],
+        "b_index": [
+          80,
+          80
+        ],
+        "a": [
+          [
+            "0x2430",
+            "0x42000006"
+          ],
+          [
+            "0x2434",
+            "0x0"
+          ],
+          [
+            "0x2004",
+            "0xffffffff"
+          ]
+        ],
+        "b": []
+      }
+    ],
+    "unnormalized_differences": [
+      {
+        "operation": "replace",
+        "a_index": [
+          71,
+          72
+        ],
+        "b_index": [
+          71,
+          75
+        ],
+        "a": [
+          [
+            "0x2400",
+            "0xee5b0000"
+          ]
+        ],
+        "b": [
+          [
+            "0x2430",
+            "0x42000006"
+          ],
+          [
+            "0x2434",
+            "0x0"
+          ],
+          [
+            "0x2004",
+            "0xffffffff"
+          ],
+          [
+            "0x2400",
+            "0xa02fc000"
+          ]
+        ]
+      },
+      {
+        "operation": "delete",
+        "a_index": [
+          77,
+          80
+        ],
+        "b_index": [
+          80,
+          80
+        ],
+        "a": [
+          [
+            "0x2430",
+            "0x42000006"
+          ],
+          [
+            "0x2434",
+            "0x0"
+          ],
+          [
+            "0x2004",
+            "0xffffffff"
+          ]
+        ],
+        "b": []
+      }
+    ],
+    "expected_permutation": {
+      "baseline_CFG_group": [
+        76,
+        79
+      ],
+      "baseline_TAB_and_ATTR_groups": [
+        70,
+        76
+      ],
+      "AS0_PA_normalization_only": true,
+      "all_82_normalized_stores_match": true,
+      "unexpected_differences": []
+    }
+  }
+}

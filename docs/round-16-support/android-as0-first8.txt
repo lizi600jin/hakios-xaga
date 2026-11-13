@@ -1,0 +1,9 @@
+Last 2460 register accesses of 2460 total:
+     0: w: reg 0xffffffc015802430 val 42000006
+     1: w: reg 0xffffffc015802434 val 00000000
+     2: w: reg 0xffffffc015802400 val 44b49000
+     3: w: reg 0xffffffc015802404 val 00000001
+     4: w: reg 0xffffffc015802408 val 888d8f88
+     5: w: reg 0xffffffc01580240c val 00084c8d
+     6: r: reg 0xffffffc015802428 val 00000000
+     7: w: reg 0xffffffc015802418 val 00000001

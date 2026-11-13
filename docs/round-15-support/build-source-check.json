@@ -1,0 +1,9 @@
+{
+  "trial": 690,
+  "driver_sha256": "0d3c32cea9159e6991796e9586a3518c791b35bc1fc6e15249301d89222b85b6",
+  "kernel_sha256": "04e66412e2cdba1223c709cfec6773c517ae5dd3501d0bbc6fcd9b3b3b3d2852",
+  "kernel_contains_status_probe": true,
+  "source_sync_matches": true,
+  "probe_phase": "existing failed-start tail, after witness readback and first DISABLE",
+  "build_gate": "make kernel JOBS=8 completed with exit 0 via tools/make-kernel.sh; only pre-existing kext symbol-set errors accepted"
+}
