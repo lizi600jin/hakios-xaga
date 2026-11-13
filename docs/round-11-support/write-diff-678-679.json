@@ -1,0 +1,35 @@
+{
+  "a": 678,
+  "b": 679,
+  "normalization": "Only AS0 TRANSTAB LO/HI values set to 0 for different allocator PAs",
+  "a_stores": 82,
+  "b_stores": 85,
+  "differences": [
+    {
+      "operation": "insert",
+      "a_index": [
+        82,
+        82
+      ],
+      "b_index": [
+        82,
+        85
+      ],
+      "a": [],
+      "b": [
+        [
+          "0x24",
+          "0x20000"
+        ],
+        [
+          "0x30",
+          "0x3304"
+        ],
+        [
+          "0x24",
+          "0x20000"
+        ]
+      ]
+    }
+  ]
+}

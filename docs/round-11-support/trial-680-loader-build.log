@@ -1,0 +1,42 @@
+mtkloader: board /home/lizi/IOS/hakios-mtk/mtk/mt6895/loader/board.h
+In file included from /home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.c:36:
+/home/lizi/IOS/hakios-mtk/mtk/loader/ufs.h:762:11: warning: unused parameter 'which' [-Wunused-parameter]
+  762 |                            int which)
+      |                                ^
+/home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.c:5766:11: warning: unused variable 'v' [-Wunused-variable]
+ 5766 |         uint32_t v;
+      |                  ^
+/home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.c:7424:12: warning: unused variable 'xnu_chosen' [-Wunused-variable]
+ 7424 |         const int xnu_chosen = 1;
+      |                   ^~~~~~~~~~
+In file included from /home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.c:36:
+/home/lizi/IOS/hakios-mtk/mtk/loader/ufs.h:1544:13: warning: unused function 'ufs_mtk_host_reset' [-Wunused-function]
+ 1544 | static void ufs_mtk_host_reset(void)
+      |             ^~~~~~~~~~~~~~~~~~
+/home/lizi/IOS/hakios-mtk/mtk/loader/ufs.h:1608:13: warning: unused function 'ufs_mtk_host_enable' [-Wunused-function]
+ 1608 | static void ufs_mtk_host_enable(void)
+      |             ^~~~~~~~~~~~~~~~~~~
+/home/lizi/IOS/hakios-mtk/mtk/loader/ufs.h:2702:13: warning: unused function 'ufs_probe_variants' [-Wunused-function]
+ 2702 | static void ufs_probe_variants(void)
+      |             ^~~~~~~~~~~~~~~~~~
+/home/lizi/IOS/hakios-mtk/mtk/loader/ufs.h:2882:12: warning: unused function 'ufs_capacity' [-Wunused-function]
+ 2882 | static int ufs_capacity(uint8_t lun, uint32_t *lbs_out)
+      |            ^~~~~~~~~~~~
+/home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.c:6755:1: warning: unused function 'mali_leave_powered' [-Wunused-function]
+ 6755 | mali_leave_powered(void)
+      | ^~~~~~~~~~~~~~~~~~
+In file included from /home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.c:586:
+/home/lizi/IOS/hakios-mtk/mtk/loader/mtkconnsys.h:98:1: warning: unused function 'connsys_dt_report' [-Wunused-function]
+   98 | connsys_dt_report(uint64_t dtb)
+      | ^~~~~~~~~~~~~~~~~
+/home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.c:611:13: warning: unused function 'ufs_step' [-Wunused-function]
+  611 | static void ufs_step(uint32_t n)
+      |             ^~~~~~~~
+/home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.c:617:17: warning: unused function 'ufs_step_get' [-Wunused-function]
+  617 | static uint32_t ufs_step_get(void)
+      |                 ^~~~~~~~~~~~
+/home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.c:5764:1: warning: unused function 'mali_dump' [-Wunused-function]
+ 5764 | mali_dump(void)
+      | ^~~~~~~~~
+12 warnings generated.
+-rwxrwxr-x 1 lizi lizi 47776 Nov 13 14:39 /home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.bin

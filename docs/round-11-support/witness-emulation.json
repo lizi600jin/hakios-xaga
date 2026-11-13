@@ -1,0 +1,84 @@
+{
+  "driver_sha256": "33ba53d8d6c2774e4d5b36790e4a07c4e3849e72296678609e5ee2a10bae13bf",
+  "witness_sha256": "12f91ecda337f305eb22f00af7774ce331e5ddeffc0917dee60f966f96b5d814",
+  "witness_hex": "40f20000c0f2004040f21101016040f2220141604bf6ef61cdf6ad610160fee7",
+  "unicorn": "2.1.4",
+  "capstone": "5.0.7",
+  "cpu": "Cortex-M7, Thumb M-class",
+  "instruction_budget": 40,
+  "instructions": [
+    {
+      "pc": "0x1000000",
+      "bytes": "40f20000",
+      "instruction": "movw r0, #0"
+    },
+    {
+      "pc": "0x1000004",
+      "bytes": "c0f20040",
+      "instruction": "movt r0, #0x400"
+    },
+    {
+      "pc": "0x1000008",
+      "bytes": "40f21101",
+      "instruction": "movw r1, #0x11"
+    },
+    {
+      "pc": "0x100000c",
+      "bytes": "0160",
+      "instruction": "str r1, [r0]"
+    },
+    {
+      "pc": "0x100000e",
+      "bytes": "40f22201",
+      "instruction": "movw r1, #0x22"
+    },
+    {
+      "pc": "0x1000012",
+      "bytes": "4160",
+      "instruction": "str r1, [r0, #4]"
+    },
+    {
+      "pc": "0x1000014",
+      "bytes": "4bf6ef61",
+      "instruction": "movw r1, #0xbeef"
+    },
+    {
+      "pc": "0x1000018",
+      "bytes": "cdf6ad61",
+      "instruction": "movt r1, #0xdead"
+    },
+    {
+      "pc": "0x100001c",
+      "bytes": "0160",
+      "instruction": "str r1, [r0]"
+    },
+    {
+      "pc": "0x100001e",
+      "bytes": "fee7",
+      "instruction": "b #0x100001e"
+    }
+  ],
+  "stores": [
+    {
+      "address": "0x4000000",
+      "bytes": 4,
+      "value": "0x11"
+    },
+    {
+      "address": "0x4000004",
+      "bytes": 4,
+      "value": "0x22"
+    },
+    {
+      "address": "0x4000000",
+      "bytes": 4,
+      "value": "0xdeadbeef"
+    }
+  ],
+  "final_words": [
+    "0xdeadbeef",
+    "0x22"
+  ],
+  "outcome": "expected_stores_completed",
+  "limitation": "Encoding test only; does not model Mali MMU, cache, clocks, NVIC or reset."
+}

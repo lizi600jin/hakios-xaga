@@ -513,6 +513,8 @@ static unsigned gMaliEarlyAs0;                  /* set once the early path has a
  * Switching it off puts the old sequence back, so the two can be compared in one line.
  */
 static unsigned gMaliCold = 1;                  /* mali_cold=0 restores the reset-path writes */
+static unsigned gMaliCacheFlush;                /* mali_cacheflush=1 flushes GPU caches just before AUTO */
+static unsigned gMaliResetOnly;                 /* mali_resetonly=1 adds only the early soft reset */
 /*
  * mali_gpm=0 skips the initiator-to-memory protector step.
  *
@@ -641,11 +643,10 @@ struct mali_mem {
  * this phone that is above four gigabytes (XNU's own window starts at 0x100000000). Observed root
  * page table addresses across runs: 0x102c2c000, 0x1ed84c000, 0x1ffb3c000 -- 4.0, 7.7 and 8.5 GiB.
  *
- * The last of those is where the interesting reading came from. Driving AS0 one write at a time
- * showed all three configuration registers writing clean, and MMU_BUS_ERROR(0) appearing only when
- * AS_COMMAND=UPDATE made the walker read the root table. A walk that cannot read its own root
- * reports exactly that: a bus error with AS_FAULTSTATUS and AS_FAULTADDRESS both zero, because no
- * translation was ever attempted.
+ * The original reason for this window was an interpretation of IRQ bit16 after AS UPDATE as a
+ * root-fetch bus error. That interpretation was not established: parked/unmapped AS2..7 also
+ * latch their respective upper IRQ bits, without fault status/address. Keep this allocator as
+ * an experimental option, not as proof that addresses above 4GB are inaccessible to the GPU.
  *
  * So the driver can now place all of it below four gigabytes instead. 0x50000000 is inside the
  * 0x48402000-0x6fffffff System RAM block that Android's own iomem dump shows as free, above
@@ -803,22 +804,10 @@ mem_pa(const struct mali_mem *m, size_t offset)
  */
 #define PTE_TABLE       3ull
 #define PTE_PAGE        3ull
-/*
- * Access permission is AP[2:1] in bits 7:6, and the three valued encoding means the "read only"
- * form is not a single bit.
- *
- *	0b00  privileged read/write, unprivileged no access
- *	0b01  privileged read/write, unprivileged read only
- *	0b10  reserved -- the encoding this file used to write, silently
- *	0b11  read only for both
- *
- * kbase says the same thing as ENTRY_ACCESS_RO = 3 << 6 (mmu/mali_kbase_mmu_mode_aarch64.c:33-42),
- * next to ENTRY_ACCESS_RW = 0 and ENTRY_ACCESS_USER_ABLE = 2 << 6. The old PTE_RDONLY here was
- * 1 << 7, which sets AP[2] and clears AP[1]: that is 0b10, the reserved one. Nothing has noticed
- * because no fetch has happened yet; the reset vector 0x010018ed sits in section 1, which is the
- * read-only one, so it would have mattered at exactly the moment the MCU finally started.
- */
-#define PTE_UNPRIV      (1ull << 6)     /* AP = 0b01: privileged RW, unprivileged RO */
+/* Match kbase's GPU permissions (mali_kbase_mmu_mode_aarch64.c:39-40):
+ * ENTRY_ACCESS_RW = 1 << 6 and ENTRY_ACCESS_RO = 3 << 6. Do not infer an
+ * additional unprivileged-RO mode from the old PTE_UNPRIV name. */
+#define PTE_UNPRIV      (1ull << 6)     /* kbase ENTRY_ACCESS_RW */
 #define PTE_RDONLY      (3ull << 6)     /* AP = 0b11: read only everywhere */
 #define PTE_SH_OS       (2ull << 8)
 #define PTE_SH_IS       (3ull << 8)
@@ -941,19 +930,9 @@ pt_map(uint64_t *root, uint64_t va, uint64_t pa, uint64_t leaf)
 			if (child == NULL) {
 				return false;
 			}
-			/*
-			 * The access flag belongs on table descriptors too.
-			 *
-			 * kbase has one builder for both kinds of entry, and it sets bit 10 in
-			 * each of them: entry_set_pte() writes (phy & PAGE_MASK) |
-			 * ENTRY_ACCESS_BIT | ENTRY_IS_PTE and entry_set_ate() writes the same
-			 * bit alongside its own type. This driver had been putting the flag on
-			 * the leaf only, which leaves every table the walker reads without it.
-			 * A walk that stops at a descriptor with the flag clear latches an MMU
-			 * interrupt instead of a page fault, which is the reading that finally
-			 * turned up: mmu irq 0x10000, MMU_BUS_ERROR(0), with AS0 faultstatus
-			 * still zero.
-			 */
+			/* kbase entry_set_pte() includes ENTRY_ACCESS_BIT on table descriptors.
+			 * Match that encoding; the upper IRQ bit after UPDATE does not prove a
+			 * fault caused by this flag or a completed table walk. */
 			table[index] = child_pa | PTE_TABLE | PTE_AF;
 			if (!gPtUncached) {
 				FlushPoC_DcacheRegion((vm_offset_t)&table[index],
@@ -1184,16 +1163,15 @@ load_firmware(void)
 				 *
 				 * That is not a theoretical hole. The vendor image's reset vector is
 				 * 0x010018ed, which lies in section 1 at leaf 1 (0x1001000-0x1001fff);
-				 * leaf 1 was never mapped, so the very first instruction fetch after
-				 * MCU_CONTROL=AUTO had no translation, and the MCU -- which cannot take
-				 * a data abort for an instruction fetch it never issued -- reported
-				 * enabled and executed nothing. Section 1 was 25% mapped: leaves 0, 4,
-				 * 8 and 12 only.
+				 * leaf 1 was never mapped, so the firmware entry had no valid descriptor.
+				 * Section 1 was 25% mapped: leaves 0, 4, 8 and 12 only. This is a real
+				 * mapping defect; whether the MCU makes progress after the fix still
+				 * needs runtime evidence.
 				 *
 				 * The witness experiment survived this by luck: its stub sits at VA
 				 * 0x1000000 (leaf 0) and its two stores land at 0x04000000/0x04000004
-				 * (section 9 leaf 0), all of which were mapped. That is why a 32-byte
-				 * program and a quarter-megabyte firmware image disagreed.
+				 * (section 9 leaf 0), all of which were mapped. The old coverage hole
+				 * therefore does not explain the witness's unchanged markers.
 				 */
 				for (va = va_start; va < va_end; va += PT_LEAF_GRANULE) {
 					if (!pt_map(gMcuRoot, va,
@@ -1466,9 +1444,9 @@ read_witness(void)
 	}
 	/*
 	 * Both markers are read, and the first one is the verdict: the stub writes 0x11 there and
-	 * overwrites it with 0xdeadbeef at the end, so a 0xdeadbeef means the whole thing ran and a
-	 * 0x11 means it died between the two stores. Anything else means the first store never
-	 * happened at all, which is the answer every previous run assumed.
+	 * overwrites it with 0xdeadbeef at the end, so 0xdeadbeef confirms completion and 0x11
+	 * confirms at least the first store. An unchanged marker only says that no completed
+	 * store was observed; it cannot distinguish instruction fetch from a stalled store.
 	 */
 	/*
 	 * Read it three times, with barriers, before believing a zero.
@@ -1506,7 +1484,7 @@ read_witness(void)
 	} else if (first == MALI_WITNESS_FIRST) {
 		printf(" -- the first store landed and nothing after it\n");
 	} else {
-		printf(" -- the core never executed the first store\n");
+		printf(" -- no completed first store observed (not an instruction trace)\n");
 	}
 }
 
@@ -3745,6 +3723,32 @@ start_mcu(void)
 			printf("mali: the input block is outside the shared section\n");
 		}
 	}
+	/* Isolate cache maintenance from mali_cold=0's other changes. This branch is
+	 * inline in the observed glb-req -> AUTO path, after all CPU image edits.
+	 * The command and completion bit match gpu_flush_caches() and vendor CSF.
+	 * A timeout is an incomplete precondition, not an MCU execution result. */
+	if (gMaliCacheFlush) {
+		unsigned cache_spins;
+		uint32_t raw;
+
+		mwr(kIntClear, kGpuIrqCleanCaches);
+		mwr(kGpuCmd, kGpuCmdFlushCaches);
+		for (cache_spins = 0; cache_spins < 100000u; cache_spins++) {
+			if (mrd(kIntRaw) & kGpuIrqCleanCaches) {
+				break;
+			}
+			delay(1);
+		}
+		raw = mrd(kIntRaw);
+		printf("mali: cache trial %u: cmd %#x spins %u raw %#x completed %u\n",
+		    gMaliTrial, kGpuCmdFlushCaches, cache_spins, raw,
+		    (raw & kGpuIrqCleanCaches) ? 1u : 0u);
+		if (!(raw & kGpuIrqCleanCaches)) {
+			printf("mali: cache trial %u: stopping before AUTO\n", gMaliTrial);
+			return false;
+		}
+		mwr(kIntClear, kGpuIrqCleanCaches);
+	}
 	/* Freeze before AUTO, then print after the attempt so tracing cannot delay the request. */
 	gMaliWritesFrozen = true;
 	/*
@@ -4495,12 +4499,16 @@ mali_bring_up(void)
 	 * The reset path is still available behind mali_cold=0, which is the only way to compare two
 	 * runs that differ in exactly one decision.
 	 */
-	if (!gMaliCold) {
+	if (!gMaliCold || gMaliResetOnly) {
+		printf("mali: reset trial %u: early soft reset, resetonly %u cold %u\n",
+		    gMaliTrial, gMaliResetOnly, gMaliCold);
 		if (!gpu_soft_reset()) {
 			/* A block that will not reset is not a block to write firmware into. */
 			return;
 		}
-		gpu_hw_issues();
+		if (!gMaliCold) {
+			gpu_hw_issues();
+		}
 	}
 	/*
 	 * The seven unused address spaces go first, before the interrupt masks.
@@ -4984,6 +4992,8 @@ hakios_mali610_init(void)
 	PE_parse_boot_argn("mali_fwnc", &gMaliFwNc, sizeof(gMaliFwNc));
 	PE_parse_boot_argn("mali_fwx", &gMaliFwX, sizeof(gMaliFwX));
 	PE_parse_boot_argn("mali_ptvendor", &gMaliPtVendor, sizeof(gMaliPtVendor));
+	PE_parse_boot_argn("mali_cacheflush", &gMaliCacheFlush, sizeof(gMaliCacheFlush));
+	PE_parse_boot_argn("mali_resetonly", &gMaliResetOnly, sizeof(gMaliResetOnly));
 	PE_parse_boot_argn("mali_bpverify", &gMaliBpVerify, sizeof(gMaliBpVerify));
 	PE_parse_boot_argn("mali_scclk", &gMaliScClk, sizeof(gMaliScClk));
 	PE_parse_boot_argn("mali_scupd", &gMaliScUpd, sizeof(gMaliScUpd));

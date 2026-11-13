@@ -1,17 +1,17 @@
 # STATE-MINI · HakiOS xaga GPU
 
-更新：2026-11-13T14:28:15+08:00。旧版保存于 STATE-MINI-pre-round10-2026-11-13.md；旧版的“所有内存/时钟因素已排除”“零指令执行”不可继续当事实。
+更新：2026-11-13T14:47:06+08:00。旧版保存于 STATE-MINI-pre-round10-2026-11-13.md；旧版的“所有内存/时钟因素已排除”“零指令执行”不可继续当事实。
 
 ## 当前任务与授权
 
 主问题是修复 4K 映射后 CSF MCU 为什么仍未完成可见启动。
 用户已明确授权操作手机、刷机、全权接管；无需重复询问相同权限。
-最初要求的 round-7 离线审计已完成、提交并推送。后续真机结果见 GPU-ROUND-8/9/10。
+最初要求的 round-7 离线审计已完成、提交并推送。后续真机结果见 GPU-ROUND-8/9/10/11。
 不直接试 mali=6，继续 mali=5 上独立变量。
 
 ## 手机与恢复
 
-设备 GAJZ4HIN99AQ69Y9，678 完成后已恢复原厂 Android，boot_completed=1。
+设备 GAJZ4HIN99AQ69Y9，680 完成后已恢复原厂 Android，boot_completed=1。
 boot_a MD5=a63b2e35a7c2522cb24a6a10332b9bc8。
 备份 /home/lizi/IOS/hakios-mtk/backup/boot_a_stock_real.img，64MiB。
 用户照片卡点是 XNU 返回 Android；672 Android dmesg 有 Mali FW boot/reset timeout。
@@ -45,14 +45,21 @@ root adbd 返回后立即拉 logbook；不用等 boot_completed。
 - 678：仅mali_low=0，root=0x101dec000，walk/读回正确、全覆盖，三次仍0xff5aa5f0,0。高分配路径未解决。该开关同时改变位置和CPU缓存策略。
 - stock CPU kretprobe + 自有Mali缓冲分配捕获64个native PTE（16不同值），PBHA=0，低属性0x443。external回调0事件。只证明这些用户映射，不是firmware AS0全表；无依据盲加PBHA6。probe与instance已全部清理。
 
+- 679：独立 GPU cache 0x3304，1次poll后completion bit17到达；仍无store。
+- 680：独立early soft reset完成，未加coherency/key/ASN/cache；仍无store。
+- 离线按实际32字节做Cortex-M7模拟，得到11/22/deadbeef三次store；只验证编码，不代替真机。
+
 ## 当前源码/构建与下一步
 
 源码 /home/lizi/IOS/hakios-mtk/mtk/mt6895/drivers/gpu/hakios.mali610.c
 675–678 driver SHA256=59147207c289989b084407e2f10dbf37f1f265a0cd5439dee23b2119b93dea36
-kernel=a5c04ceb6fbda38ffbfb797eee0883d6a7d40d91f0e69df451a3824068a57056
-payload=2b16691d48b4da14dfc1f144b0340ca9d2d43b8956f0e4d6fbc783138626738a
-本地已打包镜像仍678，已运行并恢复；不要当作新trial再次刷。
-下一步：单独验证GPU cache失效、复位生命周期；不直接用mali_cold=0把多变量混在一起。
+675–678 kernel=a5c04ceb6fbda38ffbfb797eee0883d6a7d40d91f0e69df451a3824068a57056
+675–678 payload=2b16691d48b4da14dfc1f144b0340ca9d2d43b8956f0e4d6fbc783138626738a
+当前679–680 driver=33ba53d8d6c2774e4d5b36790e4a07c4e3849e72296678609e5ee2a10bae13bf
+kernel=1570b909195beabfd346c0adc5e41049d9f52817b2630a4eeb3d9f6c61d78557
+payload=605f00f400601cf5200363b6a982b8fd3b9bb004e59e49380f368a988582a229
+本地已打包镜像仍680，已运行并恢复；不要当作新trial再次刷。
+下一步：L2上电前的COHERENCY_PROTOCOL读回与单独配置。vendor先PM init（含reset/coherency），固件延迟到first open；warm trace不是全部初始化。不要把两个单独负结果当成完整组合也已正常。
 先保持witness判据；未通可见store前，trace buffer不是唯一解释。
 脚本/完整raw在out/round-8-support；run-once.py为已测恢复流程，prepare-loader.sh只构建loader/打包，analyze.py纯离线。
 构建须走make-kernel错误分类门，不许仅看旧文件存在。

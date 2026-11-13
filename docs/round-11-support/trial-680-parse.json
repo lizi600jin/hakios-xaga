@@ -1,0 +1,78 @@
+{
+  "trial": 680,
+  "logbook_bytes": 4198400,
+  "logbook_sha256": "46dadfa2825e2e21387900319dcd5209b08494f9c80733f3c26e5cf9e398cb9c",
+  "conservative_prefix_end": null,
+  "foreign_suffix_trial": null,
+  "mali_rows": 281,
+  "stores": 85,
+  "coverage": {
+    "time": 38.583805,
+    "line": "mali: coverage: every section fully mapped"
+  },
+  "l2": {
+    "time": 38.395166,
+    "line": "mali: L2 up: trans 0 active 0 ready 0x1"
+  },
+  "as0_update": {
+    "time": 38.599402,
+    "line": "mali: AS0 step update    mmu irq 0x10000"
+  },
+  "as0_probe": {
+    "time": 38.600869,
+    "line": "mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 680"
+  },
+  "version": {
+    "time": 47.953273,
+    "line": "mali: version word 0xff5aa5f0 (untouched; no firmware version published) trial 680"
+  },
+  "glb": {
+    "time": 47.955308,
+    "line": "mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0"
+  },
+  "csg0": {
+    "time": 47.957334,
+    "line": "mali: round7 CSG0: in 0x4004000 out 0x400c000 streams 8 stride 0xc"
+  },
+  "boot_failed": {
+    "time": 47.959377,
+    "line": "mali: the global interface never raised; the MCU did not boot"
+  },
+  "witness_entry": {
+    "time": 38.611356,
+    "line": "mali: witness: code at 0x1000000, reset vector now 0x1000001"
+  },
+  "witness_reads": {
+    "time": 47.965704,
+    "line": "mali: witness: read1 0xff5aa5f0 0 read2 0xff5aa5f0 0 read3 0xff5aa5f0 0 trial 680"
+  },
+  "witness_verdict": {
+    "time": 47.967831,
+    "line": "mali: witness: verdict trial 680 -- no completed first store observed (not an instruction trace)"
+  },
+  "failed_tail_return": {
+    "time": 50.211217,
+    "line": "mali: shared probe trial 680: completed; returning before global_interface"
+  },
+  "vendor_leaves": [
+    "mali: vendor leaf sec0 attrs 0x400000000004c3 (SH=0 NG=0)",
+    "mali: vendor leaf sec1 attrs 0x4c3 (SH=0 NG=0)",
+    "mali: vendor leaf sec2 attrs 0x40000000000443 (SH=0 NG=0)",
+    "mali: vendor leaf sec3 attrs 0x40000000000443 (SH=0 NG=0)",
+    "mali: vendor leaf sec4 attrs 0x40000000000443 (SH=0 NG=0)",
+    "mali: vendor leaf sec5 attrs 0x400000000004c3 (SH=0 NG=0)",
+    "mali: vendor leaf sec6 attrs 0x40000000000443 (SH=0 NG=0)",
+    "mali: vendor leaf sec7 attrs 0x40000000000443 (SH=0 NG=0)",
+    "mali: vendor leaf sec8 attrs 0x40000000000443 (SH=0 NG=0)",
+    "mali: vendor leaf sec9 attrs 0x40000000000457 (SH=0 NG=0)"
+  ],
+  "parked_as": [
+    "mali: AS2 parked, mmu irq 0x40000",
+    "mali: AS3 parked, mmu irq 0x80000",
+    "mali: AS4 parked, mmu irq 0x100000",
+    "mali: AS5 parked, mmu irq 0x200000",
+    "mali: AS6 parked, mmu irq 0x400000",
+    "mali: AS7 parked, mmu irq 0x800000"
+  ],
+  "l2_precedes_as0_update": true
+}
