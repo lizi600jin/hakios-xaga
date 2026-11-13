@@ -425,3 +425,22 @@ HiFi 侧的 `work/XAGA_JACK_FOR_IOS.md`（2026-11-14 00:58 写入）§4 声称�
 IOKit 符号的导出清单问题，属项目既有状态）。
 
 不是"整个构建成功"，也不是"构建因耳机失败"。
+
+### 一次被驳回的架构改动（记录）
+
+6.1sol 为了给耳机驱动加 `drivers/map` 条目，改了四个构建工具：
+`xnu/apply.sh`、`xnu/sync-drivers.sh`、`xnu/export.sh`、`tools/drivers-check.py`。
+
+**已回滚，理由有实证**：
+
+1. 项目里其他 mt6895 驱动（`mt6895_keys.c`、`mali610.c`、`nvt.c`、`mt6895_usb.c`）
+   都**不在** `drivers/map` 里，却能正常构建 —— 它们由 `hakios-config.py external-files` 管理。
+2. 本项目在 01:47 实测过：**map 里没有条目时**，`sync-drivers.sh` 照样输出
+   `mtk/mt6895/drivers/audio/hakios.mt6895_headset.c -> bsd/dev/hakios.mt6895_headset.c`，
+   且构建照样产出 `CC hakios.mt6895_headset.o`。
+3. 那四个改动会影响**所有** SoC 驱动的构建路径，属于项目架构，不是耳机任务的范围。
+
+回滚后复验：`sync-drivers.sh` 报 `drivers in step`，树里的驱动与仓库 `cmp` 一致，
+`conf/files` 登记在位，`drivers-check` 只剩一条**回滚前就存在**的 `drivers/usb` 问题。
+
+**结论**：耳机驱动走既有的 external-files 路径即可，不需要改构建工具。
