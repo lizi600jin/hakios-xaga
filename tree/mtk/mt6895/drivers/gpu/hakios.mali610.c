@@ -486,6 +486,7 @@ static unsigned gMaliAs0First;                  /* mali_as0first=1 moves the pre
 static unsigned gMaliDomainWait;                /* mali_domainwait=1 polls SPM at 10us/1s like scpsys */
 static unsigned gMaliFwNc;                      /* mali_fwnc=1 maps every firmware section non-cacheable */
 static unsigned gMaliFwX;                       /* mali_fwx=1 makes every firmware section executable */
+static unsigned gMaliPtVendor;                  /* mali_ptvendor=1 matches noncoherent kbase SH/NG bits */
 static unsigned gMaliBpVerify;                  /* mali_bpverify=1 releases bus protection and confirms STA */
 static unsigned gMaliScClk;                     /* mali_scclk=1 un-gates CLK_CFG_5 bit7 (mfgsc_ref_ck) */
 static unsigned gMaliMcuWin;                    /* mali_mcuwin=1 prints the whole 0x3000..0x3100 block */
@@ -1136,9 +1137,13 @@ load_firmware(void)
 				 * table at VA 0 was unmapped in that sense, so the reset
 				 * fetch never happened and no instruction ever ran.
 				 */
-				leaf = PTE_PAGE | PTE_AF | PTE_NG | PTE_UNPRIV |
-				    (cached ? PTE_SH_IS : PTE_SH_OS) |
+				leaf = PTE_PAGE | PTE_AF | PTE_UNPRIV |
 				    ((uint64_t)index << 2);
+				/* kbase convert_mem_flags/get_mmu_flags omit SH and NG on
+				 * noncoherent firmware mappings; keep the baseline selectable. */
+				if (!gMaliPtVendor) {
+					leaf |= PTE_NG | (cached ? PTE_SH_IS : PTE_SH_OS);
+				}
 				if (!(flags & SEC_WR)) {
 					leaf |= PTE_RDONLY;
 				}
@@ -1159,6 +1164,10 @@ load_firmware(void)
 				}
 				if (!(flags & SEC_WR) && gMaliFwX) {
 					leaf &= ~PTE_RDONLY;
+				}
+				if (gMaliPtVendor) {
+					printf("mali: vendor leaf sec%u attrs %#llx (SH=0 NG=0)\n",
+					    gSectCount, (unsigned long long)leaf);
 				}
 				/*
 				 * Step by the leaf granule, not by PAGE_SIZE.
@@ -4959,6 +4968,7 @@ hakios_mali610_init(void)
 	PE_parse_boot_argn("mali_domainwait", &gMaliDomainWait, sizeof(gMaliDomainWait));
 	PE_parse_boot_argn("mali_fwnc", &gMaliFwNc, sizeof(gMaliFwNc));
 	PE_parse_boot_argn("mali_fwx", &gMaliFwX, sizeof(gMaliFwX));
+	PE_parse_boot_argn("mali_ptvendor", &gMaliPtVendor, sizeof(gMaliPtVendor));
 	PE_parse_boot_argn("mali_bpverify", &gMaliBpVerify, sizeof(gMaliBpVerify));
 	PE_parse_boot_argn("mali_scclk", &gMaliScClk, sizeof(gMaliScClk));
 	PE_parse_boot_argn("mali_mcuwin", &gMaliMcuWin, sizeof(gMaliMcuWin));

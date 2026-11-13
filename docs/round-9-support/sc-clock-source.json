@@ -1,0 +1,133 @@
+[
+  {
+    "path": "/home/lizi/IOS/work-xaga/k-xaga-16.2/drivers/clk/mediatek/clk-mt6895.c",
+    "sha256": "aab7583ba5563911bfc3ba0c9a17ae1b07dee4160931a3f91ace6daa4d2aa596"
+  },
+  {
+    "source": "clk-mt6895.c",
+    "start": 32,
+    "end": 35,
+    "lines": [
+      "#define CLK_CFG_UPDATE\t\t\t\t0x0004",
+      "#define CLK_CFG_UPDATE1\t\t\t\t0x0008",
+      "#define CLK_CFG_UPDATE2\t\t\t\t0x000c",
+      "#define VLP_CLK_CFG_UPDATE\t\t\t0x0004"
+    ]
+  },
+  {
+    "source": "clk-mt6895.c",
+    "start": 140,
+    "end": 143,
+    "lines": [
+      "#define TOP_MUX_DSP7_SHIFT\t\t\t17",
+      "#define TOP_MUX_MFG_REF_SHIFT\t\t\t19",
+      "#define TOP_MUX_MFGSC_REF_SHIFT\t\t\t20",
+      "#define TOP_MUX_CAMTG_SHIFT\t\t\t21"
+    ]
+  },
+  {
+    "source": "clk-mt6895.c",
+    "start": 1237,
+    "end": 1248,
+    "lines": [
+      "static const char * const mfg_ref_parents[] = {",
+      "\t\"tck_26m_mx9_ck\",",
+      "\t\"univpll_d6\",",
+      "\t\"mainpll_d5_d2\"",
+      "};",
+      "",
+      "static const char * const mfgsc_ref_parents[] = {",
+      "\t\"tck_26m_mx9_ck\",",
+      "\t\"univpll_d6\",",
+      "\t\"mainpll_d5_d2\"",
+      "};",
+      ""
+    ]
+  },
+  {
+    "source": "clk-mt6895.c",
+    "start": 2273,
+    "end": 2283,
+    "lines": [
+      "\tMUX_GATE_CLR_SET_UPD(CLK_TOP_MFG_REF_SEL/* dts */, \"mfg_ref_sel\",",
+      "\t\tmfg_ref_parents/* parent */, CLK_CFG_4, CLK_CFG_4_SET,",
+      "\t\tCLK_CFG_4_CLR/* set parent */, 24/* lsb */, 2/* width */,",
+      "\t\t31/* pdn */, CLK_CFG_UPDATE/* upd ofs */,",
+      "\t\tTOP_MUX_MFG_REF_SHIFT/* upd shift */),",
+      "\t/* CLK_CFG_5 */",
+      "\tMUX_GATE_CLR_SET_UPD(CLK_TOP_MFGSC_REF_SEL/* dts */, \"mfgsc_ref_sel\",",
+      "\t\tmfgsc_ref_parents/* parent */, CLK_CFG_5, CLK_CFG_5_SET,",
+      "\t\tCLK_CFG_5_CLR/* set parent */, 0/* lsb */, 2/* width */,",
+      "\t\t7/* pdn */, CLK_CFG_UPDATE/* upd ofs */,",
+      "\t\tTOP_MUX_MFGSC_REF_SHIFT/* upd shift */),"
+    ]
+  },
+  {
+    "path": "/home/lizi/IOS/work-xaga/k-xaga-16.2/drivers/clk/mediatek/clk-mux.c",
+    "sha256": "6a665e022ab58c19ec3d8244be2e9871a648a57dbe33da02163b6a34c1a5259c"
+  },
+  {
+    "source": "clk-mux.c",
+    "start": 44,
+    "end": 70,
+    "lines": [
+      "static int mtk_clk_mux_enable_setclr(struct clk_hw *hw)",
+      "{",
+      "\tstruct mtk_clk_mux *mux = to_mtk_clk_mux(hw);",
+      "\tunsigned long flags = 0;",
+      "",
+      "\tif (mux->lock)",
+      "\t\tspin_lock_irqsave(mux->lock, flags);",
+      "\telse",
+      "\t\t__acquire(mux->lock);",
+      "",
+      "\tregmap_write(mux->regmap, mux->data->clr_ofs,",
+      "\t\tBIT(mux->data->gate_shift));",
+      "",
+      "\t/*",
+      "\t * If mux setting restore after vcore resume, it will",
+      "\t * not be effective yet. Set the update bit to ensure the mux gets",
+      "\t * updated.",
+      "\t */",
+      "\tregmap_write(mux->regmap, mux->data->upd_ofs,",
+      "\t\tBIT(mux->data->upd_shift));",
+      "",
+      "\tif (mux->lock)",
+      "\t\tspin_unlock_irqrestore(mux->lock, flags);",
+      "\telse",
+      "\t\t__release(mux->lock);",
+      "",
+      "\treturn 0;"
+    ]
+  },
+  {
+    "source": "clk-mux.c",
+    "start": 270,
+    "end": 292,
+    "lines": [
+      "\tunsigned long flags = 0;",
+      "",
+      "\tif (mux->lock)",
+      "\t\tspin_lock_irqsave(mux->lock, flags);",
+      "\telse",
+      "\t\t__acquire(mux->lock);",
+      "",
+      "\tregmap_read(mux->regmap, mux->data->mux_ofs, &orig);",
+      "\tval = (orig & ~(mask << mux->data->mux_shift))",
+      "\t\t\t| (index << mux->data->mux_shift);",
+      "",
+      "\tif (val != orig) {",
+      "\t\tregmap_write(mux->regmap, mux->data->clr_ofs,",
+      "\t\t\t\tmask << mux->data->mux_shift);",
+      "\t\tregmap_write(mux->regmap, mux->data->set_ofs,",
+      "\t\t\t\tindex << mux->data->mux_shift);",
+      "",
+      "\t\tif (mux->data->upd_shift >= 0)",
+      "\t\t\tregmap_write(mux->regmap, mux->data->upd_ofs,",
+      "\t\t\t\t\tBIT(mux->data->upd_shift));",
+      "\t}",
+      "",
+      "\tif (mux->lock)"
+    ]
+  }
+]

@@ -1,0 +1,32 @@
+trial 674: prepared hashes verified; entering fastboot
+< waiting for GAJZ4HIN99AQ69Y9>
+Sending 'boot_a' (22436 KB)                        OKAY [  1.133s]
+Writing 'boot_a'                                   OKAY [  0.067s]
+Finished. Total time: 1.315s
+
+Rebooting                                          OKAY [  0.010s]
+Finished. Total time: 0.060s
+
+trial 674: waiting for adbd; log pull does not require boot_completed
+37.601815 mali: coverage: every section fully mapped
+37.601870 mali: AS0 step update    mmu irq 0x10000
+37.601874 mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0
+37.601910 mali: witness: vector was sp 0x2040000 reset 0x10018ed
+37.601912 mali: witness: code at 0x1000000, reset vector now 0x1000001
+37.601915 mali: sentinel 0xff5aa5f0 written to the version word
+46.803163 mali: version word 0xff5aa5f0 (untouched; no firmware version published)
+46.804108 mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0
+46.805062 mali: round7 CSG0: in 0x4004000 out 0x400c000 streams 8 stride 0xc
+46.806015 mali: the global interface never raised; the MCU did not boot
+46.809074 mali: witness: read1 0xff5aa5f0 0 read2 0xff5aa5f0 0 read3 0xff5aa5f0 0
+46.810134 mali: witness: verdict -- the core never executed the first store
+45.417722 mali: version word 0xff5aa5f0 (untouched; no firmware version published)
+45.417729 mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0
+45.417736 mali: round7 CSG0: in 0x4004000 out 0x400c000 streams 8 stride 0xc
+45.417742 mali: the global interface never raised; the MCU did not boot
+45.417768 mali: witness: read1 0xff5aa5f0 0 read2 0xff5aa5f0 0 read3 0xff5aa5f0 0
+45.417778 mali: witness: verdict -- the core never executed the first store
+47.609592 mali: shared probe trial 673: failed-start tail, level 5; global_interface skipped
+47.624215 mali: shared probe trial 673: completed; returning before global_interface
+trial 674: captured current log; boot_completed=False; restoring stock boot_a
+trial 674: stock Android boot_completed=1, stock MD5 verified

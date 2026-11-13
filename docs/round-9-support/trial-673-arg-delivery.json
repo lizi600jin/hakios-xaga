@@ -1,0 +1,18 @@
+{
+  "trial": 673,
+  "counts": {
+    "mali=5": 3,
+    "mali_cold=1": 3,
+    "mali_preas0=0": 3,
+    "mali_low=1": 3,
+    "mali_trace=1": 3,
+    "mali_witness=1": 3,
+    "mali_fwnc=1": 3,
+    "mali_trial=673": 3
+  },
+  "matching_lines": [
+    "boot-args: rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=1 mali_trace=1 mali_witness=1 mali_fwnc=1 mali_trial=673 loader_return_after=150",
+    "boot args: rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=1 mali_trace=1 mali_witness=1 mali_fwnc=1 mali_trial=673 loader_return_after=150",
+    "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=1 mali_trace=1 mali_witness=1 mali_fwnc=1 mali_trial=673 loader_return_after=150"
+  ]
+}
