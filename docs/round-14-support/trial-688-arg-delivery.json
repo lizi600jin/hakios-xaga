@@ -1,0 +1,55 @@
+{
+  "trial": 688,
+  "baseline": 681,
+  "baseline_default_options": {
+    "mali_hwissues": "0",
+    "mali_stackpwron": "0",
+    "mali_mcuwin": "0",
+    "mali_mcuseq": "0",
+    "mali_doorbell": "0"
+  },
+  "changes": {
+    "mali_trial": {
+      "baseline": "681",
+      "trial": "688"
+    },
+    "mali_doorbell": {
+      "baseline": "0",
+      "trial": "1"
+    }
+  },
+  "counts": {
+    "cpus=4": 3,
+    "buttons=2": 3,
+    "touchscreen=3": 3,
+    "keylog=1": 3,
+    "key_scan=1": 3,
+    "fbwidth=1080": 3,
+    "fbheight=2460": 3,
+    "fb_disp=1": 3,
+    "mali=5": 3,
+    "mali_cold=1": 3,
+    "mali_preas0=0": 3,
+    "mali_low=0": 3,
+    "mali_trace=1": 3,
+    "mali_witness=1": 3,
+    "mali_ptvendor=1": 3,
+    "mali_scclk=1": 3,
+    "mali_scupd=1": 3,
+    "mali_sc26=0": 3,
+    "mali_cacheflush=0": 3,
+    "mali_resetonly=0": 3,
+    "mali_cohnone=0": 3,
+    "mali_hwissues=0": 3,
+    "mali_stackpwron=0": 3,
+    "mali_mcuwin=0": 3,
+    "mali_mcuseq=0": 3,
+    "mali_doorbell=1": 3,
+    "mali_trial=688": 3
+  },
+  "matching_lines": [
+    "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=1 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=0 mali_mcuwin=0 mali_mcuseq=0 mali_doorbell=1 mali_trial=688 loader_return_after=150",
+    "boot-args: rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=1 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=0 mali_mcuwin=0 mali_mcuseq=0 mali_doorbell=1 mali_trial=688 loader_return_after=150",
+    "boot args: rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=1 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=0 mali_mcuwin=0 mali_mcuseq=0 mali_doorbell=1 mali_trial=688 loader_return_after=150"
+  ]
+}

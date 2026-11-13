@@ -1,0 +1,55 @@
+[
+  {
+    "path": "/home/lizi/IOS/work-xaga/k-xaga-16.2/drivers/gpu/mediatek/mali-valhall/gpu/arm/midgard/include/uapi/gpu/arm/midgard/gpu/backend/mali_kbase_gpu_regmap_csf.h",
+    "sha256": "4249c887c035e09ef688d6e49c233101ea3caab42a2e75ff6d42db62dc5eddcb",
+    "start": 107,
+    "end": 126,
+    "lines": [
+      "",
+      "/* CSF_CONFIG register */",
+      "#define CSF_CONFIG_FORCE_COHERENCY_FEATURES_SHIFT 2",
+      "",
+      "/* GPU control registers */",
+      "#define CORE_FEATURES           0x008   /* () Shader Core Features */",
+      "#define MCU_CONTROL             0x700",
+      "#define MCU_STATUS              0x704",
+      "",
+      "#define MCU_CNTRL_ENABLE        (1 << 0)",
+      "#define MCU_CNTRL_AUTO          (1 << 1)",
+      "#define MCU_CNTRL_DISABLE       (0)",
+      "",
+      "#define MCU_STATUS_HALTED        (1 << 1)",
+      "",
+      "#define PRFCNT_BASE_LO   0x060  /* (RW) Performance counter memory",
+      "\t\t\t\t * region base address, low word",
+      "\t\t\t\t */",
+      "#define PRFCNT_BASE_HI   0x064  /* (RW) Performance counter memory",
+      "\t\t\t\t * region base address, high word"
+    ]
+  },
+  {
+    "path": "/tmp/src-ref/panthor_panthor_fw_regs.h",
+    "sha256": "f9b36ff410d3463906d8be1420aa4869731ab1602ddeefda22dad4c97e1cb603",
+    "start": 8,
+    "end": 24,
+    "lines": [
+      "",
+      "#define MCU_CONTROL\t\t\t\t\t0x0",
+      "#define   MCU_CONTROL_ENABLE\t\t\t\t1",
+      "#define   MCU_CONTROL_AUTO\t\t\t\t2",
+      "#define   MCU_CONTROL_DISABLE\t\t\t\t0",
+      "",
+      "#define MCU_STATUS\t\t\t\t\t0x4",
+      "#define   MCU_STATUS_DISABLED\t\t\t\t0",
+      "#define   MCU_STATUS_ENABLED\t\t\t\t1",
+      "#define   MCU_STATUS_HALT\t\t\t\t2",
+      "#define   MCU_STATUS_FATAL\t\t\t\t3",
+      "",
+      "#define JOB_INT_BASE\t\t\t\t\t0x1000",
+      "#define   JOB_INT_GLOBAL_IF\t\t\t\tBIT(31)",
+      "#define   JOB_INT_CSG_IF(x)\t\t\t\tBIT(x)",
+      "",
+      "#define CSF_GPU_LATEST_FLUSH_ID\t\t\t\t0x10000"
+    ]
+  }
+]

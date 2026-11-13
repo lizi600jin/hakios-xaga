@@ -1,0 +1,27 @@
+trial 688: previous log backed up; reserved logbook slot zeroed and verified
+trial 688: prepared hashes verified; entering fastboot
+< waiting for GAJZ4HIN99AQ69Y9>
+Sending 'boot_a' (22440 KB)                        OKAY [  1.083s]
+Writing 'boot_a'                                   OKAY [  0.048s]
+Finished. Total time: 1.224s
+
+Rebooting                                          OKAY [  0.010s]
+Finished. Total time: 0.066s
+
+trial 688: waiting for adbd; log pull does not require boot_completed
+38.663529 mali: coverage: every section fully mapped
+38.721164 mali: AS0 step update    mmu irq 0x10000
+38.725808 mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 688
+38.741766 mali: witness: vector was sp 0x2040000 reset 0x10018ed
+38.743460 mali: witness: code at 0x1000000, reset vector now 0x1000001
+38.745135 mali: sentinel 0xff5aa5f0 written to the version word
+48.290329 mali: version word 0xff5aa5f0 (untouched; no firmware version published) trial 688
+48.292336 mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0
+48.294333 mali: round7 CSG0: in 0x4004000 out 0x400c000 streams 8 stride 0xc
+48.296351 mali: the global interface never raised; the MCU did not boot
+48.302351 mali: witness: read1 0xff5aa5f0 0 read2 0xff5aa5f0 0 read3 0xff5aa5f0 0process lsd[20] denied attempt to escape CPU monitor (missing required entitlement).
+48.306418 mali: witness: verdict trial 688 -- no completed first store observed (not an instruction trace)
+50.508787 mali: shared probe trial 688: failed-start tail, level 5; global_interface skipped
+50.523948 mali: shared probe trial 688: completed; returning before global_interface
+trial 688: captured current log; boot_completed=False; restoring stock boot_a
+trial 688: stock Android boot_completed=1, stock MD5 verified

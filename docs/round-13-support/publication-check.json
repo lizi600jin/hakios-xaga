@@ -1,0 +1,28 @@
+{
+  "trials": [
+    {
+      "trial": 685,
+      "stores": 83,
+      "stock_restored": true,
+      "source_snapshot_matches": true,
+      "raw_hash_matches": true
+    },
+    {
+      "trial": 686,
+      "stores": 82,
+      "stock_restored": true,
+      "source_snapshot_matches": true,
+      "raw_hash_matches": true
+    },
+    {
+      "trial": 687,
+      "stores": 82,
+      "stock_restored": true,
+      "source_snapshot_matches": true,
+      "raw_hash_matches": true
+    }
+  ],
+  "all_source_snapshots_preserved": true,
+  "complete_readonly_observations": true,
+  "report_matches_local": true
+}

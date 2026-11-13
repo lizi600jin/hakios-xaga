@@ -1,0 +1,14 @@
+{
+  "trial": 686,
+  "driver_sha256": "953ad54126832f9149afa10317567de2c7bacceb1bb8c458b00d0bafe1ae4219",
+  "synced_driver_sha256": "953ad54126832f9149afa10317567de2c7bacceb1bb8c458b00d0bafe1ae4219",
+  "kernel_sha256": "8b757ad908ac94fb945629d21d014b72cdd8beaf023aed563bcc14b94011590e",
+  "kernel_contains_observation_strings": [
+    "mali: spm raw trial %u",
+    "mali: spm F3C bits trial %u",
+    "mali: pdc readback: trial %u",
+    "mali: pdc raw trial %u",
+    "after AUTO (before DISABLE)"
+  ],
+  "build_gate": "make kernel JOBS=8 completed with exit 0 via tools/make-kernel.sh; only pre-existing kext symbol-set errors accepted"
+}

@@ -1,0 +1,132 @@
+{
+  "trial": 688,
+  "logbook_bytes": 4198400,
+  "logbook_sha256": "25d43b8971703756426966039020b7f272aec248d6d765f160b2eb2ec4968a76",
+  "parsed_entire_window": true,
+  "trial_markers": [
+    688
+  ],
+  "mali_rows": 279,
+  "stores": 82,
+  "coverage": {
+    "time": 38.663529,
+    "line": "mali: coverage: every section fully mapped"
+  },
+  "l2": {
+    "time": 38.350017,
+    "line": "mali: L2 up: trans 0 active 0 ready 0x1"
+  },
+  "hwissues": null,
+  "protocol": {
+    "time": 38.346044,
+    "line": "mali: protocol trial 688: features 0x1 before 0 after 0 wrote 0"
+  },
+  "stack_before": null,
+  "as0_update": {
+    "time": 38.721164,
+    "line": "mali: AS0 step update    mmu irq 0x10000"
+  },
+  "as0_probe": {
+    "time": 38.725808,
+    "line": "mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 688"
+  },
+  "before_auto": {
+    "time": 38.760523,
+    "line": "mali: views before AUTO: gpu status 0/0 irq raw 0/0x600 mcu control 0 status 0"
+  },
+  "after_auto": {
+    "time": 48.282482,
+    "line": "mali: after the start request: gpu status 0x1, gpu irq status 0, job irq status 0, mmu irq 0, as0 status 0 faultstatus 0 faultaddress 0"
+  },
+  "version": {
+    "time": 48.290329,
+    "line": "mali: version word 0xff5aa5f0 (untouched; no firmware version published) trial 688"
+  },
+  "glb": {
+    "time": 48.292336,
+    "line": "mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0"
+  },
+  "witness_entry": {
+    "time": 38.74346,
+    "line": "mali: witness: code at 0x1000000, reset vector now 0x1000001"
+  },
+  "witness_reads": {
+    "time": 48.302351,
+    "line": "mali: witness: read1 0xff5aa5f0 0 read2 0xff5aa5f0 0 read3 0xff5aa5f0 0process lsd[20] denied attempt to escape CPU monitor (missing required entitlement)."
+  },
+  "witness_verdict": {
+    "time": 48.306418,
+    "line": "mali: witness: verdict trial 688 -- no completed first store observed (not an instruction trace)"
+  },
+  "failed_tail_return": {
+    "time": 50.523948,
+    "line": "mali: shared probe trial 688: completed; returning before global_interface"
+  },
+  "debug_top": [
+    {
+      "time": 38.681008,
+      "line": "mali: bus idle before the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)"
+    },
+    {
+      "time": 38.736805,
+      "line": "mali: bus idle after the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)"
+    },
+    {
+      "time": 49.401219,
+      "line": "mali: bus idle after the failed start: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)"
+    },
+    {
+      "time": 50.491328,
+      "line": "mali: bus idle after the core was switched off: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)"
+    }
+  ],
+  "mcuseq_observations": [],
+  "trace_excludes_ENABLE_and_AUTO_requests": true,
+  "trace_excludes_doorbell_request": true,
+  "doorbell_observations": [
+    {
+      "time": 38.770608,
+      "line": "mali: doorbell trial 688: wrote 1 to 0x80000, job_irq before 0 after 0, mcu_st 0x1"
+    }
+  ],
+  "doorbell_result": {
+    "time": 38.770608,
+    "job_irq_before": "0x0",
+    "job_irq_after": "0x0",
+    "mcu_raw_status": "0x1"
+  },
+  "stack_observations": [],
+  "power_domain_observations": [
+    {
+      "time": 29.329689,
+      "line": "mali: mfg8  ST1T0 did NOT come up: 0xd (sta 0, sram pdn 0 ack 0)"
+    },
+    {
+      "time": 35.193169,
+      "line": "mali: mfg8  ST1T0 did NOT come up: 0xd (sta 0, sram pdn 0 ack 0)"
+    },
+    {
+      "time": 38.307615,
+      "line": "mali: pwr status 0x1fc / 0x1fc (scpsys 0xF34/0xF38), gpufreq 0x4 (0xF3C); want 0x3ffc"
+    }
+  ],
+  "spin_samples": [
+    {
+      "time": 38.772371,
+      "line": "mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    },
+    {
+      "time": 38.781661,
+      "line": "mali: spin 1000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    },
+    {
+      "time": 39.391078,
+      "line": "mali: spin 100000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    },
+    {
+      "time": 42.639427,
+      "line": "mali: spin 500000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    }
+  ],
+  "l2_precedes_as0_update": true
+}

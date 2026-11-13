@@ -1,0 +1,51 @@
+--- hakios.mali610.trial-688.c
++++ hakios.mali610.trial-689.c
+@@ -520,6 +520,7 @@
+ static unsigned gMaliHwIssues;                  /* mali_hwissues=1 zeroes the four vendor quirk registers */
+ static unsigned gMaliStackPwrOn;                /* mali_stackpwron=1 requests core-stack power and observes READY */
+ static unsigned gMaliDoorbell;                  /* mali_doorbell=1 rings doorbell 0 once after AUTO */
++static unsigned gMaliPdcSettle;                 /* mali_pdcsettle=1 waits for eight equal 1-ms SPM samples */
+ /*
+  * mali_gpm=0 skips the initiator-to-memory protector step.
+  *
+@@ -3794,6 +3795,32 @@
+ 	}
+ 	/* Freeze before AUTO, then print after the attempt so tracing cannot delay the request. */
+ 	gMaliWritesFrozen = true;
++	if (gMaliPdcSettle) {
++		uint32_t before = reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF);
++		uint32_t prev = before, cur = before;
++		unsigned stable = 0, spins, changes = 0;
++
++		printf("mali: pdcsettle trial %u: before %#x fd %#x target 8 interval 1000 us limit 200000\n",
++		    gMaliTrial, before, reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF + 4u));
++		for (spins = 0; spins < 200000u; spins++) {
++			delay(1000);
++			cur = reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF);
++			if (cur == prev) {
++				if (++stable >= 8u) {
++					break;
++				}
++			} else {
++				stable = 0;
++				changes++;
++				printf("mali: pdcsettle trial %u: PWR_STATUS %#x -> %#x (fd %#x)\n",
++				    gMaliTrial, prev, cur, reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF + 4u));
++				prev = cur;
++			}
++		}
++		printf("mali: pdcsettle trial %u: %s at %#x (& 0x3ffc = %#x) after %u spins, stable %u changes %u before %#x\n",
++		    gMaliTrial, stable >= 8u ? "settled" : "NOT SETTLED", cur, cur & 0x3ffcu,
++		    spins < 200000u ? spins + 1u : spins, stable, changes, before);
++	}
+ 	/*
+ 	 * mali_mcuseq=1: two writes instead of one.
+ 	 *
+@@ -5097,6 +5124,7 @@
+ 	PE_parse_boot_argn("mali_mcuwin", &gMaliMcuWin, sizeof(gMaliMcuWin));
+ 	PE_parse_boot_argn("mali_mcuseq", &gMaliMcuSeq, sizeof(gMaliMcuSeq));
+ 	PE_parse_boot_argn("mali_doorbell", &gMaliDoorbell, sizeof(gMaliDoorbell));
++	PE_parse_boot_argn("mali_pdcsettle", &gMaliPdcSettle, sizeof(gMaliPdcSettle));
+ 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {
+ 		thread_deallocate(thread);
+ 	} else {

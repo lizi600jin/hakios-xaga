@@ -1,0 +1,37 @@
+{
+  "trial": 685,
+  "verified_args": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=1 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=1 mali_trial=685",
+  "arg_occurrences": 3,
+  "files": [
+    {
+      "path": "mtk/mt6895/drivers/gpu/hakios.mali610.c",
+      "bytes": 231373,
+      "sha256": "ab5b8ea264d2b81b293a81d5cbe29f4fb521cdac7e00960cdb7e0d331f5f4768",
+      "md5": "e6da9cb2b82660366cea45889b74b99b"
+    },
+    {
+      "path": "hakios-kernel",
+      "bytes": 15285912,
+      "sha256": "9fa289c4b10d79e4d17cb7a773d53bfb1aca12cfa492fa1c4fd72813647255bf",
+      "md5": "b52dbacd8d2e0868c51b991f0ff26862"
+    },
+    {
+      "path": "build-payload.bin",
+      "bytes": 19480376,
+      "sha256": "8b8b8cabe79ceb7599f503bc1f73cd6e54cf681c2571327f40d758d077c1c20f",
+      "md5": "18240c8d62d68f79d8a5c7075e654905"
+    },
+    {
+      "path": "mtk/loader/mtkloader.bin",
+      "bytes": 47928,
+      "sha256": "594bade1ecb30e2fa51f7d8eaec33fff5a287fae1ba332c2475dbb5c220ec9e7",
+      "md5": "c05617e07612bcb47be18e4dac14083b"
+    },
+    {
+      "path": "xnu-flashed-slot_a.img",
+      "bytes": 22978560,
+      "sha256": "7fffdcd29f767cf9ffa398491af51794f565ed4b0830c9e263ffa1343db2d243",
+      "md5": "9d959905bbd9ca6c02d616bfa1fe558a"
+    }
+  ]
+}

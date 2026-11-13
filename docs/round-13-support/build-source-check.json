@@ -1,0 +1,9 @@
+{
+  "driver_sha256": "ab5b8ea264d2b81b293a81d5cbe29f4fb521cdac7e00960cdb7e0d331f5f4768",
+  "synced_driver_sha256": "ab5b8ea264d2b81b293a81d5cbe29f4fb521cdac7e00960cdb7e0d331f5f4768",
+  "kernel_sha256": "9fa289c4b10d79e4d17cb7a773d53bfb1aca12cfa492fa1c4fd72813647255bf",
+  "kernel_has_before_log": true,
+  "kernel_has_after_log": true,
+  "kernel_has_stack_boot_arg": true,
+  "build_gate": "make kernel JOBS=8 completed with exit 0 via tools/make-kernel.sh; only pre-existing kext symbol-set errors accepted"
+}

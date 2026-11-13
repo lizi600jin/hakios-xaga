@@ -1,0 +1,42 @@
+--- hakios.mali610.trial-687.c
++++ hakios.mali610.trial-688.c
+@@ -519,6 +519,7 @@
+ static unsigned gMaliCohNone;                   /* mali_cohnone=1 selects vendor noncoherent mode before L2 */
+ static unsigned gMaliHwIssues;                  /* mali_hwissues=1 zeroes the four vendor quirk registers */
+ static unsigned gMaliStackPwrOn;                /* mali_stackpwron=1 requests core-stack power and observes READY */
++static unsigned gMaliDoorbell;                  /* mali_doorbell=1 rings doorbell 0 once after AUTO */
+ /*
+  * mali_gpm=0 skips the initiator-to-memory protector step.
+  *
+@@ -3826,6 +3827,14 @@
+ 		    mrd(kMcuStatus) & 1u, (mrd(kMcuStatus) >> 1) & 1u,
+ 		    (mrd(kMcuStatus) >> 2) & 1u, (mrd(kMcuStatus) >> 3) & 1u);
+ 	}
++	if (gMaliDoorbell) {
++		uint32_t job_before = mrd(kJobIntStatus);
++
++		mwr(kDoorbell0, 1u);
++		__asm__ volatile ("dsb sy" ::: "memory");
++		printf("mali: doorbell trial %u: wrote 1 to 0x80000, job_irq before %#x after %#x, mcu_st %#x\n",
++		    gMaliTrial, job_before, mrd(kJobIntStatus), mrd(kMcuStatus));
++	}
+ 	/*
+ 	 * And ring the doorbell.
+ 	 *
+@@ -3965,7 +3974,7 @@
+ 	 * that at zero.
+ 	 */
+ 	printf("mali: MCU status %u (%s), job irq %#x, gpu irq %#x\n", mrd(kMcuStatus),
+-	    mrd(kMcuStatus) == 1u ? "enabled" : mrd(kMcuStatus) == 2u ? "halted" :
++	    mrd(kMcuStatus) == 1u ? "raw state 1; boot unproven" : mrd(kMcuStatus) == 2u ? "halted" :
+ 	    mrd(kMcuStatus) == 3u ? "fatal" : "disabled", mrd(kJobIntStatus), mrd(kIntRaw));
+ 	/*
+ 	 * What the block itself says about the attempt.
+@@ -5087,6 +5096,7 @@
+ 	PE_parse_boot_argn("mali_sc26", &gMaliSc26, sizeof(gMaliSc26));
+ 	PE_parse_boot_argn("mali_mcuwin", &gMaliMcuWin, sizeof(gMaliMcuWin));
+ 	PE_parse_boot_argn("mali_mcuseq", &gMaliMcuSeq, sizeof(gMaliMcuSeq));
++	PE_parse_boot_argn("mali_doorbell", &gMaliDoorbell, sizeof(gMaliDoorbell));
+ 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {
+ 		thread_deallocate(thread);
+ 	} else {

@@ -1,0 +1,8 @@
+{
+  "trial": 688,
+  "driver_sha256": "19dfdcd0e664a6d50932d55054eb06a92bd14c1d4db79f655afb1cb6902482b9",
+  "kernel_sha256": "ef9451dd5f4436ee21f87291328a6f26084c6b2a0ba10a14ca403e7c9dfc3d9a",
+  "kernel_contains_doorbell_log": true,
+  "kernel_uses_raw_state1_label": true,
+  "build_gate": "make kernel JOBS=8 completed with exit 0 via tools/make-kernel.sh; only pre-existing kext symbol-set errors accepted"
+}

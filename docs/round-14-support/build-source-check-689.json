@@ -1,0 +1,9 @@
+{
+  "trial": 689,
+  "driver_sha256": "c17402e014cd0371de4dc6125153de5a4456b780dc465e3956b7f69aa50c1e6d",
+  "kernel_sha256": "36c66ca5e8fced9567b8e96ebd82b2bce7c8779b8174284e736345d321489d82",
+  "kernel_contains_pdcsettle_log": true,
+  "unrun_status_probe_absent": true,
+  "no_new_mmio_write_calls": true,
+  "build_gate": "make kernel JOBS=8 completed with exit 0 via tools/make-kernel.sh; only pre-existing kext symbol-set errors accepted"
+}

@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/BkaNeko/xaga-mali-r54-port",
+  "commit": "1350bc1e7be56e2281bbab8b806aa34c88fb21ec",
+  "path": "docs/GPUEB.zh-CN.md",
+  "source_url": "https://github.com/BkaNeko/xaga-mali-r54-port/blob/1350bc1e7be56e2281bbab8b806aa34c88fb21ec/docs/GPUEB.zh-CN.md",
+  "sha256": "3d436b7c5f31056317d8bcab54a1c2b5cb7528eeb49c4500063596d377b7a3c6",
+  "line_ranges_reviewed": [
+    [
+      454,
+      503
+    ],
+    [
+      725,
+      750
+    ]
+  ],
+  "supported_claim": "The repository reports a working device whose direct-MMIO snapshots show F3C=3 and MFG1..12 control words 0x1112. This invalidates treating those sampled values alone as a failure criterion; numeric bitmask magnitude does not rank device health."
+}

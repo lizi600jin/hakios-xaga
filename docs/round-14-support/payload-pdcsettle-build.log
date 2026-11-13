@@ -1,0 +1,5 @@
+[ -n "1" ] || { echo "make payload: xaga is not a MediaTek device (mtk/)"; exit 1; }
+[ -f hakios-kernel ] || { echo "make payload: no hakios-kernel (make xaga_defconfig && make kernel)"; exit 1; }
+[ -f "userland/root.apfs" ] || { echo "make payload: no RAM disk userland/root.apfs (RAMDISK=...)"; exit 1; }
+python3 xnuloader/mkpayload.py -o build-payload.bin kernel=hakios-kernel ramdisk=userland/root.apfs
+build-payload.bin: 19480440 bytes

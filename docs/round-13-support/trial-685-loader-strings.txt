@@ -1,0 +1,670 @@
+ARMd
+TFhh8&h(8
+TFhh
+TFhh8&h(8
+ii8 
+js8s
+qH!	
+r	|	
+js8s
+)!@9
+j*8J
+``Q9
+i)8?d
+js8s
+js8s
+js8s
+js8s
+js8s
+js8s
+js8s
+js8s
+js8s
+Thv@
+js8s
+js8s
+js8s
+Th>@
+js8s
+R	i*8
+js8s
+js8s
+js8s
+i)8T
+2ni(8
+js8s
+1@94s
+)AA9k#@
+kmi,
+Ty#@
+js8s
+2ij(8
+TH}@
+?iu8
+,i+8
+2di"8B
+q#I,8
+!I 8
+T-A,
+Oik8
+js8s
+js8s
+45+t
+4?/@
+T,ih8
+*li(8
+js8s
+js8s
+js8s
+js8s
+@9?)
+	A@9?
+R+1@9J
+K!@9
++1@9
+K!@9
++1@9
+SJ1@9?}
+*)Q+
+**Ij8,#@
+@9N'@
+T,#@
+*Iyi
+i)8H
+js8s
+i)8H
+js8s
+js8s
+R)9@
+Riji
+2iji
+Riji
+js8s
+TIC@9?
+T,3@9
+,3@9
+7MC@9
+R?i&
+#@9i3@9
+TIC@9?
+R,3@9
+Rk	@
+,3@9
+7MC@9
+R?i&
+#@9i3@9
+RH%@
+KA@9
+l&qH
+*p1@9M
+!@9@
+p1@9
+TQA@9
+	kL!
+js8s
+Uiv8
+ kx8
+ kx8
+ kx8
+js8s
+js8s
+R	i*8V
+@ky89
+ ku8
+ ku8
+ ku8
+js8s
+js8s
+js8s
+2*i(
+3+i3
+js8s
+js8s
+js8s
+js8s
+ks8s
+js8s
+js8s
+js8s
+ae9D
+js8s
+js8s
+!W9,
+js8s
+js8s
+ ks8s
+ ks8s
+ ks8s
+ ks8s
+J!@9
+(3@9j
+Kii8
+i)8)
+T*ib8X
+lii8Li)8)
+@k|8
+T(3@9
+@k|8
+@9_#
+@k|8
+T`.H
+(3@9S
+Ti"@9
+k"@9,3@9)
+(i+8I
+J1@9?}
+*,Q8
+@9A%@
+kAj 
+A@9L
+)q@9?
+R11@9R
+,1@9
+!@9?
+11@9
++1@)
+4K	@
+`q)}
+K	@9L
+T`#W9
+`#W9
+jh8+ih8_
+TNil8
+jh8*kh8?
+@#W9
+,	@9-
+@#W9
+RhR	
+*a%9h
+R(U	
+_ii8)
+!	*)
+*(i	
+(jHk	
+	QH9
+]H9)
+*	@9,
+@9J=
+*Ia	*)
+*ii(
+AqpA)
+?ih8
+R+I(8
+?I(8
+?h(8
++1@)
+@9_~
+ @9h
+js8s
+js8s
+js8s
+js8s
+js8s
+js8s
+js8s
+js8s
+JKi(8
++ih8
+jj8J
+ij8J
+4Hhc8c
+R)q}
+hj)84
+2mI(8
+jJ48
+rVyh
+yj88Y
+yj88
+T8$@
+yj88Y
+Chc8cJ88
+*wj!8w
+27I!8!
+cJ88
+T#B!
+26I78
+iw86
+cJ!8
+tJ68
+i)8)
+RHhc8c
+T*hk8k
+i)8)
+*K	@
+TH	@
+i)8)
+Ti	@
+TK	@
+*K	@
+TI	@
+hi8)
+=== end of XNU log ===
+logbook: body write failed: 
+_msgbufp
+_uart_putc
+XNU kernel 
+ MB into 
+platform-name
+peripheral-frequency
+nvram
+gps-capable
+disable-globe-map
+supports-maps-optical-heading
+mobiledevice-beta-min-ver
+[... 
+_cpu_ttep
+_gic_v3_irq_cpu_init
+_hakios_host_keep_len
+kb    
+model-number
+MQAC2
+unique-chip-id
+board-id
+siri-gesture
+ui-reachability
+ bytes into pmsg, 
+READ(10)
+no error recorded
+mfg1
+md0   
+HAKIOS0000000000
+RAMDisk1
+builtin-mics
+itunes-min-ver
+B(A78)
+ pll 
+WRITE(10) status
+=== XNU log (from DRAM; a few bits may have flipped in the reset) ===
+_redwood_host_keep_len
+vc_colors: alpha set
+certificate-security-mode
+development-cert
+running
+sandman-support
+oled-display
+thin-bezel
+ MHz div 
+*** loader fault: vector 
+ ESR 
+ ELR 
+gpu: the sleep controller does not answer; leaving the domains alone
+_loader_log_wrapped
+_vmapple_uart_receive_ready
+_initproc
+ found 
+artwork-device-subtype
+low-power-wallet-mode
+ui-weather-quality
+supports-3rd-party-haptics
+gpu: domains down and isolation back
+ramdisk
+_loader_log_ring_at
+_redwood_host_keep_dropped
+region-info
+darwin-board
+nvram-current-bank
+target-sub-type
+product-name
+public-key-accelerator
+device-color-policy
+ FAR 
+ does not start with a branch: not jumping
+mfg2
+_redwood_host_keep
+uart_putc and uart_putc_options -> loader_log_putc
+xnusys at block 
+cannot read it: 
+dram-size
+iBoot-8422.100.650
+nvram-bank-size
+defaults
+target-type
+bluetooth-le
+activation-protocol-version
+clock: 
+(no panic string)
+_nprocs
+hs    
+A1865
+nvram-proxy-data
+ranges
+uart0
+common
+ initproc 
+ cells lit, 
+READ(10) status
+, XNU memory 
+#address-cells
+display-scale
+psci-method
+mac-address-bluetooth0
+production-cert
+state
+memory-frequency
+mobiledevice-min-ver
+ code 
+tasks 
+LK dtb 
+TCR_EL1 
+backtrace:
+  lr 
+ dropped) ===
+XNU log symbols not found
+_vc_colors
+_loader_log_len
+_iso_font
+_vmapple_uart_transmit_ready
+_gic_last_unhandled
+ bytes
+ (or the GPT could not be read: 
+APFS: 
+serial-number
+regulatory-model-number
+boot-console
+manufacturer
+personal-hotspot
+== mtkloader: Darwin/XNU on XAGA (MT6895) ==
+EFI PART
+_loader_stub_slot
+_loader_live
+ lun 
+ status 
+mac-address-wifi0
+ fp 
+ (slide: 
+logbook: tail write failed: 
+, entry 
+ EL2 
+cpus
+ bytes) ===
+ TTBR1_EL1 
+=== kept for the host by the kernel: 
+ bytes (
+ wrapped 
+kernel
+_uart_putc_options
+random-seed
+boot-manifest-hash
+options
+fixed-frequency
+car-integration
+watch-companion
+udid-version
+ICC_CTLR_EL1 
+=== XNU log (
+gpu: the domains are back as Android expects them
+ heartbeat 
+SYSTEM IMAGE 86 full hs
+ fst 
+kernel.ver=
+ pitch 
+ MHz
+Jumping to XNU...
+ MB: 
+debug-enabled
+uart
+halting; the watchdog will restart the board
+ read as characters, last text row 
+ bytes of the XNU log left out here ...]
+controller error
+_loader_log
+--- kernel message buffer (from DRAM) ---
+boot-args: rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=1 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=1 mali_trial=685 loader_return_after=150
+framebuffer 
+xaga
+software-behavior
+nvram-bank-count
+small-core
+mediatek,mt6577-uart
+panic: 
+aoc down; iso_con 0xf30 
+ size 
+effective-security-mode-ap
+RAMDisk
+arm-io
+RF-exposure-separation-distance
+baseband-chipset
+front-cam-offset-from-center
+ lines dropped
+logbook: header write failed: 
+vmapple_uart: transmit_ready patched, transmit_data -> loader_log_putc, receive off
+system.apfs
+#size-cells
+ptp-large-files
+location-reminders
+LL(A55)
+io    
+ CNTFRQ 
+t8015
+cpu-id
+arm,gic-v3
+artwork-device-idiom
+volume-down-button-location
+closed-loop
+doorbell timeout
+gic_v3_irq_cpu_init: the BPR1 write is not where it was -- EOImode stays set
+ delta 
+HAKIOS0000000000MLB
+lockdown-certtype
+hearingaid-low-energy-audio
+graphics-featureset-class
+graphics-featureset-fallbacks
+dictation
+ -> 
+ sym debugger_panic_str -> pa 
+-byte blocks
+msgbuf 
+bytes 
+ tx 
+no Android kernel in this image: reset
+ bufx 
+ (root.packfs only)
+ MB/s)
+display-rotation
+product
+volume-up-button-location
+starting Android, so that the log above can be pulled
+_loader_log_putc
+return stub at 
+ ok 
+timers: CNTPCT 
+kern.vm_compressor
+pram
+artwork-display-gamut
+display-mirroring
+ui-pip
+allow-32bit-apps
+ui-background-quality
+compatible-app-variant
+ (EOImode set: clearing)
+ of xnusys
+gpu: about to put the SRAM isolation back
+ rx 
+rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=1 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=1 mali_trial=685 loader_return_after=150
+failed at 
+LL/A
+chip-id
+haptics
+interrupt-controller
+has-boot-chime
+supports-avatars
+lba out of READ(10) range
+WRITE(10)
+ ring_at 
+ fdev 
+root.apfs (small!)
+ (the system image), md1 
+ CNTVCT 
+ MB says 
+no APFS container there (write userland/system.apfs to it)
+memory-map
+waiting
+clock-frequency
+wifi-chipset
+product-description
+compatible-device-fallback
+artwork-scale-factor
+has-applelpm
+=== XNU returned to mtkloader: reason 
+[screen: 
+lba out of WRITE(10) range
+ back to 
+_tasks_count
+found 
+bus-frequency
+name
+sRGB
+model
+hearingaid-audio-equalization
+artwork-dynamic-displaymode
+mtkloader: about to enter XNU
+boot args: rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=1 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=1 mali_trial=685 loader_return_after=150
+ (end)
+ processes 
+ KB at byte 
+xnusys
+=== the watcher left a record in DRAM (
+=== mtkloader: XNU ran until the watchdog reset ===
+_vmapple_uart_transmit_data
+_gic_active_iar
+ERROR: no XNU payload in this image
+secs  
+: that cannot be
+firmware-version
+compatible
+assistant
+clock: this core measures 
+ con 
+_hakios_host_keep
+_hakios_host_keep_dropped
+what  
+this core is running at 
+the APFS container at 
+chosen
+embedded-panic-log-size
+iap2-protocol-supported
+ (checkpoint)
+ -> pa 
+gpt: 
+starting Android
+loader_log_len 
+_gic_unhandled_count
+cpu_ttep 
+md0 
+a speed its cycle counter will not say
+reading 
+mlb-serial-number
+device-perf-memory-class
+offline-dictation
+side-button-location
+0123456789abcdef
+controller not ready
+scsi
+_debugger_panic_str
+_debugger_panic_args
+kernel at 
+no xnusys partition on the 
+effective-production-status-ap
+single-stage-boot
+logbook: 
+doorbell timeout (no timebase: counted polls)
+--- end of message buffer ---
+ bytes, ramdisk 
+gic_v3_irq_cpu_init: every core clears EOImode
+ upm 
+ CNTKCTL 
+ blocks of 
+device_type
+ephemeral-data-mode
+ (EOImode clear)
+ (early exception)
+host_keep: 
+device-tree
+certificate-production-status
+=== what the screen showed when XNU came back ===
+list did not start
+the Android kernel at 
+no XNU payload
+kernel.ver
+done in 
+ s (
+dram-base
+secure-boot
+timebase-frequency
+product-id
+supports-burnin-mitigation
+BL(A78)
+$fff
+>xx<
+<`00{
+X~<~
+00``
+<fff~ff~<
+<,l~~
+<~``|n
+>``~vff~<
+~ff<<ff~<
+|fff~>
+>pp>
+8<<<f~~f
+x~ff|~fg~~
+>r````p>
+p|nfffff~|
+~~``~~``~~
+>~``~~````
+>r``nff~>
+ffff~~ffff
+Bflxx|lnfg
+ ```````~~
+ffn~~ZZBBB
+bfvvv~nnnf
+|ffffff~<
+x~fff~x```
+|ffffff~<
+x~ffn|lffg
+~``x>
+Bfffffff~<
+Bffff,<<<8
+~~~ff
+Bfn<
+Bff<<
+@` 0
+>~fn~
+```~vfff~|
+>r```r>
+~nfff~~
+<ff~`v>
+~nfff~>
+```~vfffff
+```flx|lff
+pp000008
+~vfffff
+<ffff~<
+~vfff~|```
+~nfff~~
+>800000
+<`p<
+88~8888
+fffff~>
+fff<<<
+Z~~f
+fff<<
+ hakios_kver=
+Apple Inc.
+D22AP
+D22AP
+iPhone10,3
+AppleARM
+iPhone10,3
+bootrom
+redwood
+4357
+iPhone X
+1400
+iPhone X
+iPhone9,2
+mav17
+phone
+APPLE4
+APPLE3:APPLE3v1:APPLE2:APPLE1:GLES2,0
+1190.100.2

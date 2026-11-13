@@ -1,0 +1,31 @@
+{
+  "trial": 688,
+  "logbook_sha256": "25d43b8971703756426966039020b7f272aec248d6d765f160b2eb2ec4968a76",
+  "start_offset": 408423,
+  "end_offset": 408622,
+  "samples": [
+    {
+      "read": 1,
+      "words": [
+        "0xff5aa5f0",
+        "0x0"
+      ]
+    },
+    {
+      "read": 2,
+      "words": [
+        "0xff5aa5f0",
+        "0x0"
+      ]
+    },
+    {
+      "read": 3,
+      "words": [
+        "0xff5aa5f0",
+        "0x0"
+      ]
+    }
+  ],
+  "trial_tag_in_continuation": true,
+  "interleaved_process_message": true
+}

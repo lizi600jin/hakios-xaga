@@ -1,0 +1,19 @@
+{
+  "trials": [
+    {
+      "trial": 688,
+      "stock_restored": true,
+      "stores": 82,
+      "raw_and_source_hashes_verified": true
+    },
+    {
+      "trial": 689,
+      "stock_restored": true,
+      "stores": 82,
+      "raw_and_source_hashes_verified": true
+    }
+  ],
+  "published_driver_sha256": "c17402e014cd0371de4dc6125153de5a4456b780dc465e3956b7f69aa50c1e6d",
+  "round13_and_14_reports_match_local": true,
+  "deferred_status_prototype_not_in_tested_source": true
+}

@@ -374,6 +374,7 @@ enum : uint32_t {
 	kShaderConfig = 0x0f04, kTilerConfig = 0x0f08, kL2MmuConfig = 0x0f0c, kCsfConfig = 0x0f00,
 	kPwrKey = 0x050, kMcuControl = 0x700, kMcuStatus = 0x704,
 	kStackPresent = 0xe00, kDoorbell0 = 0x80000,
+	kStackReady = 0xe10, kStackPwrOn = 0xe20, kStackPwrTrans = 0xe40,
 	kL2Config = 0x048, kAsnHash0 = 0x2c0, kAsnHashStep = 0x4, kAsnHashCount = 3,
 	/*
 	 * The IPA block, which the vendor driver arms before every firmware start. Offsets are
@@ -517,6 +518,9 @@ static unsigned gMaliCacheFlush;                /* mali_cacheflush=1 flushes GPU
 static unsigned gMaliResetOnly;                 /* mali_resetonly=1 adds only the early soft reset */
 static unsigned gMaliCohNone;                   /* mali_cohnone=1 selects vendor noncoherent mode before L2 */
 static unsigned gMaliHwIssues;                  /* mali_hwissues=1 zeroes the four vendor quirk registers */
+static unsigned gMaliStackPwrOn;                /* mali_stackpwron=1 requests core-stack power and observes READY */
+static unsigned gMaliDoorbell;                  /* mali_doorbell=1 rings doorbell 0 once after AUTO */
+static unsigned gMaliPdcSettle;                 /* mali_pdcsettle=1 waits for eight equal 1-ms SPM samples */
 /*
  * mali_gpm=0 skips the initiator-to-memory protector step.
  *
@@ -2791,6 +2795,44 @@ mcu_window_dump(const char *when)
 		printf(" nothing but zeros and ones");
 	}
 	printf("\n");
+	/* Observation only, paired with the full MCU dump. Preserve complete SPM words. */
+	if (gMaliMcuWin && gSpm != 0 && gMfgcfg != 0) {
+		uint32_t f30 = reg_rd(gSpm, MALI_SPM_BUCK_ISO);
+		uint32_t f34 = reg_rd(gSpm, MALI_SPM_PWR_STATUS);
+		uint32_t f38 = reg_rd(gSpm, MALI_SPM_PWR_STATUS2);
+		uint32_t f3c = reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF);
+		uint32_t f40 = reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF + 4u);
+		uint32_t sc[MALI_PDC_CORES];
+		char line[256];
+		unsigned i, off = 0;
+
+		printf("mali: spm raw trial %u %s: F30 %#x F34 %#x F38 %#x F3C %#x F40 %#x\n",
+		    gMaliTrial, when, f30, f34, f38, f3c, f40);
+		line[0] = 0;
+		for (i = 0; i < 32u; i++) {
+			off += scnprintf(line + off, sizeof(line) - off, " b%u=%u", i, (f3c >> i) & 1u);
+		}
+		printf("mali: spm F3C bits trial %u %s:%s\n", gMaliTrial, when, line);
+		line[0] = 0;
+		off = 0;
+		for (i = 0; i < MALI_PDC_CORES; i++) {
+			sc[i] = reg_rd(gMfgcfg, MALI_PDC_SC_BASE + i * MALI_PDC_SC_STEP);
+			off += scnprintf(line + off, sizeof(line) - off, " sc%u=%#x", i, sc[i]);
+		}
+		printf("mali: pdc raw trial %u %s:%s\n", gMaliTrial, when, line);
+		line[0] = 0;
+		off = 0;
+		for (i = 0; i < MALI_PDC_CORES; i++) {
+			off += scnprintf(line + off, sizeof(line) - off, " sc%u=%u", i, sc[i] & MALI_PDC_SC_EN);
+		}
+		printf("mali: pdc readback: trial %u %s:%s\n", gMaliTrial, when, line);
+		printf("mali: pdc groups trial %u %s: cg %#x st0 %#x st1 %#x st2 %#x st4 %#x st5 %#x st6 %#x\n",
+		    gMaliTrial, when, reg_rd(gMfgcfg, 0x100), reg_rd(gMfgcfg, 0x120),
+		    reg_rd(gMfgcfg, 0x140), reg_rd(gMfgcfg, 0x118), reg_rd(gMfgcfg, 0xc0),
+		    reg_rd(gMfgcfg, 0x98), reg_rd(gMfgcfg, 0x1c0));
+	} else if (gMaliMcuWin) {
+		printf("mali: spm/pdc observation trial %u %s: mapping unavailable\n", gMaliTrial, when);
+	}
 }
 
 /* All words here were already read by the existing GPU and MCU-window dumps.
@@ -3753,6 +3795,32 @@ start_mcu(void)
 	}
 	/* Freeze before AUTO, then print after the attempt so tracing cannot delay the request. */
 	gMaliWritesFrozen = true;
+	if (gMaliPdcSettle) {
+		uint32_t before = reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF);
+		uint32_t prev = before, cur = before;
+		unsigned stable = 0, spins, changes = 0;
+
+		printf("mali: pdcsettle trial %u: before %#x fd %#x target 8 interval 1000 us limit 200000\n",
+		    gMaliTrial, before, reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF + 4u));
+		for (spins = 0; spins < 200000u; spins++) {
+			delay(1000);
+			cur = reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF);
+			if (cur == prev) {
+				if (++stable >= 8u) {
+					break;
+				}
+			} else {
+				stable = 0;
+				changes++;
+				printf("mali: pdcsettle trial %u: PWR_STATUS %#x -> %#x (fd %#x)\n",
+				    gMaliTrial, prev, cur, reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF + 4u));
+				prev = cur;
+			}
+		}
+		printf("mali: pdcsettle trial %u: %s at %#x (& 0x3ffc = %#x) after %u spins, stable %u changes %u before %#x\n",
+		    gMaliTrial, stable >= 8u ? "settled" : "NOT SETTLED", cur, cur & 0x3ffcu,
+		    spins < 200000u ? spins + 1u : spins, stable, changes, before);
+	}
 	/*
 	 * mali_mcuseq=1: two writes instead of one.
 	 *
@@ -3785,6 +3853,14 @@ start_mcu(void)
 		    mrd(kMcuControl), mrd(kMcuStatus),
 		    mrd(kMcuStatus) & 1u, (mrd(kMcuStatus) >> 1) & 1u,
 		    (mrd(kMcuStatus) >> 2) & 1u, (mrd(kMcuStatus) >> 3) & 1u);
+	}
+	if (gMaliDoorbell) {
+		uint32_t job_before = mrd(kJobIntStatus);
+
+		mwr(kDoorbell0, 1u);
+		__asm__ volatile ("dsb sy" ::: "memory");
+		printf("mali: doorbell trial %u: wrote 1 to 0x80000, job_irq before %#x after %#x, mcu_st %#x\n",
+		    gMaliTrial, job_before, mrd(kJobIntStatus), mrd(kMcuStatus));
 	}
 	/*
 	 * And ring the doorbell.
@@ -3868,6 +3944,9 @@ start_mcu(void)
 	printf("mali: the start loop ended after %u spins (halt seen %u, fatal seen %u)\n",
 	    spins, sawHalt ? 1u : 0u, sawFatal ? 1u : 0u);
 	mali_write_trace("after AUTO (stores captured before AUTO)");
+	if (gMaliMcuWin) {
+		mcu_window_dump("after AUTO (before DISABLE)");
+	}
 
 	/*
 	 * The version word is the harder of the two proofs, so ask it even when the loop timed out.
@@ -3922,7 +4001,7 @@ start_mcu(void)
 	 * that at zero.
 	 */
 	printf("mali: MCU status %u (%s), job irq %#x, gpu irq %#x\n", mrd(kMcuStatus),
-	    mrd(kMcuStatus) == 1u ? "enabled" : mrd(kMcuStatus) == 2u ? "halted" :
+	    mrd(kMcuStatus) == 1u ? "raw state 1; boot unproven" : mrd(kMcuStatus) == 2u ? "halted" :
 	    mrd(kMcuStatus) == 3u ? "fatal" : "disabled", mrd(kJobIntStatus), mrd(kIntRaw));
 	/*
 	 * What the block itself says about the attempt.
@@ -4585,6 +4664,29 @@ mali_bring_up(void)
 	if (!gpu_l2_power_on()) {
 		return;
 	}
+	/* One opt-in STACK request after L2; a timeout must still reach the witness. */
+	if (gMaliStackPwrOn) {
+		uint32_t present = mrd(kStackPresent);
+		uint32_t ready0 = mrd(kStackReady), trans0 = mrd(kStackPwrTrans);
+		uint32_t ready = ready0;
+		unsigned spins;
+
+		printf("mali: stackpwron trial %u: present %#x ready %#x trans %#x (before)\n",
+		    gMaliTrial, present, ready0, trans0);
+		/* kbase_pm_invoke(ACTION_PWRON) writes this register despite the RO header comment. */
+		mwr(kStackPwrOn, present);
+		__asm__ volatile ("dsb sy" ::: "memory");
+		for (spins = 0; spins < 100000u; spins++) {
+			ready = mrd(kStackReady);
+			if (ready == present) {
+				break;
+			}
+			delay(1);       /* XNU delay() takes microseconds. */
+		}
+		printf("mali: stackpwron trial %u: present %#x ready %#x trans %#x (after %u spins, %s)\n",
+		    gMaliTrial, present, ready, mrd(kStackPwrTrans), spins,
+		    ready == present ? "ALL READY" : "NOT READY");
+	}
 	if (!gMaliCold) {
 		/*
 		 * The cache flush, which the cold path does not do.
@@ -4781,7 +4883,9 @@ mali_bring_up(void)
 		delay(2000);
 		printf("mali: MCU control written %u, status now %u, control reads %u\n",
 		    kMcuControlDisable, mrd(kMcuStatus), mrd(kMcuControl));
-		mcu_window_dump("after the core was switched off");
+		if (!gMaliMcuWin) {
+			mcu_window_dump("after the core was switched off");
+		}
 		mcu_view_sample("after DISABLE");
 		mfg_bus_idle("after the core was switched off");
 		mfg_bus_watch("after the core was switched off");
@@ -5012,12 +5116,15 @@ hakios_mali610_init(void)
 	PE_parse_boot_argn("mali_resetonly", &gMaliResetOnly, sizeof(gMaliResetOnly));
 	PE_parse_boot_argn("mali_cohnone", &gMaliCohNone, sizeof(gMaliCohNone));
 	PE_parse_boot_argn("mali_hwissues", &gMaliHwIssues, sizeof(gMaliHwIssues));
+	PE_parse_boot_argn("mali_stackpwron", &gMaliStackPwrOn, sizeof(gMaliStackPwrOn));
 	PE_parse_boot_argn("mali_bpverify", &gMaliBpVerify, sizeof(gMaliBpVerify));
 	PE_parse_boot_argn("mali_scclk", &gMaliScClk, sizeof(gMaliScClk));
 	PE_parse_boot_argn("mali_scupd", &gMaliScUpd, sizeof(gMaliScUpd));
 	PE_parse_boot_argn("mali_sc26", &gMaliSc26, sizeof(gMaliSc26));
 	PE_parse_boot_argn("mali_mcuwin", &gMaliMcuWin, sizeof(gMaliMcuWin));
 	PE_parse_boot_argn("mali_mcuseq", &gMaliMcuSeq, sizeof(gMaliMcuSeq));
+	PE_parse_boot_argn("mali_doorbell", &gMaliDoorbell, sizeof(gMaliDoorbell));
+	PE_parse_boot_argn("mali_pdcsettle", &gMaliPdcSettle, sizeof(gMaliPdcSettle));
 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {
 		thread_deallocate(thread);
 	} else {

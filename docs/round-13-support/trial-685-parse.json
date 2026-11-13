@@ -1,0 +1,149 @@
+{
+  "trial": 685,
+  "logbook_bytes": 4198400,
+  "logbook_sha256": "dc325f3d30101b1023cab3702c730b60d292431de9bdbe0528ca58fca69d0370",
+  "parsed_entire_window": true,
+  "trial_markers": [
+    685
+  ],
+  "mali_rows": 257,
+  "stores": 83,
+  "coverage": {
+    "time": 33.116107,
+    "line": "mali: coverage: every section fully mapped"
+  },
+  "l2": {
+    "time": 32.333072,
+    "line": "mali: L2 up: trans 0 active 0 ready 0x1"
+  },
+  "hwissues": null,
+  "protocol": {
+    "time": 32.333025,
+    "line": "mali: protocol trial 685: features 0x1 before 0 after 0 wrote 0"
+  },
+  "stack_before": {
+    "time": 32.467098,
+    "line": "mali: stackpwron trial 685: present 0x33 ready 0 trans 0 (before)"
+  },
+  "as0_update": {
+    "time": 33.136462,
+    "line": "mali: AS0 step update    mmu irq 0x10000"
+  },
+  "as0_probe": {
+    "time": 33.138276,
+    "line": "mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 685"
+  },
+  "before_auto": {
+    "time": 33.168673,
+    "line": "mali: views before AUTO: gpu status 0/0 irq raw 0/0x600 mcu control 0 status 0"
+  },
+  "after_auto": {
+    "time": 41.96219,
+    "line": "mali: after the start request: gpu status 0x1, gpu irq status 0, job irq status 0, mmu irq 0, as0 status 0 faultstatus 0 faultaddress 0"
+  },
+  "version": {
+    "time": 41.966761,
+    "line": "mali: version word 0xff5aa5f0 (untouched; no firmware version published) trial 685"
+  },
+  "glb": {
+    "time": 41.967719,
+    "line": "mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0"
+  },
+  "witness_entry": {
+    "time": 33.152467,
+    "line": "mali: witness: code at 0x1000000, reset vector now 0x1000001"
+  },
+  "witness_reads": {
+    "time": 41.972693,
+    "line": "mali: witness: read1 0xff5aa5f0 0 read2 0xff5aa5f0 0 read3 0xff5aa5f0 0 trial 685"
+  },
+  "witness_verdict": {
+    "time": 41.973793,
+    "line": "mali: witness: verdict trial 685 -- no completed first store observed (not an instruction trace)"
+  },
+  "failed_tail_return": {
+    "time": 44.094635,
+    "line": "mali: shared probe trial 685: completed; returning before global_interface"
+  },
+  "debug_top": [
+    {
+      "time": 33.123684,
+      "line": "mali: bus idle before the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)"
+    },
+    {
+      "time": 33.145404,
+      "line": "mali: bus idle after the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)"
+    },
+    {
+      "time": 43.02227,
+      "line": "mali: bus idle after the failed start: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)"
+    },
+    {
+      "time": 44.070528,
+      "line": "mali: bus idle after the core was switched off: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)"
+    }
+  ],
+  "stack_observations": [
+    {
+      "time": 32.467098,
+      "line": "mali: stackpwron trial 685: present 0x33 ready 0 trans 0 (before)"
+    },
+    {
+      "time": 33.03611,
+      "line": "mali: stackpwron trial 685: present 0x33 ready 0 trans 0 (after 100000 spins, NOT READY)"
+    }
+  ],
+  "stack_result": {
+    "present": "0x33",
+    "ready_before": "0x0",
+    "trans_before": "0x0",
+    "ready_after": "0x0",
+    "trans_after": "0x0",
+    "spins": 100000,
+    "reported_status": "NOT READY",
+    "between_log_timestamps_s": 0.569012,
+    "ready_matches_present": false,
+    "transition_nonzero_on_final_sample": false,
+    "witness_samples": [
+      [
+        "0xff5aa5f0",
+        "0x0"
+      ],
+      [
+        "0xff5aa5f0",
+        "0x0"
+      ],
+      [
+        "0xff5aa5f0",
+        "0x0"
+      ]
+    ],
+    "witness_final_markers_observed": false,
+    "category": "ready_incomplete"
+  },
+  "power_domain_observations": [
+    {
+      "time": 32.332572,
+      "line": "mali: pwr status 0x1fc / 0x1fc (scpsys 0xF34/0xF38), gpufreq 0x4 (0xF3C); want 0x3ffc"
+    }
+  ],
+  "spin_samples": [
+    {
+      "time": 33.178861,
+      "line": "mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    },
+    {
+      "time": 33.183926,
+      "line": "mali: spin 1000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    },
+    {
+      "time": 33.8061,
+      "line": "mali: spin 100000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    },
+    {
+      "time": 36.521893,
+      "line": "mali: spin 500000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    }
+  ],
+  "l2_precedes_as0_update": true
+}
