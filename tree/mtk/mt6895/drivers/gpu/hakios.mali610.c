@@ -483,6 +483,13 @@ static unsigned gMaliPreAs0;                    /* mali_preas0=1 updates AS0 bef
 static unsigned gMaliNoApClear;                 /* mali_noapclear=1 skips 13 diagnostic MMU clears */
 static unsigned gMaliNoPwrClear;                /* mali_nopwrclear=1 skips two L2 power IRQ clears */
 static unsigned gMaliAs0First;                  /* mali_as0first=1 moves the pre-AS0 block before AS2..7 */
+static unsigned gMaliDomainWait;                /* mali_domainwait=1 polls SPM at 10us/1s like scpsys */
+static unsigned gMaliFwNc;                      /* mali_fwnc=1 maps every firmware section non-cacheable */
+static unsigned gMaliFwX;                       /* mali_fwx=1 makes every firmware section executable */
+static unsigned gMaliBpVerify;                  /* mali_bpverify=1 releases bus protection and confirms STA */
+static unsigned gMaliScClk;                     /* mali_scclk=1 un-gates CLK_CFG_5 bit7 (mfgsc_ref_ck) */
+static unsigned gMaliMcuWin;                    /* mali_mcuwin=1 prints the whole 0x3000..0x3100 block */
+static unsigned gMaliMcuSeq;                    /* mali_mcuseq=1 writes ENABLE before AUTO */
 static unsigned gMaliEarlyAs0;                  /* set once the early path has already done it */
 /*
  * mali_cold=1 walks the path the phone's own driver walks when the machine boots, and nothing else.
@@ -527,6 +534,7 @@ static unsigned gMaliOstd;                      /* mali_ostd=1 samples the outst
  * the reads alone are what the booting image did, so that is where it starts.
  */
 static unsigned gMaliSema;                      /* mali_sema=1 writes the semaphore request */
+static unsigned gMaliPdcAuto;                    /* mali_pdcauto=1 powers only mfg1 and lets PDCv2 take the rest */
 /* Round comparisons keep these independent and opt in. */
 static unsigned gMaliFreeRun;                   /* mali_freerun=1 sets four GLOBAL_CON free-run bits */
 static unsigned gMaliParkAttrs;                 /* mali_parkattrs=1 matches cold AS2/AS3 MEMATTR */
@@ -566,10 +574,10 @@ mali_write_trace(const char *when)
 {
 	unsigned i;
 
-	printf("mali: trial %u %s: level %u cold %u low %u preas0 %u freerun %u parkattrs %u trace %u as0first %u noapclear %u nopwrclear %u\n",
+	printf("mali: trial %u %s: level %u cold %u low %u preas0 %u freerun %u parkattrs %u trace %u as0first %u noapclear %u nopwrclear %u domainwait %u fwnc %u fwx %u\n",
 	    gMaliTrial, when, gMaliLevel, gMaliCold, gMaliLowMem, gMaliPreAs0,
 	    gMaliFreeRun, gMaliParkAttrs, gMaliTrace, gMaliAs0First,
-	    gMaliNoApClear, gMaliNoPwrClear);
+	    gMaliNoApClear, gMaliNoPwrClear, gMaliDomainWait, gMaliFwNc, gMaliFwX);
 	if (!gMaliTrace || gMaliWritesPrinted) {
 		return;
 	}
@@ -839,6 +847,15 @@ mem_pa(const struct mali_mem *m, size_t offset)
  * nothing here: index 1 in kbase's table is FORCE_TO_CACHE_ALL, not write-back.
  */
 #define IDX_CACHE       0               /* AS_MEMATTR_INDEX_IMPL_DEF_CACHE_POLICY */
+/*
+ * The granule pt_map() actually indexes with: table[(va >> 12) & 0x1ff].
+ *
+ * Deliberately not PAGE_SIZE. On this kernel PAGE_SIZE is 16K (see the note at the firmware
+ * mapping loop), while the level-3 table this code builds is walked at 4K by whatever the MCU
+ * does with AS_TRANSTAB -- and pt_map agrees with the MCU, not with PAGE_SIZE.
+ */
+#define PT_LEAF_GRANULE  0x1000ull
+
 #define IDX_NC          5               /* AS_MEMATTR_INDEX_NON_CACHEABLE */
 #define IDX_SHARED      6               /* AS_MEMATTR_INDEX_SHARED */
 /*
@@ -953,6 +970,8 @@ pt_map(uint64_t *root, uint64_t va, uint64_t pa, uint64_t leaf)
 }
 
 /* ------------------------------------------------------------------ the firmware container */
+
+static void *sect_at(uint64_t va);
 
 /*
  * The CSF image is a container, not a raw blob (panthor_fw.c): a twenty-byte header and then a run
@@ -1092,7 +1111,19 @@ load_firmware(void)
 				 * NON_CACHEABLE(5) -- the picture the vendor's AS_MEMATTR table shows
 				 * too, where indices 5 and 6 both carry 0x4c for the same reason.
 				 */
-				index = (flags & SEC_CACHE_MASK) == SEC_CACHED ? IDX_CACHE : IDX_NC;
+				/*
+				 * mali_fwnc=1 forces every section to NON_CACHEABLE.
+				 *
+				 * The MCU does not snoop the CPU's caches. mem_flush() below writes the
+				 * image out, but the PTE still says "cached", so a section the CPU has
+				 * since brought back into its cache could be read by the MCU from DRAM
+				 * as stale data -- and if that section is the vector table at VA 0, the
+				 * reset fetch never happens. That is one explanation for status=1,
+				 * no fault, untouched version word and a permanently busy debug_top.
+				 */
+				index = (gMaliFwNc || (flags & SEC_CACHE_MASK) != SEC_CACHED)
+				    ? IDX_NC : IDX_CACHE;
+				cached = (index == IDX_CACHE);
 				/*
 				 * PTE_PAGE is not decoration. Everything below it in this
 				 * expression is attributes; the two low bits are what say
@@ -1111,10 +1142,48 @@ load_firmware(void)
 				if (!(flags & SEC_WR)) {
 					leaf |= PTE_RDONLY;
 				}
-				if (!(flags & SEC_EX)) {
+				/*
+				 * mali_fwx=1 forces every firmware section executable.
+				 *
+				 * The reset vector lives in section 0, and that section's flags word
+				 * says r-- (no SEC_EX), so this code marks every one of its pages XN.
+				 * The hardware reads the initial SP from VA 0 and the reset address
+				 * from VA 4 -- a data read -- but the reset address it reads points
+				 * into section 1 (0x010018ed), and if the fetch that follows is
+				 * refused by the MMU there is no fault on AS0 because the fetch never
+				 * becomes a transaction: status stays 1, debug_top goes busy and the
+				 * version word keeps the sentinel. That is this board's exact shape.
+				 */
+				if (!(flags & SEC_EX) && !gMaliFwX) {
 					leaf |= PTE_XN;
 				}
-				for (va = va_start; va < va_end; va += PAGE_SIZE) {
+				if (!(flags & SEC_WR) && gMaliFwX) {
+					leaf &= ~PTE_RDONLY;
+				}
+				/*
+				 * Step by the leaf granule, not by PAGE_SIZE.
+				 *
+				 * PAGE_SIZE on this kernel is 16K: the loader publishes dram-size
+				 * 0xfe000000 (>1GB), so arm_init.c:417 picks PAGE_MAX_SHIFT and
+				 * PAGE_SHIFT becomes 14. pt_map(), however, indexes the level-3 table
+				 * with (va >> 12) & 0x1ff -- a 4K granule -- so this loop advancing by
+				 * PAGE_SIZE wrote one 4K leaf out of every four and left the other
+				 * twelve kilobytes of each 16K window without a valid descriptor.
+				 *
+				 * That is not a theoretical hole. The vendor image's reset vector is
+				 * 0x010018ed, which lies in section 1 at leaf 1 (0x1001000-0x1001fff);
+				 * leaf 1 was never mapped, so the very first instruction fetch after
+				 * MCU_CONTROL=AUTO had no translation, and the MCU -- which cannot take
+				 * a data abort for an instruction fetch it never issued -- reported
+				 * enabled and executed nothing. Section 1 was 25% mapped: leaves 0, 4,
+				 * 8 and 12 only.
+				 *
+				 * The witness experiment survived this by luck: its stub sits at VA
+				 * 0x1000000 (leaf 0) and its two stores land at 0x04000000/0x04000004
+				 * (section 9 leaf 0), all of which were mapped. That is why a 32-byte
+				 * program and a quarter-megabyte firmware image disagreed.
+				 */
+				for (va = va_start; va < va_end; va += PT_LEAF_GRANULE) {
 					if (!pt_map(gMcuRoot, va,
 					    mem_pa(&s->mem, (size_t)(va - va_start)), leaf)) {
 						printf("mali: out of page tables at %#llx\n", va);
@@ -1192,6 +1261,77 @@ load_firmware(void)
 		return false;
 	}
 	printf("mali: %u sections, %u page tables\n", gSectCount, gPtCount);
+	/*
+	 * Coverage self-check, so a mapping hole shows up as a number and not as a mystery.
+	 *
+	 * The 16K-versus-4K step bug survived fifteen rounds because nothing ever asked "how much
+	 * of the firmware is actually mapped". Walking every leaf granule and comparing what the
+	 * walk finds against what the section needs turns that question into one line of output.
+	 */
+	{
+		unsigned si;
+		unsigned bad = 0;
+
+		for (si = 0; si < gSectCount; si++) {
+			struct mali_section *sec = &gSect[si];
+			uint64_t v;
+			unsigned need = 0;
+			unsigned have = 0;
+
+			for (v = sec->va_start; v < sec->va_end; v += PT_LEAF_GRANULE) {
+				uint64_t *table = gMcuRoot;
+				int lvl;
+				bool ok = true;
+
+				need++;
+				for (lvl = 0; lvl < 3; lvl++) {
+					unsigned idx = (unsigned)((v >> (39 - 9 * lvl)) & 0x1ffu);
+
+					if ((table[idx] & 1u) == 0u) {
+						ok = false;
+						break;
+					}
+					table = pt_kva(table[idx] & PTE_ADDRESS);
+					if (table == NULL) {
+						ok = false;
+						break;
+					}
+				}
+				if (ok && (table[(v >> 12) & 0x1ffu] & 1u) != 0u) {
+					have++;
+				}
+			}
+			if (need != have) {
+				printf("mali: COVERAGE sec%u %#llx-%#llx: %u of %u leaves mapped\n",
+				    si, (unsigned long long)sec->va_start,
+				    (unsigned long long)sec->va_end, have, need);
+				bad++;
+			}
+		}
+		printf("mali: coverage: %s\n", bad ? "HOLES FOUND" : "every section fully mapped");
+	}
+	/*
+	 * The reset vector, now that the sections exist.
+	 *
+	 * The hardware takes the initial stack pointer from VA 0 and the reset address from VA 4.
+	 * This driver has never printed either, so every argument so far has assumed the vendor image
+	 * puts 0x010018ed at +4 and that section 1 therefore holds the entry point. One line settles
+	 * whether that is true; if it is not, the "we loaded the right image" premise needs re-examining.
+	 */
+	{
+		volatile uint32_t *vec = (volatile uint32_t *)sect_at(0ull);
+		void *code = sect_at(0x1000000ull);
+
+		if (vec != NULL) {
+			printf("mali: reset vector: sp %#x  pc %#x\n", vec[0], vec[1]);
+			printf("mali: entry words at VA 0x1000000: %#x %#x %#x %#x\n",
+			    vec[2], vec[3],
+			    code ? *(volatile uint32_t *)code : 0u,
+			    code ? *((volatile uint32_t *)code + 1) : 0u);
+		} else {
+			printf("mali: reset vector: no section covers VA 0\n");
+		}
+	}
 	return true;
 }
 
@@ -1318,9 +1458,37 @@ read_witness(void)
 	 * 0x11 means it died between the two stores. Anything else means the first store never
 	 * happened at all, which is the answer every previous run assumed.
 	 */
+	/*
+	 * Read it three times, with barriers, before believing a zero.
+	 *
+	 * These pages come from mem_alloc_low(), which maps them with MALI_WIMG_WCOMB --
+	 * write-combining, not cacheable. Writes may be gathered there; the read direction is
+	 * not guaranteed to bypass a pending combine buffer either. The whole "the core never
+	 * executed the first store" verdict rests on one read of one word, so ask three times
+	 * and put a barrier between them: a stable 0xff5aa5f0 settles the question, a word that
+	 * changes means the path, not the core, was the problem.
+	 */
+	__asm__ volatile ("dmb sy" ::: "memory");
 	first = words[0];
 	second = words[1];
-	printf("mali: witness: %#x %#x", first, second);
+	__asm__ volatile ("dmb sy" ::: "memory");
+	printf("mali: witness: read1 %#x %#x", first, second);
+	{
+		uint32_t a = words[0];
+		uint32_t b = words[1];
+
+		__asm__ volatile ("dmb sy" ::: "memory");
+		printf(" read2 %#x %#x", a, b);
+		a = words[0];
+		b = words[1];
+		__asm__ volatile ("dmb sy" ::: "memory");
+		printf(" read3 %#x %#x", a, b);
+		if (a != first) {
+			printf(" (UNSTABLE -- the read path is suspect, not the core)");
+		}
+	}
+	printf("\n");
+	printf("mali: witness: verdict");
 	if (first == MALI_WITNESS_DONE) {
 		printf(" -- the core ran the witness to the end, so the MCU works\n");
 	} else if (first == MALI_WITNESS_FIRST) {
@@ -1390,9 +1558,36 @@ domain_on(uint32_t at, const char *what)
 	 * 0x4000000d, one status bit set, and the code below then cleared the isolation and
 	 * raised the reset on a domain that was still mid-handshake.
 	 */
-	for (spins = 0; spins < 2000000u; spins++) {
-		if ((reg_rd(gSpm, at) & SPM_STA_MASK) == SPM_STA_MASK) {
-			break;
+	{
+		/*
+		 * Two budgets, chosen by mali_domainwait.
+		 *
+		 * 0: 2000000 back-to-back reads (~0.72 s measured) -- the historical behaviour,
+		 *    kept so a single run can show whether the delay is what matters.
+		 * 1: 100000 reads at 10 us apart -- scpsys's MTK_POLL_DELAY_US/MTK_POLL_TIMEOUT,
+		 *    i.e. the vendor's own one-second budget.
+		 */
+		unsigned limit = gMaliDomainWait ? 100000u : 2000000u;
+
+		for (spins = 0; spins < limit; spins++) {
+			if ((reg_rd(gSpm, at) & SPM_STA_MASK) == SPM_STA_MASK) {
+				break;
+			}
+			/*
+			 * mali_domainwait=1: wait the way scpsys waits, not the way a tight loop waits.
+			 *
+			 * The comment above already said this loop "used to spin two million times with
+			 * no delay at all" and that scpsys polls with a 10us delay for a full second --
+			 * but the loop itself was never changed. Two million back-to-back MMIO reads
+			 * take about 0.72 s here (measured: 0.723 s between consecutive domain give-ups
+			 * in trial 402), short of the one-second budget the vendor allows. On a domain
+			 * that needs longer than 0.72 s to acknowledge, this loop gives up before the
+			 * hardware would have answered, and the caller then clears isolation and raises
+			 * reset on a domain that is still mid-handshake.
+			 */
+			if (gMaliDomainWait) {
+				delay(10);
+			}
 		}
 	}
 	v = reg_rd(gSpm, at);
@@ -1441,9 +1636,17 @@ domain_on(uint32_t at, const char *what)
 	 * bit 12 still set means the SRAM behind that domain is physically powered down -- which
 	 * for a shader stack means the core there has no instruction memory to fetch from.
 	 */
-	for (spins = 0; spins < 2000000u; spins++) {
-		if ((reg_rd(gSpm, at) & SPM_SRAM_ACK) == 0) {
-			break;
+	{
+		/* Same two budgets as the acknowledge poll above; see the comment there. */
+		unsigned limit = gMaliDomainWait ? 100000u : 2000000u;
+
+		for (spins = 0; spins < limit; spins++) {
+			if ((reg_rd(gSpm, at) & SPM_SRAM_ACK) == 0) {
+				break;
+			}
+			if (gMaliDomainWait) {
+				delay(10);
+			}
 		}
 	}
 	/*
@@ -1525,6 +1728,9 @@ mali_aoc_up(void)
 	printf("mali: aoc: released, iso_con now %#x\n", reg_rd(gSpm, MALI_SPM_BUCK_ISO));
 }
 
+static unsigned pdc_enable(void);
+static void pdc_report(void);
+
 /*
  * The twelve domains, parents before children (mtk-scpsys-mt6895.c's dependency table). The
  * vendor's own path powers only MFG1 by hand -- PDC takes the rest once the GPU asks -- so a
@@ -1548,6 +1754,62 @@ power_on(void)
 	unsigned i;
 	unsigned up = 0;
 	unsigned pass;
+
+	/*
+	 * mali_pdcauto=1: touch mfg1 only, then hand mfg2..mfg12 to the power controller.
+	 *
+	 * The vendor does exactly this and nothing more. __gpufreq_mtcmos_control(POWER_ON)
+	 * (gpufreq_mt6895.c:3371) calls pm_runtime_get_sync() on g_mtcmos->mfg1_dev alone, and
+	 * everything that would raise mfg2..mfg12 by hand sits inside "#if !GPUFREQ_PDCv2_ENABLE"
+	 * -- a block that does not compile on this platform, because include/gpufreq_mt6895.h:70
+	 * sets GPUFREQ_PDCv2_ENABLE to 1. What remains is one call to __gpufreq_pdc_control(),
+	 * which sets the MFG_ACTIVE_POWER_CON bits and lets the controller bring the rest up.
+	 *
+	 * This driver has always done the opposite: twelve domains written one at a time, and the
+	 * result has been identical every run -- seven answer, five do not, and the control words
+	 * of the five sit at 0x100d with the SRAM acknowledge still asserted. Writing a domain's
+	 * control word while the power controller owns that domain is not a race the driver can
+	 * win; at best it is redundant, at worst the two disagree about who may release the rail.
+	 *
+	 * The status register the vendor checks is also not the one this driver has been reading.
+	 * PWR_STATUS_OFS is 0xF3C (include/gpufreq_mt6895.h:72) with MFG_1_12_PWR_MASK 0x3FFC, so
+	 * bit (n+2) of 0xF3C is MFGn. This driver reads 0xF34/0xF38 and calls the low nine bits
+	 * "seven domains"; the vendor only ever reads 0xF3C.
+	 */
+	if (gMaliPdcAuto) {
+		/*
+		 * mali_pdcauto=1 must not run pdc_enable() here: this function is called before
+		 * clock_26m(), and mfgcfg lives inside mfg1 -- that is, on the far side of a gate
+		 * clock_26m() is the only thing that opens. The first run of this branch proved it:
+		 * all seventeen PDC stores read back zero (pdc: sc0 0 sc9 0 cg 0 st0 0 st4 0 st6 0)
+		 * and 0xF3C came back 0x6 instead of 0x3FFE.
+		 */
+		(void)domain_on(MALI_MFG1, "mfg1  MPU");
+		if ((reg_rd(gSpm, MALI_MFG1) & SPM_STA_MASK) != SPM_STA_MASK) {
+			printf("mali: mfg1 did not come up; PDC cannot take over\n");
+			return 0;
+		}
+		printf("mali: pdc auto: mfg1 up (PDC deferred until after clock_26m)\n");
+		/* The controller is hardware, not a register write; give it 200 ms. */
+		delay(200000);
+		printf("mali: pdc auto: 0xF3C %#x (want 0x3ffe) 0xF40 %#x 0xF34 %#x\n",
+		    reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF) & 0x3ffcu,
+		    reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF + 4u) & 0x3ffcu,
+		    reg_rd(gSpm, MALI_SPM_PWR_STATUS) & MALI_MFG_PWR_MASK);
+		/*
+		 * Report what scpsys's own register says mfg1 did, and let the bring-up continue.
+		 *
+		 * The PDC verdict is printed after clock_26m(); this branch only decides that mfg1 is
+		 * up and that the caller should not walk mfg2..mfg12 by hand.
+		 */
+		for (i = 0; i < 12u; i++) {
+			if (reg_rd(gSpm, MALI_SPM_PWR_STATUS) & (1u << (2 + i))) {
+				up++;
+			}
+		}
+		printf("mali: pdc auto: %u of twelve answered by scpsys before PDC\n", up);
+		return up;
+	}
 
 	/*
 	 * Twice, because the second level cannot come up in the same sweep as its parent.
@@ -1698,6 +1960,78 @@ bus_protect_release(void)
 		    reg_rd(gInfracfg, MALI_BP_EMISYS1_EN_OFF),
 		    reg_rd(gInfracfg, MALI_BP_EMISYS1_STA_OFF), MALI_BP_EMISYS1_MFG1_MASK);
 	}
+	/*
+	 * The verification, inline.
+	 *
+	 * Every round so far writes CLR and moves on: BUS_PROT_IGN means "never acknowledge", so
+	 * mtk-scpsys.c:409 returns before reading the status word and a clear that landed and a
+	 * clear that did nothing look identical. Poll it here instead and print the answer. This
+	 * lives inside bus_protect_release() rather than in its own function because the separate
+	 * version got compiled but never ran.
+	 */
+	if (gInfracfg != 0) {
+		static const struct {
+			uint32_t clr_off, sta_off, mask;
+			const char *what;
+		} kPoll[] = {
+			{ 0x0ca8u, 0x0cacu, 0x0000000fu, "md0" },
+			{ 0x0c68u, 0x0c6cu, 0x000c0000u, "emisys0" },
+			{ 0x0c78u, 0x0c7cu, 0x000c0000u, "emisys1" },
+		};
+		unsigned q;
+
+		for (q = 0; q < sizeof(kPoll) / sizeof(kPoll[0]); q++) {
+			uint32_t s0 = reg_rd(gInfracfg, kPoll[q].sta_off);
+			uint32_t s1;
+			unsigned spins;
+
+			printf("mali: bp raw %s: en %#x set %#x clr %#x sta %#x\n",
+			    kPoll[q].what,
+			    reg_rd(gInfracfg, 0x0000u + (q == 0 ? 0x0ca0u : (q == 1 ? 0x0c60u : 0x0c70u))),
+			    reg_rd(gInfracfg, q == 0 ? 0x0ca4u : (q == 1 ? 0x0c64u : 0x0c74u)),
+			    reg_rd(gInfracfg, kPoll[q].clr_off),
+			    s0);
+			reg_wr(gInfracfg, kPoll[q].clr_off, kPoll[q].mask);
+			__asm__ volatile ("dsb sy" ::: "memory");
+			for (spins = 0; spins < 10000u; spins++) {
+				s1 = reg_rd(gInfracfg, kPoll[q].sta_off);
+				if ((s1 & kPoll[q].mask) == 0u) {
+					break;
+				}
+				delay(10);
+			}
+			s1 = reg_rd(gInfracfg, kPoll[q].sta_off);
+			printf("mali: bpverify %s: sta %#x -> %#x after %u polls (%s)\n",
+			    kPoll[q].what, s0, s1, spins,
+			    (s1 & kPoll[q].mask) == 0u ? "OPENED" : "STILL SET -- clear did not land");
+			/*
+			 * Second route, and only for the group that refused the first one.
+			 *
+			 * scpsys takes this fork whenever a descriptor has no set_ofs
+			 * (mtk-scpsys.c:386-389 / :412-415): touch the enable word instead of the clear
+			 * word. The phone's own reading for this register is 0x0 (it is
+			 * MD_MFGSYS_PROTECT_EN_0, clkchk-mt6895.c:177), so setting the bits is not the
+			 * goal -- the goal is to find out whether AP writes to this word land at all.
+			 * If the value does not change even briefly, the word is not ours to write.
+			 */
+			if ((s1 & kPoll[q].mask) != 0u) {
+				uint32_t enow = reg_rd(gInfracfg,
+				    q == 0 ? 0x0ca0u : (q == 1 ? 0x0c60u : 0x0c70u));
+
+				reg_wr(gInfracfg,
+				    q == 0 ? 0x0ca0u : (q == 1 ? 0x0c60u : 0x0c70u),
+				    enow | kPoll[q].mask);
+				__asm__ volatile ("dsb sy" ::: "memory");
+				printf("mali: bpverify %s: EN route %#x -> %#x, sta now %#x (%s)\n",
+				    kPoll[q].what, enow,
+				    reg_rd(gInfracfg,
+					q == 0 ? 0x0ca0u : (q == 1 ? 0x0c60u : 0x0c70u)),
+				    reg_rd(gInfracfg, kPoll[q].sta_off),
+				    (reg_rd(gInfracfg, kPoll[q].sta_off) & kPoll[q].mask) == 0u
+					? "OPENED" : "still set");
+			}
+		}
+	}
 	if (gMfgrpc != 0) {
 		/* 0x13F91044 (the CLR word, read back above) answers 0xf on every run, so that one
 		 * sub-block is decoded and clocked. 0x13F91034 is not -- touching it hangs the bus,
@@ -1712,6 +2046,82 @@ bus_protect_release(void)
 		} else {
 			printf("mali: bus protect sta: mfgrpc not read (mali_rpc=0)\n");
 		}
+	}
+}
+
+/*
+ * mali_bpverify=1: release the bus protection and then actually confirm it.
+ *
+ * Every round so far has written the four CLR words and moved on, because BUS_PROT_IGN means
+ * "this SoC never acknowledges the clear" and mtk-scpsys.c:409 returns before the status read.
+ * But a silently-ignored clear and a clear that landed look identical when nobody looks:
+ *
+ *	md0 sta 0xffffffe0  before mfg1   (bits 0..3 = 0)
+ *	md0 sta 0xffffffef  after  CLR    (bits 0..3 = 1)
+ *
+ * and set_bus_protection() polls for (val & mask) == mask while clear_bus_protection() polls for
+ * !(val & mask), so bit=1 means the port is protected. On that reading the clear never landed.
+ *
+ * That conclusion is drawn for md0 only. On the same phone dump emisys0/1 read bits 18/19 = 1
+ * (protected) and that phone's GPU works, so "sta bit 1 means blocked" does not generalise to
+ * every port group. md0 is the only group where the phone and this board disagree
+ * (phone 0xCAC = 0xffffffe0, bits 0..3 = 0; this board = 0xffffffef, bits 0..3 = 1).
+ *
+ * This routine does it the way the vendor's own helpers do: make sure the enable bit is set,
+ * write CLR, then poll STA until the mask reads zero, printing every step. If it does not
+ * converge, that is the answer -- and it would explain the witness result (a core that cannot
+ * fetch a single instruction) better than any firmware-side theory.
+ */
+static void
+bus_protect_release_verified(void)
+{
+	static const struct {
+		uint32_t set_off, clr_off, en_off, sta_off, mask;
+		const char *what;
+	} kProt[] = {
+		{ 0x0ca4u, 0x0ca8u, 0x0ca0u, 0x0cacu, 0x0000000fu, "md0" },
+		{ 0x0c64u, 0x0c68u, 0x0c60u, 0x0c6cu, 0x000c0000u, "emisys0" },
+		{ 0x0c74u, 0x0c78u, 0x0c70u, 0x0c7cu, 0x000c0000u, "emisys1" },
+	};
+	unsigned i;
+
+	if (gInfracfg == 0) {
+		printf("mali: bpverify: infracfg not mapped\n");
+		return;
+	}
+	for (i = 0; i < sizeof(kProt) / sizeof(kProt[0]); i++) {
+		uint32_t en = reg_rd(gInfracfg, kProt[i].en_off);
+		uint32_t sta0 = reg_rd(gInfracfg, kProt[i].sta_off);
+		uint32_t sta1;
+		unsigned spins;
+
+		printf("mali: bpverify %s: set %#x clr %#x en %#x sta %#x (mask %#x)\n",
+		    kProt[i].what, reg_rd(gInfracfg, kProt[i].set_off),
+		    reg_rd(gInfracfg, kProt[i].clr_off), en, sta0, kProt[i].mask);
+		/*
+		 * Never pre-assert the enable word.
+		 *
+		 * SET / CLR / EN are three views of one latch, and the vendor's helpers pick exactly
+		 * one of them (mtk-scpsys.c:386-389 and :412-415: use set_ofs if present, else touch
+		 * en_ofs -- never both). Writing EN |= mask before CLR would arm a port that is
+		 * already open and then hope the CLR disarms it again. emisys0/1 are open on this
+		 * board right now (sta 0xff000020, bits 18/19 = 0), so that sequence would put two
+		 * good ports at risk to test one whose CLR is the one under suspicion.
+		 */
+		(void)en;
+		reg_wr(gInfracfg, kProt[i].clr_off, kProt[i].mask);
+		__asm__ volatile ("dsb sy" ::: "memory");
+		for (spins = 0; spins < 100000u; spins++) {
+			sta1 = reg_rd(gInfracfg, kProt[i].sta_off);
+			if ((sta1 & kProt[i].mask) == 0u) {
+				break;
+			}
+			delay(10);
+		}
+		sta1 = reg_rd(gInfracfg, kProt[i].sta_off);
+		printf("mali: bpverify %s: sta %#x -> %#x after %u spins (%s)\n",
+		    kProt[i].what, sta0, sta1, spins,
+		    (sta1 & kProt[i].mask) == 0u ? "CLEARED" : "STILL SET -- the clear did not land");
 	}
 }
 
@@ -1795,6 +2205,26 @@ pll_300mhz(void)
 	 */
 	reg_wr(gTopckgen, MALI_CLK_CFG_5_CLR, MALI_MFG_SEL_1_MASK);
 	reg_wr(gTopckgen, MALI_CLK_CFG_5_SET, 2u);
+	/*
+	 * mali_scclk=1: clear the power-down bit of mfgsc_ref_sel.
+	 *
+	 * The vendor registers this mux with MUX_GATE_CLR_SET_UPD (clk-mt6895.c:2279-2283) and a
+	 * pdn bit at 7, while mfg_ref_sel one register over is a plain MUX_CLR_SET_UPD with no gate
+	 * (clk-mt6895.c:1917-1921). That difference matters: mfg_ref_sel is the GPU's own clock and
+	 * costs nothing to leave on, but mfgsc_ref_sel -- the second, shader-side selector -- sits
+	 * behind a gate that nothing in this driver has ever cleared.
+	 *
+	 * The board reads CLK_CFG_5 = 0x01010182 before this runs: selector 2 is already set, and
+	 * bit 7 is 1. Under MUX_GATE semantics that is a mux whose parent is selected and whose
+	 * output is gated off, which is precisely the shape of "the MCU's state machine answers but
+	 * no instruction is ever fetched".
+	 */
+	if (gMaliScClk) {
+		reg_wr(gTopckgen, MALI_CLK_CFG_5_CLR, 1u << 7);
+		delay(2);
+		printf("mali: scclk: cfg5 %#x after un-gating bit7\n",
+		    reg_rd(gTopckgen, MALI_CLK_CFG_5));
+	}
 	delay(2);
 
 	printf("mali: pll: con0 %#x con1 %#x con3 %#x cfg5 %#x cfg30 %#x\n",
@@ -2332,10 +2762,20 @@ mcu_window_dump(const char *when)
 	unsigned shown = 0;
 
 	printf("mali: MCU window %s:", when);
+	/*
+	 * mali_mcuwin=1 prints every word, including the zeros.
+	 *
+	 * The filter below was there because the window looked empty and printing 64 lines of
+	 * nothing is noise. It is the opposite of what this run needs: Android's register history
+	 * contains no access at all to 0x3000..0x3100 in 2460 records, so this block has never
+	 * been compared against anything, and "the words that are zero" is information here --
+	 * a state word that should be non-zero and reads zero is a different finding from a state
+	 * word that is simply not implemented.
+	 */
 	for (at = 0x3000u; at < 0x3100u; at += 4u) {
 		uint32_t v = mrd(at);
 
-		if (v == 0u || v == 0xffffffffu) {
+		if (!gMaliMcuWin && (v == 0u || v == 0xffffffffu)) {
 			continue;
 		}
 		if ((shown % 4u) == 0u) {
@@ -3278,7 +3718,39 @@ start_mcu(void)
 	}
 	/* Freeze before AUTO, then print after the attempt so tracing cannot delay the request. */
 	gMaliWritesFrozen = true;
+	/*
+	 * mali_mcuseq=1: two writes instead of one.
+	 *
+	 * kbase's register header defines MCU_CNTRL_ENABLE as (1 << 0) and MCU_CNTRL_AUTO as
+	 * (1 << 1) -- two separate bits in one field, not two values of one enum. Every kbase site
+	 * writes AUTO alone, and so does this driver, which is why "write 2" has been treated as
+	 * the whole start sequence. But the header also defines MCU_STATUS_HALTED as (1 << 1) and
+	 * nothing else, so the "1" this board reads back from MCU_STATUS is not a value the header
+	 * names at all -- the reading "1 means ENABLED" is this project's interpretation, not
+	 * something the vendor documents.
+	 *
+	 * If that "1" is MCU_STATUS bit 0 rather than an enum value, then the core is sitting in a
+	 * state the AUTO write does not clear, and one ENABLE written before it is the cheapest
+	 * way to find out. The vendor's comment on enable_mcu gives the reason it might matter:
+	 * AUTO exists so that on a fast reset the MCU can leave protected mode by itself -- it
+	 * presumes a core that has been through an ENABLE at least once.
+	 */
+	if (gMaliMcuSeq) {
+		mwr(kMcuControl, kMcuControlEnable);
+		__asm__ volatile ("dsb sy" ::: "memory");
+		delay(5);
+		printf("mali: mcuseq: after ENABLE write, control reads %#x status %#x\n",
+		    mrd(kMcuControl), mrd(kMcuStatus));
+	}
 	mwr(kMcuControl, kMcuControlAuto);
+	if (gMaliMcuSeq) {
+		__asm__ volatile ("dsb sy" ::: "memory");
+		delay(5);
+		printf("mali: mcuseq: after AUTO write, control reads %#x status %#x (status bits: 0=%u 1=%u 2=%u 3=%u)\n",
+		    mrd(kMcuControl), mrd(kMcuStatus),
+		    mrd(kMcuStatus) & 1u, (mrd(kMcuStatus) >> 1) & 1u,
+		    (mrd(kMcuStatus) >> 2) & 1u, (mrd(kMcuStatus) >> 3) & 1u);
+	}
 	/*
 	 * And ring the doorbell.
 	 *
@@ -3522,6 +3994,37 @@ start_mcu(void)
 	 */
 	if (!booted) {
 		printf("mali: the global interface never raised; the MCU did not boot\n");
+		/*
+		 * The SRAM isolation, read where it cannot be lost.
+		 *
+		 * mali_aoc_up() clears AOC_VGPU_SRAM_ISO_DIN(bit9) and AOC_VGPU_SRAM_LATCH_ENB(bit10)
+		 * at the very top of the cold-start path, and the ring buffer on this board has thrown
+		 * that line away on every run -- so whether the isolation was ever released has never
+		 * been observed, only assumed. The failure path is the right place to look because it
+		 * sits in the part of the log that survives.
+		 *
+		 * This matters more than any of the firmware-side theories. A GPU whose SRAM is held
+		 * in isolation still answers every register read (the register file is on the bus, not
+		 * in that memory), still reports itself present, still accepts a firmware image into
+		 * DRAM -- and still cannot fetch an instruction. That is this board's signature
+		 * exactly: MCU_STATUS reads enabled because the state machine took the request, no
+		 * translation fault because no fetch was ever attempted, and the sentinel word left
+		 * as written because nothing ran.
+		 *
+		 * Read only. Nothing here changes state.
+		 */
+		{
+			uint32_t iso = reg_rd(gSpm, MALI_SPM_BUCK_ISO);
+			uint32_t sema = reg_rd(gSpm, MALI_SPM_SEMA_M4);
+
+			printf("mali: aoc verdict: 0xF30 %#x (srclk iso %u, latch %u) 0x6AC %#x\n",
+			    iso, (iso & MALI_AOC_VGPU_SRAM_ISO) ? 1u : 0u,
+			    (iso & MALI_AOC_VGPU_LATCH) ? 1u : 0u, sema);
+			printf("mali: aoc verdict: %s\n",
+			    ((iso & MALI_AOC_VGPU_SRAM_ISO) || (iso & MALI_AOC_VGPU_LATCH))
+			    ? "SRAM STILL ISOLATED -- the MCU has no memory to fetch from"
+			    : "isolation released as intended; look elsewhere");
+		}
 	}
 	return booted;
 }
@@ -3657,6 +4160,13 @@ mali_bring_up(void)
 		return;
 	}
 	bus_protect_release();
+	/*
+	 * Unconditional. The switch this used to sit behind (mali_bpverify) was passed on the
+	 * command line and read back as zero, so the one experiment that answers "does the MD0
+	 * clear actually land" never ran. Nothing here is new write traffic: every address is one
+	 * bus_protect_release() already touches two lines above.
+	 */
+	bus_protect_release_verified();
 
 	/*
 	 * What the loader has already done, and why nothing here repeats it.
@@ -3759,6 +4269,60 @@ mali_bring_up(void)
 		mali_vstack_rail();
 		/* The crystal first, so the block always has a clock to answer with. */
 		clock_26m();
+		/*
+		 * mali_pdcauto=1: the PDC handover, now that the gate is open.
+		 *
+		 * This is the run the vendor makes: mfg1 by hand, then MFG_ACTIVE_POWER_CON and the
+		 * controller does the rest. Placed here because the first attempt wrote all of it
+		 * behind a shut BG3D gate and every store came back zero.
+		 */
+		if (gMaliPdcAuto) {
+			unsigned pdcup = 0;
+			unsigned pdi;
+			uint32_t gf;
+
+			printf("mali: pdc auto: %u pdc words written (gate open)\n", pdc_enable());
+			pdc_report();
+			/* The controller is hardware, not a register write; give it 200 ms. */
+			delay(200000);
+			gf = reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF) & 0x3ffcu;
+			printf("mali: pdc auto: 0xF3C %#x (want 0x3ffe) 0xF40 %#x 0xF34 %#x\n",
+			    gf, reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF + 4u) & 0x3ffcu,
+			    reg_rd(gSpm, MALI_SPM_PWR_STATUS) & MALI_MFG_PWR_MASK);
+			for (pdi = 0; pdi < 12u; pdi++) {
+				if (gf & (1u << (pdi + 2))) {
+					pdcup++;
+				}
+			}
+			printf("mali: pdc auto: %u of twelve domains up via PDC\n", pdcup);
+			/*
+			 * Raw dump, no mask. 0x3FFC is the vendor's MFG_1_12_PWR_MASK; anything above
+			 * the low bits of 0xF3C is a different field and is worth seeing rather than
+			 * masking away. Also re-read each PDC enable to find which ones the hardware
+			 * cleared again (st6 and sc9 were 0 in trial 602 straight after being written).
+			 */
+			printf("mali: pwr raw: 0xF3C %#x 0xF40 %#x 0xF34 %#x 0xF38 %#x\n",
+			    reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF),
+			    reg_rd(gSpm, MALI_SPM_PWR_STATUS_GF + 4u),
+			    reg_rd(gSpm, MALI_SPM_PWR_STATUS),
+			    reg_rd(gSpm, MALI_SPM_PWR_STATUS2));
+			{
+				char line[160];
+				unsigned off = 0;
+
+				line[0] = 0;
+				for (pdi = 0; pdi < MALI_PDC_CORES; pdi++) {
+					off += scnprintf(line + off, sizeof(line) - off, " sc%u=%#x",
+					    pdi, reg_rd(gMfgcfg, MALI_PDC_SC_BASE + pdi * MALI_PDC_SC_STEP) & 1u);
+					if (off > sizeof(line) - 20) break;
+				}
+				printf("mali: pdc readback:%s\n", line);
+			}
+			printf("mali: shader/bus: present %#x ready %#x pwron %#x pwrtran %#x"
+			    " l2pwron %#x l2active %#x\n",
+			    mrd(kShaderPresent), mrd(kShaderReady), mrd(kShaderPwrOn),
+			    mrd(kShaderPwrTrans), mrd(kL2PwrOn), mrd(kL2PwrActive));
+		}
 		/*
 		 * PDC after the clock, never before.
 		 *
@@ -4163,6 +4727,50 @@ mali_bring_up(void)
 		gpueb_watch("after the failed start");
 		gmpu_probe("after the failed start");
 		cpe_probe();
+		/* Read fixed offsets in our allocated DRAM only. Do not follow firmware pointers
+		 * or ring a doorbell when the firmware has not announced a successful boot. */
+		printf("mali: shared probe trial %u: failed-start tail, level %u; global_interface skipped\n",
+		    gMaliTrial, gMaliLevel);
+		if (gShared != NULL && gShared->va_end >= gShared->va_start &&
+		    gShared->mem.kva != 0 && gShared->mem.size >= 0x1020u &&
+		    gShared->va_end - gShared->va_start >= 0x1020u) {
+			volatile struct glb_control *raw =
+			    (volatile struct glb_control *)gShared->mem.kva;
+			volatile struct csg_control *csg =
+			    (volatile struct csg_control *)(gShared->mem.kva + 0x1000u);
+			uint64_t lo = gShared->va_start;
+			uint64_t hi = gShared->va_end;
+			uint32_t version = raw->version;
+			uint32_t input_va = raw->input_va;
+			uint32_t output_va = raw->output_va;
+			uint32_t csg_in = csg->input_va;
+			uint32_t csg_out = csg->output_va;
+			bool in_ok = input_va >= lo && input_va < hi &&
+			    sizeof(struct glb_input) <= hi - input_va;
+			bool out_ok = output_va >= lo && output_va < hi &&
+			    sizeof(struct glb_output) <= hi - output_va;
+
+			printf("mali: shared probe: VA %#llx-%#llx size %#lx kva %#llx pa0 %#llx pa1000 %#llx\n",
+			    (unsigned long long)lo, (unsigned long long)hi,
+			    (unsigned long)gShared->mem.size, (unsigned long long)gShared->mem.kva,
+			    (unsigned long long)mem_pa(&gShared->mem, 0),
+			    (unsigned long long)mem_pa(&gShared->mem, 0x1000u));
+			printf("mali: shared probe GLB: version %#x features %#x input_va %#x output_va %#x\n",
+			    version, raw->features, input_va, output_va);
+			printf("mali: shared probe GLB: groups %u stride %#x perfcnt %#x instr %#x input_span_ok %u output_span_ok %u\n",
+			    raw->group_num, raw->group_stride, raw->perfcnt_size, raw->instr_features,
+			    in_ok ? 1u : 0u, out_ok ? 1u : 0u);
+			printf("mali: shared probe CSG0: features %#x input_va %#x output_va %#x suspend %#x protected_suspend %#x\n",
+			    csg->features, csg_in, csg_out, csg->suspend_size, csg->protm_suspend_size);
+			printf("mali: shared probe CSG0: streams %u stride %#x input_in_section %u output_in_section %u\n",
+			    csg->stream_num, csg->stream_stride,
+			    csg_in >= lo && csg_in < hi ? 1u : 0u,
+			    csg_out >= lo && csg_out < hi ? 1u : 0u);
+		} else {
+			printf("mali: shared probe: fixed GLB/CSG ranges unavailable; no reads performed\n");
+		}
+		printf("mali: shared probe trial %u: completed; returning before global_interface\n",
+		    gMaliTrial);
 		return;
 	}
 	if (gMaliWitness) {
@@ -4314,6 +4922,11 @@ hakios_mali610_init(void)
 	}
 	{
 		unsigned sema = 0;
+		unsigned pdcauto = 0;
+
+		if (PE_parse_boot_argn("mali_pdcauto", &pdcauto, sizeof(pdcauto))) {
+			gMaliPdcAuto = pdcauto ? 1u : 0u;
+		}
 
 		if (PE_parse_boot_argn("mali_sema", &sema, sizeof(sema))) {
 			gMaliSema = sema ? 1u : 0u;
@@ -4325,6 +4938,13 @@ hakios_mali610_init(void)
 	PE_parse_boot_argn("mali_trial", &gMaliTrial, sizeof(gMaliTrial));
 	PE_parse_boot_argn("mali_noapclear", &gMaliNoApClear, sizeof(gMaliNoApClear));
 	PE_parse_boot_argn("mali_nopwrclear", &gMaliNoPwrClear, sizeof(gMaliNoPwrClear));
+	PE_parse_boot_argn("mali_domainwait", &gMaliDomainWait, sizeof(gMaliDomainWait));
+	PE_parse_boot_argn("mali_fwnc", &gMaliFwNc, sizeof(gMaliFwNc));
+	PE_parse_boot_argn("mali_fwx", &gMaliFwX, sizeof(gMaliFwX));
+	PE_parse_boot_argn("mali_bpverify", &gMaliBpVerify, sizeof(gMaliBpVerify));
+	PE_parse_boot_argn("mali_scclk", &gMaliScClk, sizeof(gMaliScClk));
+	PE_parse_boot_argn("mali_mcuwin", &gMaliMcuWin, sizeof(gMaliMcuWin));
+	PE_parse_boot_argn("mali_mcuseq", &gMaliMcuSeq, sizeof(gMaliMcuSeq));
 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {
 		thread_deallocate(thread);
 	} else {
