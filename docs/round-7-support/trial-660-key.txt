@@ -1,0 +1,8 @@
+[   37.935697]: mali: walk 0: L0 0x50008403 L1 0x5000c403 L2 0x50010403 L3 0x40000050004fc3 page
+[   37.937927]: mali: walk 0x1000000: L0 0x50008403 L1 0x5000c403 L2 0x50024403 L3 0x50014fc3 page
+[   37.940174]: mali: walk 0x2000000: L0 0x50008403 L1 0x5000c403 L2 0x50068403 L3 0x40000050028f43 page
+[   37.942414]: mali: walk 0x4000000: L0 0x50008403 L1 0x5000c403 L2 0x50198403 L3 0x40000050104e57 page
+[   37.944638]: mali: walk 0x40000000: L0 0x50008403 L1 0 table unset
+[   37.946831]: mali: walk 0x40022000: L0 0x50008403 L1 0 table unset
+[   37.953340]: mali: coverage: every section fully mapped
+[   37.977878]: mali: trial 660 mali=3 stop: level 3 cold 1 low 1 preas0 1 freerun 0 parkattrs 0 trace 1 as0first 0 noapclear 0 nopwrclear 0 domainwait 0 fwnc 0 fwx 0

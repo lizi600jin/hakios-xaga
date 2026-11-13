@@ -1,0 +1,8 @@
+[   37.544270]: mali: walk 0: L0 0x50008403 L1 0x5000c403 L2 0x50010403 L3 0x40000050004fc3 page
+[   37.545628]: mali: walk 0x1000000: L0 0x50008403 L1 0x5000c403 L2 0x50024403 L3 0x50014fc3 page
+[   37.546972]: mali: walk 0x2000000: L0 0x50008403 L1 0x5000c403 L2 0x50068403 L3 0x40000050028f43 pageprocess lsd[20] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.549680]: mali: walk 0x4000000: L0 0x50008403 L1 0x5000c403 L2 0x50198403 L3 0x40000050104e57 page
+[   37.551070]: mali: walk 0x40000000: L0 0x50008403 L1 0 table unset
+[   37.552440]: mali: walk 0x40022000: L0 0x50008403 L1 0 table unset
+[   37.556562]: mali: coverage: every section fully mapped
+[   37.572110]: mali: trial 662 mali=3 stop: level 3 cold 1 low 1 preas0 1 freerun 0 parkattrs 0 trace 1 as0first 0 noapclear 0 nopwrclear 0 domainwait 0 fwnc 0 fwx 0

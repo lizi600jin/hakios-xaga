@@ -1,0 +1,28 @@
+[   39.104650]: mali: walk 0: L0 0x50008403 L1 0x5000c403 L2 0x50010403 L3 0x40000050004fc3 page
+[   39.111569]: mali: walk 0x1000000: L0 0x50008403 L1 0x5000c403 L2 0x50024403 L3 0x50014fc3 page
+[   39.118500]: mali: walk 0x2000000: L0 0x50008403 L1 0x5000c403 L2 0x50068403 L3 0x40000050028f43 pageprocess lsd[20] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.132273]: mali: walk 0x4000000: L0 0x50008403 L1 0x5000c403 L2 0x50198403 L3 0x40000050104e57 page
+[   39.139180]: mali: walk 0x40000000: L0 0x50008403 L1 0 table unsetprocess lsd[20] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.152975]: mali: walk 0x40022000: L0 0x50008403 L1 0 table unset
+[   39.180379]: mali: coverage: every section fully mapped
+[   39.207390]: mali: mmu irq 0 after the clear, before AS0 and before the L2
+[   39.213961]: mali: AS0 step idle      mmu irq 0
+[   39.220454]: mali: AS0 step transtab  mmu irq 0
+[   39.233404]: mali: AS0 step memattr   mmu irq 0
+[   39.239788]: mali: AS0 step transcfg  mmu irq 0
+[   39.246283]: mali: AS0 readback: transtab 0x50000000 memattr 0x84c8d888d8f88 transcfg 0x42000006
+[   39.259140]: mali: AS0 step update    mmu irq 0x10000
+[   39.265447]: mali: AS0 enabled: root 0x50000000 transcfg 0x42000006
+[   39.271727]: mali: mmu irq 0x10000 after AS0 took the update, before the L2
+[   39.423158]: mali: mmu irq 0x10000 before the start request (page faults 0, request completions 0x1)
+[   39.429764]: mali: sentinel 0xff5aa5f0 written to the version word
+[   39.454827]: mali: mmu irq 0 with the latch freshly cleared, just before the start request
+[   39.456984]: mali: glb req 0 -> 0 (halt was already clear)
+[   39.459127]: mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+[   39.466480]: mali: spin 1000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+[   40.044816]: mali: spin 100000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+[   43.796492]: mali: spin 500000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+[   49.243501]: mali: the start loop ended after 1000000 spins (halt seen 0, fatal seen 0)
+[   49.245663]: mali: trial 663 after AUTO (stores captured before AUTO): level 5 cold 1 low 1 preas0 1 freerun 0 parkattrs 0 trace 1 as0first 0 noapclear 0 nopwrclear 0 domainwait 0 fwnc 0 fwx 0
+[   49.351412]: mali: version word 0xff5aa5f0 (untouched; no firmware version published)
+[   49.352932]: mali: the global interface never raised; the MCU did not boot

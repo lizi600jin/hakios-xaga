@@ -1,0 +1,436 @@
+{
+  "scope": "offline model and existing logs only; no hardware access",
+  "sources": [
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/mtk/mt6895/drivers/gpu/hakios.mali610.c",
+      "bytes": 226344,
+      "sha256": "d37bb795b0e996bfe787e85ab5118d092f640ac0779ce00c30ee19557c0e24d6"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/drivers/gpu/hakios.mali610_fw.h",
+      "bytes": 1323077,
+      "sha256": "ccdd7ba351a3f3d10f883b4f0de2abc58bbadf7758d5ea68214e01cdf7c28cf7"
+    },
+    {
+      "path": "/tmp/src-ref/panthor_panthor_fw.c",
+      "bytes": 45236,
+      "sha256": "344282baeb26af9d59fbbbd997476f0dbdc501abdb0d76b84c701052be194e73"
+    },
+    {
+      "path": "/home/lizi/IOS/work-xaga/k-xaga-16.2/drivers/gpu/mediatek/mali-valhall/gpu/arm/midgard/csf/mali_kbase_csf_firmware.c",
+      "bytes": 72731,
+      "sha256": "48cda0c20e0f4d86e843a89290fa159c48e1bd90a3f641837ae1e5f0c249764c"
+    },
+    {
+      "path": "/home/lizi/IOS/work-xaga/k-xaga-16.2/drivers/gpu/mediatek/mali-valhall/gpu/arm/midgard/csf/mali_kbase_csf_trace_buffer.c",
+      "bytes": 22810,
+      "sha256": "47684447837c15d8f905bfef18da26dbb96c6fc3901f73f5526167ca455f4a22"
+    },
+    {
+      "path": "/home/lizi/IOS/work-xaga/k-xaga-16.2/drivers/gpu/mediatek/mali-valhall/gpu/arm/midgard/mmu/mali_kbase_mmu_mode_aarch64.c",
+      "bytes": 6537,
+      "sha256": "b3cf619fae60ea26c537b56669ad8b6bd99e63b36c29bcc4b7f242260dbe4b5c"
+    },
+    {
+      "path": "/home/lizi/IOS/work-xaga/k-xaga-16.2/drivers/gpu/mediatek/mali-valhall/gpu/arm/midgard/mmu/mali_kbase_mmu_hw_direct.c",
+      "bytes": 17843,
+      "sha256": "6ceedb1d4948cbde7218d2a90c286c0aef2a16e8fde7aa85e0efa70d3bb8a472"
+    },
+    {
+      "path": "/home/lizi/IOS/work-xaga/k-xaga-16.2/drivers/gpu/mediatek/mali-valhall/gpu/arm/midgard/mmu/backend/mali_kbase_mmu_csf.c",
+      "bytes": 19308,
+      "sha256": "236bf477c8d4e7b25b2e7d2297e0f4e4d39737eac8166e96b543efee028321c1"
+    },
+    {
+      "path": "/home/lizi/IOS/work-xaga/k-xaga-16.2/drivers/gpu/mediatek/mali-valhall/gpu/arm/midgard/include/uapi/gpu/arm/midgard/gpu/mali_kbase_gpu_regmap.h",
+      "bytes": 21060,
+      "sha256": "cee060b7f578eb33d9005bd90f07531d9ffb98939ead3e281ec6e9a0b1a30b98"
+    }
+  ],
+  "firmware_binary_sha256": "de22d2fc06bc8a859968499a6e609c27fe838be062bf5c97d92ea9f904f7229a",
+  "host_page_bytes": 16384,
+  "gpu_leaf_bytes": 4096,
+  "table_count": 9,
+  "leaves_total": 357,
+  "shared_leaves": 148,
+  "sections": [
+    {
+      "section": 0,
+      "va_start": "0x0",
+      "va_end_exclusive": "0x1000",
+      "leaves": 1,
+      "pa_start_model": "0x50004000",
+      "first_leaf": "0x40000050004fc3",
+      "last_leaf": "0x40000050004fc3",
+      "file_bytes": 2836,
+      "zero_tail_bytes": 1260
+    },
+    {
+      "section": 1,
+      "va_start": "0x1000000",
+      "va_end_exclusive": "0x1010000",
+      "leaves": 16,
+      "pa_start_model": "0x50014000",
+      "first_leaf": "0x50014fc3",
+      "last_leaf": "0x50023fc3",
+      "file_bytes": 63560,
+      "zero_tail_bytes": 1976
+    },
+    {
+      "section": 2,
+      "va_start": "0x2000000",
+      "va_end_exclusive": "0x203e000",
+      "leaves": 62,
+      "pa_start_model": "0x50028000",
+      "first_leaf": "0x40000050028f43",
+      "last_leaf": "0x40000050065f43",
+      "file_bytes": 180752,
+      "zero_tail_bytes": 73200
+    },
+    {
+      "section": 3,
+      "va_start": "0x203e000",
+      "va_end_exclusive": "0x203f000",
+      "leaves": 1,
+      "pa_start_model": "0x5006c000",
+      "first_leaf": "0x4000005006cf43",
+      "last_leaf": "0x4000005006cf43",
+      "file_bytes": 0,
+      "zero_tail_bytes": 4096
+    },
+    {
+      "section": 4,
+      "va_start": "0x203f000",
+      "va_end_exclusive": "0x2040000",
+      "leaves": 1,
+      "pa_start_model": "0x50070000",
+      "first_leaf": "0x40000050070f43",
+      "last_leaf": "0x40000050070f43",
+      "file_bytes": 0,
+      "zero_tail_bytes": 4096
+    },
+    {
+      "section": 5,
+      "va_start": "0x2800000",
+      "va_end_exclusive": "0x2840000",
+      "leaves": 64,
+      "pa_start_model": "0x50074000",
+      "first_leaf": "0x40000050074fc3",
+      "last_leaf": "0x400000500b3fc3",
+      "file_bytes": 180752,
+      "zero_tail_bytes": 81392
+    },
+    {
+      "section": 6,
+      "va_start": "0x3000000",
+      "va_end_exclusive": "0x303e000",
+      "leaves": 62,
+      "pa_start_model": "0x500b8000",
+      "first_leaf": "0x400000500b8f43",
+      "last_leaf": "0x400000500f5f43",
+      "file_bytes": 0,
+      "zero_tail_bytes": 253952
+    },
+    {
+      "section": 7,
+      "va_start": "0x303e000",
+      "va_end_exclusive": "0x303f000",
+      "leaves": 1,
+      "pa_start_model": "0x500fc000",
+      "first_leaf": "0x400000500fcf43",
+      "last_leaf": "0x400000500fcf43",
+      "file_bytes": 0,
+      "zero_tail_bytes": 4096
+    },
+    {
+      "section": 8,
+      "va_start": "0x303f000",
+      "va_end_exclusive": "0x3040000",
+      "leaves": 1,
+      "pa_start_model": "0x50100000",
+      "first_leaf": "0x40000050100f43",
+      "last_leaf": "0x40000050100f43",
+      "file_bytes": 0,
+      "zero_tail_bytes": 4096
+    },
+    {
+      "section": 9,
+      "va_start": "0x4000000",
+      "va_end_exclusive": "0x4094000",
+      "leaves": 148,
+      "pa_start_model": "0x50104000",
+      "first_leaf": "0x40000050104e57",
+      "last_leaf": "0x40000050197e57",
+      "file_bytes": 8192,
+      "zero_tail_bytes": 598016
+    }
+  ],
+  "shared_glb_words": [
+    "0x0",
+    "0x0",
+    "0x4002000",
+    "0x4003000",
+    "0x8",
+    "0xa0",
+    "0x0",
+    "0x71"
+  ],
+  "shared_csg0_words": [
+    "0x0",
+    "0x4004000",
+    "0x400c000",
+    "0x0",
+    "0x0",
+    "0x8",
+    "0xc"
+  ],
+  "shared_zero_tail_from": "0x04002000",
+  "entries": [
+    {
+      "offset": "0x14",
+      "type": 0,
+      "size": 32,
+      "optional": false
+    },
+    {
+      "offset": "0x34",
+      "type": 0,
+      "size": 28,
+      "optional": false
+    },
+    {
+      "offset": "0x50",
+      "type": 0,
+      "size": 28,
+      "optional": false
+    },
+    {
+      "offset": "0x6c",
+      "type": 0,
+      "size": 28,
+      "optional": false
+    },
+    {
+      "offset": "0x88",
+      "type": 0,
+      "size": 28,
+      "optional": false
+    },
+    {
+      "offset": "0xa4",
+      "type": 0,
+      "size": 28,
+      "optional": false
+    },
+    {
+      "offset": "0xc0",
+      "type": 0,
+      "size": 28,
+      "optional": false
+    },
+    {
+      "offset": "0xdc",
+      "type": 0,
+      "size": 28,
+      "optional": false
+    },
+    {
+      "offset": "0xf8",
+      "type": 0,
+      "size": 28,
+      "optional": false
+    },
+    {
+      "offset": "0x114",
+      "type": 0,
+      "size": 32,
+      "optional": false
+    },
+    {
+      "offset": "0x134",
+      "type": 1,
+      "size": 60,
+      "optional": true
+    },
+    {
+      "offset": "0x170",
+      "type": 1,
+      "size": 60,
+      "optional": true
+    },
+    {
+      "offset": "0x1ac",
+      "type": 1,
+      "size": 56,
+      "optional": true
+    },
+    {
+      "offset": "0x1e4",
+      "type": 1,
+      "size": 32,
+      "optional": true
+    },
+    {
+      "offset": "0x204",
+      "type": 3,
+      "size": 40,
+      "optional": true
+    },
+    {
+      "offset": "0x22c",
+      "type": 3,
+      "size": 48,
+      "optional": true
+    },
+    {
+      "offset": "0x25c",
+      "type": 3,
+      "size": 40,
+      "optional": true
+    },
+    {
+      "offset": "0x284",
+      "type": 3,
+      "size": 44,
+      "optional": true
+    },
+    {
+      "offset": "0x2b0",
+      "type": 3,
+      "size": 44,
+      "optional": true
+    },
+    {
+      "offset": "0x2dc",
+      "type": 6,
+      "size": 16,
+      "optional": true
+    },
+    {
+      "offset": "0x2ec",
+      "type": 5,
+      "size": 20,
+      "optional": true
+    }
+  ],
+  "trace_entries": [
+    {
+      "name": "fwutf",
+      "type": 0,
+      "size_va": 140,
+      "insert_va": 144,
+      "extract_va": 148,
+      "data_va": 152,
+      "enable_va": 156,
+      "enable_count": 0,
+      "initial_words": {
+        "size_va": "0x0",
+        "insert_va": "0x0",
+        "extract_va": "0x0",
+        "data_va": "0x0",
+        "enable_va": "0x0"
+      }
+    },
+    {
+      "name": "firmware trace",
+      "type": 1,
+      "size_va": 156,
+      "insert_va": 160,
+      "extract_va": 164,
+      "data_va": 168,
+      "enable_va": 172,
+      "enable_count": 4,
+      "initial_words": {
+        "size_va": "0x0",
+        "insert_va": "0x0",
+        "extract_va": "0x0",
+        "data_va": "0x0",
+        "enable_va": "0x0"
+      }
+    },
+    {
+      "name": "fwlog",
+      "type": 1,
+      "size_va": 176,
+      "insert_va": 180,
+      "extract_va": 184,
+      "data_va": 188,
+      "enable_va": 2764,
+      "enable_count": 11,
+      "initial_words": {
+        "size_va": "0x0",
+        "insert_va": "0x0",
+        "extract_va": "0x0",
+        "data_va": "0x0",
+        "enable_va": "0x0"
+      }
+    },
+    {
+      "name": "benchmark",
+      "type": 0,
+      "size_va": 192,
+      "insert_va": 196,
+      "extract_va": 200,
+      "data_va": 204,
+      "enable_va": 208,
+      "enable_count": 45,
+      "initial_words": {
+        "size_va": "0x0",
+        "insert_va": "0x0",
+        "extract_va": "0x0",
+        "data_va": "0x0",
+        "enable_va": "0x0"
+      }
+    },
+    {
+      "name": "timeline",
+      "type": 0,
+      "size_va": 216,
+      "insert_va": 220,
+      "extract_va": 224,
+      "data_va": 228,
+      "enable_va": 2768,
+      "enable_count": 1,
+      "initial_words": {
+        "size_va": "0x0",
+        "insert_va": "0x0",
+        "extract_va": "0x0",
+        "data_va": "0x0",
+        "enable_va": "0x0"
+      }
+    }
+  ],
+  "trial663_sample_walks_match_model": [
+    "0x0",
+    "0x1000000",
+    "0x2000000",
+    "0x4000000"
+  ],
+  "logs": [
+    {
+      "path": "/home/lizi/IOS/work-xaga/codex/out/round-6-support/trial-608-logbook.bin",
+      "bytes": 4198400,
+      "sha256": "2cce0b37ddf549d3d750ccb9450751ae12cd67a795d2db5cb85593fbdf6b8087"
+    },
+    {
+      "path": "/home/lizi/IOS/work-xaga/codex/out/round-6-support/trial-613-logbook.bin",
+      "bytes": 4198400,
+      "sha256": "5569d7673534b0792b1296d75ff346422c60fea574f60c589c362ac07cd118ac"
+    },
+    {
+      "path": "/home/lizi/IOS/work-xaga/codex/out/round-6-support/trial-660-logbook.bin",
+      "bytes": 4198400,
+      "sha256": "8bb49aa98282a8516b882bc1e701c3d5966b0710097145956a9a0c3f0806aa01"
+    },
+    {
+      "path": "/home/lizi/IOS/work-xaga/codex/out/round-6-support/trial-662-logbook.bin",
+      "bytes": 4198400,
+      "sha256": "eb94c28d052a6f747e862a46feeec069ebaea893d8dbfd76b37a6708bf07a7c4"
+    },
+    {
+      "path": "/home/lizi/IOS/work-xaga/codex/out/round-6-support/trial-663-logbook.bin",
+      "bytes": 4198400,
+      "sha256": "3fe094ca49f41084f5a7e8513272a8aa0db2b5303ef7926b93dd52dbb7221013"
+    }
+  ]
+}

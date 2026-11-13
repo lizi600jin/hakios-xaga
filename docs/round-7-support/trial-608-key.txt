@@ -1,0 +1,30 @@
+[   33.058138]: mali: walk 0: L0 0x50008403 L1 0x5000c403 L2 0x50010403 L3 0x40000050004fc3 page
+[   33.058149]: mali: walk 0x1000000: L0 0x50008403 L1 0x5000c403 L2 0x50024403 L3 0x50014fc3 page
+[   33.058157]: mali: walk 0x2000000: L0 0x50008403 L1 0x5000c403 L2 0x50068403 L3 0x40000050028f43 page
+[   33.058165]: mali: walk 0x4000000: L0 0x50008403 L1 0x5000c403 L2 0x50198403 L3 0x40000050104e57 page
+[   33.058180]: mali: walk 0x40000000: L0 0x50008403 L1 0 table unset
+[   33.058185]: mali: walk 0x40022000: L0 0x50008403 L1 0 table unset
+[   33.058200]: mali: mmu irq 0 after the clear, before AS0 and before the L2
+[   33.058205]: mali: AS0 step idle      mmu irq 0
+[   33.058209]: mali: AS0 step transtab  mmu irq 0
+[   33.058213]: mali: AS0 step memattr   mmu irq 0
+[   33.058217]: mali: AS0 step transcfg  mmu irq 0
+[   33.058221]: mali: AS0 readback: transtab 0x50000000 memattr 0x84c8d888d8f88 transcfg 0x42000006
+[   33.058226]: mali: AS0 step update    mmu irq 0x10000
+[   33.058229]: mali: AS0 enabled: root 0x50000000 transcfg 0x42000006
+[   33.058232]: mali: mmu irq 0x10000 after AS0 took the update, before the L2
+[   33.226792]: mali: mmu irq 0x10000 before the start request (page faults 0, request completions 0x1)
+[   33.229732]: mali: witness: vector was sp 0x2040000 reset 0x10018ed
+[   33.231218]: mali: witness: code at 0x1000000, reset vector now 0x1000001
+[   33.232672]: mali: sentinel 0xff5aa5f0 written to the version word
+[   33.252623]: mali: mmu irq 0 with the latch freshly cleared, just before the start request
+[   33.254206]: mali: glb req 0 -> 0 (halt was already clear)
+[   33.255842]: mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+[   33.269148]: mali: spin 1000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+[   33.873433]: mali: spin 100000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+[   36.265877]: mali: spin 500000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+[   41.765652]: mali: the start loop ended after 1000000 spins (halt seen 0, fatal seen 0)
+[   41.768102]: mali: trial 608 after AUTO (stores captured before AUTO): level 6 cold 1 low 1 preas0 1 freerun 1 parkattrs 1 trace 1 as0first 0 noapclear 0 nopwrclear 0 domainwait 0 fwnc 0 fwx 0
+[   41.875206]: mali: version word 0xff5aa5f0 (untouched; no firmware version published)
+[   41.877437]: mali: the global interface never raised; the MCU did not boot
+[   41.879685]: mali: witness: 0xff5aa5f0 0 -- the core never executed the first store
