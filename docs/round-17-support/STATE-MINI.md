@@ -42,3 +42,9 @@ payload=20509da6253da0c6361d52983601a197e9be02221f1d5346fe539ad5d58c3cf9
 - boot参数完整token各3份；新编内核必须过make-kernel错误分类门，复用内核要核对精确哈希。
 - trace82冻结在AUTO前，不含AUTO和失败尾部DISABLE；不把计数相同说成全启动过程无写差异。
 - 推送export https_proxy=http://127.0.0.1:7897后git push origin main，不重写已发布历史。
+
+## 停手时保留的下轮判据边界
+
+用户要求本轮完成报告推送后停手，未再实施任何实验。下轮skipprot仍须先审条件guard补丁，保留正常入口witness=0。
+
+skipprot不是能保证双向区分“未取指”和“取指后卡住”的唯一实验：若出现归属于本次访问、地址落在PROT范围的fault，会增加访问路径信息；若fault仍为0，两种情形仍可能不可区分。debug_top从4变1b也没有识别请求发起者或证明MCU已经执行指令，不能单独作为“MCU至少执行过”的证据。

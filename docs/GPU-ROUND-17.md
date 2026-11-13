@@ -84,3 +84,9 @@ trace冻结在AUTO之前，82条预期仅指冻结前GPU stores；不能据此�
 主控提出“692 fault=0证明没有写PROT，故skipprot已被部分回答”。本报告不采纳这个推论：692的sec6/7/8仍是有效、可写映射，合法写入也可以fault=0。它没有执行取消映射的干预。未出现版本/JOB/store也不能把故障确定在第一条指令之前。
 
 详细讨论见round-17-support/trial-692-followup-review.md。建议下一阶段先做离线固件兼容性比较和CSF MCU实际clock/reset控制链审计，再决定真机实验；暂不增加未知GPUEB读或自动接续skipprot。MFG域供电、GPUEB自身状态与CSF MCU复位/执行状态不可未经证据互相替代。
+
+## 停手时保留的下轮判据边界
+
+用户要求本轮完成报告推送后停手，未再实施任何实验。下轮skipprot仍须先审条件guard补丁，保留正常入口witness=0。
+
+skipprot不是能保证双向区分“未取指”和“取指后卡住”的唯一实验：若出现归属于本次访问、地址落在PROT范围的fault，会增加访问路径信息；若fault仍为0，两种情形仍可能不可区分。debug_top从4变1b也没有识别请求发起者或证明MCU已经执行指令，不能单独作为“MCU至少执行过”的证据。
