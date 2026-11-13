@@ -1,0 +1,211 @@
+{
+  "result": {
+    "trial": 692,
+    "logbook_bytes": 4198400,
+    "logbook_sha256": "eb778173c3c05864e9de31aaa4f37dea46b7f40705662762836bf5c04e328b6f",
+    "parsed_entire_window": true,
+    "trial_markers": [
+      692
+    ],
+    "mali_rows": 264,
+    "stores": 82,
+    "coverage": {
+      "time": 37.502149,
+      "line": "mali: coverage: every section fully mapped"
+    },
+    "l2": {
+      "time": 37.323058,
+      "line": "mali: L2 up: trans 0 active 0 ready 0x1"
+    },
+    "hwissues": null,
+    "protocol": {
+      "time": 37.323,
+      "line": "mali: protocol trial 692: features 0x1 before 0 after 0 wrote 0"
+    },
+    "stack_before": null,
+    "as0_update": {
+      "time": 37.502218,
+      "line": "mali: AS0 step update    mmu irq 0x10000"
+    },
+    "as0_probe": {
+      "time": 37.502223,
+      "line": "mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 692"
+    },
+    "before_auto": {
+      "time": 37.502332,
+      "line": "mali: views before AUTO: gpu status 0/0 irq raw 0/0x600 mcu control 0 status 0"
+    },
+    "after_auto": {
+      "time": 45.825888,
+      "line": "mali: after the start request: gpu status 0x1, gpu irq status 0, job irq status 0, mmu irq 0, as0 status 0 faultstatus 0 faultaddress 0"
+    },
+    "version": {
+      "time": 45.833494,
+      "line": "mali: version word 0xff5aa5f0 (untouched; no firmware version published) trial 692"
+    },
+    "glb": {
+      "time": 45.834944,
+      "line": "mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0"
+    },
+    "witness_entry": null,
+    "witness_reads": null,
+    "witness_verdict": null,
+    "failed_tail_return": {
+      "time": 47.990434,
+      "line": "mali: shared probe trial 692: completed; returning before global_interface"
+    },
+    "as0_steps": [
+      {
+        "time": 37.502192,
+        "step": "idle",
+        "mmu_irq": "0x0",
+        "line": "mali: AS0 step idle      mmu irq 0"
+      },
+      {
+        "time": 37.502197,
+        "step": "transcfg",
+        "mmu_irq": "0x0",
+        "line": "mali: AS0 step transcfg  mmu irq 0"
+      },
+      {
+        "time": 37.502202,
+        "step": "transtab",
+        "mmu_irq": "0x0",
+        "line": "mali: AS0 step transtab  mmu irq 0"
+      },
+      {
+        "time": 37.502206,
+        "step": "memattr",
+        "mmu_irq": "0x0",
+        "line": "mali: AS0 step memattr   mmu irq 0"
+      },
+      {
+        "time": 37.502218,
+        "step": "update",
+        "mmu_irq": "0x10000",
+        "line": "mali: AS0 step update    mmu irq 0x10000"
+      }
+    ],
+    "assorder_observations": [
+      {
+        "time": 37.502208,
+        "line": "mali: as_enable trial 692: AS0 applied Android order (CFG->TAB->ATTR)"
+      }
+    ],
+    "as0_readback": {
+      "time": 37.502213,
+      "line": "mali: AS0 readback: transtab 0x1a2214000 memattr 0x84c8d888d8f88 transcfg 0x42000006"
+    },
+    "reset_vector": {
+      "time": 37.502152,
+      "line": "mali: reset vector: sp 0x2040000  pc 0x10018ed"
+    },
+    "start_loop_ended": {
+      "time": 45.70356,
+      "line": "mali: the start loop ended after 1000000 spins (halt seen 0, fatal seen 0)"
+    },
+    "normal_mali5_return": null,
+    "witness_enabled": false,
+    "normal_entry_observed": true,
+    "android_as0_order_verified": true,
+    "debug_top": [
+      {
+        "time": 37.502181,
+        "line": "mali: bus idle before the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)"
+      },
+      {
+        "time": 37.502246,
+        "line": "mali: bus idle after the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)"
+      },
+      {
+        "time": 46.895368,
+        "line": "mali: bus idle after the failed start: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)"
+      },
+      {
+        "time": 47.960811,
+        "line": "mali: bus idle after the core was switched off: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)"
+      }
+    ],
+    "mcuseq_observations": [],
+    "trace_excludes_ENABLE_and_AUTO_requests": true,
+    "trace_excludes_doorbell_request": true,
+    "mcu_status_samples": [
+      {
+        "time": 37.502278,
+        "line": "mali: MCU status 0 before the start request",
+        "raw_status": 0
+      },
+      {
+        "time": 45.824656,
+        "line": "mali: MCU status 1 (raw state 1; boot unproven), job irq 0, gpu irq 0",
+        "raw_status": 1
+      }
+    ],
+    "status_semantics_observations": [],
+    "doorbell_observations": [],
+    "pdcsettle_observations": [],
+    "stack_observations": [],
+    "power_domain_observations": [
+      {
+        "time": 34.235218,
+        "line": "mali: mfg8  ST1T0 did NOT come up: 0xd (sta 0, sram pdn 0 ack 0)"
+      },
+      {
+        "time": 37.322598,
+        "line": "mali: pwr status 0x1fc / 0x1fc (scpsys 0xF34/0xF38), gpufreq 0x4 (0xF3C); want 0x3ffc"
+      }
+    ],
+    "spin_samples": [
+      {
+        "time": 37.503513,
+        "line": "mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+      },
+      {
+        "time": 37.510097,
+        "line": "mali: spin 1000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+      },
+      {
+        "time": 38.198226,
+        "line": "mali: spin 100000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+      },
+      {
+        "time": 40.505275,
+        "line": "mali: spin 500000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+      }
+    ],
+    "l2_precedes_as0_update": true
+  },
+  "write_diff": {
+    "a": 691,
+    "b": 692,
+    "normalization": "Only AS0 TRANSTAB LO/HI (0x2400/0x2404) values set to 0 for allocator PAs",
+    "a_stores": 82,
+    "b_stores": 82,
+    "differences": [],
+    "unnormalized_differences": [
+      {
+        "operation": "replace",
+        "a_index": [
+          74,
+          75
+        ],
+        "b_index": [
+          74,
+          75
+        ],
+        "a": [
+          [
+            "0x2400",
+            "0xa02fc000"
+          ]
+        ],
+        "b": [
+          [
+            "0x2400",
+            "0xa2214000"
+          ]
+        ]
+      }
+    ]
+  }
+}

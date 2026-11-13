@@ -1,0 +1,23 @@
+{
+  "trial": 692,
+  "comparison_trial": 691,
+  "source_kernel_payload_identical": true,
+  "mali_rows": 264,
+  "stores": 82,
+  "normal_entry": "0x010018ed",
+  "witness_not_installed": true,
+  "all_normalized_stores_match_691": true,
+  "raw_and_source_hashes_verified": true,
+  "log_complete": true,
+  "completion_markers_seen": {
+    "start_complete": true,
+    "status_probe_required": false,
+    "status_probe_complete": false,
+    "witness_required": false,
+    "witness_complete": false,
+    "normal_firmware_required": true,
+    "normal_version_complete": true,
+    "normal_tail_complete": true
+  },
+  "stock_restored_and_independently_checked": true
+}

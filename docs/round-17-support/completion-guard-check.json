@@ -1,0 +1,29 @@
+{
+  "cases": [
+    {
+      "case": "pre_AUTO_sentinel_only",
+      "accepted": false
+    },
+    {
+      "case": "loop_end_only",
+      "accepted": false
+    },
+    {
+      "case": "version_without_tail",
+      "accepted": false
+    },
+    {
+      "case": "full_failure_tail",
+      "accepted": true
+    },
+    {
+      "case": "wrong_trial",
+      "accepted": false
+    },
+    {
+      "case": "success_return",
+      "accepted": true
+    }
+  ],
+  "all_passed": true
+}

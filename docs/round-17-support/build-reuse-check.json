@@ -1,0 +1,28 @@
+{
+  "trial": 692,
+  "source_kernel_payload_identical_to_691": true,
+  "reused_artifacts": [
+    {
+      "path": "mtk/mt6895/drivers/gpu/hakios.mali610.c",
+      "bytes": 236705,
+      "sha256": "611adac6a49c0f8cecab09ee5e29352146b291825757f3446fc58e389cc9d53c",
+      "md5": "bf933b5ad8f63ba0f2cd0187995e2c76"
+    },
+    {
+      "path": "hakios-kernel",
+      "bytes": 15286040,
+      "sha256": "cdc9e38282d2258fb8fd7743a32a9b1c3b13ae6f8c30a9ed55dd9d6c0c5a49a3",
+      "md5": "407e972202168f865dc2368ae7ef9bbe"
+    },
+    {
+      "path": "build-payload.bin",
+      "bytes": 19480504,
+      "sha256": "20509da6253da0c6361d52983601a197e9be02221f1d5346fe539ad5d58c3cf9",
+      "md5": "295f9f7ee90ffcb90e1f701d4bb0c8a6"
+    }
+  ],
+  "kernel_rebuilt": false,
+  "prior_build_gate": "round-16-support/build-source-check.json and kernel-assorder-build.log",
+  "runner_sha256": "52d9fb81a16bdb8c73da64b9a672c82c44c194c080415484f86dfc59a053176d",
+  "image_md5": "643b2a27e0db0346af6bbccfc1ae4e66"
+}

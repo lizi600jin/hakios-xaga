@@ -114,22 +114,42 @@ try:
             probe = adb('shell',
                 f'dd if=/dev/block/by-name/xnusys bs=4096 skip=653560 count=1025 2>/dev/null | strings',
                 timeout=30, check=False)
-            start_complete = ('the start loop ended' in probe) or ('witness: read1' in probe)
+            # Witness is not always on: 692 runs the normal firmware entry with
+            # mali_witness=0, where no "witness: read1" line is ever produced.
+            # "the start loop ended" is unconditional, and the version word line is
+            # emitted on every path that reaches the end of the attempt.
+            start_complete = (('the start loop ended' in probe)
+                              or ('witness: read1' in probe)
+                              or (f'version word' in probe))
             status_required = 'mali_statussem=1' in build['verified_args'].split()
             status_markers = [f'status semantics trial {trial}: {step}' for step in
                               ('after DISABLE', 'second DISABLE', 'bounded re-read')]
             status_complete = all(marker in probe for marker in status_markers)
             witness_required = 'mali_witness=1' in build['verified_args'].split()
             witness_complete = bool(re.search(rf'witness: read1[^\n]*\btrial {trial}\b', probe))
+            # The pre-AUTO sentinel message also contains "version word".
+            # Normal firmware needs its actual result AND a complete return tail.
+            normal_required = ('mali=5' in build['verified_args'].split()
+                               and not witness_required)
+            normal_version_complete = bool(re.search(
+                rf'mali: version word[^\n]*\btrial {trial}\b', probe))
+            normal_tail_complete = (
+                f'shared probe trial {trial}: completed; returning before global_interface' in probe
+                or ('mali: the MCU is up; stopping here because mali=5' in probe
+                    and f'trial {trial}' in probe))
             meta['completion_markers_seen'] = {'start_complete': start_complete,
                                                 'status_probe_required': status_required,
                                                 'status_probe_complete': status_complete,
                                                 'witness_required': witness_required,
-                                                'witness_complete': witness_complete}
+                                                'witness_complete': witness_complete,
+                                                'normal_firmware_required': normal_required,
+                                                'normal_version_complete': normal_version_complete,
+                                                'normal_tail_complete': normal_tail_complete}
             meta['completion_checked_at'] = datetime.datetime.now().astimezone().isoformat()
             save()
             if (start_complete and (not status_required or status_complete)
-                    and (not witness_required or witness_complete)):
+                    and (not witness_required or witness_complete)
+                    and (not normal_required or (normal_version_complete and normal_tail_complete))):
                 return True
             time.sleep(5)
         return False
