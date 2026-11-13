@@ -31,12 +31,20 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_BASELINE = os.path.join(HERE, "accdet-baseline.json")
 
-# "headset: ... 0x2688 = 0x00" / "0x2688=0x00" / "read 0x2688 0x00"
+# The driver prints in the shape of Android's own dump_reg, four to a line, one of
+#   headset: (0x2688)=0x00          <- this is the shape it actually writes
+#   headset: accdet 0x2688 = 0x00
+#   headset: 0x2688=0x00
+#   headset: read 0x2688 0x00
+# all four are accepted, because the point is to compare values, not to police a format.
 FORMS = (
-    re.compile(r"0x([0-9a-fA-F]{3,4})\s*=\s*0x([0-9a-fA-F]{1,2})"),
-    re.compile(r"0x([0-9a-fA-F]{3,4})\s+0x([0-9a-fA-F]{1,2})\b"),
+    re.compile(r"0x([0-9a-fA-F]{3,4})\)?\s*=\s*0x([0-9a-fA-F]{1,2})"),
+    re.compile(r"0x([0-9a-fA-F]{3,4})\)?\s+0x([0-9a-fA-F]{1,2})\b"),
 )
 MARKER = re.compile(r"headset\s*:", re.IGNORECASE)
+# What a failed read looks like ("headset: (0x2688)=--"). Counted, not silently dropped: a
+# baseline register that did not read is missing for a reason, and the reason is worth saying.
+FAILED = re.compile(r"0x([0-9a-fA-F]{3,4})\)?=--")
 
 
 def load_baseline(path):
@@ -45,11 +53,19 @@ def load_baseline(path):
 
 
 def baseline_values(base):
-    out = {}
-    for region in base["regions"].values():
+    """{register: value} for the registers that come back in a block, plus the strays separately.
+
+    Android's dump_reg prints two contiguous blocks and then a handful of one-off registers
+    (0x2319, 0x231d, 0x2320, 0x2323, 0x2529, 0x252d, 0x1108, 0x11c0). The blocks are what a
+    driver reads; the strays are printed for a person, from separate reads, and a driver that
+    does not read them has not failed at anything. They are reported, not counted as missing.
+    """
+    blocks, strays = {}, {}
+    for name, region in base["regions"].items():
+        target = strays if name == "misc" else blocks
         for reg, value in region["values"].items():
-            out[int(reg, 16)] = value
-    return out
+            target[int(reg, 16)] = value
+    return blocks, strays
 
 
 def parse_log(path):
@@ -91,7 +107,8 @@ def region_of(reg, base):
     return "misc"
 
 
-def report(base, want, got, verbose):
+def report(base, want, got, verbose, strays=None):
+    strays = strays or {}
     agreed, differed, missing, extra = compare(want, got)
     total = len(want)
 
@@ -203,8 +220,9 @@ def self_test():
                    "values": {"0x2508": 7, "0x2509": 9}},
         "misc": {"values": {"0x2319": 0}},
     }}
-    want = baseline_values(base)
-    assert len(want) == 9, want  # six in accdet, two in auddec, one in misc
+    want, strays = baseline_values(base)
+    assert len(want) == 8, want        # six in accdet, two in auddec
+    assert len(strays) == 1, strays     # the one misc register, reported not required
 
     def clean(**override):
         """One log line per baseline register, with any register replaced."""
@@ -219,7 +237,7 @@ def self_test():
             "headset: accdet 0x2688 = 0x%02x" % want[0x2688],
             "headset: 0x2689=0x%02x" % want[0x2689],
             "headset: read 0x2508 0x%02x" % want[0x2508],
-            "headset: 0x2319 = 0x%02x" % want[0x2319],
+            "headset: 0x2319 = 0x%02x" % strays[0x2319],
             "headset: 0x268a = 0x%02x" % want[0x268a],
             "headset: 0x268b = 0x%02x" % want[0x268b],
             "headset: 0x268c = 0x%02x" % want[0x268c],
@@ -231,10 +249,10 @@ def self_test():
             "headset: 0x2688 = 0x%02x" % want[0x2688],
         ], 1, "too few to call the addressing right"),
         ("nothing printed", [], 0, "printed no register"),
-        ("one register differs, the rest agree", clean(r2688=0x01), 9, "what differs is"),
+        ("one register differs, the rest agree", clean(r2688=0x01), 8, "what differs is"),
         ("every register differs", [
             "headset: 0x%04x = 0x%02x" % (reg, want[reg] ^ 0xff) for reg in sorted(want)
-        ], 9, "too few to call the addressing right"),
+        ], 8, "too few to call the addressing right"),
         ("half the registers missing", clean()[:4], 4, "too few to call the addressing right"),
         ("the whole block missing", [
             "headset: 0x2508 = 0x%02x" % want[0x2508],
@@ -244,10 +262,14 @@ def self_test():
         # shape, not by its score, or a dead read passes.
         ("a dead bus reads zero everywhere", [
             "headset: 0x%04x = 0x00" % reg for reg in sorted(want)
-        ], 9, "every one of the 9 registers read back 0x00"),
+        ], 8, "every one of the 8 registers read back 0x00"),
         # ... but one register reading 0x00 is an honest answer, not a dead bus.
-        ("a single register that reads zero", [
+        ("a single stray register that reads zero", [
             "headset: 0x2319 = 0x00"
+        ], 1, "nothing matched"),
+        # One register reading zero is an honest answer; a whole block of them is a dead bus.
+        ("one block register that reads zero is honest, not a dead bus", [
+            "headset: 0x2688 = 0x00"
         ], 1, "too few to call the addressing right"),
     ]
 
@@ -266,7 +288,7 @@ def self_test():
             from contextlib import redirect_stdout
             buf = io.StringIO()
             with redirect_stdout(buf):
-                report(base, want, got, verbose=False)
+                report(base, want, got, verbose=False, strays=strays)
             if expect_text not in buf.getvalue():
                 print("FAIL %-40s verdict lacks %r" % (name, expect_text))
                 failures += 1
@@ -301,7 +323,8 @@ def main():
     if marked == 0:
         print("no line in %s carries the driver's 'headset:' marker" % args.log)
         return 2
-    return report(base, baseline_values(base), got, args.verbose)
+    want, strays = baseline_values(base)
+    return report(base, want, got, args.verbose, strays)
 
 
 if __name__ == "__main__":
