@@ -173,3 +173,110 @@ fastboot -s GAJZ4HIN99AQ69Y9 reboot
    今天有多次改动）与 `drivers/input/hakios.input.c`
 
 **单变量原则**：一次只改一件事，否则四次刷机就白烧了。
+
+---
+
+## 11. 收尾取证（手机已恢复安卓后补做）
+
+### 11.1 手机状态：已完全恢复
+
+```
+$ adb shell getprop sys.boot_completed
+1
+$ adb shell getprop ro.build.display.id
+CP2A.260605.016
+$ adb shell su -c 'md5sum /dev/block/by-name/boot_a'
+a63b2e35a7c2522cb24a6a10332b9bc8  /dev/block/by-name/boot_a
+```
+
+`boot_a` 的 md5 与备份 `boot_a_stock_real.img` **完全一致**，恢复无残留。
+
+### 11.2 MT6368 状态未受四次刷机影响
+
+重启安卓后重读 `dump_reg`，与 2026-11-14 凌晨的基线**逐字节一致**：
+
+```
+$ diff <(grep -oE "\(0x[0-9a-f]+\)=0x[0-9a-f]+" accdet-baseline-dump.txt) \
+       <(grep -oE "\(0x[0-9a-f]+\)=0x[0-9a-f]+" accdet-after-round20.txt)
+→ 空（无差异）
+```
+
+→ 四次刷机没有改动 PMIC 任何寄存器。耳机基线仍然有效。
+
+### 11.3 ★ 本轮最重要的发现：loader 在 692 之后被大规模重写
+
+这是收尾取证时才查到的，之前一直没注意。
+
+| 项 | 值 |
+|---|---|
+| 692 那轮的 loader 二进制 | **48208 字节** |
+| 今天的 loader 二进制 | **59720 字节**（+24%） |
+| `mtkloader.c` 已提交版本 | 3453 行 |
+| `mtkloader.c` 工作区版本 | **7496 行** |
+| **新增** | **4172 行、删除 129 行** |
+| `mtkloader.c` mtime | **11-13 23:46** |
+| 692 日志时间 | **11-13 12:02 之前** |
+
+新增的内容（从 diff 摘要）：
+
+```
++ static const uint32_t core_order[8] = BOARD_CORE_ORDER;
++ static void mali_leave_powered(void);
++ static void mali_power_down(void);
++ static void probe_say(const char *text);
++ static void probe_flash(uint64_t reason);
++ static void ufs_step(uint32_t n);
++ static int payload_header_ok(const struct payload_header *ph);
++ static int board_read(uint64_t lba, uint32_t blocks, void *dst);
++ static uint32_t gpt_detect(void);
++ static int save_log_to_flash(uint64_t pa, uint64_t len, uint64_t reason, uint64_t code, ...);
+```
+
+即：**UFS 支持、GPT 解析、payload 头校验、GPU probe/logbook 机制** 全部是 692 之后加的。
+
+### 11.4 为什么这条重要
+
+前面第 4 次刷机做到了「692 参数 + 无耳机调用」，仍黑屏。当时我归因于「内核二进制变了」。
+
+现在有了更具体的候选：**loader 本身在 692 之后重写了 4172 行**。
+
+第 1 轮 logbook 的 `code = 0x13`（死在 `mali_aoc_up()`）也符合这个方向——
+`probe_flash()` 本身就是新增的机制。
+
+### 11.5 下一轮的第一步（建议）
+
+**用已提交版本（3453 行）的 loader 重建并刷一次。**
+
+```sh
+cd /home/lizi/IOS/hakios-mtk
+git stash push mtk/loader/mtkloader.c    # 或 git show HEAD:... > 临时文件
+DEVICE=xaga ./mtk/loader/build.sh
+```
+
+判据：
+- 进得去 → 元凶在这 4172 行里，二分定位
+- 进不去 → loader 不是原因，回头查内核
+
+这是**单变量**对照，比今天四次刷机里任何一次都干净。
+
+### 11.6 未取到
+
+| 项 | 原因 |
+|---|---|
+| 第 3、4 轮 logbook | 手机黑屏期间无法 adb pull，重启后已被新一轮覆盖 |
+| 任何耳机寄存器读数 | 四次刷机都没跑到耳机代码 |
+| 692 那轮的镜像 | 历史镜像最老只到 11-10，11-13 的没留 |
+
+### 11.7 工作区状态（供下一轮审计）
+
+`hakios-mtk` 有 **49 个未提交改动**，按目录分：
+
+```
+  7  mtk/mt6895/drivers/{gpu,input,usb}/
+  2  xnu/files/bsd/
+  1  xnu/files/iokit/
+  4  userland/
+  ...
+```
+
+其中 `mtk/loader/mtkloader.c`（+4172 行）是最大的一块，也是 11.3 指出的嫌疑对象。
