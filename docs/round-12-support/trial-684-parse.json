@@ -1,0 +1,104 @@
+{
+  "trial": 684,
+  "logbook_bytes": 4198400,
+  "logbook_sha256": "40875cad9b706e84125ca52214e1e0a1de785ceafa25bab6919ae25d34dc2373",
+  "parsed_entire_window": true,
+  "trial_markers": [
+    684
+  ],
+  "mali_rows": 265,
+  "stores": 86,
+  "coverage": {
+    "time": 37.897267,
+    "line": "mali: coverage: every section fully mapped"
+  },
+  "l2": {
+    "time": 37.760078,
+    "line": "mali: L2 up: trans 0 active 0 ready 0x1"
+  },
+  "hwissues": {
+    "time": 37.759911,
+    "line": "mali: hwissues trial 684: before shader 0 tiler 0 l2mmu 0 csf 0 -> after 0 0 0 0"
+  },
+  "protocol": {
+    "time": 37.760025,
+    "line": "mali: protocol trial 684: features 0x1 before 0 after 0 wrote 0"
+  },
+  "as0_update": {
+    "time": 37.897328,
+    "line": "mali: AS0 step update    mmu irq 0x10000"
+  },
+  "as0_probe": {
+    "time": 37.897333,
+    "line": "mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 684"
+  },
+  "before_auto": {
+    "time": 37.897487,
+    "line": "mali: views before AUTO: gpu status 0/0 irq raw 0/0x600 mcu control 0 status 0"
+  },
+  "after_auto": {
+    "time": 46.736667,
+    "line": "mali: after the start request: gpu status 0x1, gpu irq status 0, job irq status 0, mmu irq 0, as0 status 0 faultstatus 0 faultaddress 0"
+  },
+  "version": {
+    "time": 46.742434,
+    "line": "mali: version word 0xff5aa5f0 (untouched; no firmware version published) trial 684"
+  },
+  "glb": {
+    "time": 46.743458,
+    "line": "mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0"
+  },
+  "witness_entry": {
+    "time": 37.897409,
+    "line": "mali: witness: code at 0x1000000, reset vector now 0x1000001"
+  },
+  "witness_reads": {
+    "time": 46.748776,
+    "line": "mali: witness: read1 0xff5aa5f0 0 read2 0xff5aa5f0 0 read3 0xff5aa5f0 0 trial 684"
+  },
+  "witness_verdict": {
+    "time": 46.74991,
+    "line": "mali: witness: verdict trial 684 -- no completed first store observed (not an instruction trace)"
+  },
+  "failed_tail_return": {
+    "time": 48.910267,
+    "line": "mali: shared probe trial 684: completed; returning before global_interface"
+  },
+  "debug_top": [
+    {
+      "time": 37.897293,
+      "line": "mali: bus idle before the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)"
+    },
+    {
+      "time": 37.897367,
+      "line": "mali: bus idle after the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)"
+    },
+    {
+      "time": 47.811012,
+      "line": "mali: bus idle after the failed start: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)"
+    },
+    {
+      "time": 48.88336,
+      "line": "mali: bus idle after the core was switched off: qchannel 0x11 debug_sel 0x3 debug_top 0x1b (still busy after 100000 spins)"
+    }
+  ],
+  "spin_samples": [
+    {
+      "time": 37.898654,
+      "line": "mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    },
+    {
+      "time": 37.903877,
+      "line": "mali: spin 1000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    },
+    {
+      "time": 38.730148,
+      "line": "mali: spin 100000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    },
+    {
+      "time": 41.330964,
+      "line": "mali: spin 500000: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b"
+    }
+  ],
+  "l2_precedes_as0_update": true
+}

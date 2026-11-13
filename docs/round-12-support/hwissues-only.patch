@@ -1,0 +1,39 @@
+--- hakios.mali610.trials-681-683.c
++++ hakios.mali610.trial-684.c
+@@ -516,6 +516,7 @@
+ static unsigned gMaliCacheFlush;                /* mali_cacheflush=1 flushes GPU caches just before AUTO */
+ static unsigned gMaliResetOnly;                 /* mali_resetonly=1 adds only the early soft reset */
+ static unsigned gMaliCohNone;                   /* mali_cohnone=1 selects vendor noncoherent mode before L2 */
++static unsigned gMaliHwIssues;                  /* mali_hwissues=1 zeroes the four vendor quirk registers */
+ /*
+  * mali_gpm=0 skips the initiator-to-memory protector step.
+  *
+@@ -4511,6 +4512,20 @@
+ 			gpu_hw_issues();
+ 		}
+ 	}
++	/* Opt-in four-write experiment; after any successful reset, before AS/L2 setup. */
++	if (gMaliHwIssues) {
++		uint32_t shader = mrd(kShaderConfig), tiler = mrd(kTilerConfig);
++		uint32_t l2mmu = mrd(kL2MmuConfig), csf = mrd(kCsfConfig);
++
++		mwr(kShaderConfig, 0);
++		mwr(kTilerConfig, 0);
++		mwr(kL2MmuConfig, 0);
++		mwr(kCsfConfig, 0);
++		__asm__ volatile ("dsb sy" ::: "memory");
++		printf("mali: hwissues trial %u: before shader %#x tiler %#x l2mmu %#x csf %#x -> after %#x %#x %#x %#x\n",
++		    gMaliTrial, shader, tiler, l2mmu, csf,
++		    mrd(kShaderConfig), mrd(kTilerConfig), mrd(kL2MmuConfig), mrd(kCsfConfig));
++	}
+ 	/*
+ 	 * The seven unused address spaces go first, before the interrupt masks.
+ 	 *
+@@ -4996,6 +5011,7 @@
+ 	PE_parse_boot_argn("mali_cacheflush", &gMaliCacheFlush, sizeof(gMaliCacheFlush));
+ 	PE_parse_boot_argn("mali_resetonly", &gMaliResetOnly, sizeof(gMaliResetOnly));
+ 	PE_parse_boot_argn("mali_cohnone", &gMaliCohNone, sizeof(gMaliCohNone));
++	PE_parse_boot_argn("mali_hwissues", &gMaliHwIssues, sizeof(gMaliHwIssues));
+ 	PE_parse_boot_argn("mali_bpverify", &gMaliBpVerify, sizeof(gMaliBpVerify));
+ 	PE_parse_boot_argn("mali_scclk", &gMaliScClk, sizeof(gMaliScClk));
+ 	PE_parse_boot_argn("mali_scupd", &gMaliScUpd, sizeof(gMaliScUpd));

@@ -1,0 +1,174 @@
+{
+  "a": 681,
+  "b": 683,
+  "normalization": "Only AS0 TRANSTAB LO/HI (0x2400/0x2404) values set to 0 for allocator PAs",
+  "a_stores": 82,
+  "b_stores": 89,
+  "differences": [
+    {
+      "operation": "insert",
+      "a_index": [
+        0,
+        0
+      ],
+      "b_index": [
+        0,
+        3
+      ],
+      "a": [],
+      "b": [
+        [
+          "0x24",
+          "0x100"
+        ],
+        [
+          "0x30",
+          "0x101"
+        ],
+        [
+          "0x24",
+          "0x100"
+        ]
+      ]
+    },
+    {
+      "operation": "insert",
+      "a_index": [
+        65,
+        65
+      ],
+      "b_index": [
+        68,
+        69
+      ],
+      "a": [],
+      "b": [
+        [
+          "0x304",
+          "0x1f"
+        ]
+      ]
+    },
+    {
+      "operation": "insert",
+      "a_index": [
+        82,
+        82
+      ],
+      "b_index": [
+        86,
+        89
+      ],
+      "a": [],
+      "b": [
+        [
+          "0x24",
+          "0x20000"
+        ],
+        [
+          "0x30",
+          "0x3304"
+        ],
+        [
+          "0x24",
+          "0x20000"
+        ]
+      ]
+    }
+  ],
+  "unnormalized_differences": [
+    {
+      "operation": "insert",
+      "a_index": [
+        0,
+        0
+      ],
+      "b_index": [
+        0,
+        3
+      ],
+      "a": [],
+      "b": [
+        [
+          "0x24",
+          "0x100"
+        ],
+        [
+          "0x30",
+          "0x101"
+        ],
+        [
+          "0x24",
+          "0x100"
+        ]
+      ]
+    },
+    {
+      "operation": "insert",
+      "a_index": [
+        65,
+        65
+      ],
+      "b_index": [
+        68,
+        69
+      ],
+      "a": [],
+      "b": [
+        [
+          "0x304",
+          "0x1f"
+        ]
+      ]
+    },
+    {
+      "operation": "replace",
+      "a_index": [
+        71,
+        72
+      ],
+      "b_index": [
+        75,
+        76
+      ],
+      "a": [
+        [
+          "0x2400",
+          "0xee5b0000"
+        ]
+      ],
+      "b": [
+        [
+          "0x2400",
+          "0xf0ae0000"
+        ]
+      ]
+    },
+    {
+      "operation": "insert",
+      "a_index": [
+        82,
+        82
+      ],
+      "b_index": [
+        86,
+        89
+      ],
+      "a": [],
+      "b": [
+        [
+          "0x24",
+          "0x20000"
+        ],
+        [
+          "0x30",
+          "0x3304"
+        ],
+        [
+          "0x24",
+          "0x20000"
+        ]
+      ]
+    }
+  ]
+}

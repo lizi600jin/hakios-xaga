@@ -1,0 +1,94 @@
+{
+  "a": 681,
+  "b": 684,
+  "normalization": "Only AS0 TRANSTAB LO/HI (0x2400/0x2404) values set to 0 for allocator PAs",
+  "a_stores": 82,
+  "b_stores": 86,
+  "differences": [
+    {
+      "operation": "insert",
+      "a_index": [
+        0,
+        0
+      ],
+      "b_index": [
+        0,
+        4
+      ],
+      "a": [],
+      "b": [
+        [
+          "0xf04",
+          "0x0"
+        ],
+        [
+          "0xf08",
+          "0x0"
+        ],
+        [
+          "0xf0c",
+          "0x0"
+        ],
+        [
+          "0xf00",
+          "0x0"
+        ]
+      ]
+    }
+  ],
+  "unnormalized_differences": [
+    {
+      "operation": "insert",
+      "a_index": [
+        0,
+        0
+      ],
+      "b_index": [
+        0,
+        4
+      ],
+      "a": [],
+      "b": [
+        [
+          "0xf04",
+          "0x0"
+        ],
+        [
+          "0xf08",
+          "0x0"
+        ],
+        [
+          "0xf0c",
+          "0x0"
+        ],
+        [
+          "0xf00",
+          "0x0"
+        ]
+      ]
+    },
+    {
+      "operation": "replace",
+      "a_index": [
+        71,
+        72
+      ],
+      "b_index": [
+        75,
+        76
+      ],
+      "a": [
+        [
+          "0x2400",
+          "0xee5b0000"
+        ]
+      ],
+      "b": [
+        [
+          "0x2400",
+          "0x9fc0c000"
+        ]
+      ]
+    }
+  ]
+}

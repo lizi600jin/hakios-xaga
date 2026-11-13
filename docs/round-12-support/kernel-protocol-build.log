@@ -1,0 +1,794 @@
+[ -d xnu-src/xnu-8796.121.2 ] || xnu/apply.sh
+[ -e xnu-deps/host/bin/ld64 ] || xnu-deps/setup.sh
+tools/make-kernel.sh -j8
+sync-drivers: /home/lizi/IOS/hakios-mtk/mtk/mt6895/drivers/gpu/hakios.mali610.c -> bsd/dev/hakios.mali610.c
+hakios-config: kernel: 4 of 35 drivers built in, from .config; left out: adsp speaker sound mic virtio_sound bt camera torch socinfo adreno haptic virtio_input goodix buttons qmi modem virtio_net battery cpufreq thermal pmic battguard ufs virtio_blk wifi mali mtk_keys mtk_scp tcm mtk_emmc mtk_connsys
+make[1]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2'
+make[2]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2'
+make[2]: warning: -j9 forced in submake: resetting jobserver mode.
+make[3]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/bsd'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/san'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/san/coverage'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/san/memory'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/decomment'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/config'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/bsd/sys'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/kextsymboltool'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/setsegname'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/san/memory'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/san/coverage'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/installfile'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/replacecontents'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/kextsymboltool'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/config'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/decomment'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/bsd/sys'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/setsegname'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/replacecontents'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP/installfile'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/san'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/bsd'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/SETUP'
+make[3]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj'
+make[3]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+make[3]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/arm'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/arm'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/arm'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/arm'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/arm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm64'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/arm'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/arm'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/arm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm64'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm64'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm64'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm64'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/bsm'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm64'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/bsm'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm64'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/bsm'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm64'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/bsm'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm64'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm64'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/crypto/entropy'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm64'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm64'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/nvram'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/platform'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/crypto/entropy'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/nvram'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit/crypto'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/platform'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/nvram'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/nvram'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/platform'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/platform'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit/crypto'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/atm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev/random'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/atm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/machine'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev/random'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/power'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/atm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/pwr_mgt'
+make[3]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/atm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/machine'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/power'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev/random'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/machine'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev/random'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/pwr_mgt'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/power'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/machine'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/power'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/machine'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/machine'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/corpses'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/pwr_mgt'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/pwr_mgt'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/machine'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/corpses'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/machine'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/os'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/corpses'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/libkern'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/corpses'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/os'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/os'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/machine'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/os'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/bank'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/machine'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/system_management'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/libkern'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/bank'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/libkern'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/libkern'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/system_management'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/machine'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/bank'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/rtc'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/bank'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/machine'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/system_management'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/system_management'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/machine'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/machine'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/c++'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/rtc'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/machine'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/machine'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/rtc'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/rtc'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/skywalk'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/voucher'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/c++'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/voucher'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/firehose'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/skywalk'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/img4'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/crypto'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/voucher'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/skywalk'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/skywalk'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/firehose'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/voucher'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/device'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/crypto'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/img4'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/c++'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/c++'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/firehose'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/firehose'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/memory'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/img4'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/img4'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/crypto'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/crypto'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/device'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/devfs'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/device'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/device'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/memory'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/devfs'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coretrust'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/default_pager'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/memory'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/memory'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/devfs'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach_debug'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/devfs'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/default_pager'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach_debug'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet6'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coretrust'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/net'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/default_pager'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach_debug'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/default_pager'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach_debug'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coretrust'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coretrust'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet6'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/fifofs'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/net'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/net'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet6'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/net'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet6'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kern'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/coverage'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/apple_encrypted_archive'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/fifofs'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/coverage'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/fifofs'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/coverage'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/routefs'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/coverage'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netkey'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/fifofs'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/routefs'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/apple_encrypted_archive'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kdp'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kern'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/apple_encrypted_archive'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security/audit'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/apple_encrypted_archive'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kern'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netkey'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kdp'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/core'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netkey'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kern'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/specfs'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netkey'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security/audit'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/ipc'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/amfi'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kdp'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kdp'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security/audit'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security/audit'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/ipc'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/specfs'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/core'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/machine'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/amfi'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/specfs'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/ipc'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/ipc'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/core'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/specfs'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/core'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/machine'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/UserNotification'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/channel'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/union'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/amfi'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/amfi'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/UserNotification'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/machine'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/channel'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/machine'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/UserNotification'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/UserNotification'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/union'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/channel'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/channel'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/pthread'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/union'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/mem'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/union'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coreanalytics'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/nullfs'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/pthread'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/gssd'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coreanalytics'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kextd'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/mem'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/nullfs'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/gssd'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coreanalytics'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/pthread'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/pthread'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coreanalytics'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/uuid'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/nexus'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/gssd'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kextd'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/gssd'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/bindfs'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/nexus'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/compression'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/uuid'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kextd'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kextd'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/nexus'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/nexus'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/compression'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/bindfs'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/packet'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/uuid'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys/_types'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vfs'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/compression'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/uuid'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/compression'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/packet'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vfs'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/lockd'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys/_types'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vfs'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/lockd'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vfs'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/namespace'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/packet'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/packet'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vm'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys/_types'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/lockd'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys/_types'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/lockd'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/namespace'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/vm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/vm'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/libsa'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/console'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vm'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vm'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/vm'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/vm'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/libsa'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/console'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/libsa'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/prng'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/libsa'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/console'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/tests'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/console'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kperf'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/prng'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/tests'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kperf'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/prng'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/prng'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/tests'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/tests'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kperf'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kperf'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk'
+make[3]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+make[3]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/conf'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/conf'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/conf'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/conf'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/conf'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/conf'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/conf'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/conf'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/conf'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/conf'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/conf'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/conf'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/conf'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/conf'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/conf'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/DEVELOPMENT'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/DEVELOPMENT'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/conf'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/DEVELOPMENT'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/DEVELOPMENT'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/DEVELOPMENT'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/DEVELOPMENT'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/DEVELOPMENT'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/DEVELOPMENT'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/DEVELOPMENT'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/DEVELOPMENT'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/DEVELOPMENT'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/conf'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/conf'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/conf'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/DEVELOPMENT'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/DEVELOPMENT'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/conf'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/conf'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/conf'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/DEVELOPMENT'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/DEVELOPMENT'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/DEVELOPMENT'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/DEVELOPMENT'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/conf'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/conf'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/DEVELOPMENT'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/DEVELOPMENT'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/DriverKit'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/DEVELOPMENT'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/conf'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/conf'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/DriverKit'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/conf'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/conf'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/atm'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/default_pager'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/device'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/gssd'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/default_pager'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/mach'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/kextd'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/gssd'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/UserNotification'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/atm'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/device'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/mach'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/kextd'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/UserNotification'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/lockd'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/lockd'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT'
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/conf'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/conf'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk'
+make[7]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT'
+make[8]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT'
+             CC hakios.mali610.o
+     LDFILELIST bsd
+make[8]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT'
+make[7]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT'
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/conf'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/conf'
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+             CC version.o
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+             LD mach.development.bcm2837.unstripped
+       DSYMUTIL mach.development.bcm2837.dSYM
+        LIBTOOL mach.development.bcm2837.a
+          STRIP mach.development.bcm2837
+[cctools-port]: generating fake signature for '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837//mach.development.bcm2837'
+built kernel at /home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837//mach.development.bcm2837
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+make[3]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+make[3]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools'
+make[4]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config'
+make[5]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools/lldbmacros'
+make[6]: Entering directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools/lldbmacros'
+         SYMSET BSDKernel (arm64)
+         SYMSET IOKit (arm64)
+         SYMSET Libkern (arm64)
+         SYMSET Mach (arm64)
+         SYMSET Unsupported (arm64)
+         SYMSET Private (arm64)
+         SYMSET MACFramework (arm64)
+exported name not in import list: IOMemoryMap::_CopyState(_IOMemoryMapPrivateState*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryMap::_CopyState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, _IOMemoryMapPrivateState*))
+exported name not in import list: IODMACommand::PrepareForDMA(unsigned long long, IOMemoryDescriptor*, unsigned long long, unsigned long long, unsigned long long*, unsigned int*, IOAddressSegment*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODMACommand::GetPreparation(unsigned long long*, unsigned long long*, IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODMACommand::PerformOperation(unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryDescriptor*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserClient::AsyncCompletion(OSAction*, int, unsigned long long const*, unsigned int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserClient::AsyncCompletion_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, int, unsigned long long const*, unsigned int))
+exported name not in import list: IOUserClient::AsyncCompletion_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, int, unsigned long long const*, unsigned int), OSMetaClass const*)
+exported name not in import list: IOUserClient::_ExternalMethod_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long const*, unsigned int, OSData*, IOMemoryDescriptor*, unsigned long long*, unsigned int*, unsigned long long, OSData**, IOMemoryDescriptor*, OSAction*))
+exported name not in import list: IOUserClient::CopyClientMemoryForType_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long*, IOMemoryDescriptor**))
+exported name not in import list: IOUserClient::CreateMemoryDescriptorFromClient(unsigned long long, unsigned int, IOAddressSegment const*, IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserServer::Exit_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IOUserServer::Create_Invoke(IORPC, int (*)(char const*, unsigned long long, unsigned long long, OSString*, IOUserServer**))
+exported name not in import list: IOUserServer::LoadModule_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IODispatchQueue::Create_Invoke(IORPC, int (*)(char const*, unsigned long long, unsigned long long, IODispatchQueue**))
+exported name not in import list: IODispatchQueue::SetPort_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, ipc_port*))
+exported name not in import list: IODispatchQueue::SetPort(ipc_port*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::CheckForWork(bool, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::Cancel_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, void ( block_pointer)()))
+exported name not in import list: IODispatchSource::SetEnable_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, bool))
+exported name not in import list: IODispatchSource::CheckForWork_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IORPC, bool))
+exported name not in import list: IODispatchSource::SetEnableWithCompletion_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, bool, void ( block_pointer)()))
+exported name not in import list: IODispatchSource::Cancel(void ( block_pointer)(), int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::SetEnable(bool, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::_CopyState(_IOMDPrivateState*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::CreateMapping(unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryMap**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::_CopyState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, _IOMDPrivateState*))
+exported name not in import list: IOMemoryDescriptor::CreateMapping_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryMap**))
+exported name not in import list: IOBufferMemoryDescriptor::Create_Invoke(IORPC, int (*)(unsigned long long, unsigned long long, unsigned long long, IOBufferMemoryDescriptor**))
+exported name not in import list: IOBufferMemoryDescriptor::SetLength_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long))
+exported name not in import list: IOBufferMemoryDescriptor::SetLength(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::CopyMemory(IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::Create_Invoke(IORPC, int (*)(unsigned long long, IODispatchQueue*, IODataQueueDispatchSource**))
+exported name not in import list: IODataQueueDispatchSource::CopyMemory_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOMemoryDescriptor**))
+exported name not in import list: IODataQueueDispatchSource::DataServiced_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::DataServiced_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*), OSMetaClass const*)
+exported name not in import list: IODataQueueDispatchSource::DataAvailable_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::DataAvailable_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*), OSMetaClass const*)
+exported name not in import list: IODataQueueDispatchSource::SetDataServicedHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::SetDataAvailableHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::SetDataServicedHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::CopyDataServicedHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction**))
+exported name not in import list: IODataQueueDispatchSource::SetDataAvailableHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::CopyDataAvailableHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction**))
+exported name not in import list: IODataQueueDispatchSource::_Dispatch(IODataQueueDispatchSource*, IORPC)
+exported name not in import list: IOInterruptDispatchSource::Create_Invoke(IORPC, int (*)(IOService*, unsigned int, IODispatchQueue*, IOInterruptDispatchSource**))
+exported name not in import list: IOInterruptDispatchSource::SetHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IOInterruptDispatchSource::InterruptOccurred_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, unsigned long long, unsigned long long))
+exported name not in import list: IOInterruptDispatchSource::InterruptOccurred_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, unsigned long long, unsigned long long), OSMetaClass const*)
+exported name not in import list: IOServiceNotificationDispatchSource::SetHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOServiceNotificationDispatchSource::CopyNextNotification(unsigned long long*, IOService**, unsigned long long*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: OSAction::Create_Invoke(IORPC, int (*)(OSObject*, unsigned long long, unsigned long long, unsigned long, OSAction**))
+exported name not in import list: OSAction::_Dispatch(OSAction*, IORPC)
+exported name not in import list: OSObject::SetDispatchQueue(char const*, IODispatchQueue*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: OSObject::SetDispatchQueue_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, IODispatchQueue*))
+exported name not in import list: OSObject::CopyDispatchQueue_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, IODispatchQueue**))
+exported name not in import list: IOService::AdjustBusy(int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Stop_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*))
+exported name not in import list: IOService::GetBusyState(unsigned int*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Start_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*))
+exported name not in import list: IOService::Create_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*, char const*, IOService**))
+exported name not in import list: IOService::NewUserClient(unsigned int, IOUserClient**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetProperties(OSDictionary*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CopyProperties(OSDictionary**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RemoveProperty(OSString*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SearchProperty(char const*, char const*, unsigned long long, OSObject**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetName_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IOService::RegisterService(int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::ChangePowerState(unsigned int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::StringFromReturn(int, OSString**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::GetRegistryEntryID(unsigned long long*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RequireMaxBusStall(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::ClientCrashed_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*, unsigned long long))
+exported name not in import list: IOService::NewUserClient_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int, IOUserClient**))
+exported name not in import list: IOService::SetPowerState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int))
+exported name not in import list: IOService::SetProperties_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSDictionary*))
+exported name not in import list: IOService::CopyProperties_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSDictionary**))
+exported name not in import list: IOService::RemoveProperty_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSString*))
+exported name not in import list: IOService::SearchProperty_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, char const*, unsigned long long, OSObject**))
+exported name not in import list: IOService::CopyProviderProperties(OSArray*, OSArray**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CoreAnalyticsSendEvent(unsigned long long, OSString*, OSDictionary*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RegisterService_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*))
+exported name not in import list: IOService::ChangePowerState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int))
+exported name not in import list: IOService::GetRegistryEntryID_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long*))
+exported name not in import list: IOService::CopySystemStateNotificationService(IOService**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Create(IOService*, char const*, IOService**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetName(char const*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CopyName(OSString**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Terminate(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+make[5]: *** [/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/config/Makefile:108: /home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config/IOKit.symbolset] Error 1
+exported name not in import list: IOMemoryMap::_CopyState(_IOMemoryMapPrivateState*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryMap::_CopyState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, _IOMemoryMapPrivateState*))
+exported name not in import list: IODMACommand::PrepareForDMA(unsigned long long, IOMemoryDescriptor*, unsigned long long, unsigned long long, unsigned long long*, unsigned int*, IOAddressSegment*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODMACommand::GetPreparation(unsigned long long*, unsigned long long*, IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODMACommand::PerformOperation(unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryDescriptor*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserClient::AsyncCompletion(OSAction*, int, unsigned long long const*, unsigned int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserClient::AsyncCompletion_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, int, unsigned long long const*, unsigned int))
+exported name not in import list: IOUserClient::AsyncCompletion_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, int, unsigned long long const*, unsigned int), OSMetaClass const*)
+exported name not in import list: IOUserClient::_ExternalMethod_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long const*, unsigned int, OSData*, IOMemoryDescriptor*, unsigned long long*, unsigned int*, unsigned long long, OSData**, IOMemoryDescriptor*, OSAction*))
+exported name not in import list: IOUserClient::CopyClientMemoryForType_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long*, IOMemoryDescriptor**))
+exported name not in import list: IOUserClient::CreateMemoryDescriptorFromClient(unsigned long long, unsigned int, IOAddressSegment const*, IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserServer::Exit_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IOUserServer::Create_Invoke(IORPC, int (*)(char const*, unsigned long long, unsigned long long, OSString*, IOUserServer**))
+exported name not in import list: IOUserServer::LoadModule_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IODispatchQueue::Create_Invoke(IORPC, int (*)(char const*, unsigned long long, unsigned long long, IODispatchQueue**))
+exported name not in import list: IODispatchQueue::SetPort_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, ipc_port*))
+exported name not in import list: IODispatchQueue::SetPort(ipc_port*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::CheckForWork(bool, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::Cancel_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, void ( block_pointer)()))
+exported name not in import list: IODispatchSource::SetEnable_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, bool))
+exported name not in import list: IODispatchSource::CheckForWork_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IORPC, bool))
+exported name not in import list: IODispatchSource::SetEnableWithCompletion_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, bool, void ( block_pointer)()))
+exported name not in import list: IODispatchSource::Cancel(void ( block_pointer)(), int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::SetEnable(bool, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::_CopyState(_IOMDPrivateState*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::CreateMapping(unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryMap**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::_CopyState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, _IOMDPrivateState*))
+exported name not in import list: IOMemoryDescriptor::CreateMapping_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryMap**))
+exported name not in import list: OSObject::_Dispatch(OSObject*, IORPC)
+exported name not in import list: IOService::_Dispatch(IOService*, IORPC)
+exported name not in import list: IOBufferMemoryDescriptor::Create_Invoke(IORPC, int (*)(unsigned long long, unsigned long long, unsigned long long, IOBufferMemoryDescriptor**))
+exported name not in import list: IOBufferMemoryDescriptor::SetLength_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long))
+exported name not in import list: IOBufferMemoryDescriptor::SetLength(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::CopyMemory(IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::Create_Invoke(IORPC, int (*)(unsigned long long, IODispatchQueue*, IODataQueueDispatchSource**))
+exported name not in import list: IODataQueueDispatchSource::CopyMemory_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOMemoryDescriptor**))
+exported name not in import list: IODataQueueDispatchSource::DataServiced_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::DataServiced_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*), OSMetaClass const*)
+exported name not in import list: IODataQueueDispatchSource::DataAvailable_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::DataAvailable_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*), OSMetaClass const*)
+exported name not in import list: IODataQueueDispatchSource::SetDataServicedHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::SetDataAvailableHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::SetDataServicedHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::CopyDataServicedHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction**))
+exported name not in import list: IODataQueueDispatchSource::SetDataAvailableHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::CopyDataAvailableHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction**))
+exported name not in import list: IODataQueueDispatchSource::_Dispatch(IODataQueueDispatchSource*, IORPC)
+exported name not in import list: IOInterruptDispatchSource::Create_Invoke(IORPC, int (*)(IOService*, unsigned int, IODispatchQueue*, IOInterruptDispatchSource**))
+exported name not in import list: IOInterruptDispatchSource::SetHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IOInterruptDispatchSource::InterruptOccurred_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, unsigned long long, unsigned long long))
+exported name not in import list: IOInterruptDispatchSource::InterruptOccurred_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, unsigned long long, unsigned long long), OSMetaClass const*)
+exported name not in import list: IOServiceNotificationDispatchSource::SetHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOServiceNotificationDispatchSource::CopyNextNotification(unsigned long long*, IOService**, unsigned long long*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: OSAction::Create_Invoke(IORPC, int (*)(OSObject*, unsigned long long, unsigned long long, unsigned long, OSAction**))
+exported name not in import list: OSAction::_Dispatch(OSAction*, IORPC)
+exported name not in import list: OSObject::SetDispatchQueue(char const*, IODispatchQueue*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: OSObject::SetDispatchQueue_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, IODispatchQueue*))
+exported name not in import list: OSObject::CopyDispatchQueue_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, IODispatchQueue**))
+exported name not in import list: OSObject::_Dispatch(OSObject*, IORPC)
+exported name not in import list: IOService::AdjustBusy(int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Stop_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*))
+exported name not in import list: IOService::GetBusyState(unsigned int*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Start_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*))
+exported name not in import list: IOService::Create_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*, char const*, IOService**))
+exported name not in import list: IOService::NewUserClient(unsigned int, IOUserClient**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetProperties(OSDictionary*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CopyProperties(OSDictionary**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RemoveProperty(OSString*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SearchProperty(char const*, char const*, unsigned long long, OSObject**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetName_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IOService::RegisterService(int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::ChangePowerState(unsigned int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::StringFromReturn(int, OSString**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::GetRegistryEntryID(unsigned long long*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RequireMaxBusStall(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::ClientCrashed_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*, unsigned long long))
+exported name not in import list: IOService::NewUserClient_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int, IOUserClient**))
+exported name not in import list: IOService::SetPowerState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int))
+exported name not in import list: IOService::SetProperties_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSDictionary*))
+exported name not in import list: IOService::CopyProperties_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSDictionary**))
+exported name not in import list: IOService::RemoveProperty_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSString*))
+exported name not in import list: IOService::SearchProperty_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, char const*, unsigned long long, OSObject**))
+exported name not in import list: IOService::CopyProviderProperties(OSArray*, OSArray**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CoreAnalyticsSendEvent(unsigned long long, OSString*, OSDictionary*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RegisterService_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*))
+exported name not in import list: IOService::ChangePowerState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int))
+make[5]: *** [/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/config/Makefile:108: /home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config/Libkern.symbolset] Error 1
+exported name not in import list: IOService::GetRegistryEntryID_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long*))
+exported name not in import list: IOService::CopySystemStateNotificationService(IOService**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Create(IOService*, char const*, IOService**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetName(char const*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CopyName(OSString**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Terminate(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::_Dispatch(IOService*, IORPC)
+make[6]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools/lldbmacros'
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools/lldbmacros'
+make[5]: *** [/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/config/Makefile:121: check_all_exports] Error 1
+exported name not in import list: IOUnifiedAddressTranslator::gMetaClass
+exported name not in import list: IOUnifiedAddressTranslator::superClass
+exported name not in import list: IOUnifiedAddressTranslator::commitUnmaps()
+exported name not in import list: IOUnifiedAddressTranslator::prepareFWUnmap(unsigned long long, unsigned long long)
+exported name not in import list: IOUnifiedAddressTranslator::getPageTableEntry(unsigned long long)
+exported name not in import list: IOUnifiedAddressTranslator::setClientContextID(unsigned int, bool)
+exported name not in import list: IOUnifiedAddressTranslator::isPageFaultExpected(unsigned long long, unsigned int)
+exported name not in import list: IOUnifiedAddressTranslator::removeClientContextID()
+exported name not in import list: IOUnifiedAddressTranslator::registerTaskForService(task*, IOService*)
+exported name not in import list: IOUnifiedAddressTranslator::createMappingInAperture(unsigned int, IOMemoryDescriptor*, unsigned int, unsigned long long, unsigned long)
+exported name not in import list: IOUnifiedAddressTranslator::getTotalPageTableMemory()
+exported name not in import list: IOUnifiedAddressTranslator::map(IOMemoryMap*, unsigned int)
+exported name not in import list: IOUnifiedAddressTranslator::doMap(IOMemoryDescriptor*, unsigned long long, unsigned long long, unsigned int)
+exported name not in import list: IOUnifiedAddressTranslator::unmap(IOMemoryMap*)
+exported name not in import list: IOUnifiedAddressTranslator::doUnmap(IOMemoryDescriptor*, unsigned long long, unsigned long long)
+exported name not in import list: IOUnifiedAddressTranslator::taskDied()
+exported name not in import list: OSAction_IOUserClient_KernelCompletion::gMetaClass
+exported name not in import list: OSAction_IOUserClient_KernelCompletion::superClass
+exported name not in import list: vtable for IOUnifiedAddressTranslator
+exported name not in import list: vtable for OSAction_IOUserClient_KernelCompletion
+exported name not in import list: _nvme_ppl_get_desc
+exported name not in import list: _pmap_cs_configuration
+exported name not in import list: _pmap_has_iofilter_protected_write
+exported name not in import list: _pmap_iommu_alloc_contiguous_pages
+exported name not in import list: _pmap_iommu_init
+exported name not in import list: _pmap_iommu_ioctl
+exported name not in import list: _pmap_iommu_iovmalloc
+exported name not in import list: _pmap_iommu_iovmfree
+exported name not in import list: _pmap_iommu_map
+exported name not in import list: _pmap_iommu_unmap
+exported name not in import list: _sart_get_desc
+exported name not in import list: _t6000dart_get_desc
+exported name not in import list: _t6000dart_vo_tte
+exported name not in import list: _t8020dart_get_desc
+exported name not in import list: _t8020dart_vo_tte
+exported name not in import list: _t8110dart_get_desc
+exported name not in import list: _t8110dart_max_translation_levels
+exported name not in import list: _t8110dart_vo_tt_index
+exported name not in import list: _t8110dart_vo_tte
+exported name not in import list: _uat_get_desc
+make[5]: *** [/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/config/Makefile:108: /home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config/Private.symbolset] Error 1
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools'
+make[5]: Target 'do_config_all' not remade because of errors.
+make[5]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config'
+make[4]: *** [/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/makedefs/MakeInc.dir:89: config_all] Error 2
+make[4]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config'
+make[3]: *** [/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/makedefs/MakeInc.dir:89: config_all_recurse_into_config] Error 2
+make[3]: Target 'config_all' not remade because of errors.
+make[3]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837'
+make[2]: *** [/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2/makedefs/MakeInc.top:538: config_all_bootstrap_DEVELOPMENT^ARM64^BCM2837] Error 2
+make[2]: Target 'all' not remade because of errors.
+make[2]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2'
+make[1]: *** [Makefile:239: all] Error 2
+make[1]: Target 'default' not remade because of errors.
+make[1]: Leaving directory '/home/lizi/IOS/hakios-mtk/xnu-src/xnu-8796.121.2'
+make-kernel: built: hakios-kernel (xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837)
+make-kernel: (exit status 2 is the kext symbol-set checks failing, as they do on this configuration; see tools/make-kernel.sh)

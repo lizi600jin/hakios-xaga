@@ -1,0 +1,3 @@
+MCU window before the start request:process lsd[20] denied attempt to escape CPU monitor (missing required entitlement).
+
+MCU window after the core was switched off:process lsd[20] denied attempt to escape CPU monitor (missing required entitlement).

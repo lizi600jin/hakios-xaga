@@ -515,6 +515,8 @@ static unsigned gMaliEarlyAs0;                  /* set once the early path has a
 static unsigned gMaliCold = 1;                  /* mali_cold=0 restores the reset-path writes */
 static unsigned gMaliCacheFlush;                /* mali_cacheflush=1 flushes GPU caches just before AUTO */
 static unsigned gMaliResetOnly;                 /* mali_resetonly=1 adds only the early soft reset */
+static unsigned gMaliCohNone;                   /* mali_cohnone=1 selects vendor noncoherent mode before L2 */
+static unsigned gMaliHwIssues;                  /* mali_hwissues=1 zeroes the four vendor quirk registers */
 /*
  * mali_gpm=0 skips the initiator-to-memory protector step.
  *
@@ -1453,10 +1455,9 @@ read_witness(void)
 	 *
 	 * These pages come from mem_alloc_low(), which maps them with MALI_WIMG_WCOMB --
 	 * write-combining, not cacheable. Writes may be gathered there; the read direction is
-	 * not guaranteed to bypass a pending combine buffer either. The whole "the core never
-	 * executed the first store" verdict rests on one read of one word, so ask three times
-	 * and put a barrier between them: a stable 0xff5aa5f0 settles the question, a word that
-	 * changes means the path, not the core, was the problem.
+	 * not guaranteed to bypass a pending combine buffer either. Read three times with
+	 * barriers to check stability. A stable sentinel still only bounds visible output;
+	 * it does not provide a trace of the core's instructions.
 	 */
 	__asm__ volatile ("dmb sy" ::: "memory");
 	first = words[0];
@@ -3125,19 +3126,20 @@ gpu_l2_power_on(void)
 	if (mrd(kL2Present) != kL2PresentFirst) {
 		printf("mali: the L2 reports itself as %#x, not one core group\n", mrd(kL2Present));
 	}
-	/*
-	 * Coherency: NONE on the reset path, untouched on the cold path.
-	 *
-	 * 0x304 is written exactly once in the five hundred records of the reset trace -- 0x1f, which
-	 * is GPU_COHERENCY_NONE -- and never in the twenty-four hundred records of a boot. Panthor
-	 * writes it too, but from panthor_gpu_coherency_set(), which runs under a feature check whose
-	 * outcome on this part is unknown to us: the value it would write here is the same 0x1f, so
-	 * the write is either redundant or was already done before the trace window opens. Either way
-	 * the cold path does not need it, and one fewer difference from a working machine is worth
-	 * more than one more guess.
-	 */
-	if (!gMaliCold) {
-		mwr(kCoherencyProtocol, kCoherencyNone);
+	/* kbase's initial PM setup selects system coherency before the deferred FW
+	 * load (pm_driver.c:2939); Panthor also selects it before L2 power-on.
+	 * A trace starting at AS configuration cannot establish that this earlier
+	 * setup was absent. Keep the old cold path selectable and observe both
+	 * register values in the already-reached pre-L2 path. */
+	{
+		uint32_t before = mrd(kCoherencyProtocol);
+
+		if (!gMaliCold || gMaliCohNone) {
+			mwr(kCoherencyProtocol, kCoherencyNone);
+		}
+		printf("mali: protocol trial %u: features %#x before %#x after %#x wrote %u\n",
+		    gMaliTrial, mrd(kCoherencyFeatures), before, mrd(kCoherencyProtocol),
+		    (!gMaliCold || gMaliCohNone) ? 1u : 0u);
 	}
 	/*
 	 * The ASN hash, which is the one thing panthor has to do differently on a MediaTek part.
@@ -3595,8 +3597,8 @@ start_mcu(void)
 	 * whether the MCU ever ran: those values are what the CPU put there. The version word is the
 	 * one the firmware has to overwrite, and in the image it is zero, which is also what "never
 	 * ran" reads. Writing a value that no firmware would ever produce breaks the tie: if it
-	 * survives, not one instruction executed; if it is gone, the firmware ran and then wrote zero
-	 * or faulted after writing.
+	 * survives, no version publication was observed. A changed word needs interpretation
+	 * together with the boot IRQ or the witness markers; neither reading is a PC trace.
 	 */
 	if (gShared != NULL) {
 		volatile struct glb_control *sentinel =
@@ -4510,6 +4512,20 @@ mali_bring_up(void)
 			gpu_hw_issues();
 		}
 	}
+	/* Opt-in four-write experiment; after any successful reset, before AS/L2 setup. */
+	if (gMaliHwIssues) {
+		uint32_t shader = mrd(kShaderConfig), tiler = mrd(kTilerConfig);
+		uint32_t l2mmu = mrd(kL2MmuConfig), csf = mrd(kCsfConfig);
+
+		mwr(kShaderConfig, 0);
+		mwr(kTilerConfig, 0);
+		mwr(kL2MmuConfig, 0);
+		mwr(kCsfConfig, 0);
+		__asm__ volatile ("dsb sy" ::: "memory");
+		printf("mali: hwissues trial %u: before shader %#x tiler %#x l2mmu %#x csf %#x -> after %#x %#x %#x %#x\n",
+		    gMaliTrial, shader, tiler, l2mmu, csf,
+		    mrd(kShaderConfig), mrd(kTilerConfig), mrd(kL2MmuConfig), mrd(kCsfConfig));
+	}
 	/*
 	 * The seven unused address spaces go first, before the interrupt masks.
 	 *
@@ -4994,6 +5010,8 @@ hakios_mali610_init(void)
 	PE_parse_boot_argn("mali_ptvendor", &gMaliPtVendor, sizeof(gMaliPtVendor));
 	PE_parse_boot_argn("mali_cacheflush", &gMaliCacheFlush, sizeof(gMaliCacheFlush));
 	PE_parse_boot_argn("mali_resetonly", &gMaliResetOnly, sizeof(gMaliResetOnly));
+	PE_parse_boot_argn("mali_cohnone", &gMaliCohNone, sizeof(gMaliCohNone));
+	PE_parse_boot_argn("mali_hwissues", &gMaliHwIssues, sizeof(gMaliHwIssues));
 	PE_parse_boot_argn("mali_bpverify", &gMaliBpVerify, sizeof(gMaliBpVerify));
 	PE_parse_boot_argn("mali_scclk", &gMaliScClk, sizeof(gMaliScClk));
 	PE_parse_boot_argn("mali_scupd", &gMaliScUpd, sizeof(gMaliScUpd));
