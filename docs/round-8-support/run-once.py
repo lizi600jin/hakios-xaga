@@ -2,7 +2,8 @@
 """Run a prepared experiment; pull logs as soon as adbd returns, then restore stock.
 
 User authorized device control/flashing on 2026-11-13. Only boot_a is flashed;
-xnusys is read for the existing logbook. No arbitrary MMIO accesses.
+the dedicated xnusys logbook slot is backed up and cleared before each run.
+No arbitrary MMIO accesses or writes to the filesystem area of xnusys.
 """
 from pathlib import Path
 import datetime, hashlib, json, re, subprocess, sys, time
@@ -72,6 +73,27 @@ try:
     for item in build['files']:
         assert hashlib.sha256((ROOT / item['path']).read_bytes()).hexdigest() == item['sha256']
     assert adb('shell', 'getprop sys.boot_completed') == '1'
+    # The source reserves 8 MiB at the end of xnusys. Clear only its existing
+    # 4 MiB + 4 KiB logbook window, after saving the previous bytes on the host.
+    slot_block, slot_blocks, block_bytes = 653560, 1025, 4096
+    partition_bytes = int(adb('shell', 'blockdev --getsize64 /dev/block/by-name/xnusys'))
+    assert partition_bytes - (8 << 20) == slot_block * block_bytes
+    assert slot_blocks * block_bytes <= (8 << 20)
+    remote = f'/data/local/tmp/round8-before-{trial}.bin'
+    adb('shell', f'dd if=/dev/block/by-name/xnusys of={remote} bs=4096 skip={slot_block} count={slot_blocks}')
+    previous = OUT / f'pre-trial-{trial}-logbook.bin'
+    adb('pull', remote, str(previous), timeout=30)
+    assert previous.stat().st_size == slot_blocks * block_bytes
+    adb('shell', f'dd if=/dev/zero of=/dev/block/by-name/xnusys bs=4096 seek={slot_block} count={slot_blocks} conv=fsync', timeout=30)
+    zero_md5 = hashlib.md5(bytes(slot_blocks * block_bytes)).hexdigest()
+    observed = adb('shell', f'dd if=/dev/block/by-name/xnusys bs=4096 skip={slot_block} count={slot_blocks} 2>/dev/null | md5sum')
+    assert observed.startswith(zero_md5)
+    meta['logbook_preclear'] = {'partition_bytes': partition_bytes,
+        'offset_bytes': slot_block * block_bytes, 'bytes': slot_blocks * block_bytes,
+        'previous_sha256': hashlib.sha256(previous.read_bytes()).hexdigest(),
+        'zero_md5_verified': zero_md5}
+    save()
+    print(f'trial {trial}: previous log backed up; reserved logbook slot zeroed and verified', flush=True)
     print(f'trial {trial}: prepared hashes verified; entering fastboot', flush=True)
     bootloader()
     fastboot('flash', 'boot_a', str(ROOT / 'xnu-flashed-slot_a.img'))
@@ -85,7 +107,9 @@ try:
     adb('pull', f'/data/local/tmp/round8-{trial}.bin', str(logbook), timeout=30)
     raw = logbook.read_bytes()
     assert len(raw) == 4198400
-    assert f'trial {trial}'.encode() in raw, 'Stale logbook: missing current trial marker'
+    meta['current_trial_marker_present'] = f'trial {trial}'.encode() in raw
+    if not meta['current_trial_marker_present']:
+        print(f'trial {trial}: no current marker; retain raw evidence and restore stock; result inconclusive', flush=True)
     meta['logbook_sha256'] = hashlib.sha256(raw).hexdigest()
     rows = [(m[1].decode(), m[2].decode('utf-8', 'replace'), m.start())
             for m in re.finditer(rb'\[\s*([0-9]+\.[0-9]+)\]: (mali:[^\x00\n]{0,800})', raw)]

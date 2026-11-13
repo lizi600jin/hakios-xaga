@@ -128,6 +128,7 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
 #define MALI_MFG_REF_MASK       0x03000000u
 #define MALI_MFG_REF_26M        (0u << 24)      /* tck_26m_mx9_ck: the always-on crystal */
 #define MALI_MFG_REF_SHIFT      19              /* CLK_UPDATE bit for mfg_ref_sel */
+#define MALI_MFGSC_REF_SHIFT    20              /* CLK_UPDATE bit for mfgsc_ref_sel */
 #define MALI_MFG_SEL_0_BIT      (1u << 16)      /* 0 = mfg_ref_ck, 1 = mfgpll_ck */
 
 /*
@@ -489,6 +490,8 @@ static unsigned gMaliFwX;                       /* mali_fwx=1 makes every firmwa
 static unsigned gMaliPtVendor;                  /* mali_ptvendor=1 matches noncoherent kbase SH/NG bits */
 static unsigned gMaliBpVerify;                  /* mali_bpverify=1 releases bus protection and confirms STA */
 static unsigned gMaliScClk;                     /* mali_scclk=1 un-gates CLK_CFG_5 bit7 (mfgsc_ref_ck) */
+static unsigned gMaliScUpd;                     /* mali_scupd=1 enables and commits the MFGSC mux */
+static unsigned gMaliSc26;                      /* with scupd, select the known-live 26 MHz parent */
 static unsigned gMaliMcuWin;                    /* mali_mcuwin=1 prints the whole 0x3000..0x3100 block */
 static unsigned gMaliMcuSeq;                    /* mali_mcuseq=1 writes ENABLE before AUTO */
 static unsigned gMaliEarlyAs0;                  /* set once the early path has already done it */
@@ -1496,8 +1499,8 @@ read_witness(void)
 			printf(" (UNSTABLE -- the read path is suspect, not the core)");
 		}
 	}
-	printf("\n");
-	printf("mali: witness: verdict");
+	printf(" trial %u\n", gMaliTrial);
+	printf("mali: witness: verdict trial %u", gMaliTrial);
 	if (first == MALI_WITNESS_DONE) {
 		printf(" -- the core ran the witness to the end, so the MCU works\n");
 	} else if (first == MALI_WITNESS_FIRST) {
@@ -2205,8 +2208,8 @@ pll_300mhz(void)
 	 * The vendor's power-on enables both muxes -- clk_mux for the GPU and clk_sc_mux for the
 	 * shader stacks -- and then switches both to CLOCK_MAIN. The phone's own clock summary reads
 	 * mfg_sel_0_ck at 299999955 and mfg_sel_1_ck at 218400000, which is mainpll_d5_d2, so the
-	 * second one is not left on the crystal. Selector 2 in this field is that parent; the field
-	 * is bits 1:0 of CLK_CFG_5 and has no update bit of its own, the same as CLK_CFG_30.
+	 * second one is not left on the crystal. Selector 2 is that parent in CLK_CFG_5 bits 1:0.
+	 * The vendor mux has UPDATE bit20; the historical baseline did not commit it.
 	 *
 	 * Whether the MCU fetches through this mux is not established. It is set because the only
 	 * working configuration in evidence sets it, and because a mux left on a stopped parent is
@@ -2228,10 +2231,22 @@ pll_300mhz(void)
 	 * output is gated off, which is precisely the shape of "the MCU's state machine answers but
 	 * no instruction is ever fetched".
 	 */
-	if (gMaliScClk) {
+	if (gMaliScClk || gMaliScUpd) {
+		if (gMaliScUpd && gMaliSc26) {
+			reg_wr(gTopckgen, MALI_CLK_CFG_5_CLR, MALI_MFG_SEL_1_MASK);
+		}
 		reg_wr(gTopckgen, MALI_CLK_CFG_5_CLR, 1u << 7);
+		if (gMaliScUpd) {
+			/* clk-mux.c:54-63 commits the restored mux after clearing its gate. */
+			reg_wr(gTopckgen, MALI_CLK_UPDATE, 1u << MALI_MFGSC_REF_SHIFT);
+		}
 		delay(2);
 		printf("mali: scclk: cfg5 %#x after un-gating bit7\n",
+		    reg_rd(gTopckgen, MALI_CLK_CFG_5));
+		printf("mali: sc mux trial %u: update20 %u parent %u gate %u cfg5 %#x\n",
+		    gMaliTrial, gMaliScUpd ? 1u : 0u,
+		    reg_rd(gTopckgen, MALI_CLK_CFG_5) & MALI_MFG_SEL_1_MASK,
+		    (reg_rd(gTopckgen, MALI_CLK_CFG_5) >> 7) & 1u,
 		    reg_rd(gTopckgen, MALI_CLK_CFG_5));
 	}
 	delay(2);
@@ -2902,10 +2917,10 @@ as_enable(unsigned as, uint64_t transtab)
 	    (unsigned long long)gpu_rd64(asReg(as, kAsTranscfg)));
 	AS_STEP("update", mwr(asReg(as, kAsCommand), kAsCmdUpdate));
 	/* Inline in the observed AS_STEP path; all registers were read in prior runs. */
-	printf("mali: round7 AS%u after UPDATE: raw %#x status %#x fault %#x addr %#llx gpu_fault %#x\n",
+	printf("mali: round7 AS%u after UPDATE: raw %#x status %#x fault %#x addr %#llx gpu_fault %#x trial %u\n",
 	    as, mrd(kMmuIntRaw), mrd(asReg(as, kAsStatus)),
 	    mrd(asReg(as, kAsFaultStatus)),
-	    (unsigned long long)gpu_rd64(asReg(as, kAsFaultAddress)), mrd(kGpuFaultStatus));
+	    (unsigned long long)gpu_rd64(asReg(as, kAsFaultAddress)), mrd(kGpuFaultStatus), gMaliTrial);
 	/*
 	 * One UPDATE, not two.
 	 *
@@ -3985,10 +4000,10 @@ start_mcu(void)
 	if (gShared != NULL) {
 		uint32_t version = ((volatile struct glb_control *)gShared->mem.kva)->version;
 
-		printf("mali: version word %#x (%s)\n", version,
+		printf("mali: version word %#x (%s) trial %u\n", version,
 		    version == kSentinelVersion ? "untouched; no firmware version published" :
 		    version == 0u ? "zero, the firmware never wrote it either" :
-		    "written by the firmware");
+		    "written by the firmware", gMaliTrial);
 		/* Fixed offsets in allocated DRAM, before DISABLE or any pointer-following. */
 		if (gShared->mem.size >= 0x1020u &&
 		    gShared->va_end - gShared->va_start >= 0x1020u) {
@@ -4971,6 +4986,8 @@ hakios_mali610_init(void)
 	PE_parse_boot_argn("mali_ptvendor", &gMaliPtVendor, sizeof(gMaliPtVendor));
 	PE_parse_boot_argn("mali_bpverify", &gMaliBpVerify, sizeof(gMaliBpVerify));
 	PE_parse_boot_argn("mali_scclk", &gMaliScClk, sizeof(gMaliScClk));
+	PE_parse_boot_argn("mali_scupd", &gMaliScUpd, sizeof(gMaliScUpd));
+	PE_parse_boot_argn("mali_sc26", &gMaliSc26, sizeof(gMaliSc26));
 	PE_parse_boot_argn("mali_mcuwin", &gMaliMcuWin, sizeof(gMaliMcuWin));
 	PE_parse_boot_argn("mali_mcuseq", &gMaliMcuSeq, sizeof(gMaliMcuSeq));
 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {

@@ -38,7 +38,7 @@ for trial in trials:
     (out / f'trial-{trial}-writes.tsv').write_text('record\toffset\tvalue\n' +
         ''.join(f'{i}\t{off}\t{value:#x}\n' for i, off, value in writes))
     # Preserve MCU-window continuation lines from the full body too.
-    text = raw.decode('utf-8', 'replace')
+    text = (raw[:cutoff] if cutoff is not None else raw).decode('utf-8', 'replace')
     blocks = re.findall(r'MCU window[^\n]*\n(?: *0x[0-9a-f]+=[^\n]*\n)*', text)
     (out / f'trial-{trial}-mcu.txt').write_text('\n'.join(blocks))
     def first(needle):

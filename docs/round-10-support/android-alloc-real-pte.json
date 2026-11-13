@@ -1,0 +1,139 @@
+{
+  "started_at": "2026-11-13T14:20:24.539609+08:00",
+  "method": "private kretprobes; CPU return registers only",
+  "limitation": "Owned user-buffer mappings; not the firmware AS0 table.",
+  "probes": [
+    {
+      "target": "mali_kbase_mt6895:kbase_mmu_create_ate",
+      "event": "hakios_alloc_1794550824539512192/pte0",
+      "registered": true,
+      "enabled": true,
+      "definition": "r128:hakios_alloc_1794550824539512192/pte0 mali_kbase_mt6895:kbase_mmu_create_ate pte=$retval:x64",
+      "format": "name: pte0\nID: 1493\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:unsigned long __probe_func;\toffset:8;\tsize:8;\tsigned:0;\n\tfield:unsigned long __probe_ret_ip;\toffset:16;\tsize:8;\tsigned:0;\n\tfield:u64 pte;\toffset:24;\tsize:8;\tsigned:0;\n\nprint fmt: \"(%lx <- %lx) pte=0x%Lx\", REC->__probe_func, REC->__probe_ret_ip, REC->pte\n",
+      "rows": 0,
+      "pbha_counts": {},
+      "low_attributes_counts": {},
+      "sample_values": [],
+      "physical_address_min": null,
+      "physical_address_max": null
+    },
+    {
+      "target": "mali_kbase_mt6895:kbase_native_mgm_update_gpu_pte",
+      "event": "hakios_alloc_1794550824539512192/pte1",
+      "registered": true,
+      "enabled": true,
+      "definition": "r128:hakios_alloc_1794550824539512192/pte1 mali_kbase_mt6895:kbase_native_mgm_update_gpu_pte pte=$retval:x64",
+      "format": "name: pte1\nID: 1494\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:unsigned long __probe_func;\toffset:8;\tsize:8;\tsigned:0;\n\tfield:unsigned long __probe_ret_ip;\toffset:16;\tsize:8;\tsigned:0;\n\tfield:u64 pte;\toffset:24;\tsize:8;\tsigned:0;\n\nprint fmt: \"(%lx <- %lx) pte=0x%Lx\", REC->__probe_func, REC->__probe_ret_ip, REC->pte\n",
+      "rows": 64,
+      "pbha_counts": {
+        "0": 64
+      },
+      "low_attributes_counts": {
+        "0x443": 64
+      },
+      "sample_values": [
+        "0x400001fec70443",
+        "0x400001018bb443",
+        "0x4000016a998443",
+        "0x40000163207443",
+        "0x4000013fdf4443",
+        "0x4000017f8a9443",
+        "0x4000019d9bd443",
+        "0x400001861af443",
+        "0x4000019f0cf443",
+        "0x4000014fb23443",
+        "0x40000173242443",
+        "0x40000138446443",
+        "0x400001aff98443",
+        "0x40000219dae443",
+        "0x400001e7814443",
+        "0x400001d10d3443",
+        "0x400001d10d3443",
+        "0x400001e7814443",
+        "0x40000219dae443",
+        "0x400001aff98443",
+        "0x40000138446443",
+        "0x40000173242443",
+        "0x4000014fb23443",
+        "0x4000019f0cf443",
+        "0x400001861af443",
+        "0x4000019d9bd443",
+        "0x4000017f8a9443",
+        "0x4000013fdf4443",
+        "0x40000163207443",
+        "0x4000016a998443",
+        "0x400001018bb443",
+        "0x400001fec70443"
+      ],
+      "physical_address_min": "0x1018bb000",
+      "physical_address_max": "0x219dae000"
+    },
+    {
+      "target": "mali_mgm:example_mgm_update_gpu_pte",
+      "event": "hakios_alloc_1794550824539512192/pte2",
+      "registered": true,
+      "enabled": true,
+      "definition": "r128:hakios_alloc_1794550824539512192/pte2 mali_mgm:example_mgm_update_gpu_pte pte=$retval:x64",
+      "format": "name: pte2\nID: 1495\nformat:\n\tfield:unsigned short common_type;\toffset:0;\tsize:2;\tsigned:0;\n\tfield:unsigned char common_flags;\toffset:2;\tsize:1;\tsigned:0;\n\tfield:unsigned char common_preempt_count;\toffset:3;\tsize:1;\tsigned:0;\n\tfield:int common_pid;\toffset:4;\tsize:4;\tsigned:1;\n\n\tfield:unsigned long __probe_func;\toffset:8;\tsize:8;\tsigned:0;\n\tfield:unsigned long __probe_ret_ip;\toffset:16;\tsize:8;\tsigned:0;\n\tfield:u64 pte;\toffset:24;\tsize:8;\tsigned:0;\n\nprint fmt: \"(%lx <- %lx) pte=0x%Lx\", REC->__probe_func, REC->__probe_ret_ip, REC->pte\n",
+      "rows": 0,
+      "pbha_counts": {},
+      "low_attributes_counts": {},
+      "sample_values": [],
+      "physical_address_min": null,
+      "physical_address_max": null
+    }
+  ],
+  "cleanup": [
+    {
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "stock_boot_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+  "helper_sha256": "37d69f70502853be078f98d6d840d27dd44e9d4313d3010d91c889cf419a001d",
+  "allocation": {
+    "exit": 0,
+    "stdout": "CSF API 1.18\nallocation 0: gpu_va=0x41000 flags=0x300f\nowned buffer mapped at 0x7300355000, byte=0x5a\nallocation 1: gpu_va=0x41000 flags=0x300f\nowned buffer mapped at 0x7300355000, byte=0x5a\nallocation 2: gpu_va=0x41000 flags=0x300f\nowned buffer mapped at 0x7300355000, byte=0x5a\nallocation 3: gpu_va=0x41000 flags=0x300f\nowned buffer mapped at 0x7300355000, byte=0x5a\ncompleted 4 allocations; context closed\n",
+    "stderr": ""
+  },
+  "trace_sha256": "bf06664f5b1bdc6c24846bdc156dab00e0f4d6f8e54e7c834ba2da2c9d94a3c5",
+  "outcome": "sampled",
+  "cleanup_verified": true,
+  "boot_completed_after": "1"
+}

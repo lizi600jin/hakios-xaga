@@ -1,0 +1,75 @@
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 64/64   #P:8
+#
+#                                _-----=> irqs-off
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| /     delay
+#           TASK-PID     CPU#  ||||   TIMESTAMP  FUNCTION
+#              | |         |   ||||      |         |
+ hakios-mali-all-8629    [004] d..2  1119.382219: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001fec70443
+ hakios-mali-all-8629    [004] d..2  1119.382224: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001018bb443
+ hakios-mali-all-8629    [004] d..2  1119.382226: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000016a998443
+ hakios-mali-all-8629    [004] d..2  1119.382227: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000163207443
+ hakios-mali-all-8629    [004] d..2  1119.382228: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000013fdf4443
+ hakios-mali-all-8629    [004] d..2  1119.382230: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000017f8a9443
+ hakios-mali-all-8629    [004] d..2  1119.382231: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000019d9bd443
+ hakios-mali-all-8629    [004] d..2  1119.382232: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001861af443
+ hakios-mali-all-8629    [004] d..2  1119.382233: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000019f0cf443
+ hakios-mali-all-8629    [004] d..2  1119.382235: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000014fb23443
+ hakios-mali-all-8629    [004] d..2  1119.382236: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000173242443
+ hakios-mali-all-8629    [004] d..2  1119.382237: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000138446443
+ hakios-mali-all-8629    [004] d..2  1119.382238: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001aff98443
+ hakios-mali-all-8629    [004] d..2  1119.382240: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000219dae443
+ hakios-mali-all-8629    [004] d..2  1119.382241: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001e7814443
+ hakios-mali-all-8629    [004] d..2  1119.382242: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001d10d3443
+ hakios-mali-all-8629    [004] d..2  1119.382331: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001d10d3443
+ hakios-mali-all-8629    [004] d..2  1119.382339: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001e7814443
+ hakios-mali-all-8629    [004] d..2  1119.382347: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000219dae443
+ hakios-mali-all-8629    [004] d..2  1119.382353: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001aff98443
+ hakios-mali-all-8629    [004] d..2  1119.382359: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000138446443
+ hakios-mali-all-8629    [004] d..2  1119.382364: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000173242443
+ hakios-mali-all-8629    [004] d..2  1119.382369: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000014fb23443
+ hakios-mali-all-8629    [004] d..2  1119.382374: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000019f0cf443
+ hakios-mali-all-8629    [004] d..2  1119.382379: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001861af443
+ hakios-mali-all-8629    [004] d..2  1119.382384: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000019d9bd443
+ hakios-mali-all-8629    [004] d..2  1119.382389: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000017f8a9443
+ hakios-mali-all-8629    [004] d..2  1119.382395: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000013fdf4443
+ hakios-mali-all-8629    [004] d..2  1119.382400: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000163207443
+ hakios-mali-all-8629    [004] d..2  1119.382405: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000016a998443
+ hakios-mali-all-8629    [004] d..2  1119.382410: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001018bb443
+ hakios-mali-all-8629    [004] d..2  1119.382415: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001fec70443
+ hakios-mali-all-8629    [004] d..2  1119.382551: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001fec70443
+ hakios-mali-all-8629    [004] d..2  1119.382556: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001018bb443
+ hakios-mali-all-8629    [004] d..2  1119.382561: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000016a998443
+ hakios-mali-all-8629    [004] d..2  1119.382566: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000163207443
+ hakios-mali-all-8629    [004] d..2  1119.382571: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000013fdf4443
+ hakios-mali-all-8629    [004] d..2  1119.382577: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000017f8a9443
+ hakios-mali-all-8629    [004] d..2  1119.382582: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000019d9bd443
+ hakios-mali-all-8629    [004] d..2  1119.382587: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001861af443
+ hakios-mali-all-8629    [004] d..2  1119.382592: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000019f0cf443
+ hakios-mali-all-8629    [004] d..2  1119.382597: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000014fb23443
+ hakios-mali-all-8629    [004] d..2  1119.382602: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000173242443
+ hakios-mali-all-8629    [004] d..2  1119.382607: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000138446443
+ hakios-mali-all-8629    [004] d..2  1119.382612: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001aff98443
+ hakios-mali-all-8629    [004] d..2  1119.382617: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000219dae443
+ hakios-mali-all-8629    [004] d..2  1119.382622: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001e7814443
+ hakios-mali-all-8629    [004] d..2  1119.382627: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001d10d3443
+ hakios-mali-all-8629    [004] d..2  1119.382741: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001d10d3443
+ hakios-mali-all-8629    [004] d..2  1119.382746: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001e7814443
+ hakios-mali-all-8629    [004] d..2  1119.382751: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000219dae443
+ hakios-mali-all-8629    [004] d..2  1119.382756: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001aff98443
+ hakios-mali-all-8629    [004] d..2  1119.382761: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000138446443
+ hakios-mali-all-8629    [004] d..2  1119.382766: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000173242443
+ hakios-mali-all-8629    [004] d..2  1119.382771: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000014fb23443
+ hakios-mali-all-8629    [004] d..2  1119.382776: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000019f0cf443
+ hakios-mali-all-8629    [004] d..2  1119.382781: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001861af443
+ hakios-mali-all-8629    [004] d..2  1119.382786: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000019d9bd443
+ hakios-mali-all-8629    [004] d..2  1119.382790: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000017f8a9443
+ hakios-mali-all-8629    [004] d..2  1119.382796: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000013fdf4443
+ hakios-mali-all-8629    [004] d..2  1119.382801: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x40000163207443
+ hakios-mali-all-8629    [004] d..2  1119.382805: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x4000016a998443
+ hakios-mali-all-8629    [004] d..2  1119.382810: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001018bb443
+ hakios-mali-all-8629    [004] d..2  1119.382815: pte1: (kbase_mmu_insert_pages_no_flush+0x2c0/0x678 [mali_kbase_mt6895] <- kbase_native_mgm_update_gpu_pte) pte=0x400001fec70443
