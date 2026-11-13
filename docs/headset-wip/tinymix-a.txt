@@ -1,0 +1,568 @@
+Mixer name: 'mt6895-mt6368'
+Number of controls: 564
+ctl	type	num	name                                     value
+	range/values
+0	INT	1	Audio IRQ1 CNT                           0 (dsrange 0->262143)
+1	INT	1	Audio IRQ2 CNT                           0 (dsrange 0->262143)
+2	INT	1	deep_buffer_irq_cnt                      0 (dsrange 0->262143)
+3	INT	1	voip_rx_irq_cnt                          0 (dsrange 0->262143)
+4	BOOL	1	deep_buffer_scenario                     Off
+5	BOOL	1	record_xrun_assert                       Off
+6	BOOL	1	echo_ref_xrun_assert                     Off
+7	BOOL	1	fast_play_scenario                       Off
+8	BOOL	1	primary_play_scenario                    Off
+9	BOOL	1	voip_rx_scenario                         Off
+10	INT	1	sram_size                                73728 (dsrange 0->-1)
+11	INT	1	vow_barge_in_irq_id                      15 (dsrange 0->262143)
+12	BOOL	1	adsp_primary_sharemem_scenario           Off
+13	BOOL	1	adsp_deepbuffer_sharemem_scenario        Off
+14	BOOL	1	adsp_voip_sharemem_scenario              Off
+15	BOOL	1	adsp_playback_sharemem_scenario          Off
+16	BOOL	1	adsp_call_final_sharemem_scenario        Off
+17	BOOL	1	adsp_ktv_sharemem_scenario               Off
+18	BOOL	1	adsp_fm_sharemem_scenario                Off
+19	BOOL	1	adsp_offload_sharemem_scenario           Off
+20	BOOL	1	adsp_capture_sharemem_scenario           Off
+21	BOOL	1	adsp_ref_sharemem_scenario               Off
+22	BOOL	1	adsp_fast_sharemem_scenario              Off
+23	BOOL	1	adsp_spatializer_sharemem_scenario       Off
+24	BOOL	1	mmap_play_scenario                       Off
+25	BOOL	1	mmap_record_scenario                     Off
+26	INT	1	aaudio_ion                               0 (dsrange 0->-1)
+27	INT	1	aaudio_dl_mmap_fd                        0 (dsrange 0->-1)
+28	INT	1	aaudio_ul_mmap_fd                        0 (dsrange 0->-1)
+29	INT	1	HW Gain 1                                524288 (dsrange 0->268435455)
+30	INT	1	HW Gain 2                                524288 (dsrange 0->268435455)
+31	ENUM	1	I2S0_HD_Mux                              >Normal Low_Jitter
+32	ENUM	1	I2S1_HD_Mux                              >Normal Low_Jitter
+33	ENUM	1	I2S2_HD_Mux                              >Normal Low_Jitter
+34	ENUM	1	I2S3_HD_Mux                              >Normal Low_Jitter
+35	ENUM	1	I2S5_HD_Mux                              >Normal Low_Jitter
+36	INT	1	Sidetone_Gain                            0 (dsrange 0->65535)
+37	INT	1	Sidetone_Positive_Gain_dB                0 (dsrange 0->100)
+38	INT	1	ADDA_DL_GAIN                             0 (dsrange 0->65535)
+39	ENUM	1	MTKAIF_DMIC                              >Off On
+40	ENUM	1	MTKAIF_ADDA6_ONLY                        >Off On
+41	BOOL	1	UL1_CH1 ADDA_UL_CH1                      Off
+42	BOOL	1	UL1_CH1 ADDA_UL_CH2                      Off
+43	BOOL	1	UL1_CH1 ADDA_UL_CH3                      Off
+44	BOOL	1	UL1_CH2 ADDA_UL_CH1                      Off
+45	BOOL	1	UL1_CH2 ADDA_UL_CH2                      Off
+46	BOOL	1	UL1_CH2 ADDA_UL_CH3                      Off
+47	BOOL	1	UL1_CH2 ADDA_UL_CH4                      Off
+48	BOOL	1	UL1_CH3 ADDA_UL_CH1                      Off
+49	BOOL	1	UL1_CH3 ADDA_UL_CH2                      Off
+50	BOOL	1	UL1_CH3 ADDA_UL_CH3                      Off
+51	BOOL	1	UL1_CH4 ADDA_UL_CH1                      Off
+52	BOOL	1	UL1_CH4 ADDA_UL_CH2                      Off
+53	BOOL	1	UL1_CH4 ADDA_UL_CH3                      Off
+54	BOOL	1	UL1_CH4 ADDA_UL_CH4                      Off
+55	BOOL	1	UL2_CH1 I2S0_CH1                         Off
+56	BOOL	1	UL2_CH1 DL1_CH1                          Off
+57	BOOL	1	UL2_CH1 DL12_CH1                         Off
+58	BOOL	1	UL2_CH1 DL2_CH1                          Off
+59	BOOL	1	UL2_CH1 DL3_CH1                          Off
+60	BOOL	1	UL2_CH1 DL4_CH1                          Off
+61	BOOL	1	UL2_CH1 DL5_CH1                          Off
+62	BOOL	1	UL2_CH1 DL6_CH1                          Off
+63	BOOL	1	UL2_CH1 DL7_CH1                          Off
+64	BOOL	1	UL2_CH1 PCM_1_CAP_CH1                    Off
+65	BOOL	1	UL2_CH1 PCM_2_CAP_CH1                    Off
+66	BOOL	1	UL2_CH1 I2S2_CH1                         Off
+67	BOOL	1	UL2_CH1 CONNSYS_I2S_CH1                  Off
+68	BOOL	1	UL2_CH1 SRC_1_OUT_CH1                    Off
+69	BOOL	1	UL2_CH2 I2S0_CH2                         Off
+70	BOOL	1	UL2_CH2 DL1_CH2                          Off
+71	BOOL	1	UL2_CH2 DL12_CH2                         Off
+72	BOOL	1	UL2_CH2 DL2_CH2                          Off
+73	BOOL	1	UL2_CH2 DL3_CH2                          Off
+74	BOOL	1	UL2_CH2 DL4_CH2                          Off
+75	BOOL	1	UL2_CH2 DL5_CH2                          Off
+76	BOOL	1	UL2_CH2 DL6_CH2                          Off
+77	BOOL	1	UL2_CH2 DL7_CH2                          Off
+78	BOOL	1	UL2_CH2 PCM_1_CAP_CH1                    Off
+79	BOOL	1	UL2_CH2 PCM_2_CAP_CH1                    Off
+80	BOOL	1	UL2_CH2 I2S2_CH2                         Off
+81	BOOL	1	UL2_CH2 CONNSYS_I2S_CH2                  Off
+82	BOOL	1	UL2_CH2 SRC_1_OUT_CH2                    Off
+83	BOOL	1	UL3_CH1 CONNSYS_I2S_CH1                  Off
+84	BOOL	1	UL3_CH2 CONNSYS_I2S_CH2                  Off
+85	BOOL	1	UL4_CH1 ADDA_UL_CH1                      Off
+86	BOOL	1	UL4_CH1 I2S0_CH1                         Off
+87	BOOL	1	UL4_CH1 I2S2_CH1                         Off
+88	BOOL	1	UL4_CH2 ADDA_UL_CH2                      Off
+89	BOOL	1	UL4_CH2 I2S0_CH2                         Off
+90	BOOL	1	UL4_CH2 I2S2_CH2                         Off
+91	ENUM	1	UL4_TINYCONN_CH1_MUX                     >NONE I2S0_CH1 I2S0_CH2 I2S2_CH1 I2S2_CH2 I2S6_CH1 I2S6_CH2 I2S8_CH1 I2S8_CH2
+92	ENUM	1	UL4_TINYCONN_CH2_MUX                     >NONE I2S0_CH1 I2S0_CH2 I2S2_CH1 I2S2_CH2 I2S6_CH1 I2S6_CH2 I2S8_CH1 I2S8_CH2
+93	BOOL	1	UL5_CH1 ADDA_UL_CH1                      Off
+94	BOOL	1	UL5_CH2 ADDA_UL_CH2                      Off
+95	BOOL	1	UL6_CH1 ADDA_UL_CH1                      Off
+96	BOOL	1	UL6_CH1 DL1_CH1                          Off
+97	BOOL	1	UL6_CH1 DL12_CH1                         Off
+98	BOOL	1	UL6_CH1 DL6_CH1                          Off
+99	BOOL	1	UL6_CH1 DL2_CH1                          Off
+100	BOOL	1	UL6_CH1 DL3_CH1                          Off
+101	BOOL	1	UL6_CH1 DL4_CH1                          Off
+102	BOOL	1	UL6_CH1 PCM_1_CAP_CH1                    Off
+103	BOOL	1	UL6_CH1 PCM_2_CAP_CH1                    Off
+104	BOOL	1	UL6_CH1 GAIN1_OUT_CH1                    Off
+105	BOOL	1	UL6_CH2 ADDA_UL_CH2                      Off
+106	BOOL	1	UL6_CH2 DL1_CH2                          Off
+107	BOOL	1	UL6_CH2 DL12_CH2                         Off
+108	BOOL	1	UL6_CH2 DL6_CH2                          Off
+109	BOOL	1	UL6_CH2 DL2_CH2                          Off
+110	BOOL	1	UL6_CH2 DL3_CH2                          Off
+111	BOOL	1	UL6_CH2 DL4_CH2                          Off
+112	BOOL	1	UL6_CH2 PCM_1_CAP_CH1                    Off
+113	BOOL	1	UL6_CH2 PCM_2_CAP_CH1                    Off
+114	BOOL	1	UL6_CH2 GAIN1_OUT_CH2                    Off
+115	BOOL	1	UL7_CH1 ADDA_UL_CH1                      Off
+116	BOOL	1	UL7_CH1 HW_GAIN2_OUT_CH1                 Off
+117	BOOL	1	UL7_CH1 HW_SRC_2_OUT_CH1                 Off
+118	BOOL	1	UL7_CH2 ADDA_UL_CH2                      Off
+119	BOOL	1	UL7_CH2 HW_GAIN2_OUT_CH2                 Off
+120	BOOL	1	UL7_CH2 HW_SRC_2_OUT_CH2                 Off
+121	BOOL	1	UL8_CH1 ADDA_UL_CH1                      Off
+122	BOOL	1	UL8_CH2 ADDA_UL_CH2                      Off
+123	BOOL	1	UL_MONO_1_CH1 PCM_1_CAP_CH1              Off
+124	BOOL	1	UL_MONO_1_CH1 PCM_2_CAP_CH1              Off
+125	BOOL	1	UL_MONO_2_CH1 ADDA_UL_CH1                Off
+126	BOOL	1	UL_MONO_3_CH1 ADDA_UL_CH1                Off
+127	BOOL	1	DSP_DL DSP_DL1                           Off
+128	BOOL	1	DSP_DL DSP_DL2                           Off
+129	BOOL	1	DSP_DL DSP_DL12                          Off
+130	BOOL	1	DSP_DL DSP_DL6                           Off
+131	BOOL	1	DSP_DL DSP_DL3                           Off
+132	BOOL	1	DSP_DL DSP_DL4                           Off
+133	ENUM	1	HDMI_CH0_MUX                             >CH0 CH1 CH2 CH3 CH4 CH5 CH6 CH7
+134	ENUM	1	HDMI_CH1_MUX                             >CH0 CH1 CH2 CH3 CH4 CH5 CH6 CH7
+135	ENUM	1	HDMI_CH2_MUX                             >CH0 CH1 CH2 CH3 CH4 CH5 CH6 CH7
+136	ENUM	1	HDMI_CH3_MUX                             >CH0 CH1 CH2 CH3 CH4 CH5 CH6 CH7
+137	ENUM	1	HDMI_CH4_MUX                             >CH0 CH1 CH2 CH3 CH4 CH5 CH6 CH7
+138	ENUM	1	HDMI_CH5_MUX                             >CH0 CH1 CH2 CH3 CH4 CH5 CH6 CH7
+139	ENUM	1	HDMI_CH6_MUX                             >CH0 CH1 CH2 CH3 CH4 CH5 CH6 CH7
+140	ENUM	1	HDMI_CH7_MUX                             >CH0 CH1 CH2 CH3 CH4 CH5 CH6 CH7
+141	ENUM	1	HDMI_OUT_MUX                             >Disconnect Connect
+142	ENUM	1	DPTX_OUT_MUX                             >Disconnect Connect
+143	ENUM	1	DPTX_VIRTUAL_OUT_MUX                     >Disconnect Connect
+144	BOOL	1	PCM_1_PB_CH1 ADDA_UL_CH1                 Off
+145	BOOL	1	PCM_1_PB_CH1 DL2_CH1                     Off
+146	BOOL	1	PCM_1_PB_CH1 DL4_CH1                     Off
+147	BOOL	1	PCM_1_PB_CH2 ADDA_UL_CH2                 Off
+148	BOOL	1	PCM_1_PB_CH2 DL2_CH2                     Off
+149	BOOL	1	PCM_1_PB_CH2 DL4_CH2                     Off
+150	BOOL	1	PCM_1_PB_CH4 I2S0_CH1                    Off
+151	BOOL	1	PCM_1_PB_CH4 I2S0_CH2                    Off
+152	BOOL	1	PCM_1_PB_CH4 DL1_CH1                     Off
+153	BOOL	1	PCM_1_PB_CH4 I2S2_CH1                    Off
+154	BOOL	1	PCM_1_PB_CH4 I2S2_CH2                    Off
+155	BOOL	1	PCM_1_PB_CH4 DL4_CH1                     Off
+156	BOOL	1	PCM_2_PB_CH1 ADDA_UL_CH1                 Off
+157	BOOL	1	PCM_2_PB_CH1 ADDA_UL_CH2                 Off
+158	BOOL	1	PCM_2_PB_CH1 ADDA_UL_CH3                 Off
+159	BOOL	1	PCM_2_PB_CH1 DL2_CH1                     Off
+160	BOOL	1	PCM_2_PB_CH1 DL4_CH1                     Off
+161	BOOL	1	PCM_2_PB_CH2 ADDA_UL_CH1                 Off
+162	BOOL	1	PCM_2_PB_CH2 ADDA_UL_CH2                 Off
+163	BOOL	1	PCM_2_PB_CH2 ADDA_UL_CH3                 Off
+164	BOOL	1	PCM_2_PB_CH2 DL2_CH2                     Off
+165	BOOL	1	PCM_2_PB_CH2 DL4_CH2                     Off
+166	BOOL	1	PCM_2_PB_CH3 ADDA_UL_CH3                 Off
+167	BOOL	1	PCM_2_PB_CH4 I2S0_CH1                    Off
+168	BOOL	1	PCM_2_PB_CH4 I2S0_CH2                    Off
+169	BOOL	1	PCM_2_PB_CH4 DL1_CH1                     Off
+170	BOOL	1	PCM_2_PB_CH4 I2S2_CH1                    Off
+171	BOOL	1	PCM_2_PB_CH4 I2S2_CH2                    Off
+172	BOOL	1	PCM_2_PB_CH4 DL4_CH1                     Off
+173	BOOL	1	PCM_2_PB_CH5 I2S0_CH2                    Off
+174	BOOL	1	PCM_2_PB_CH5 DL1_CH2                     Off
+175	BOOL	1	PCM_2_PB_CH5 I2S2_CH2                    Off
+176	BOOL	1	PCM_2_PB_CH5 DL4_CH2                     Off
+177	BOOL	1	HW_SRC_1_IN_CH1 DL1_CH1                  Off
+178	BOOL	1	HW_SRC_1_IN_CH1 DL2_CH1                  Off
+179	BOOL	1	HW_SRC_1_IN_CH1 DL3_CH1                  Off
+180	BOOL	1	HW_SRC_1_IN_CH1 DL4_CH1                  Off
+181	BOOL	1	HW_SRC_1_IN_CH1 DL6_CH1                  Off
+182	BOOL	1	HW_SRC_1_IN_CH1 I2S0_CH1                 Off
+183	BOOL	1	HW_SRC_1_IN_CH1 DL5_CH1                  Off
+184	BOOL	1	HW_SRC_1_IN_CH1 HW_GAIN1_OUT_CH1         Off
+185	BOOL	1	HW_SRC_1_IN_CH2 DL1_CH2                  Off
+186	BOOL	1	HW_SRC_1_IN_CH2 DL2_CH2                  Off
+187	BOOL	1	HW_SRC_1_IN_CH2 DL3_CH2                  Off
+188	BOOL	1	HW_SRC_1_IN_CH2 DL4_CH2                  Off
+189	BOOL	1	HW_SRC_1_IN_CH2 DL6_CH2                  Off
+190	BOOL	1	HW_SRC_1_IN_CH2 I2S0_CH2                 Off
+191	BOOL	1	HW_SRC_1_IN_CH2 DL5_CH2                  Off
+192	BOOL	1	HW_SRC_1_IN_CH2 HW_GAIN1_OUT_CH2         Off
+193	BOOL	1	HW_SRC_2_IN_CH1 DL1_CH1                  Off
+194	BOOL	1	HW_SRC_2_IN_CH1 DL2_CH1                  Off
+195	BOOL	1	HW_SRC_2_IN_CH1 DL3_CH1                  Off
+196	BOOL	1	HW_SRC_2_IN_CH1 DL4_CH1                  Off
+197	BOOL	1	HW_SRC_2_IN_CH1 DL5_CH1                  Off
+198	BOOL	1	HW_SRC_2_IN_CH1 DL6_CH1                  Off
+199	BOOL	1	HW_SRC_2_IN_CH1 HW_GAIN2_OUT_CH1         Off
+200	BOOL	1	HW_SRC_2_IN_CH2 DL1_CH2                  Off
+201	BOOL	1	HW_SRC_2_IN_CH2 DL2_CH2                  Off
+202	BOOL	1	HW_SRC_2_IN_CH2 DL3_CH2                  Off
+203	BOOL	1	HW_SRC_2_IN_CH2 DL4_CH2                  Off
+204	BOOL	1	HW_SRC_2_IN_CH2 DL5_CH2                  Off
+205	BOOL	1	HW_SRC_2_IN_CH2 DL6_CH2                  Off
+206	BOOL	1	HW_SRC_2_IN_CH2 HW_GAIN2_OUT_CH2         Off
+207	BOOL	1	HW_GAIN1_IN_CH1 CONNSYS_I2S_CH1          Off
+208	BOOL	1	HW_GAIN1_IN_CH2 CONNSYS_I2S_CH2          Off
+209	BOOL	1	HW_GAIN2_IN_CH1 ADDA_UL_CH1              Off
+210	BOOL	1	HW_GAIN2_IN_CH2 ADDA_UL_CH2              Off
+211	BOOL	1	I2S1_CH1 DL1_CH1                         Off
+212	BOOL	1	I2S1_CH1 DL2_CH1                         Off
+213	BOOL	1	I2S1_CH1 DL3_CH1                         Off
+214	BOOL	1	I2S1_CH1 DL12_CH1                        Off
+215	BOOL	1	I2S1_CH1 DL6_CH1                         Off
+216	BOOL	1	I2S1_CH1 DL4_CH1                         Off
+217	BOOL	1	I2S1_CH1 DL5_CH1                         Off
+218	BOOL	1	I2S1_CH1 DL8_CH1                         Off
+219	BOOL	1	I2S1_CH1 GAIN1_OUT_CH1                   Off
+220	BOOL	1	I2S1_CH1 ADDA_UL_CH1                     Off
+221	BOOL	1	I2S1_CH1 PCM_1_CAP_CH1                   Off
+222	BOOL	1	I2S1_CH1 PCM_2_CAP_CH1                   Off
+223	BOOL	1	I2S1_CH2 DL1_CH2                         Off
+224	BOOL	1	I2S1_CH2 DL2_CH2                         Off
+225	BOOL	1	I2S1_CH2 DL3_CH2                         Off
+226	BOOL	1	I2S1_CH2 DL12_CH2                        Off
+227	BOOL	1	I2S1_CH2 DL6_CH2                         Off
+228	BOOL	1	I2S1_CH2 DL4_CH2                         Off
+229	BOOL	1	I2S1_CH2 DL5_CH2                         Off
+230	BOOL	1	I2S1_CH2 DL8_CH2                         Off
+231	BOOL	1	I2S1_CH2 GAIN1_OUT_CH2                   Off
+232	BOOL	1	I2S1_CH2 ADDA_UL_CH2                     Off
+233	BOOL	1	I2S1_CH2 PCM_1_CAP_CH1                   Off
+234	BOOL	1	I2S1_CH2 PCM_2_CAP_CH1                   Off
+235	BOOL	1	I2S1_CH2 PCM_1_CAP_CH2                   Off
+236	BOOL	1	I2S1_CH2 PCM_2_CAP_CH2                   Off
+237	BOOL	1	I2S3_CH1 DL1_CH1                         Off
+238	BOOL	1	I2S3_CH1 DL2_CH1                         Off
+239	BOOL	1	I2S3_CH1 DL3_CH1                         Off
+240	BOOL	1	I2S3_CH1 DL12_CH1                        Off
+241	BOOL	1	I2S3_CH1 DL6_CH1                         Off
+242	BOOL	1	I2S3_CH1 DL4_CH1                         Off
+243	BOOL	1	I2S3_CH1 DL5_CH1                         Off
+244	BOOL	1	I2S3_CH1 DL7_CH1                         Off
+245	BOOL	1	I2S3_CH1 DL8_CH1                         Off
+246	BOOL	1	I2S3_CH1 GAIN1_OUT_CH1                   Off
+247	BOOL	1	I2S3_CH1 ADDA_UL_CH1                     Off
+248	BOOL	1	I2S3_CH1 ADDA_UL_CH2                     Off
+249	BOOL	1	I2S3_CH1 ADDA_UL_CH3                     Off
+250	BOOL	1	I2S3_CH1 PCM_1_CAP_CH1                   Off
+251	BOOL	1	I2S3_CH1 PCM_2_CAP_CH1                   Off
+252	BOOL	1	I2S3_CH2 DL1_CH2                         Off
+253	BOOL	1	I2S3_CH2 DL2_CH2                         Off
+254	BOOL	1	I2S3_CH2 DL3_CH2                         Off
+255	BOOL	1	I2S3_CH2 DL12_CH2                        Off
+256	BOOL	1	I2S3_CH2 DL6_CH2                         Off
+257	BOOL	1	I2S3_CH2 DL4_CH2                         Off
+258	BOOL	1	I2S3_CH2 DL5_CH2                         Off
+259	BOOL	1	I2S3_CH2 DL7_CH2                         Off
+260	BOOL	1	I2S3_CH2 DL8_CH2                         Off
+261	BOOL	1	I2S3_CH2 GAIN1_OUT_CH2                   Off
+262	BOOL	1	I2S3_CH2 ADDA_UL_CH1                     Off
+263	BOOL	1	I2S3_CH2 ADDA_UL_CH2                     Off
+264	BOOL	1	I2S3_CH2 ADDA_UL_CH3                     Off
+265	BOOL	1	I2S3_CH2 PCM_1_CAP_CH1                   Off
+266	BOOL	1	I2S3_CH2 PCM_2_CAP_CH1                   Off
+267	BOOL	1	I2S3_CH2 PCM_1_CAP_CH2                   Off
+268	BOOL	1	I2S3_CH2 PCM_2_CAP_CH2                   Off
+269	BOOL	1	I2S5_CH1 DL1_CH1                         Off
+270	BOOL	1	I2S5_CH1 DL2_CH1                         Off
+271	BOOL	1	I2S5_CH1 DL3_CH1                         Off
+272	BOOL	1	I2S5_CH1 DL12_CH1                        Off
+273	BOOL	1	I2S5_CH1 DL6_CH1                         Off
+274	BOOL	1	I2S5_CH1 DL4_CH1                         Off
+275	BOOL	1	I2S5_CH1 DL5_CH1                         Off
+276	BOOL	1	I2S5_CH1 DL8_CH1                         Off
+277	BOOL	1	I2S5_CH1 GAIN1_OUT_CH1                   Off
+278	BOOL	1	I2S5_CH1 ADDA_UL_CH1                     Off
+279	BOOL	1	I2S5_CH1 PCM_1_CAP_CH1                   Off
+280	BOOL	1	I2S5_CH1 PCM_2_CAP_CH1                   Off
+281	BOOL	1	I2S5_CH2 DL1_CH2                         Off
+282	BOOL	1	I2S5_CH2 DL2_CH2                         Off
+283	BOOL	1	I2S5_CH2 DL3_CH2                         Off
+284	BOOL	1	I2S5_CH2 DL12_CH2                        Off
+285	BOOL	1	I2S5_CH2 DL6_CH2                         Off
+286	BOOL	1	I2S5_CH2 DL4_CH2                         Off
+287	BOOL	1	I2S5_CH2 DL5_CH2                         Off
+288	BOOL	1	I2S5_CH2 DL8_CH2                         Off
+289	BOOL	1	I2S5_CH2 GAIN1_OUT_CH2                   Off
+290	BOOL	1	I2S5_CH2 ADDA_UL_CH2                     Off
+291	BOOL	1	I2S5_CH2 PCM_1_CAP_CH1                   Off
+292	BOOL	1	I2S5_CH2 PCM_2_CAP_CH1                   Off
+293	BOOL	1	I2S5_CH2 PCM_1_CAP_CH2                   Off
+294	BOOL	1	I2S5_CH2 PCM_2_CAP_CH2                   Off
+295	ENUM	1	I2S1_TINYCONN_CH1_MUX                    >NONE DL1_CH1 DL1_CH2 DL12_CH1 DL12_CH2 DL2_CH1 DL2_CH2 DL3_CH1 DL3_CH2
+296	ENUM	1	I2S1_TINYCONN_CH2_MUX                    >NONE DL1_CH1 DL1_CH2 DL12_CH1 DL12_CH2 DL2_CH1 DL2_CH2 DL3_CH1 DL3_CH2
+297	ENUM	1	I2S3_TINYCONN_CH1_MUX                    >NONE DL1_CH1 DL1_CH2 DL12_CH1 DL12_CH2 DL2_CH1 DL2_CH2 DL3_CH1 DL3_CH2
+298	ENUM	1	I2S3_TINYCONN_CH2_MUX                    >NONE DL1_CH1 DL1_CH2 DL12_CH1 DL12_CH2 DL2_CH1 DL2_CH2 DL3_CH1 DL3_CH2
+299	ENUM	1	I2S1_Out_Mux                             >Normal Dummy_Widget
+300	ENUM	1	I2S3_Out_Mux                             >Normal Dummy_Widget
+301	ENUM	1	I2S5_Out_Mux                             >Normal Dummy_Widget
+302	ENUM	1	I2S0_In_Mux                              >Normal Dummy_Widget
+303	ENUM	1	I2S0_Lpbk_Mux                            >Normal Lpbk
+304	ENUM	1	I2S2_Lpbk_Mux                            >Normal Lpbk
+305	BOOL	1	ADDA_DL_CH1 DL1_CH1                      Off
+306	BOOL	1	ADDA_DL_CH1 DL12_CH1                     Off
+307	BOOL	1	ADDA_DL_CH1 DL2_CH1                      Off
+308	BOOL	1	ADDA_DL_CH1 DL3_CH1                      Off
+309	BOOL	1	ADDA_DL_CH1 DL4_CH1                      Off
+310	BOOL	1	ADDA_DL_CH1 DL5_CH1                      Off
+311	BOOL	1	ADDA_DL_CH1 DL6_CH1                      Off
+312	BOOL	1	ADDA_DL_CH1 DL7_CH1                      Off
+313	BOOL	1	ADDA_DL_CH1 DL8_CH1                      Off
+314	BOOL	1	ADDA_DL_CH1 ADDA_UL_CH3                  Off
+315	BOOL	1	ADDA_DL_CH1 ADDA_UL_CH2                  Off
+316	BOOL	1	ADDA_DL_CH1 ADDA_UL_CH1                  Off
+317	BOOL	1	ADDA_DL_CH1 GAIN1_OUT_CH1                Off
+318	BOOL	1	ADDA_DL_CH1 PCM_1_CAP_CH1                Off
+319	BOOL	1	ADDA_DL_CH1 PCM_2_CAP_CH1                Off
+320	BOOL	1	ADDA_DL_CH1 SRC_1_OUT_CH1                Off
+321	BOOL	1	ADDA_DL_CH2 DL1_CH1                      Off
+322	BOOL	1	ADDA_DL_CH2 DL1_CH2                      Off
+323	BOOL	1	ADDA_DL_CH2 DL12_CH2                     Off
+324	BOOL	1	ADDA_DL_CH2 DL2_CH1                      Off
+325	BOOL	1	ADDA_DL_CH2 DL2_CH2                      Off
+326	BOOL	1	ADDA_DL_CH2 DL3_CH1                      Off
+327	BOOL	1	ADDA_DL_CH2 DL3_CH2                      Off
+328	BOOL	1	ADDA_DL_CH2 DL4_CH2                      Off
+329	BOOL	1	ADDA_DL_CH2 DL5_CH2                      Off
+330	BOOL	1	ADDA_DL_CH2 DL6_CH2                      Off
+331	BOOL	1	ADDA_DL_CH2 DL7_CH2                      Off
+332	BOOL	1	ADDA_DL_CH2 DL8_CH2                      Off
+333	BOOL	1	ADDA_DL_CH2 ADDA_UL_CH3                  Off
+334	BOOL	1	ADDA_DL_CH2 ADDA_UL_CH2                  Off
+335	BOOL	1	ADDA_DL_CH2 ADDA_UL_CH1                  Off
+336	BOOL	1	ADDA_DL_CH2 GAIN1_OUT_CH2                Off
+337	BOOL	1	ADDA_DL_CH2 PCM_1_CAP_CH1                Off
+338	BOOL	1	ADDA_DL_CH2 PCM_2_CAP_CH1                Off
+339	BOOL	1	ADDA_DL_CH2 PCM_1_CAP_CH2                Off
+340	BOOL	1	ADDA_DL_CH2 PCM_2_CAP_CH2                Off
+341	BOOL	1	ADDA_DL_CH2 SRC_1_OUT_CH2                Off
+342	BOOL	1	ADDA_DL_CH3 DL1_CH1                      Off
+343	BOOL	1	ADDA_DL_CH3 DL12_CH1                     Off
+344	BOOL	1	ADDA_DL_CH3 DL2_CH1                      Off
+345	BOOL	1	ADDA_DL_CH3 DL3_CH1                      Off
+346	BOOL	1	ADDA_DL_CH3 DL4_CH1                      Off
+347	BOOL	1	ADDA_DL_CH3 DL5_CH1                      Off
+348	BOOL	1	ADDA_DL_CH3 DL6_CH1                      Off
+349	BOOL	1	ADDA_DL_CH3 ADDA_UL_CH3                  Off
+350	BOOL	1	ADDA_DL_CH3 ADDA_UL_CH2                  Off
+351	BOOL	1	ADDA_DL_CH3 ADDA_UL_CH1                  Off
+352	BOOL	1	ADDA_DL_CH3 GAIN1_OUT_CH1                Off
+353	BOOL	1	ADDA_DL_CH3 PCM_1_CAP_CH1                Off
+354	BOOL	1	ADDA_DL_CH3 PCM_2_CAP_CH1                Off
+355	BOOL	1	ADDA_DL_CH4 DL1_CH1                      Off
+356	BOOL	1	ADDA_DL_CH4 DL1_CH2                      Off
+357	BOOL	1	ADDA_DL_CH4 DL12_CH2                     Off
+358	BOOL	1	ADDA_DL_CH4 DL2_CH1                      Off
+359	BOOL	1	ADDA_DL_CH4 DL2_CH2                      Off
+360	BOOL	1	ADDA_DL_CH4 DL3_CH1                      Off
+361	BOOL	1	ADDA_DL_CH4 DL3_CH2                      Off
+362	BOOL	1	ADDA_DL_CH4 DL4_CH2                      Off
+363	BOOL	1	ADDA_DL_CH4 DL5_CH2                      Off
+364	BOOL	1	ADDA_DL_CH4 DL6_CH2                      Off
+365	BOOL	1	ADDA_DL_CH4 ADDA_UL_CH3                  Off
+366	BOOL	1	ADDA_DL_CH4 ADDA_UL_CH2                  Off
+367	BOOL	1	ADDA_DL_CH4 ADDA_UL_CH1                  Off
+368	BOOL	1	ADDA_DL_CH4 GAIN1_OUT_CH2                Off
+369	BOOL	1	ADDA_DL_CH4 PCM_1_CAP_CH1                Off
+370	BOOL	1	ADDA_DL_CH4 PCM_2_CAP_CH1                Off
+371	BOOL	1	ADDA_DL_CH4 PCM_1_CAP_CH2                Off
+372	BOOL	1	ADDA_DL_CH4 PCM_2_CAP_CH2                Off
+373	ENUM	1	ADDA_UL_Mux                              >MTKAIF AP_DMIC
+374	ENUM	1	ADDA_CH34_UL_Mux                         >MTKAIF AP_DMIC
+375	BOOL	1	Sidetone Filter Switch                   Off
+376	ENUM	1	Audio_SineGen_Switch                     >I0I1 I2 I3I4 I5I6 I7I8 I9 I10I11 I12I13 I14 I15I16 I17I18 I19I20 I21I22 I23I24 I25I26 I27I28 I29I30 I31I32 I33 I34I35 I36I37 I38I39 I40I41 I42I43 I44I45 I46I47 I48I49 I50I51 I52I53 I54I55 I56I57 I58I59 I60I61 I62I63 I78I79 O0O1 O2 O3O4 O5O6 O7O8 O9O10 O11 O12 O13O14 O15O16 O17O18 O19O20 O21O22 O23O24 O25 O28O29 O34 O32O33 O35 O36O37 O38O39 O30O31 O40O41 O42O43 O44O45 O46O47 O48O49 O50O51 O54O55 O56O57 O58O59 O60O61 O62O63 O64O65 O66O67 O68O69 O70O71 O72O73 O74O75 O76O77 O78O79 O80O81 O82O83 OFF O3 O4
+377	ENUM	1	Audio_SineGen_SampleRate                 >8K 11K 12K 16K 22K 24K 32K 44K 48K 88k 96k 176k 192k
+378	ENUM	1	Audio_SineGen_Amplitude                  >1/128 1/64 1/32 1/16 1/8 1/4 1/2 1
+379	ENUM	1	Audio_SineGen_Mute_Ch1                   >Off On
+380	ENUM	1	Audio_SineGen_Mute_Ch2                   >Off On
+381	INT	1	Audio_SineGen_Freq_Div_Ch1               0 (dsrange 0->31)
+382	INT	1	Audio_SineGen_Freq_Div_Ch2               0 (dsrange 0->31)
+383	INT	1	usb_call_echo_ref                        0 (dsrange 0->-1)
+384	INT	1	Speech_A2M_Msg_ID                        0 (dsrange 0->65535)
+385	INT	1	Speech_MD_Status                         0 (dsrange 0->-1)
+386	INT	1	Speech_SCP_CALL_STATE                    0 (dsrange 0->-1)
+387	BOOL	1	Speech_Mic_Mute                          Off
+388	BOOL	1	Speech_DL_Mute                           Off
+389	BOOL	1	Speech_UL_Mute                           Off
+390	INT	1	Speech_Phone1_MD_Idx                     0 (dsrange 0->2)
+391	INT	1	Speech_Phone2_MD_Idx                     0 (dsrange 0->2)
+392	BOOL	1	Speech_Phone_ID                          Off
+393	BOOL	1	Speech_MD_EPOF                           Off
+394	BOOL	1	Speech_BT_SCO_WB                         Off
+395	BOOL	1	Speech_SHM_Init                          On
+396	BOOL	1	Speech_SHM_USIP                          On
+397	INT	1	Speech_SHM_Widx                          0 (dsrange 0->-1)
+398	INT	1	Speech_MD_HeadVersion                    43605 (dsrange 0->-1)
+399	INT	1	Speech_MD_Version                        12288 (dsrange 0->-1)
+400	BOOL	1	Speech_Cust_Param_Init                   Off
+401	BOOL	1	Vow_bargein_echo_ref                     Off
+402	ENUM	1	Ultrasound Enable                        >Off On
+403	ENUM	1	Ultrasound RampDown                      >Off On
+404	INT	1	Ultrasound Latency                       0 (dsrange 0->10000)
+405	INT	1	Ultrasound Sensitivity                   0 (dsrange 0->1000000)
+406	INT	2	Ultrasound Speaker Scaling               0 0 (dsrange 0->1000000)
+407	INT	1	Ultrasound Microphone Index              0 (dsrange 0->20)
+408	INT	1	Ultrasound Mode                          0 (dsrange 0->255)
+409	INT	1	Ultrasound Mode Flags                    0 (dsrange 0->256)
+410	INT	1	Ultrasound Calibration Profile           0 (dsrange 0->256)
+411	INT	1	Ultrasound Gain                          0 (dsrange 0->256)
+412	INT	1	Ultrasound Calibration State             0 (dsrange 0->256)
+413	BYTE	96	Ultrasound System Configuration           00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+414	BYTE	64	Ultrasound Calibration Data               de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef
+415	BYTE	16	Ultrasound Version                        de  00  00  00  ad  00  00  00  be  00  00  00  ef  00  00  00
+416	BYTE	128	Ultrasound Branch                         00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+417	BYTE	128	Ultrasound Tag                            00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+418	INT	1	Ultrasound Log Level                     0 (dsrange 0->7)
+419	BYTE	448	Ultrasound Calibration Ext Data           de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef  de  ad  be  ef
+420	BYTE	448	Ultrasound Diagnostics Data               00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+421	ENUM	1	Ultrasound Diagnostics Request           >Off On
+422	INT	1	Ultrasound Custom Setting 0              0 (dsrange 0->2147483647)
+423	INT	1	Ultrasound Custom Setting 1              0 (dsrange 0->2147483647)
+424	INT	1	Ultrasound Custom Setting 2              0 (dsrange 0->2147483647)
+425	INT	1	Ultrasound Custom Setting 3              0 (dsrange 0->2147483647)
+426	INT	1	Ultrasound Custom Setting 4              0 (dsrange 0->2147483647)
+427	INT	1	Ultrasound Custom Setting 5              0 (dsrange 0->2147483647)
+428	INT	1	Ultrasound Custom Setting 6              0 (dsrange 0->2147483647)
+429	INT	1	Ultrasound Custom Setting 7              0 (dsrange 0->2147483647)
+430	INT	1	Ultrasound Custom Setting 8              0 (dsrange 0->2147483647)
+431	INT	1	Ultrasound Custom Setting 9              0 (dsrange 0->2147483647)
+432	INT	1	Ultrasound Custom Setting 10             0 (dsrange 0->2147483647)
+433	INT	1	Ultrasound Custom Setting 11             0 (dsrange 0->2147483647)
+434	INT	1	Ultrasound Custom Setting 12             0 (dsrange 0->2147483647)
+435	INT	1	Ultrasound Custom Setting 13             0 (dsrange 0->2147483647)
+436	INT	1	Ultrasound Custom Setting 14             0 (dsrange 0->2147483647)
+437	INT	1	Ultrasound Custom Setting 15             0 (dsrange 0->2147483647)
+438	ENUM	1	Ultrasound Tx Port                       >Off On
+439	ENUM	1	Ultrasound Rx Port                       >Off On
+440	BOOL	1	Ultrasound Suspend                       Off
+441	BOOL	1	Ultrasound Input                         Off
+442	BOOL	1	Ultrasound Output                        Off
+443	INT	1	Ultrasound Event                         0 (dsrange 0->256)
+444	INT	1	Ultrasound Calibration Method            0 (dsrange 0->256)
+445	BYTE	432	Ultrasound ML                             00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00 Failed to mixer_ctl_get_array
+ 00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+446	INT	1	Ultrasound Debug Mode                    0 (dsrange 0->256)
+447	INT	1	Ultrasound Context                       0 (dsrange 0->2147483647)
+448	BYTE	68	Ultrasound Sensor Data                    00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+449	INT	1	Ultrasound Capture                       0 (dsrange 0->256)
+450	INT	1	Ultrasound Tx Channels                   0 (dsrange 0->16)
+451	INT	1	Ultrasound Library Id                    0 (dsrange 0->256)
+452	ENUM	1	Headphone Plugged In                     >Off On
+453	INT	1	Audio HP ImpeDance Setting               0 (dsrange 0->65536)
+454	ENUM	1	PMIC_REG_CLEAR                           Off On
+455	ENUM	1	DMic Used                                >Off On
+456	INT	1	Audio VOWCFG0 Data                       0 (dsrange 0->524288)
+457	INT	1	Audio VOWCFG1 Data                       0 (dsrange 0->524288)
+458	INT	1	Audio VOWCFG2 Data                       17219 (dsrange 0->524288)
+459	INT	1	Audio VOWCFG3 Data                       42856 (dsrange 0->524288)
+460	INT	1	Audio VOWCFG4 Data                       15 (dsrange 0->524288)
+461	INT	1	Audio VOWCFG5 Data                       1 (dsrange 0->524288)
+462	INT	1	Audio_VOW_Periodic                       0 (dsrange 0->524288)
+463	BYTE	128	Audio_VOW_Periodic_Param                 464	INT	2	Headset Volume                           31 31 (dsrange 0->30)
+465	INT	2	Lineout Volume                           31 31 (dsrange 0->18)
+466	INT	1	Handset Volume                           31 (dsrange 0->18)
+467	INT	1	PGA1 Volume                              0 (dsrange 0->4)
+468	INT	1	PGA2 Volume                              0 (dsrange 0->4)
+469	INT	1	PGA3 Volume                              0 (dsrange 0->4)
+470	ENUM	1	BTCVSD Band                              >NB WB
+471	BOOL	1	BTCVSD Loopback Switch                   Off
+472	BOOL	1	BTCVSD Bypass Switch                     On
+473	BOOL	1	BTCVSD Tx Mute Switch                    Off
+474	BOOL	1	BTCVSD Tx Irq Received Switch            Off
+475	BOOL	1	BTCVSD Tx Timeout Switch                 Off
+476	BOOL	1	BTCVSD Rx Irq Received Switch            Off
+477	BOOL	1	BTCVSD Rx Timeout Switch                 Off
+478	BYTE	16	BTCVSD Rx Timestamp                       00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+479	BYTE	16	BTCVSD Tx Timestamp                       00  00  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+480	ENUM	1	mtk_scp_ultra_pcm_dump                   >Off On
+481	BYTE	36	mtk_scp_ultra_param_config                02  00  00  00  02  00  00  00  00  00  00  00  00  00  00  00  e0  01  00  00  00  04  00  00  00  00  00  00  00  00  00  00  00  00  00  00
+482	BYTE	8	mtk_scp_ultra_gain_config                 00  00  00  00  00  00  00  00
+483	INT	1	mtk_scp_ultra_engine_state               4 (dsrange 0->255)
+484	INT	1	dsp_primary_default_en                   5 (dsrange 0->255)
+485	INT	1	dsp_deepbuf_default_en                   5 (dsrange 0->255)
+486	INT	1	dsp_voipdl_default_en                    31 (dsrange 0->255)
+487	BOOL	1	dsp_playback_default_en                  On
+488	BOOL	1	dsp_captureul1_default_en                On
+489	BOOL	1	dsp_offload_default_en                   Off
+490	BOOL	1	dsp_a2dp_default_en                      On
+491	BOOL	1	dsp_bledl_default_en                     On
+492	BOOL	1	dsp_bleul_default_en                     On
+493	BOOL	1	dsp_dataprovider_default_en              Off
+494	INT	1	dsp_call_final_default_en                5 (dsrange 0->255)
+495	INT	1	dsp_fast_default_en                      5 (dsrange 0->255)
+496	INT	1	dsp_spatializer_default_en               31 (dsrange 0->255)
+497	BOOL	1	dsp_ktv_default_en                       On
+498	BOOL	1	dsp_captureraw_default_en                On
+499	BOOL	1	dsp_fm_default_en                        On
+500	BOOL	1	dsp_primary_runtime_en                   Off
+501	BOOL	1	dsp_deepbuf_runtime_en                   Off
+502	BOOL	1	dsp_voipdl_runtime_en                    Off
+503	BOOL	1	dsp_playback_runtime_en                  Off
+504	BOOL	1	dsp_music_runtime_en                     Off
+505	BOOL	1	dsp_captureul1_runtime_en                Off
+506	BOOL	1	dsp_offload_runtime_en                   Off
+507	BOOL	1	dsp_a2dp_runtime_en                      Off
+508	BOOL	1	dsp_bledl_runtime_en                     Off
+509	BOOL	1	dsp_bleul_runtime_en                     Off
+510	BOOL	1	dsp_dataprovider_runtime_en              Off
+511	BOOL	1	dsp_fast_runtime_en                      Off
+512	BOOL	1	dsp_spatializer_runtime_en               Off
+513	BOOL	1	dsp_ktv_runtime_en                       Off
+514	BOOL	1	dsp_captureraw_runtime_en                Off
+515	BOOL	1	dsp_fm_runtime_en                        Off
+516	BOOL	1	dsp_call_final_runtime_en                Off
+517	BOOL	1	dsp_captureul1_ref_runtime_en            Off
+518	BOOL	1	dsp_playback_ref_runtime_en              Off
+519	BOOL	1	dsp_call_final_ref_runtime_en            Off
+520	INT	1	audio_dsp_version                        1 (dsrange 0->255)
+521	INT	1	swdsp_smartpa_process_enable             5 (dsrange 0->255)
+522	BOOL	1	ktv_status                               Off
+523	BOOL	1	audio_dsp_wakelock                       Off
+524	ENUM	1	Left TFA Profile                         >stereo handset left right
+525	INT	2	Left SmartPA Mute                        0 0 (dsrange 0->1)
+526	BOOL	2	Left TFA Stop                            Off Off
+527	INT	2	Left TFA Calibration                     6322 7471 (dsrange 0->65535)
+528	ENUM	1	Left TFA987X_ALGO_STATUS                 >ENABLED DISABLED
+529	ENUM	1	Left TFA987X_ALGO_MUTE                   >DISABLED ENABLED
+530	ENUM	1	Left TFA987X_TX_ENABLE                   DISABLE >ENABLE
+531	ENUM	1	Left TFA987X_PWDN_MUTE                   >DISABLED ENABLED
+532	INT	1	offload digital volume                   65536 (dsrange 0->16777216)
+533	INT	1	offload set format                       0 (dsrange 0->2)
+534	INT	1	offload_buffer_size                      0 (dsrange 0->4194304)
+535	INT	1	offload_target_rate                      0 (dsrange 0->1048576)
+536	BOOL	1	Ext_Speaker_Amp Switch                   Off
+537	ENUM	1	MTK_SPK_TYPE_GET                         MTK_SPK_NOT_SMARTPA MTK_SPK_RICHTEK_RT5509 MTK_SPK_MEDIATEK_MT6660 >MTK_SPK_MEDIATEK_RT5512 MTK_SPK_GOODIX_TFAXXXX
+538	ENUM	1	MTK_SPK_I2S_OUT_TYPE_GET                 MTK_SPK_I2S_0 MTK_SPK_I2S_1 MTK_SPK_I2S_2 >MTK_SPK_I2S_3 MTK_SPK_I2S_5 MTK_SPK_I2S_6 MTK_SPK_I2S_7 MTK_SPK_I2S_8 MTK_SPK_I2S_9 MTK_SPK_TINYCONN_I2S_0
+539	ENUM	1	MTK_SPK_I2S_IN_TYPE_GET                  MTK_SPK_I2S_0 MTK_SPK_I2S_1 MTK_SPK_I2S_2 MTK_SPK_I2S_3 MTK_SPK_I2S_5 MTK_SPK_I2S_6 MTK_SPK_I2S_7 MTK_SPK_I2S_8 MTK_SPK_I2S_9 >MTK_SPK_TINYCONN_I2S_0
+540	ENUM	1	DAC In Mux                               >Normal Path Sgen
+541	ENUM	1	HPL Mux                                  >Open LoudSPK Playback Audio Playback Test Mode HP Impedance
+542	ENUM	1	HPR Mux                                  >Open LoudSPK Playback Audio Playback Test Mode HP Impedance
+543	ENUM	1	RCV Mux                                  >Open Mute Voice Playback Test Mode
+544	ENUM	1	LOL Mux                                  >Open Playback_L_DAC Playback Test Mode
+545	ENUM	1	AIF Out Mux                              >Normal Path Sgen
+546	ENUM	1	AIF2 Out Mux                             >Normal Path Sgen
+547	ENUM	1	MISO0_MUX                                >UL1_CH1 UL1_CH2 UL2_CH1 UL2_CH2
+548	ENUM	1	MISO1_MUX                                UL1_CH1 >UL1_CH2 UL2_CH1 UL2_CH2
+549	ENUM	1	MISO2_MUX                                UL1_CH1 UL1_CH2 >UL2_CH1 UL2_CH2
+550	ENUM	1	UL_SRC_MUX                               >AMIC DMIC
+551	ENUM	1	UL2_SRC_MUX                              >AMIC DMIC
+552	ENUM	1	VOW_UL_SRC_MUX                           >AMIC DMIC
+553	ENUM	1	DMIC0_MUX                                >DMIC_DATA0 DMIC_DATA1_L DMIC_DATA1_L_1 DMIC_DATA1_R
+554	ENUM	1	DMIC1_MUX                                DMIC_DATA0 >DMIC_DATA1_L DMIC_DATA1_L_1 DMIC_DATA1_R
+555	ENUM	1	DMIC2_MUX                                DMIC_DATA0 DMIC_DATA1_L >DMIC_DATA1_L_1 DMIC_DATA1_R
+556	ENUM	1	VOW_AMIC0_MUX                            >ADC_L ADC_R ADC_T
+557	ENUM	1	VOW_AMIC1_MUX                            ADC_L >ADC_R ADC_T
+558	ENUM	1	ADC_L_Mux                                >Idle AIN0 Left Preamplifier Idle_1
+559	ENUM	1	ADC_R_Mux                                >Idle AIN0 Right Preamplifier Idle_1
+560	ENUM	1	ADC_3_Mux                                >Idle AIN0 Preamplifier Idle_1
+561	ENUM	1	PGA_L_Mux                                >None AIN0 AIN1
+562	ENUM	1	PGA_R_Mux                                >None AIN2 AIN3 AIN0
+563	ENUM	1	PGA_3_Mux                                >None AIN3 AIN2
