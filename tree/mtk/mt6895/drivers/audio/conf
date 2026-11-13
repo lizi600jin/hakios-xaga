@@ -1,0 +1,8 @@
+# mtk/mt6895/drivers/audio/conf: the MT6368 headset detector on xaga.
+# CONFIG_HAKIOS_MT6895_HEADSET=y builds the driver; headset=1 enables the dump.
+
+driver MT6895_HEADSET
+	file    bsd/dev/hakios.mt6895_headset.c
+	default n
+	help    read-only dumps of MT6368 accdet (0x2688-0x26d3) and AUDDEC_ANA (0x2508-0x2537)
+	help    over SPMI slave 5 with headset=1. headset=2 initialisation and insertion polling remain TODO

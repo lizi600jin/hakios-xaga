@@ -376,3 +376,52 @@ HiFi 侧的 `work/XAGA_JACK_FOR_IOS.md`（2026-11-14 00:58 写入）§4 声称�
 | `/home/lizi/IOS/work-xaga/xaga.dts` | 设备树（唯一硬件事实来源） |
 | `/home/lizi/IOS/hakios-mtk/mtk/mt6895/drivers/input/hakios.mt6895_keys.c` | SPMI 读事务实现 |
 | `/home/lizi/IOS/hakios-mtk/work-notes-vstack-pmic.md` | SPMI 写事务格式 |
+
+---
+
+## 9. 实现进度（2026-11-14 01:52）
+
+### 已完成
+
+| 项 | 状态 |
+|---|---|
+| accdet 寄存器语义 | 19/19 真机对拍通过 |
+| 只读对拍工具 | 写好，10 个自检用例通过 |
+| 驱动 `headset=1` 只读模式 | **已写，编译通过**（`CC hakios.mt6895_headset.o`，零 error） |
+| 构建接入 | conf / config / 头文件 / stubs / 调用点全部就位 |
+
+驱动路径：`mtk/mt6895/drivers/audio/hakios.mt6895_headset.c`（131 行）
+
+安全约束（已写进代码注释）：
+- 只读，无 WDATA 访问、无写命令
+- 只碰 PMIF `0x880`–`0x8a8`
+- 不写 `0x014b`（全局 shutdown）
+- 在 keys 驱动启动前同步执行，避免同一通道无锁并发
+
+### 一个同步陷阱（已记录）
+
+`xnu/sync-drivers.sh` **只同步 `drivers/`，不同步 `xnu/files/` 下的头文件**。
+改了 `xnu/files/bsd/sys/hakios.audio.h` 后必须手动复制到 `xnu-src/` 树，
+否则构建报 `implicit declaration`（本次实际踩到）。
+
+### 下一步（未做）
+
+1. **上机跑 `headset=1`**：读出的值应与 `accdet-baseline.json` 的 124 个块寄存器逐字节一致
+2. `headset=2`：完整初始化 + 轮询 `0x26a9` bit0（序列已解出，代码未写）
+3. 耳机到手后：补 ADC→阻抗换算（当前完全缺失，阻断三态分类与按键）
+
+### 编译验证的实际结果（精确边界）
+
+构建日志 `/tmp/build2.log` 的三条证据：
+
+| 证据 | 内容 |
+|---|---|
+| 驱动编译 | `CC hakios.mt6895_headset.o` —— 通过 |
+| 内核链接 | `LD mach.development.bcm2837.unstripped` —— 通过，产物 19070192 字节 |
+| 构建失败点 | `exported name not in import list: OSObject::_Dispatch(...)` → `check_all_exports` |
+
+**所以准确的说法是：驱动编译通过、内核链接成功、最终报错在事后的符号表校验（`check_all_exports`），
+且该报错与耳机驱动无关**（是 `IOUserClient::CopyClientMemoryForType_Invoke` 等
+IOKit 符号的导出清单问题，属项目既有状态）。
+
+不是"整个构建成功"，也不是"构建因耳机失败"。
