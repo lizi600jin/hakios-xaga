@@ -102,13 +102,19 @@ MT6895 SoC
 
 | 寄存器 | 用途 | 证据 |
 |---|---|---|
-| **`0x26a9`** | **插入状态 + 中断来源** | `accdet_irq_handle` @ `0x1db4` 第一件事就是读它 |
+| **`0x26b6` bit[7:6]** | **插入状态（work 上下文）** —— 正确的那一个 | `accdet_work_callback` @`0x4b30` 读 → `0x4b50` `ubfx #6,#2` |
+| **`0x26b8` bit[7:6]** | **插入状态（IRQ 上下文）** | `0x1f6c` 读 → `0x1f84` `ubfx #6,#2` → 跳表分派 |
+| `0x26a9` | EINT pending 位（bit2/bit3），**不是插入状态** | 见 ACCDET-DECODE.md 的更正节 |
 | `0x26aa` | 中断清除/使能（bit0 写 1 清） | `0x1e88-0x1e94` |
 | `0x26b6` | ADC 结果（高/低） | `0x1e5c` |
 | `0x26b8` | ADC 结果（高/低） | `0x1e70` |
 | `0x26a3` / `0x26a4` | 阈值 / mic-bias 配置 | `accdet_init` `0x920-0x968` |
 
-### 2.2 `0x26a9` 的位语义（从代码解出）
+### 2.2 `0x26a9` 的位语义（**已被更正，见 ACCDET-DECODE.md 末尾**）
+
+> ⚠️ 本节早期结论有误。`0x26a9` 的 bit2/bit3 是 EINT0/EINT1 的 pending 位，
+> **插入状态在 `0x26b6`/`0x26b8` 的 bit[7:6]**（字段名 `cur_AB`，未插时 = 3）。
+> 下面保留原始反汇编记录以备查，但结论以 ACCDET-DECODE.md 的更正节为准。
 
 反汇编 `accdet_irq_handle` 开头（`0x1e00-0x1e30`）：
 
@@ -309,7 +315,7 @@ XNU 读到同样的值，说明 XNU 是在同一状态下看同一对象。
 
 1. 新建 `mtk/mt6895/drivers/audio/hakios.mt6895_headset.c`
 2. 上电后按 `accdet_init` 序列初始化 accdet
-3. **轮询** `0x26a9`（不做中断：中断需要 GIC + SPMI 中断控制器两级接线，轮询足够且现有 keys 驱动就是轮询）
+3. **轮询 `0x26b6` bit[7:6]**（不做中断：中断需要 GIC + SPMI 中断控制器两级接线，轮询足够且现有 keys 驱动就是轮询）
 4. 状态变化时 `printf` 报告 + 更新一个可被 `/dev/hakios-audio` 查询的标志
 5. 可选：GIC 接 `Afe_ISR_Handle`(448) 或 SPMI 中断（后做）
 
@@ -407,7 +413,7 @@ HiFi 侧的 `work/XAGA_JACK_FOR_IOS.md`（2026-11-14 00:58 写入）§4 声称�
 ### 下一步（未做）
 
 1. **上机跑 `headset=1`**：读出的值应与 `accdet-baseline.json` 的 124 个块寄存器逐字节一致
-2. `headset=2`：完整初始化 + 轮询 `0x26a9` bit0（序列已解出，代码未写）
+2. `headset=2`：完整初始化 + 轮询 `0x26b6` 的 bit[7:6]（不是 `0x26a9` bit0；未插 = 3，已由基线确认）
 3. 耳机到手后：补 ADC→阻抗换算（当前完全缺失，阻断三态分类与按键）
 
 ### 编译验证的实际结果（精确边界）

@@ -130,8 +130,8 @@ aarch64-linux-gnu-readelf -sW mt6368-accdet.ko | grep -E 'accdet_dts|cust_pwm_de
 | 寄存器 | 角色 | 位 | 证据 | 真机值 |
 |---|---|---|---|---|
 | `0x26af/0x26b0` | 代码未触及 | — | 仅 dump | `0x00` |
-| `0x26b1` | moisture 比较器设置 | bit6=`0x40`、bit7=`0x80` | `+0x980` @0x1330（置 0x40，case3）、`+0x9d8` @0x1388（置 0x80，case5）、`adjust_eint_digital_setting+0x14c` @0x2b24 / `+0x1b4` @0x2b8c | `0x10`（**不是本模块写的** → 未确定，见 §7） |
-| `0x26b2` | 同上（bit4） | `0x10` | `+0x95c` @0x130c（case3 置位） | `0x00`（case3 未走） |
+| `0x26b1` | moisture 比较器设置 | bit6=`0x40`、bit7=`0x80` | 置 0x80：`+0x9d8` @0x1388（模式表 index4）；`adjust_eint_digital_setting+0x14c` @0x2b24 / `+0x1b4` @0x2b8c | `0x10`（bit4，**本模块 init 路径不写** → 未确定，见 §7） |
+| `0x26b2` | 同上（bit4） | `0x10` | `+0x95c` @0x130c（模式表 index2） | `0x00`（index2 未走，`[0x114]=4` → index3） |
 | `0x26b3` | 同上（bit7） | `0x80` | `adjust_eint_digital_setting+0x170` @0x2b48 / `+0x1d8` @0x2bb0 | `0x27`（非本模块 → 未确定） |
 | `0x26b4/0x26b5` | 代码未触及 | — | 仅 dump | `0x00` |
 | `0x26b6` | **状态（只读）：AB/配件类型** | **bit[7:6] = AB**（0/1/2/3） | 读 `accdet_irq_handle+0xa8` @0x1e5c；`ubfx #6,#2` `accdet_work_callback+0x48` @0x4b30 → `+0x68` @0x4b50；`+0x37c` @0x4e64 | `0xff` → AB=3 = 未插 ✅ |
@@ -666,3 +666,35 @@ cur < 121         -> key 2  (jack 0x4000 -> 226 KEY_MEDIA)
 | `disable_accdet` | `0x6494`–`0x6620` |
 | 中断注册 | `0x4254`–`0x4368` |
 | `dump_register` 扫的范围 | `0x2688`–`0x26cf`（`0x2f94`+循环 `0x2f9c`，上界 `0x26ce`）；`0x2508`–`0x2533`（`0x305c`+循环 `0x3064`，上界 `0x2534`）；单点 `0x230c/0x2319/0x231d/0x2320/0x2323/0x2529/0x252d/0x11c0/0x258c`；第二段 `0x26ad..0x26c0`、`0x2527..0x2531` |
+
+---
+
+## 附：本文件的一次重要更正（2026-11-14 01:56，经主控独立复核）
+
+**早期版本的本文（以及 `PLAN.md`、驱动代码注释）说「插入标志是 `0x26a9` 的 bit0」。这是错的。**
+
+正确的说法：
+
+| 项 | 正确结论 | 证据 |
+|---|---|---|
+| 插入/拔出状态 | **`0x26b6` bit[7:6]**（work 上下文）与 **`0x26b8` bit[7:6]**（IRQ 上下文） | `0x4b30` 读 `0x26b6` → `0x4b50` `ubfx w19,w9,#6,#2`；`0x1f6c` 读 `0x26b8` → `0x1f84` `ubfx w9,w9,#6,#2` |
+| 该字段的名字 | 驱动日志里叫 `cur_AB` | `.rodata+0xbf4` 附近 `"cur_AB = %d, accdet_status = %d"` |
+| `0x26a9` bit2/bit3 | **EINT0/EINT1 的 pending 位**，不是插入状态 | `0x1e04-0x1e30` 按 caps 位选掩码，取的是 `(w9>>2)&1` / `&2` / `&3` |
+| `0x26a9` bit4 | 不是状态位；`caps & 0x10` 表示「两个 EINT 都看」 | 同上 |
+
+### 独立复核过程（主控自己跑的，不是引用子代理结论）
+
+1. `aarch64-linux-gnu-objdump -dr --start-address=0x1f6c --stop-address=0x1fc0`
+   → 确认 `0x1f74` 是 `bl regmap_read`（读了 `0x26b8`），`0x1f84` 是 `ubfx w9,w9,#6,#2`，
+   `0x1f88` 是 `str w9,[x8,#368]`（存进 `.bss+0x170`），`0x1fa8` 起是 `ldrb` + `br` 跳表。
+2. 提取 `.rodata+0xf` 的 4 字节跳表：`{0x00, 0x16, 0x24, 0x0f}`
+   → AB=0 → `0x1fb4`，AB=1 → `0x200c`，AB=2 → `0x2044`，AB=3 → `0x1ff0`。
+   与子代理报告完全一致。
+3. 真机基线 `0x26b6 = 0xff`、`0x26b8 = 0xff` → AB = 3 → 走 `0x1ff0`，符合「未插」。
+
+### 影响
+
+- **驱动 `headset=2` 的轮询必须读 `0x26b6[7:6]`，不是 `0x26a9` bit0。**
+  当前 `headset=2` 是 TODO，尚未写错代码，但 `PLAN.md` §"给裸机实现的状态机"里的伪代码是错的，以本节为准。
+- 未插时 AB=3 这件事已经由真机基线确认（`0xff` 的高两位 = 3）。
+- **AB=0/1/2 分别代表什么仍未验证**（需要耳机）。

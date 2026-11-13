@@ -109,7 +109,10 @@ hakios_mt6895_headset_init(void)
 		return;
 	}
 	if (mode == 2) {
-		/* TODO: complete accdet initialisation, then poll 0x26a9 bit 0.
+		/* TODO: complete accdet initialisation, then poll 0x26b6 bits 7:6 -- not
+		 * 0x26a9 bit 0, which is an EINT pending flag. The insertion state is cur_AB,
+		 * bits 7:6 of 0x26b6 in work context (0x26b8 in interrupt context), and 3
+		 * means nothing is plugged in: the Android baseline reads 0xff in both.
 		 * A future poller must serialize PMIF transactions with the keys driver.
 		 */
 		printf("headset: headset=2 is not implemented\n");
