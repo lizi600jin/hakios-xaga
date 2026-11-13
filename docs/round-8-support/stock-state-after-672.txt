@@ -1,0 +1,12 @@
+1
+a63b2e35a7c2522cb24a6a10332b9bc8  /dev/block/by-name/boot_a
+#cooling-cells
+compatible
+ged-supply
+interrupt-names
+interrupts
+name
+operating-points-v2
+phandle
+protected-memory-allocator
+reg

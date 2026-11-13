@@ -1,0 +1,50 @@
+{
+  "trial": 670,
+  "args": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=1 mali_low=1 mali_trace=1 mali_trial=670",
+  "build": {
+    "trial": 670,
+    "verified_args": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=1 mali_low=1 mali_trace=1 mali_trial=670",
+    "arg_occurrences": 3,
+    "files": [
+      {
+        "path": "mtk/mt6895/drivers/gpu/hakios.mali610.c",
+        "bytes": 227405,
+        "sha256": "e77e7cfa4f9817e3d6dbdbe0a0481f96972b2b71c47a7390cc3b1c88312ddf51",
+        "md5": "6fd660a48cc7cdd29d99482ac7ae28ae"
+      },
+      {
+        "path": "hakios-kernel",
+        "bytes": 15269216,
+        "sha256": "c262afdb4f0a719a74cd1e6ef1e262b6c49126529ce29690b271b2a627a097fe",
+        "md5": "df5105dee60b6dd01b5309b6615815b1"
+      },
+      {
+        "path": "build-payload.bin",
+        "bytes": 19463672,
+        "sha256": "788893a3b2673fcfa6794e898f325b3a52d96003ce147af9ae58ec936d46deeb",
+        "md5": "4cbdbadb2994d3256eed4fc477ee1ece"
+      },
+      {
+        "path": "mtk/loader/mtkloader.bin",
+        "bytes": 47464,
+        "sha256": "d115e5d7e0296b66c2d98be3d29d1d9360c1e63ff4b2bcfc9fa83367171649b1",
+        "md5": "a129189c60753802ed6bec7f3f03f3ef"
+      },
+      {
+        "path": "xnu-flashed-slot_a.img",
+        "bytes": 22974464,
+        "sha256": "b3f1ea4982e972d15177362892903e45e28c40ea9803d6ff107b26fe33a21da9",
+        "md5": "72d68191ace13550004b207f4c8eb332"
+      }
+    ]
+  },
+  "outcome": "log_captured_after_manual_fastboot_and_stock_restore",
+  "experiment_image_md5": "72d68191ace13550004b207f4c8eb332",
+  "logbook_sha256": "2c05c734ebdac52376f11c41fdfdc77f0760db25d91ebfe6d2ce3f088759ab69",
+  "android_return": "User observed stuck at starting Android; adbd appeared but boot_completed was not observed before manual recovery.",
+  "recovery": "User entered fastboot; original stock boot_a restored, md5 verified, boot_completed=1 at 2026-11-13T12:55:42+08:00.",
+  "stock_boot_a_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+  "mcu_boot_completed": false,
+  "global_interface_called": false,
+  "shared_span_valid": true
+}

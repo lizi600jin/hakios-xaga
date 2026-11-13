@@ -1,0 +1,44 @@
+{
+  "stores_670": 82,
+  "stores_671": 82,
+  "same_write_multiset": true,
+  "order_identical": false,
+  "changes": [
+    {
+      "operation": "insert",
+      "baseline": [],
+      "late_as0": [
+        [
+          "0x1a0",
+          "0x1"
+        ],
+        [
+          "0x24",
+          "0x600"
+        ],
+        [
+          "0x24",
+          "0x600"
+        ]
+      ]
+    },
+    {
+      "operation": "delete",
+      "baseline": [
+        [
+          "0x1a0",
+          "0x1"
+        ],
+        [
+          "0x24",
+          "0x600"
+        ],
+        [
+          "0x24",
+          "0x600"
+        ]
+      ],
+      "late_as0": []
+    }
+  ]
+}

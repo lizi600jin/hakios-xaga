@@ -1,0 +1,73 @@
+{
+  "trial": 672,
+  "args": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=1 mali_trace=1 mali_witness=1 mali_trial=672",
+  "build": {
+    "trial": 672,
+    "verified_args": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=1 mali_trace=1 mali_witness=1 mali_trial=672",
+    "arg_occurrences": 3,
+    "files": [
+      {
+        "path": "mtk/mt6895/drivers/gpu/hakios.mali610.c",
+        "bytes": 227405,
+        "sha256": "e77e7cfa4f9817e3d6dbdbe0a0481f96972b2b71c47a7390cc3b1c88312ddf51",
+        "md5": "6fd660a48cc7cdd29d99482ac7ae28ae"
+      },
+      {
+        "path": "hakios-kernel",
+        "bytes": 15269216,
+        "sha256": "c262afdb4f0a719a74cd1e6ef1e262b6c49126529ce29690b271b2a627a097fe",
+        "md5": "df5105dee60b6dd01b5309b6615815b1"
+      },
+      {
+        "path": "build-payload.bin",
+        "bytes": 19463672,
+        "sha256": "788893a3b2673fcfa6794e898f325b3a52d96003ce147af9ae58ec936d46deeb",
+        "md5": "4cbdbadb2994d3256eed4fc477ee1ece"
+      },
+      {
+        "path": "mtk/loader/mtkloader.bin",
+        "bytes": 47512,
+        "sha256": "4b7bbb0d323c90307b983ac6e922eb15ee7619c2aa5183413894bc09e61e25ca",
+        "md5": "f33390acb2edc6a7df0f7b9e775bf650"
+      },
+      {
+        "path": "xnu-flashed-slot_a.img",
+        "bytes": 22974464,
+        "sha256": "8c7aa4f3f43a0c597539ef1913cc0a73715ebbc0de22170c4b4d66b97a943900",
+        "md5": "806efb4c9253ab1aa39f0fb3db304c18"
+      }
+    ]
+  },
+  "started_at": "2026-11-13T13:05:36.552473+08:00",
+  "steps": [
+    {
+      "command": [
+        "fastboot",
+        "-s",
+        "GAJZ4HIN99AQ69Y9",
+        "flash",
+        "boot_a",
+        "/home/lizi/IOS/hakios-mtk/xnu-flashed-slot_a.img"
+      ],
+      "exit": 0,
+      "output": "< waiting for GAJZ4HIN99AQ69Y9>\nSending 'boot_a' (22436 KB)                        OKAY [  1.139s]\nWriting 'boot_a'                                   OKAY [  0.059s]\nFinished. Total time: 1.290s\n"
+    },
+    {
+      "command": [
+        "fastboot",
+        "-s",
+        "GAJZ4HIN99AQ69Y9",
+        "reboot"
+      ],
+      "exit": 0,
+      "output": "Rebooting                                          OKAY [  0.010s]\nFinished. Total time: 0.060s\n"
+    }
+  ],
+  "experiment_reboot_at": "2026-11-13T13:06:01.292802+08:00",
+  "logbook_sha256": "59569af7123bb1db66ab7911070696fbd7df6321cff5ac73890cde32e63d5cd6",
+  "android_completed_before_stock_restore": false,
+  "stock_restore_method": "root_dd_fsync_verify_sync_then_sysrq_restart",
+  "stock_android_boot_completed": true,
+  "stock_boot_a_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+  "outcome": "experiment_captured_and_stock_restored"
+}

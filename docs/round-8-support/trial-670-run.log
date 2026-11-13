@@ -1,0 +1,10 @@
+[12:49:46] trial 670
+[12:49:46] args: cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=1 mali_low=1 mali_trace=1 mali_trial=670
+[12:49:46] image md5 72d68191ace13550004b207f4c8eb332
+[12:49:46] android up, requesting bootloader
+[12:50:11] fastboot up
+[12:50:11] flash boot_a
+Sending 'boot_a' (22436 KB)                        OKAY [  0.597s]
+Writing 'boot_a'                                   OKAY [  0.073s]
+[12:50:12] reboot requested at 2026-11-13T12:50:12+08:00
+[12:50:12] waiting for android (up to 7 min)

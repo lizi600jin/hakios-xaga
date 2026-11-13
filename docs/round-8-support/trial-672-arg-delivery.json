@@ -1,0 +1,19 @@
+{
+  "trial": 672,
+  "loader_sha256": "4b7bbb0d323c90307b983ac6e922eb15ee7619c2aa5183413894bc09e61e25ca",
+  "method": "strings -a plus literal grep count before flash",
+  "counts": {
+    "mali=5": 3,
+    "mali_cold=1": 3,
+    "mali_preas0=0": 3,
+    "mali_low=1": 3,
+    "mali_trace=1": 3,
+    "mali_witness=1": 3,
+    "mali_trial=672": 3
+  },
+  "matching_lines": [
+    "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=1 mali_trace=1 mali_witness=1 mali_trial=672 loader_return_after=150",
+    "boot args: rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=1 mali_trace=1 mali_witness=1 mali_trial=672 loader_return_after=150",
+    "boot-args: rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=1 mali_trace=1 mali_witness=1 mali_trial=672 loader_return_after=150"
+  ]
+}

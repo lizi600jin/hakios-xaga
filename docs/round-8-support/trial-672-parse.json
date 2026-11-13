@@ -1,0 +1,64 @@
+{
+  "trial": 672,
+  "logbook_bytes": 4198400,
+  "logbook_sha256": "59569af7123bb1db66ab7911070696fbd7df6321cff5ac73890cde32e63d5cd6",
+  "mali_rows": 265,
+  "stores": 82,
+  "coverage": {
+    "time": 37.792402,
+    "line": "mali: coverage: every section fully mapped"
+  },
+  "l2": {
+    "time": 37.630339,
+    "line": "mali: L2 up: trans 0 active 0 ready 0x1"
+  },
+  "as0_update": {
+    "time": 37.829852,
+    "line": "mali: AS0 step update    mmu irq 0x10000"
+  },
+  "as0_probe": {
+    "time": 37.833722,
+    "line": "mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0"
+  },
+  "version": {
+    "time": 46.627133,
+    "line": "mali: version word 0xff5aa5f0 (untouched; no firmware version published)"
+  },
+  "glb": {
+    "time": 46.628819,
+    "line": "mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0"
+  },
+  "csg0": {
+    "time": 46.630525,
+    "line": "mali: round7 CSG0: in 0x4004000 out 0x400c000 streams 8 stride 0xc"
+  },
+  "boot_failed": {
+    "time": 46.632203,
+    "line": "mali: the global interface never raised; the MCU did not boot"
+  },
+  "witness_entry": {
+    "time": 37.864579,
+    "line": "mali: witness: code at 0x1000000, reset vector now 0x1000001"
+  },
+  "witness_reads": {
+    "time": 46.637376,
+    "line": "mali: witness: read1 0xff5aa5f0 0 read2 0xff5aa5f0 0 read3 0xff5aa5f0 0"
+  },
+  "witness_verdict": {
+    "time": 46.639073,
+    "line": "mali: witness: verdict -- the core never executed the first store"
+  },
+  "failed_tail_return": {
+    "time": 48.779912,
+    "line": "mali: shared probe trial 672: completed; returning before global_interface"
+  },
+  "parked_as": [
+    "mali: AS2 parked, mmu irq 0x40000",
+    "mali: AS3 parked, mmu irq 0x80000",
+    "mali: AS4 parked, mmu irq 0x100000",
+    "mali: AS5 parked, mmu irq 0x200000",
+    "mali: AS6 parked, mmu irq 0x400000",
+    "mali: AS7 parked, mmu irq 0x800000"
+  ],
+  "l2_precedes_as0_update": true
+}

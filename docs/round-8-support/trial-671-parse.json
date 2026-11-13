@@ -1,0 +1,55 @@
+{
+  "trial": 671,
+  "logbook_bytes": 4198400,
+  "logbook_sha256": "35c987cb3becbf65ca07b525de2433523a0d61b8ed9166362e64094832f76022",
+  "mali_rows": 241,
+  "stores": 82,
+  "coverage": {
+    "time": 37.593715,
+    "line": "mali: coverage: every section fully mapped"
+  },
+  "l2": {
+    "time": 37.455767,
+    "line": "mali: L2 up: trans 0 active 0 ready 0x1"
+  },
+  "as0_update": {
+    "time": 37.593804,
+    "line": "mali: AS0 step update    mmu irq 0x10000"
+  },
+  "as0_probe": {
+    "time": 37.593808,
+    "line": "mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0"
+  },
+  "version": {
+    "time": 46.567753,
+    "line": "mali: version word 0xff5aa5f0 (untouched; no firmware version published)"
+  },
+  "glb": {
+    "time": 46.569332,
+    "line": "mali: round7 GLB: version 0xff5aa5f0 in 0x4002000 out 0x4003000 groups 8 stride 0xa0"
+  },
+  "csg0": {
+    "time": 46.570912,
+    "line": "mali: round7 CSG0: in 0x4004000 out 0x400c000 streams 8 stride 0xc"
+  },
+  "boot_failed": {
+    "time": 46.572502,
+    "line": "mali: the global interface never raised; the MCU did not boot"
+  },
+  "witness_entry": null,
+  "witness_reads": null,
+  "witness_verdict": null,
+  "failed_tail_return": {
+    "time": 48.674204,
+    "line": "mali: shared probe trial 671: completed; returning before global_interface"
+  },
+  "parked_as": [
+    "mali: AS2 parked, mmu irq 0x40000",
+    "mali: AS3 parked, mmu irq 0x80000",
+    "mali: AS4 parked, mmu irq 0x100000",
+    "mali: AS5 parked, mmu irq 0x200000",
+    "mali: AS6 parked, mmu irq 0x400000",
+    "mali: AS7 parked, mmu irq 0x800000"
+  ],
+  "l2_precedes_as0_update": true
+}

@@ -1,0 +1,99 @@
+[   11.776896] [GPU/FREQ][INFO]@gpufreq_wrapper_init: start to init gpufreq wrapper driver
+[   11.777089] [GPU/FREQ][INFO]@gpufreq_wrapper_pdrv_probe: start to probe gpufreq wrapper driver
+[   11.777482] [GPU/FREQ][INFO]@gpufreq_gpueb_init: status shared memory phy_addr: 0x7c600000, virt_addr: 0xffffffc00fe00000, size: 0x400
+[   11.777484] [GPU/FREQ][INFO]@gpufreq_gpueb_init: debug shared memory phy_addr: 0x7c600400, virt_addr: 0xffffffc00fe00400, size: 0xc00
+[   11.777487] [GPU/FREQ][INFO]@gpufreq_wrapper_pdrv_probe: gpufreq wrapper driver probe done, dual_buck: true, gpueb: on
+[   11.777560] [GPU/FREQ][INFO]@gpufreq_wrapper_init: gpufreq wrapper driver init done
+[   11.778867] [GPU/FREQ][INFO]@__gpufreq_init: start to init gpufreq platform driver
+[   11.779036] [GPU/FREQ][INFO]@__gpufreq_pdrv_probe: start to probe gpufreq platform driver
+[   11.779492] [GPU/FREQ][INFO]@__gpufreq_pdrv_probe: gpufreq platform probe only init reg_base/dfd/pmic/fp in EB mode
+[   11.779599] [GPU/FREQ][INFO]@__gpufreq_pdrv_probe: gpufreq platform driver probe done
+[   11.779682] [GPU/FREQ][INFO]@__gpufreq_init: gpufreq platform driver init done
+[   11.799620] mali 13000000.mali: Kernel DDK version r32p1-01eac0
+[   11.799644] mali 13000000.mali: GPU PM Callback - Initialize Done
+[   11.805887] mali 13000000.mali: r0p0 status 4 is unknown; treating as r0p0 status 0
+[   11.805904] mali 13000000.mali: GPU identified as 0x7 arch 10.8.6 r0p0 status 0
+[   11.808110] mali 13000000.mali: No priority control manager is configured
+[   11.808129] mali 13000000.mali: No memory group manager is configured
+[   11.808891] mali 13000000.mali: Protected memory allocator successfully loaded
+[   11.810583] mali 13000000.mali: GPU soft reset completed
+[   11.811252] mali 13000000.mali: Probed as mali0 (CSF)
+[   20.145695] mali 13000000.mali: Loading Mali firmware 0x1010000
+[   20.680365] mali 13000000.mali: Timed out waiting for fw boot completion
+[   20.680376] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: == [GPUFREQ DVFS STATUS: 0xffffffc00fe00000] ==
+[   20.680380] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: GPU[0] Freq: 880000, Volt: 75000, Vsram: 75000
+[   20.680383] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: STACK[0] Freq: 852000, Volt: 68750, Vsram: 75000
+[   20.680386] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: GPU Ceiling/Floor: 0/0, Limiter: 0/0
+[   20.680389] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: STACK Ceiling/Floor: 0/39, Limiter: 0/0
+[   20.680391] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: Power Count: 1, Aging Enable: 1, AVS Enable: 1
+[   20.680393] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: GPU_SB_Version: 0x0000, GPU_PTP_Version: 0x0002
+[   20.680397] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: == [GPUFREQ INFRA STATUS] ==
+[   20.680452] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [Regulator] Vcore: 78750, Vsram: 75000, Vstack: 68750
+[   20.680457] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [Clk] MFG_PLL: 880000, MFG_SEL_0: 0x10000, MFGSC_PLL: 852000, MFG_SEL_1: 0x20000
+[   20.680461] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [MFG]   (0x13fbf170): 0x00000003, (0x13fbf178): 0x0000001b, (0x13f91048): 0xfff0ffff
+[   20.680465] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [EMI]   (0x1021c82c): 0x01007514, (0x1021c830): 0x01007514, (0x1021e82c): 0x01007514, (0x1021e830): 0x01007514
+[   20.680468] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [EMI]   (0x10270228): 0x10000618, (0x1027022c): 0xc40000e8, (0x1030e228): 0x10000618, (0x1030e22c): 0xc40000e8
+[   20.680471] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [INFRA] (0x10001ca0): 0x0000000f, (0x10001cac): 0xffffffef, (0x10023000): 0x3b81400c
+[   20.680473] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [INFRA] (0x1002b000): 0x3b81400c, (0x10042000): 0xffff400c
+[   20.680477] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [SPM]   (0x1c001eb8-ec4): 0xc000224d 0xc0000112 0xc0000112 0x0000100d
+[   20.680480] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [SPM]   (0x1c001ec8-ed4): 0x0000100d 0x0000100d 0x0000100d 0x0000100d
+[   20.680484] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [SPM]   (0x1c001ed8-ee8): 0x0000100d 0x0000100d 0x0000100d 0x0000100d 0x0000100d
+[   20.680486] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [SPM]   (0x1c001f3c): 0x0000000f, (0x1c001f40): 0x0000000f
+[   20.680489] mali 13000000.mali: [CSF] firmware_inited=0 firmware_reloaded=0 firmware_reload_needed=0 interrupt_received=0
+[   20.680491] mali 13000000.mali: [CSF] firmware_hctl_core_pwr=0 glb_init_request_pending=0
+[   20.680494] mali 13000000.mali: [PM] in_reset=0 reset_done=0 gpu_powered=1 gpu_ready=1 mcu_state=OFF l2_state=ON mcu_desired=1 l2_desired=1 l2_always_on=0
+[   20.680496] mali 13000000.mali: [PM] hwcnt_desired=0 hwcnt_disabled=1 poweroff_wait_in_progress=0 invoke_poweroff_wait_wq_when_l2_off=0 poweron_required=0
+[   20.680499] mali 13000000.mali: Version check failed. Firmware may have failed to boot.
+[   20.680649] mali 13000000.mali: Firmware initialization failed
+[   20.681124] mali 13000000.mali: Loading Mali firmware 0x1010000
+[   25.860537] mali 13000000.mali: Power transition timed out unexpectedly
+[   25.860556] mali 13000000.mali: 	MCU desired = 0
+[   25.860563] mali 13000000.mali: 	MCU sw state = 0
+[   25.860569] mali 13000000.mali: Current state :
+[   25.860577] mali 13000000.mali: 	Shader=0000000000000000
+[   25.860585] mali 13000000.mali: 	Tiler =0000000000000000
+[   25.860592] mali 13000000.mali: 	L2    =0000000000000000
+[   25.860598] mali 13000000.mali: 	MCU status = 0
+[   25.860604] mali 13000000.mali: Cores transitioning :
+[   25.860611] mali 13000000.mali: 	Shader=0000000000000000
+[   25.860618] mali 13000000.mali: 	Tiler =0000000000000000
+[   25.860625] mali 13000000.mali: 	L2    =0000000000000001
+[   25.860636] mali 13000000.mali: Sending reset to GPU - all running jobs will be lost
+[   25.860645] mali 13000000.mali: Preparing to soft-reset GPU
+[   25.860733] mali 13000000.mali: Resetting GPU (allowing up to 500 ms)
+[   25.860743] mali 13000000.mali: Register state:
+[   25.860752] mali 13000000.mali:   GPU_IRQ_RAWSTAT=0x00000200   GPU_STATUS=0x00000003  MCU_STATUS=0x00000000
+[   25.860761] mali 13000000.mali:   JOB_IRQ_RAWSTAT=0x00000000   MMU_IRQ_RAWSTAT=0x00000000   GPU_FAULTSTATUS=0x00000000
+[   25.860769] mali 13000000.mali:   GPU_IRQ_MASK=0x00000000   JOB_IRQ_MASK=0x00000000   MMU_IRQ_MASK=0x00000000
+[   25.860777] mali 13000000.mali:   PWR_OVERRIDE0=0x00000000   PWR_OVERRIDE1=0x00000000
+[   25.860786] mali 13000000.mali:   SHADER_CONFIG=0x00000000   L2_MMU_CONFIG=0x00000000   TILER_CONFIG=0x00000000
+[   26.360856] mali 13000000.mali: Failed to soft-reset GPU (timed out after 500 ms), now attempting a hard reset
+[   26.360884] mali 13000000.mali: GPU hard reset completed
+[   26.372495] mali 13000000.mali: Timed out waiting for fw boot completion
+[   26.372510] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: == [GPUFREQ DVFS STATUS: 0xffffffc00fe00000] ==
+[   26.372519] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: GPU[0] Freq: 880000, Volt: 75000, Vsram: 75000
+[   26.372526] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: STACK[0] Freq: 852000, Volt: 68750, Vsram: 75000
+[   26.372533] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: GPU Ceiling/Floor: 0/0, Limiter: 0/0
+[   26.372540] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: STACK Ceiling/Floor: 0/39, Limiter: 0/0
+[   26.372547] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: Power Count: 1, Aging Enable: 1, AVS Enable: 1
+[   26.372554] [GPU/FREQ][INFO]@gpufreq_dump_dvfs_status: GPU_SB_Version: 0x0000, GPU_PTP_Version: 0x0002
+[   26.372563] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: == [GPUFREQ INFRA STATUS] ==
+[   26.372640] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [Regulator] Vcore: 78750, Vsram: 75000, Vstack: 68750
+[   26.372651] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [Clk] MFG_PLL: 880000, MFG_SEL_0: 0x10000, MFGSC_PLL: 852000, MFG_SEL_1: 0x20000
+[   26.372663] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [MFG]   (0x13fbf170): 0x00000003, (0x13fbf178): 0x0000001b, (0x13f91048): 0xfff0ffff
+[   26.372673] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [EMI]   (0x1021c82c): 0x01007514, (0x1021c830): 0x01007514, (0x1021e82c): 0x01007514, (0x1021e830): 0x01007514
+[   26.372683] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [EMI]   (0x10270228): 0x10000618, (0x1027022c): 0xc40000e8, (0x1030e228): 0x10000618, (0x1030e22c): 0xc40000e8
+[   26.372692] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [INFRA] (0x10001ca0): 0x0000000f, (0x10001cac): 0xffffffef, (0x10023000): 0x3b81400c
+[   26.372700] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [INFRA] (0x1002b000): 0x3b81400c, (0x10042000): 0xffff400c
+[   26.372710] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [SPM]   (0x1c001eb8-ec4): 0xc000224d 0xc0000112 0xc0000112 0x0000100d
+[   26.372719] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [SPM]   (0x1c001ec8-ed4): 0x0000100d 0x0000100d 0x0000100d 0x0000100d
+[   26.372729] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [SPM]   (0x1c001ed8-ee8): 0x0000100d 0x0000100d 0x0000100d 0x0000100d 0x0000100d
+[   26.372737] [GPU/FREQ][INFO]@__gpufreq_dump_infra_status: [SPM]   (0x1c001f3c): 0x0000000f, (0x1c001f40): 0x0000000f
+[   26.372746] mali 13000000.mali: [CSF] firmware_inited=0 firmware_reloaded=0 firmware_reload_needed=0 interrupt_received=0
+[   26.372753] mali 13000000.mali: [CSF] firmware_hctl_core_pwr=0 glb_init_request_pending=0
+[   26.372763] mali 13000000.mali: [PM] in_reset=0 reset_done=0 gpu_powered=1 gpu_ready=1 mcu_state=OFF l2_state=ON mcu_desired=1 l2_desired=1 l2_always_on=0
+[   26.372771] mali 13000000.mali: [PM] hwcnt_desired=0 hwcnt_disabled=1 poweroff_wait_in_progress=0 invoke_poweroff_wait_wq_when_l2_off=0 poweron_required=0
+[   26.372779] mali 13000000.mali: Version check failed. Firmware may have failed to boot.
+[   31.494172] mali 13000000.mali: Timed out waiting for the GPU reset to complete
+[   31.494190] mali 13000000.mali: Reset complete
+[   31.500021] mali 13000000.mali: Firmware initialization failed

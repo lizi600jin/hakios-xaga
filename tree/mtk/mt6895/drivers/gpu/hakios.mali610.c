@@ -2892,6 +2892,11 @@ as_enable(unsigned as, uint64_t transtab)
 	    (unsigned long long)gpu_rd64(asReg(as, kAsMemattr)),
 	    (unsigned long long)gpu_rd64(asReg(as, kAsTranscfg)));
 	AS_STEP("update", mwr(asReg(as, kAsCommand), kAsCmdUpdate));
+	/* Inline in the observed AS_STEP path; all registers were read in prior runs. */
+	printf("mali: round7 AS%u after UPDATE: raw %#x status %#x fault %#x addr %#llx gpu_fault %#x\n",
+	    as, mrd(kMmuIntRaw), mrd(asReg(as, kAsStatus)),
+	    mrd(asReg(as, kAsFaultStatus)),
+	    (unsigned long long)gpu_rd64(asReg(as, kAsFaultAddress)), mrd(kGpuFaultStatus));
 	/*
 	 * One UPDATE, not two.
 	 *
@@ -3975,6 +3980,19 @@ start_mcu(void)
 		    version == kSentinelVersion ? "untouched; no firmware version published" :
 		    version == 0u ? "zero, the firmware never wrote it either" :
 		    "written by the firmware");
+		/* Fixed offsets in allocated DRAM, before DISABLE or any pointer-following. */
+		if (gShared->mem.size >= 0x1020u &&
+		    gShared->va_end - gShared->va_start >= 0x1020u) {
+			volatile struct glb_control *raw =
+			    (volatile struct glb_control *)gShared->mem.kva;
+			volatile struct csg_control *csg =
+			    (volatile struct csg_control *)(gShared->mem.kva + 0x1000u);
+			printf("mali: round7 GLB: version %#x in %#x out %#x groups %u stride %#x\n",
+			    raw->version, raw->input_va, raw->output_va,
+			    raw->group_num, raw->group_stride);
+			printf("mali: round7 CSG0: in %#x out %#x streams %u stride %#x\n",
+			    csg->input_va, csg->output_va, csg->stream_num, csg->stream_stride);
+		}
 	}
 	/*
 	 * The answer is the interrupt, and only the interrupt.
