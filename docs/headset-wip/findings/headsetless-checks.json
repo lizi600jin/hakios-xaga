@@ -1,0 +1,344 @@
+{
+  "schema": "hakios.headsetless-checks/1",
+  "title": "SID 5 可读性 + 未插入基线 · 无耳机检查项定义",
+  "generated": "2026-11-15",
+  "sid": 5,
+  "constraints": {
+    "no_physical_headset": true,
+    "device_reserved_by": "codex",
+    "read_only_repo": "/home/lizi/IOS/hakios-mtk",
+    "note": "needs_phone=false 表示『无耳机也能判定』；需要手机只是指需要一次 boot 取 dump，不指需要插耳机。"
+  },
+  "regions": {
+    "accdet": {"first": "0x2688", "last": "0x26d3", "count": 76},
+    "auddec": {"first": "0x2508", "last": "0x2537", "count": 48},
+    "blocks_total": 124
+  },
+  "baseline": {
+    "path": "../../accdet-baseline.json",
+    "registers": 130,
+    "blocks": 124,
+    "misc": 6,
+    "distinct_in_blocks": 27,
+    "zeros_in_blocks": 74,
+    "ff_in_blocks": 7,
+    "all_zero_read_scores": 78,
+    "note": "全 0x00 的死总线读回会与 130 个基线中的 78 个相等（60.0%），所以占比不能当判据，必须靠 distinct 数与镜像对。"
+  },
+  "extra_registers_not_in_baseline": ["0x0008", "0x0009", "0x1cb2", "0x230c", "0x248c"],
+  "checks": [
+    {
+      "id": "A1", "group": "A", "phase": 0, "name": "0x231d 读到 stock 值 0x06",
+      "kind": "eq", "reg": "0x231d", "expect": "0x06", "needs_phone": false,
+      "means_pass": "SID 5 通道通；且 MT6368 的 AUD_TOP_INT_CON0 仍是 Android 关机前那 0x06（bit1 RG_INT_EN_ACCDET + bit2 RG_INT_EN_ACCDET_EINT0），说明芯片没被掉电复位，130 项基线可比。",
+      "means_fail": "读到 0x00 = 芯片被复位过（基线作废，但通道未必坏，看 A2）；读到 0xFF = 从设备没应答（SID 错、PMIF 仲裁没起、或 MPU 拒绝）；读到其它值 = 地址对齐或位序有问题，先别写任何寄存器。",
+      "source": "DEVICE-PROBE-STOCK.md:736 真机 dump；mt6368.h:701-712 位定义"
+    },
+    {
+      "id": "A2", "group": "A", "phase": 0, "name": "124 个块寄存器读回的不同值个数 ≥ 12",
+      "kind": "distinct", "set": "blocks", "min": 12, "min_present": 100, "needs_phone": false,
+      "means_pass": "读回的是芯片内容而不是常数填充。基线 124 个里有 27 个不同值，取 12 是留一半余量。",
+      "means_fail": "≤ 3 个不同值 = 死总线（全 0x00 或全 0xFF 或两值跳变）。先停，不要写。",
+      "source": "accdet-baseline.json 统计：blocks distinct=27"
+    },
+    {
+      "id": "A3", "group": "A", "phase": 0, "name": "块内 0xFF 个数 ≤ 12（不是全 FF 总线）",
+      "kind": "count_le", "set": "blocks", "value": "0xff", "max": 12, "min_present": 100, "needs_phone": false,
+      "means_pass": "不是『全 0xFF』死总线特征。基线 7 个 0xFF（0x268e/0x2690/0x26b6/0x26b8/0x26ba/0x26c8/0x26ca）。",
+      "means_fail": "≥ 120 个 = 从设备无应答：SID 写错、从设备未上电、或 PMIF 通道被 MPU 挡住。此时读到的 0xFF 不是状态。",
+      "source": "accdet-baseline.json：0xff 计数 7"
+    },
+    {
+      "id": "A4", "group": "A", "phase": 0, "name": "块内 0x00 个数 ≤ 96（不是全 00 总线）",
+      "kind": "count_le", "set": "blocks", "value": "0x00", "max": 96, "min_present": 100, "needs_phone": false,
+      "means_pass": "不是『全 0x00』死总线特征。基线 74 个 0x00（59.7%），留 22 个余量取 96。",
+      "means_fail": "≥ 120 个 = 通道没搬过命令 / ACCDET 时钟被关 / 子块复位。用 A1 与 D1 区分这三种：A1=0x06 且 D1=1 → 时钟问题；A1=0x00 → 复位；A1=0xFF → 总线。",
+      "source": "accdet-baseline.json：0x00 计数 74"
+    },
+    {
+      "id": "A5", "group": "A", "phase": 0, "name": "芯片身份：0x0008=0x30 且 0x0009=0x68",
+      "kind": "multi_eq",
+      "items": [["0x0008", "0x30"], ["0x0009", "0x68"]],
+      "needs_phone": false,
+      "means_pass": "在 ACCDET 块之外、用另一段地址（0x0008/0x0009，mt6368.h:19 MT6368_HWCID0）也能读到 stock 记录过的值，说明地址译码整体正确，不是碰巧在某一段对上。",
+      "means_fail": "两段地址都读对而这一段不对 = 地址高位/字节序问题；两段都读不到 = 通道本身没通。",
+      "source": "DEVICE-PROBE-STOCK.md:799 dmesg 一次观测 `(0x8)=0x30 (0x9)=0x68`，属未验证（只有一次、且是 init 时刻）"
+    },
+    {
+      "id": "A6", "group": "A", "phase": 0, "name": "7 对镜像寄存器全部相等（地址对齐检查）",
+      "kind": "mirror",
+      "pairs": [
+        ["0x268e", "0x2690"], ["0x268f", "0x2691"], ["0x2698", "0x269a"],
+        ["0x26c4", "0x26c6"], ["0x26c5", "0x26c7"], ["0x26c8", "0x26ca"],
+        ["0x26c9", "0x26cb"]
+      ],
+      "needs_phone": false,
+      "means_pass": "PWM width/thresh 与 latch 类寄存器的成对值在 stock 里逐对相等（0xff/0x04、0x08/0x08、0x1f/0x1f、0xff/0xff、0x1f/0x1f）。全部相等 ⇒ 没有丢字节、没有错位。",
+      "means_fail": "任一对不等 ⇒ 读地址偏移了 1 或 4，或某次事务丢了一个字节。此时 B7 的逐项对比没有意义，先修地址。",
+      "source": "accdet-baseline.json 逐对核对"
+    },
+    {
+      "id": "A7", "group": "A", "phase": 0, "name": "124 个块寄存器全部读到，无 read timeout",
+      "kind": "completeness", "set": "blocks", "count": 124, "needs_phone": false,
+      "means_pass": "每个事务都在 PMIF_SPIN_LIMIT=200000 次自旋内完成，dump 没有中断。",
+      "means_fail": "少一个就说明 dump 在 0xXXXX 处停了。日志里那行 `headset: read timeout at 0x....; dump stopped` 的地址就是第一个坏事务的地址，后面全部没有数据。",
+      "source": "hakios.mt6895_headset.c dump_block() 打印格式"
+    },
+    {
+      "id": "A8", "group": "A", "phase": 0, "name": "两次 dump 逐字节相同（读通道可重复）",
+      "kind": "consistency", "needs_phone": false,
+      "means_pass": "同一次 boot 里跑两遍 headset=1，124 个值全部相同 ⇒ 读通道稳定、没有间歇丢包。",
+      "means_fail": "有差异 ⇒ 要么有并发写者（keys 驱动共用 SWINF_2），要么读通道不稳。差异寄存器列出来即可定位。",
+      "source": "同类证据：accdet-baseline-dump.txt 与 accdet-after-round20.txt md5 相同（f5b3a1f4…）"
+    },
+    {
+      "id": "B1", "group": "B", "phase": 0, "name": "0x26b6 bit[7:6] == 3（空插座 cur_AB=拔出）",
+      "kind": "mask_eq", "reg": "0x26b6", "mask": "0xc0", "expect": "0xc0", "needs_phone": false,
+      "means_pass": "空插座基线正确：cur_AB=3=ACCDET_STATE_AB_11（拔出）。同时说明 ACCDET 数字部分读到的是真实状态而不是恒 0。",
+      "means_fail": "==0（0x00..0x3f）：读到三段耳机形状 —— 可能是 MICBIAS 没供电、插孔上拉异常，或基线本来就不是空插座；==1（0x40..0x7f）：四段；==2（0x80..0xbf）：本平台驱动无此分支，出现即判错（先查位序）；==3 但整字节低 6 位与 stock 不同：见 B2。",
+      "source": "mt6368.h:5514-5519 ACCDET_STATE_AB_11=0x3；MT6368_ACCDET_CON46=0x26b6"
+    },
+    {
+      "id": "B2", "group": "B", "phase": 0, "name": "0x26b6 整字节 == 0xFF（与 stock 逐位一致）",
+      "kind": "eq", "reg": "0x26b6", "expect": "0xff", "needs_phone": false,
+      "means_pass": "整字节与 stock 相同，包括无文档的低 6 位。",
+      "means_fail": "bit[7:6]=3 但整字节 ≠ 0xFF：低 6 位无文档，**不算错**，只记录。这一项失败不覆盖 B1 的结论。",
+      "source": "accdet-baseline.json 0x26b6=255"
+    },
+    {
+      "id": "B3", "group": "B", "phase": 0, "name": "0x2688 == 0x00（ACCDET→AUXADC 开关关着）",
+      "kind": "eq", "reg": "0x2688", "expect": "0x00", "needs_phone": false,
+      "means_pass": "未插入态下 AUXADC_SEL/SW 全关，与 stock 一致。",
+      "means_fail": "非 0 ⇒ 有代码（或残留状态）把 AUXADC 接到了 ACCDET，后面的 ADC 读数不能当空插座基线。",
+      "source": "accdet-baseline-dump.txt (0x2688)=0x0"
+    },
+    {
+      "id": "B4", "group": "B", "phase": 0, "name": "0x26a9 == 0x00（无 pending IRQ）",
+      "kind": "eq", "reg": "0x26a9", "expect": "0x00", "needs_phone": false,
+      "means_pass": "bit0 ACCDET_IRQ 与 bit2 EINT0_IRQ 都没挂起。**这是『没有中断』，不是『没有插入』** —— 插入状态只看 0x26b6。",
+      "means_fail": "非 0 ⇒ 有中断没清（可能上次 boot 残留）。这不影响读通道结论，但阶段 2 之前必须先清（写 0x26aa 对应位），否则 IRQ 会一直被当成新事件。",
+      "source": "accdet-baseline.json 0x26a9=0；mt6368.h:4593-4601"
+    },
+    {
+      "id": "B5", "group": "B", "phase": 0, "name": "0x26b8 == 0xFF（EINT0 侧 AB 也是拔出）",
+      "kind": "eq", "reg": "0x26b8", "expect": "0xff", "needs_phone": false,
+      "means_pass": "中断上下文的 0x26b8 bit[7:6] 与 work 上下文的 0x26b6 给出同一结论（ACCDET_EINT0_MEM_IN=3）。两条独立寄存器路径不矛盾。",
+      "means_fail": "≠0xFF 而 0x26b6 正常 ⇒ EINT0 侧模拟通路（0x2531 EINT0EN、0x252f VTH）状态与 ACCDET 侧不同，阶段 2 会用到 EINT0，必须先解释。",
+      "source": "accdet-baseline.json 0x26b8=255；mt6368.h:5043-5047"
+    },
+    {
+      "id": "B6", "group": "B", "phase": 0, "name": "0x26b7 STATE 只记录不判定",
+      "kind": "info", "reg": "0x26b7", "needs_phone": false,
+      "means_pass": "读到即记录（stock=0x00）。",
+      "means_fail": "该字段语义在 vendor 驱动里一次都没被读过（grep ACCDET_STATE_ADDR 只命中定义行），所以任何值都不能用来判插入。本条永不 FAIL。",
+      "source": "ACCDET-INIT-SEQUENCE.md §0.5"
+    },
+    {
+      "id": "B7", "group": "B", "phase": 0, "name": "与 130 项基线逐项比对，一致率 ≥ 84.6%（110/130）",
+      "kind": "agreement", "min_ratio": 0.846, "min_denominator": 100, "needs_phone": false,
+      "means_pass": "与 Android 留下的状态一致到可以认为『同一颗芯片、同一段地址、同一个状态』。差异清单仍然逐条打印，这是本项最有价值的输出。",
+      "means_fail": "< 84.6% ⇒ 不是状态漂移，是地址/字节序/丢字节。阈值 110 的取法：死 0 总线天然命中 78/130（60.0%），必须高于它才不误判，再留 20 个字节的漂移余量。",
+      "source": "accdet-baseline.json；全 0 读回得分 78 已实测计算"
+    },
+    {
+      "id": "B8", "group": "B", "phase": 0, "name": "6 个块外寄存器逐个匹配",
+      "kind": "multi_eq",
+      "items": [["0x2319", "0x00"], ["0x231d", "0x06"], ["0x2320", "0x00"],
+                ["0x2323", "0x00"], ["0x1108", "0x00"], ["0x11c0", "0xfc"]],
+      "needs_phone": false,
+      "means_pass": "复位/中断/辅助 ADC 六项与 stock 一致。0x2319=0x00 说明 RG_ACCDET_RST 已放开；0x2323=0x00 说明顶层中断状态干净；0x11c0=0xFC 说明 AUXADC_ACCDET1 保持关机前配置。",
+      "means_fail": "0x2319 bit1=1 ⇒ ACCDET 仍在复位，任何 ACCDET 寄存器读回都不可信；0x2323 非 0 ⇒ 顶层中断没清，阶段 2 的清 IRQ 会先撞到它。",
+      "source": "DEVICE-PROBE-STOCK.md:735-736；mt6368.h:105-116, 69-72"
+    },
+    {
+      "id": "B9", "group": "B", "phase": 0, "name": "AUDDEC_ANA 三项锚点",
+      "kind": "multi_eq",
+      "items": [["0x2515", "0x08"], ["0x2518", "0x15"], ["0x2519", "0x15"], ["0x251a", "0x15"]],
+      "needs_phone": false,
+      "means_pass": "第二个块（0x2508..0x2537）也读到 stock 值，48 个寄存器里 34 个为 0，所以必须靠这 4 个非零锚点判断『不是全 0』。",
+      "means_fail": "全 0 而 ACCDET 块正常 ⇒ 该块被 gate 住（0x230c 只管 ACCDET），或两次 dump 之间有人改了 AUDDEC 电源。",
+      "source": "accdet-baseline.json auddec 段"
+    },
+    {
+      "id": "B10", "group": "B", "phase": 0, "name": "0x26b6 与 0x26b8 的 bit[7:6] 一致",
+      "kind": "pair_mask", "regs": ["0x26b6", "0x26b8"], "mask": "0xc0", "needs_phone": false,
+      "means_pass": "两条独立采样路径（work 上下文 vs IRQ 上下文）对空插座给出同一结论，排除单点读到坏值。",
+      "means_fail": "两者 bit[7:6] 不同 ⇒ 至少一侧读到的是中间态（ADC 未稳定）或某一侧寄存器地址错。不要用其中任一侧下结论。",
+      "source": "ACCDET-DECODE.md:680 两条路径"
+    },
+    {
+      "id": "B11", "group": "B", "phase": 2, "name": "跑完初始化后 124 个块寄存器与基线 0 差异",
+      "kind": "agreement", "min_ratio": 1.0, "min_denominator": 100, "needs_phone": false,
+      "means_pass": "厂商 44 条写全是 read-modify-write，且 stock dump 本来就是『已初始化、已拔出、SW_EN=0』的状态，所以理论上净变化应为 0。0 差异 ⇒ 写通道、mask 运算、恢复逻辑全部正确。",
+      "means_fail": "只有 0x268a 由 0x40 变 0x41 ⇒ 多写了 SW_EN(bit0)；其它差异 ⇒ mask/shift 算错或写错地址。注意：若实现采用 50 项表的第 48 步（SW_EN=1），则预期差异恰为 1 个字节 0x268a=0x41，此时 1 差异也算 PASS，需在报告里注明用的哪一版表。",
+      "source": "离线模拟：50 项表净变化 4 个字节，其中块内仅 0x268a；现有驱动不写 SW_EN，块内净变化 0"
+    },
+    {
+      "id": "C1", "group": "C", "phase": 1, "name": "最小写探针：0x26aa bit[6:4] 1→2→1",
+      "kind": "manual",
+      "why": "需要有写通道的代码（当前 headset=1 只读，无写）。判据是三次读回：写 0x20 后读 0x20；写回 0x10 后读 0x10；两次都不得超时。",
+      "needs_phone": false,
+      "means_pass": "PMIF 写路径（WDATA + ACC 的 WR 位）通，且该字段可读回。",
+      "means_fail": "读回仍是 0x10 ⇒ 写没落地（WDATA 顺序错 / WR 位没置 / 通道非 IDLE）；读回 0x00 或 0xFF ⇒ 写坏了这一字节，立刻停。",
+      "source": "选点理由：该字段 vendor 自己在初始化第 43 步就写（值 1），属设计上可写的配置位；同字节 bit0/2/3 是电平清除位，本探针不碰"
+    },
+    {
+      "id": "C2", "group": "C", "phase": 1, "name": "写后读回必须在 mask 内等于写入值",
+      "kind": "manual",
+      "why": "driver update_bits() 已内建：读旧值 → (old & ~mask) | bits → 写 → 再读 → 比 mask 内。失败打印 `headset: verify failed at 0x%04x mask 0x%02x wanted 0x%02x got 0x%02x`。",
+      "needs_phone": false,
+      "means_pass": "日志中该字符串出现 0 次。",
+      "means_fail": "出现 1 次即定位到具体寄存器与 mask；出现 ≥2 次说明写通道整体不可用，退回阶段 0。",
+      "source": "hakios.mt6895_headset.c:214"
+    },
+    {
+      "id": "C3", "group": "C", "phase": 1, "name": "探针后 0x26aa 必须回到 0x10",
+      "kind": "manual",
+      "why": "整字节比较，防止只恢复 bit[6:4] 而漏掉 bit0/2/3。",
+      "needs_phone": false,
+      "means_pass": "最终 0x26aa == 0x10，与 stock 相同。",
+      "means_fail": "0x11 / 0x14 / 0x06 等 ⇒ 碰到了电平清除位或 M_PLUG_IN_NUM 没恢复；此时不得进入阶段 2。",
+      "source": "accdet-baseline.json 0x26aa=0x10（bit4=1，bit0/2/3=0）"
+    },
+    {
+      "id": "C4", "group": "C", "phase": 1, "name": "禁写门：0x014b / 0x0240 被拒",
+      "kind": "manual",
+      "why": "代码级断言：update_bits() 对 addr==0x014b（全局 shutdown）与 addr==0x0240（状态影子，禁 RMW）直接 return false，且不产生任何总线事务。",
+      "needs_phone": false,
+      "means_pass": "对这两个地址调用 configure() 返回 false 且 PMIF 读计数不变。",
+      "means_fail": "任一被写出去 ⇒ 立刻停手，这已经不是耳机子项目的问题。",
+      "source": "DANGER-spmi-access.md §4；SPMI-PMIF-SPEC.md:508-510；hakios.mt6895_headset.c:184-186"
+    },
+    {
+      "id": "C5", "group": "C", "phase": 1, "name": "写探针不得引起中断",
+      "kind": "manual",
+      "why": "写 0x26aa bit[6:4] 前后各读一次 0x26a9。",
+      "needs_phone": false,
+      "means_pass": "两次都 == 0x00。",
+      "means_fail": "后一次非 0 ⇒ 该字段不是纯配置位（或写操作本身被当成事件），立即恢复并放弃这条探针，改用 C6。",
+      "source": "0x26aa bit[6:4]=ACCDET_EINT_M_PLUG_IN_NUM（mt6368.h:4628-4632）"
+    },
+    {
+      "id": "C6", "group": "C", "phase": 1, "name": "备用写探针：0x26d0 bit[6:4] 0→1→0",
+      "kind": "manual",
+      "why": "C1 失败时改用 EINT1 的插拔计数位（本平台只用 EINT0）。",
+      "needs_phone": false,
+      "means_pass": "写 0x10 读 0x10，写回 0x00 读 0x00。",
+      "means_fail": "同样不落地 ⇒ 写通道整体不可用，不是选点问题。",
+      "source": "mt6368.h:5418-5427 ACCDET_EINT1_M_PLUG_IN_COUNT，stock 0x26d0=0x00"
+    },
+    {
+      "id": "C7", "group": "C", "phase": 1, "name": "探针结束后 PMIF STA 回到 IDLE",
+      "kind": "manual",
+      "why": "读 STA 0x08a8，取 (v>>1)&0x7。",
+      "needs_phone": false,
+      "means_pass": "== 0（SWINF_IDLE）。",
+      "means_fail": "== 6（WFVLDCLR）⇒ 有读事务没 ACK，下一次事务的 IDLE 等待永远不会成功；必须先写 VLDCLR=1 再继续。",
+      "source": "SPMI-PMIF-SPEC.md §0.3"
+    },
+    {
+      "id": "D1", "group": "D", "phase": 0, "name": "0x230c bit0 == 0（ACCDET 时钟未关）",
+      "kind": "mask_eq", "reg": "0x230c", "mask": "0x01", "expect": "0x00", "needs_phone": false,
+      "means_pass": "RG_ACCDET_CK_PDN=0，时钟开着，整张初始化表与块读回都有效。",
+      "means_fail": "== 1 ⇒ 时钟被 gate，ACCDET 整段会读回 0（与 A4 的『全 0』互为因果）。此时**不要**盲写 0x230d/0x230e（这两个 SET/CLR 地址只有命名推断、源码无使用点），先记录整字节并上报。",
+      "source": "mt6368.h:3843-3846；ACCDET-INIT-SEQUENCE.md §9 第 1 项『未验证』"
+    },
+    {
+      "id": "D2", "group": "D", "phase": 0, "name": "0x230c 整字节记录",
+      "kind": "info", "reg": "0x230c", "needs_phone": false,
+      "means_pass": "记录到值即可。stock dump 不含此地址，这是第一次观测。",
+      "means_fail": "本条永不 FAIL；但值是后续所有『时钟是否被关』判断的唯一依据。",
+      "source": "accdet-baseline.json 无 0x230c"
+    },
+    {
+      "id": "D3", "group": "D", "phase": 0, "name": "0x1cb2 bit0 记录（VAUD18）",
+      "kind": "info", "reg": "0x1cb2", "needs_phone": false,
+      "means_pass": "记录到值即可。0 或 1 都合法：0 表示裸机必须自己开。",
+      "means_fail": "永不 FAIL。注意：**0x26b6=0xff 不能证明 VAUD18 开着** —— VAUD18 死掉时读到的是 AB=3（0x03/0xC0 形状），与真空插座同形，两者用 0x26b6 无法区分。",
+      "source": "mt6368.h:511-514 RG_LDO_VAUD18_EN；ACCDET-INIT-SEQUENCE.md §8 注"
+    },
+    {
+      "id": "D4", "group": "D", "phase": 2, "name": "若 0x1cb2 bit0==0，初始化必须先写 1",
+      "kind": "manual",
+      "why": "现有驱动 /home/lizi/IOS/hakios-mtk 的 headset=2 全文无 0x1cb2（grep 零命中），而厂商路径靠 dc_trim 先行打开。",
+      "needs_phone": false,
+      "means_pass": "阶段 2 日志里能看到 0x1cb2 由 0 变 1 且读回 1。",
+      "means_fail": "没写 ⇒ MICBIAS 可能没有供电，阶段 2 之后所有 cur_AB 读数都不能解释（包括『看起来正确』的 AB=3）。",
+      "source": "grep -rn 1cb2 在 /home/lizi/IOS/hakios-mtk 全树零命中（2026-11-15 核对）"
+    },
+    {
+      "id": "D5", "group": "D", "phase": 0, "name": "0x2319 == 0x00（ACCDET 不在复位）",
+      "kind": "eq", "reg": "0x2319", "expect": "0x00", "needs_phone": false,
+      "means_pass": "RG_ACCDET_RST(bit1)=0，ACCDET 逻辑可用。",
+      "means_fail": "bit1=1 ⇒ 复位没放开，块读回全部无效。先写 0 再重读，不要直接跑初始化表。",
+      "source": "accdet-baseline.json 0x2319=0；mt6368.h:692-700"
+    },
+    {
+      "id": "D6", "group": "D", "phase": 0, "name": "AUDDEC 块 48 个寄存器全部读到",
+      "kind": "completeness", "set": "auddec", "count": 48, "needs_phone": false,
+      "means_pass": "第二个块边界（0x2508..0x2537）正确，48 个都在 PMIF_SPIN_LIMIT 内完成。",
+      "means_fail": "缺 ⇒ 0x2537 之后的地址可能不属于该从设备，或 dump 在这里停了。",
+      "source": "hakios.mt6895_headset.c AUDDEC_ANA_LO/HI"
+    },
+    {
+      "id": "E1", "group": "E", "phase": 0, "name": "连续 ≥10 次采样 AB 恒为 3（幂等）",
+      "kind": "samples", "min_samples": 10, "field": "ab", "expect": 3, "needs_phone": false,
+      "means_pass": "headset=2 每 50 ms 采样一次，稳态下 AB 不应抖动。恒 3 ⇒ 采样路径幂等，没有把噪声当插入。",
+      "means_fail": "出现 0/1/2 ⇒ 要么 ADC 在动（模拟前端不稳），要么读通道间歇丢字节。用 A8 的两次全量 dump 交叉验证。",
+      "source": "日志格式 `headset: sample IRQ 0x%02x AB %u EINT0 %u FSM %u sync %u`"
+    },
+    {
+      "id": "E2", "group": "E", "phase": 0, "name": "连续采样中 EINT0 字段恒为 3",
+      "kind": "samples", "min_samples": 10, "field": "eint", "expect": 3, "needs_phone": false,
+      "means_pass": "EINT0 侧与 AB 侧同时稳定，排除单侧漂移。",
+      "means_fail": "非 3 ⇒ EINT0 模拟通路在动；阶段 2 的插入门控依赖它，必须先解释再跑。",
+      "source": "同上，字段 EINT0=(0x26b8>>6)&3"
+    },
+    {
+      "id": "E3", "group": "E", "phase": 1, "name": "写 IRQ_CLR 不引入新 IRQ",
+      "kind": "manual",
+      "why": "空插座下 0x26a9 本来就是 0，『清一个已经为 0 的标志』在观测上等于什么都没发生。能做到的只有反向断言。",
+      "needs_phone": false,
+      "means_pass": "写 0x26aa bit0=1 再写 0 之后，0x26a9 仍 == 0x00。",
+      "means_fail": "0x26a9 变 1 ⇒ 写 CLR 位本身被芯片当成事件（或地址错位到 0x26a9）。这条是整个 E 组唯一能覆盖 IRQ 通路的检查。",
+      "source": "0x26aa 是电平保持型 CLR；vendor clear_accdet_int() 先置 1 再在 IRQ 落下后清 0"
+    },
+    {
+      "id": "E4", "group": "E", "phase": 1, "name": "0x26aa bit0 电平位可读回",
+      "kind": "manual",
+      "why": "写 bit0=1 后立刻读 0x26aa，bit0 应为 1（这是电平保持，不是 W1C 自清）。",
+      "needs_phone": false,
+      "means_pass": "读回 bit0=1 ⇒ 该位可写可读，且不是自清型。写回 0 后读回 bit0=0。",
+      "means_fail": "写 1 读回 0 ⇒ 该位被硬件立即自清（行为与文档不同），C1/C3 的恢复逻辑要改，且 E3 的结论无效。",
+      "source": "task 背景表『0x26aa bit0 ACCDET_IRQ_CLR W1C』与 vendor 电平保持用法需在此处实测区分"
+    },
+    {
+      "id": "E5", "group": "E", "phase": 0, "name": "空插座下不得出现任何 cable 变更打印",
+      "kind": "manual",
+      "why": "check_cable_type() 在 eint_sync=false 时直接 return，且 AB=3 走 PLUG_OUT 分支不产生事件。",
+      "needs_phone": false,
+      "means_pass": "整段日志里 `headset: cable ` 出现 0 次，`headset: microphone button` 出现 0 次。",
+      "means_fail": "出现 ⇒ 门控逻辑被绕过（eint_sync 被误置 true，或 startup_plug 把 eint==0 当成插入）。这是空插座就能抓到的真实 bug。",
+      "source": "hakios.mt6895_headset.c observe_ab()/handle_eint()"
+    },
+    {
+      "id": "E6", "group": "E", "phase": 0, "name": "0x26b7 STATE 与 AB 的一致性",
+      "kind": "info", "reg": "0x26b7", "needs_phone": false,
+      "means_pass": "只记录 (STATE, AB) 组合。stock 为 (0, 3)。",
+      "means_fail": "永不 FAIL：STATE 语义未验证（驱动全文未读该字段），不能作为判据，只能作为将来插耳机后的对照数据。",
+      "source": "ACCDET-INIT-SEQUENCE.md §0.5"
+    }
+  ],
+  "not_testable_without_headset": [
+    {"id": "F1", "name": "插入识别", "why": "需要 EINT0 由拔出态翻到插入态、0x26a9 bit2 置位；空插座下这两个事件不会发生。", "needs_phone": true},
+    {"id": "F2", "name": "三段 vs 四段判定", "why": "AB=0 与 AB=1 只能由插头接地环决定，无法伪造。", "needs_phone": true},
+    {"id": "F3", "name": "按键 hook/volume", "why": "按键靠 MICBIAS 下 AB=0 加 ADC 毫伏分档，必须有实体线控。", "needs_phone": true},
+    {"id": "F4", "name": "阻抗 / LineOut 判定", "why": "R≥5000Ω 走 mt6368_accdet_read_audio_res()，需要真实负载。", "needs_phone": true},
+    {"id": "F5", "name": "出声", "why": "需要负载才能确认 HPL/HPR 有输出；且当前驱动无 PCM 通路。", "needs_phone": true},
+    {"id": "F6", "name": "拔出消抖实际时间", "why": "DT 值 accdet-plugout-debounce=1 只有配置，没有可观测的拔出沿。", "needs_phone": true},
+    {"id": "F7", "name": "插入后 HPL/HPR mux 切换时序", "why": "空插座下 mux 停在 Open，切换序列不会发生。", "needs_phone": true},
+    {"id": "F8", "name": "四段 MIC 录音通道", "why": "需要耳麦 mic 才能验证 AIF1_RX → ADC 通路。", "needs_phone": true},
+    {"id": "F9", "name": "eint_sync 状态迁移与 6 秒 micbias 计时器", "why": "两者都以插入事件为起点，空插座下永不进入。", "needs_phone": true},
+    {"id": "F10", "name": "IRQ 由 1 落 0 的真实清除过程", "why": "0x26a9 bit0/bit2 在空插座下恒为 0，W1C/电平保持的完整握手无法触发；E3/E4 只能做反向断言。", "needs_phone": true}
+  ]
+}

@@ -261,5 +261,39 @@
     "end_line": 5179,
     "task_line": 5143,
     "note": "实测反证：trial 675/676/677 根表在 0x50000000（低窗内）时同样读到 0x10000；trial 679-692 根表在 4 GiB 以上时也是 0x10000。地址高低与该位无关。"
+  },
+  {
+    "line": 469,
+    "snippet": "mali_as0=1 parks address space 0 the way the other seven are parked, instead of giving it the firmware's table. Nothing else changes: same clear, same three writes, same UPDATE. ",
+    "premise": "mali_as0=1 让 AS0 走与 AS2..AS7 相同的三次写 + 一次 UPDATE，其余不变",
+    "verdict": "holds",
+    "fix": "保留。这是对照组机制的准确描述；作废的是它后面 :472-481 对结果的预期，不是机制本身。",
+    "end_line": 471,
+    "note": "该对照组从未跑过：全仓库日志（含 docs/ 下 100+ 份 trial-*-mali.txt）没有任何 'AS0 parked:' 行。"
+  },
+  {
+    "line": 1148,
+    "snippet": "into section 1 (0x010018ed), and if the fetch that follows is refused by the MMU there is no fault on AS0 because the fetch never becomes a transaction: status stays 1, debug_top goes busy and the version word keeps the sentinel. That is this board's exact shape.",
+    "premise": "XN 拦截的取指不产生 AS fault（'fetch never becomes a transaction'），故 status=1 + 无 fault + 哨兵不变就是本板形状",
+    "verdict": "unverified",
+    "fix": "独立于 0x10000，但同样缺证据：'XN 违规不报 fault' 没有任何实测或上游源码支持，panthor 的 AS_FAULTSTATUS 明确有 ACCESS_TYPE_EX 一类（panthor_mmu.c:1690-1700），即执行访问被拒是要记 fault 的。另外本段前提已被自家日志否掉：section 1 flags 0xd (r-x) 本身可执行。建议删掉该假说。",
+    "end_line": 1151,
+    "note": "panthor_mmu_regs.h:43 AS_FAULTSTATUS_ACCESS_TYPE_EX = (1 << 8)：执行访问确实有 fault 类型编码。"
+  },
+  {
+    "line": 3453,
+    "snippet": "Park the seven address spaces the MCU does not use.",
+    "premise": "as_park_unused() 停用 '七个' 地址空间",
+    "verdict": "rewrite",
+    "fix": "改为 '六个'：循环是 as = 2..7（:3490），AS1 留给固件，AS0 单独处理（:3504 的打印也写 2 to 7）。数字错与实际行为无关，但会被后来者当成 8 个全停用。",
+    "note": "与本条 0x10000 无关的独立笔误，顺带列出。"
+  },
+  {
+    "line": 3475,
+    "snippet": "direct comparison. All six spaces remain UNMAPPED, so a trace difference alone does not establish that their attributes are required for the MCU's AS0 fetches.",
+    "premise": "六个空间都保持 UNMAPPED，所以单凭 trace 差异不能证明其属性是 MCU 取指所必需",
+    "verdict": "holds",
+    "fix": "保留。这是全文件最克制的一句：它明确拒绝从相关性推因果。对照组设计可继续沿用。",
+    "end_line": 3476
   }
 ]

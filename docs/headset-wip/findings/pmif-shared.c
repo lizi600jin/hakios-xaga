@@ -29,6 +29,20 @@
 
 extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
 
+/*
+ * The barrier between a store to the channel and the status read that follows it. On arm64
+ * -- the only place this file is built for the kernel -- that is `dsb sy`, the same
+ * instruction all three drivers used and stronger than readl()/writel(). The host build
+ * (pmif-fix-check.py --selftest, and a plain gcc -c) has no such instruction, so the
+ * portable fence stands in: the host build is for type checking and the state machine, not
+ * for measuring ordering.
+ */
+#if defined(__aarch64__) || defined(__arm64__)
+#define PMIF_BARRIER()  __asm__ volatile ("dsb sy" ::: "memory")
+#else
+#define PMIF_BARRIER()  __atomic_thread_fence(__ATOMIC_SEQ_CST)
+#endif
+
 /* ==================================================================== state */
 
 static vm_offset_t pmif_base;
@@ -68,28 +82,64 @@ pmif_init(void)
  * follows can mean anything (SPEC §4.5), and the load needs its result before the next
  * decision. This is what all three drivers already did.
  */
+/*
+ * A seam for the host build. PMIF_MMIO_TEST is defined only by pmif-fix-check.py's
+ * --selftest build and by nothing in the kernel, where the two volatile accesses below are
+ * what actually happens. With it defined, the whole state machine -- the idle recovery, the
+ * ack, the four failure codes -- runs against a model of the device on the development
+ * machine, which is the only way to test any of it without a phone.
+ */
+#ifndef PMIF_MMIO_TEST
+#define PMIF_MMIO_TEST 0
+#endif
+
+#if PMIF_MMIO_TEST
+extern uint32_t pmif_test_rd(uint32_t at);
+extern void pmif_test_wr(uint32_t at, uint32_t value);
+
+static inline uint32_t
+pmif_load(uint32_t at)
+{
+	return pmif_test_rd(at);
+}
+
+static inline void
+pmif_store(uint32_t at, uint32_t value)
+{
+	pmif_test_wr(at, value);
+}
+#else
+static inline uint32_t
+pmif_load(uint32_t at)
+{
+	uint32_t value = *(volatile uint32_t *)(pmif_base + at);
+
+	PMIF_BARRIER();
+	return value;
+}
+
+static inline void
+pmif_store(uint32_t at, uint32_t value)
+{
+	PMIF_BARRIER();
+	*(volatile uint32_t *)(pmif_base + at) = value;
+	PMIF_BARRIER();
+}
+#endif
+
 static inline uint32_t
 pmif_rd(uint32_t at)
 {
-	uint32_t value;
-
-	if (!pmif_offset_ok(at)) {
-		return 0xffffffffu;
-	}
-	value = *(volatile uint32_t *)(pmif_base + at);
-	__asm__ volatile ("dsb sy" ::: "memory");
-	return value;
+	/* An offset outside the window is a programming error, not a runtime condition. */
+	return pmif_offset_ok(at) ? pmif_load(at) : 0xffffffffu;
 }
 
 static inline void
 pmif_wr(uint32_t at, uint32_t value)
 {
-	if (!pmif_offset_ok(at)) {
-		return;
+	if (pmif_offset_ok(at)) {
+		pmif_store(at, value);
 	}
-	__asm__ volatile ("dsb sy" ::: "memory");
-	*(volatile uint32_t *)(pmif_base + at) = value;
-	__asm__ volatile ("dsb sy" ::: "memory");
 }
 
 /* ==================================================================== polling */
@@ -271,7 +321,6 @@ pmif_status_t
 pmif_write8(uint8_t sid, uint16_t addr, uint8_t val)
 {
 	pmif_status_t status;
-	uint32_t sta;
 
 	status = pmif_hdr_admit(sid, addr, true);
 	if (status != PMIF_OK) {

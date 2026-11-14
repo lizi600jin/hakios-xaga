@@ -144,7 +144,8 @@ def check(patch_text, root, tol, verbose):
             continue
         t = read_target(root, path)
         if t is None:
-            problems.append("%s: not found under %s (the patch expects it there)" % (path, root))
+            problems.append("%s: not found under %s (the patch expects it there; --root names the "
+                            "tree the a/ and b/ paths are relative to)" % (path, root))
         targets[path] = t
 
     # 1. hunk header counts against the lines actually present
@@ -227,10 +228,13 @@ def check(patch_text, root, tol, verbose):
         else:
             notes.append("%s: the hunks are bracket-neutral (%d hunks)" % (path, len(hunks)))
 
-    # 4. every hunk must name a function or a nearby line, so a reviewer knows where it lands
-    for h in p.hunks:
-        if not h.section.strip():
-            notes.append("%s:%d: the hunk header names no enclosing line" % (h.path, h.lineno))
+    # 4. a hunk header that names the enclosing line helps a reviewer; git leaves it empty for a hunk
+    #    at the top of a file, so this is a note for --verbose only, never a problem
+    if verbose:
+        for h in p.hunks:
+            if not h.section.strip() and h.path not in new_files:
+                notes.append("%s:%d: the hunk header names no enclosing line"
+                             % (h.path, h.lineno))
 
     return problems, notes
 
@@ -349,17 +353,25 @@ def selftest():
 
 # --------------------------------------------------------------------------------------- entry
 
-def default_root():
-    here = os.path.dirname(os.path.abspath(__file__))
-    d = here
+def default_root(paths):
+    """The directory a/ and b/ are relative to: the current one if the patch's files are there, else
+    the nearest ancestor of this script that has drivers/ and mtk/, else the current directory."""
+    cwd = os.getcwd()
+    for cand in (cwd,) + tuple(_ancestors(os.path.dirname(os.path.abspath(__file__)))):
+        if all(os.path.isfile(os.path.join(cand, p)) for p in paths if p):
+            return cand
+        if os.path.isdir(os.path.join(cand, "drivers")) and os.path.isdir(os.path.join(cand, "mtk")):
+            return cand
+    return cwd
+
+
+def _ancestors(d):
     for _ in range(12):
-        if os.path.isdir(os.path.join(d, "drivers")) and os.path.isdir(os.path.join(d, "mtk")):
-            return d
+        yield d
         parent = os.path.dirname(d)
         if parent == d:
-            break
+            return
         d = parent
-    return here
 
 
 def main(argv):
@@ -380,7 +392,8 @@ def main(argv):
 
     with open(a.patch, encoding="utf-8", errors="replace") as f:
         text = f.read()
-    root = os.path.abspath(a.root or default_root())
+    existing = [h.path for h in parse(text).hunks]
+    root = os.path.abspath(a.root or default_root(existing))
 
     problems, notes = check(text, root, a.tol, a.verbose)
     print("gpueb-patch-check: %s" % a.patch)

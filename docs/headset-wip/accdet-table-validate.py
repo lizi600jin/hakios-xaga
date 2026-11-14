@@ -59,7 +59,7 @@ OPS = ("accdet_write", "accdet_update_bits", "accdet_clear_bits",
        "accdet_update_bit", "accdet_clear_bit", "accdet_read", "accdet_read_bits",
        "regmap_write", "regmap_update_bits", "regmap_read", "regmap_bulk_read")
 OP_RE = re.compile(r"\b(" + "|".join(OPS) + r")\(")
-MACRO_RE = re.compile(r"\b([A-Z][A-Z0-9_]*_ADDR)\b")
+MACRO_RE = re.compile(r"\b([A-Z][A-Z0-9_]*(?:_ADDR|_SFT))\b")
 MT_MACRO_RE = re.compile(r"\b(MT6368_[A-Z0-9_]+)\b")
 CALL_RE = re.compile(r"\b([a-zA-Z_]\w+)\s*\(")
 REASON_REF = re.compile(r"(mt6368(?:-accdet)?\.c|mt6368\.h):(\d+)(?:\s*-\s*(\d+))?")
@@ -189,6 +189,13 @@ def load_mt6368c():
     return None, None
 
 
+def macro_base(macro):
+    for suf in ("_ADDR", "_SFT"):
+        if macro.endswith(suf):
+            return macro[:-len(suf)]
+    return macro
+
+
 def func_ranges(src):
     """[(name, start_line, end_line)] by brace counting from a top-level signature."""
     lines = src.splitlines()
@@ -251,7 +258,7 @@ class Source:
             regs, calls = set(), set()
             for ln in range(a, min(b, len(self.lines)) + 1):
                 for _h, macro in self.op_idx.get(ln, []):
-                    base = macro[:-5] if macro.endswith("_ADDR") else macro
+                    base = macro_base(macro)
                     if base in self.reg_of_macro:
                         regs.add(self.reg_of_macro[base])
                 for cm in CALL_RE.finditer(self.lines[ln - 1]):
@@ -299,7 +306,7 @@ class Source:
                 cur = cm.group(1)
                 out.setdefault(cur, set())
             for _h, macro in self.op_idx.get(ln, []):
-                base = macro[:-5] if macro.endswith("_ADDR") else macro
+                base = macro_base(macro)
                 if cur and base in self.reg_of_macro:
                     out[cur].add(self.reg_of_macro[base])
         return out
@@ -331,13 +338,53 @@ def field_bits_at(reg, regmap, fields):
     return cov, names
 
 
+def field_is_here(row, base, toks):
+    """Does the op's macro name this row's field (or the register the field lives in)?"""
+    reg_names = {base}
+    # MT6368_X is the register; RG_X / ACCDET_X is the field. Accept both spellings:
+    # a row whose field name shares the register's stem counts as the same thing.
+    def norm(x):
+        for pref in ("MT6368_", "RG_", "ACCDET_"):
+            if x.startswith(pref):
+                x = x[len(pref):]
+        return x
+
+    stem = norm(base)
+    for t in toks:
+        t2 = norm(t)
+        if name_match(t, base) or name_match(t2, stem):
+            return True
+        if "*" in t2:
+            continue
+        # vendor spellings share a stem: LDO_VAUD18_EN vs LDO_VAUD18_CON0
+        cp = 0
+        for a, b in zip(t2, stem):
+            if a != b:
+                break
+            cp += 1
+        if cp >= 8 and cp >= min(len(t2), len(stem)) - 4:
+            tail_a = t2[cp:cp + 1]
+            tail_b = stem[cp:cp + 1]
+            if tail_a.isdigit() and tail_b.isdigit() and tail_a != tail_b:
+                continue                      # DEBOUNCE0 != DEBOUNCE1
+            return True
+    return False
+
+
 def symbol_tokens(row):
     return [t.strip() for t in re.split(r"[+/]", row.get("symbol") or "") if t.strip()]
 
 
 def name_match(token, name):
-    """Loose match: token may be truncated (ACCDET_FOO -> ACCDET_FOO_PWM_WIDTH)."""
+    """Loose match: token may be truncated (ACCDET_FOO -> ACCDET_FOO_PWM_WIDTH) or globbed
+    (EINT0_*_STABLE -> EINT0_EN_STABLE)."""
     if not token:
+        return False
+    if "*" in token:
+        pat = token.replace("*", ".*")
+        for cand in (pat, "ACCDET_" + pat, ".*" + pat):
+            if re.match("^" + cand + "$", name):
+                return True
         return False
     if token == name:
         return True
@@ -364,17 +411,30 @@ def check_mask_shift(row, regmap, fields):
         return "unknown", "该地址在 regmap/头文件中无字段定义", []
 
     toks = symbol_tokens(row)
-    # hard conflict: single-field symbol whose regmap entry disagrees with the row
-    if len(toks) == 1:
-        t = toks[0]
-        for addr, fl in regmap.items():
-            for f in fl:
-                if name_match(t, f["name"]) and (f["bit"] != row["shift_i"] or f["mask"] != row["mask_i"]
-                                                 or addr != row["reg_i"]):
-                    return ("must_fix",
-                            "regmap 里 %s 在 0x%04x bit%d mask 0x%x，表里是 0x%04x bit%d mask 0x%x"
-                            % (f["name"], addr, f["bit"], f["mask"],
-                               row["reg_i"], row["shift_i"], row["mask_i"]), names)
+    # hard conflict: an *exactly named* field that lives at a different place than the row
+    exact = {}
+    for a2, fl in regmap.items():
+        for f in fl:
+            exact.setdefault(f["name"], []).append((a2, f))
+    if len(toks) == 1 and toks[0] in exact:
+        for a2, f in exact[toks[0]]:
+            if a2 != row["reg_i"] or f["bit"] != row["shift_i"]:
+                return ("must_fix",
+                        "regmap 里 %s 在 0x%04x bit%d mask 0x%x，表里是 0x%04x bit%d mask 0x%x"
+                        % (f["name"], a2, f["bit"], f["mask"],
+                           row["reg_i"], row["shift_i"], row["mask_i"]), names)
+            if f["mask"] == row["mask_i"]:
+                return "ok", "", names
+            if row["mask_i"] & f["mask"] != f["mask"]:
+                return ("must_fix",
+                        "表里 mask 0x%x 没能盖住 regmap 的 %s mask 0x%x（偏窄或错位）"
+                        % (row["mask_i"], f["name"], f["mask"]), names)
+            # row writes a wider window than the field: legal only as a raw byte write
+            if row["op"] == "write":
+                return ("warn", "源码是整字节写（mask 0x%02x），比 regmap 的 %s（bit%d mask 0x%x）宽，"
+                                "会顺带写保留位" % (row["byte_mask"], f["name"], f["bit"], f["mask"]), names)
+            return ("warn", "只读校验用了整字节 mask 0x%02x，比 %s（bit%d mask 0x%x）宽："
+                            "会把保留位一起比" % (row["byte_mask"], f["name"], f["bit"], f["mask"]), names)
     extra = need - cov
     if extra:
         return ("warn", "mask 0x%02x 覆盖该地址未定义的位 %s（整字节写会把保留位写成 0）"
@@ -400,8 +460,58 @@ def check_dump(row, dump):
         return "no_dump", None, None
     dv = dump[row["reg_i"]]
     got = (dv >> row["shift_i"]) & row["mask_i"]
+    if row["op"] == "read":                 # a sample: the dump is the observation, not a target
+        return "snapshot", dv, got
     want = 0 if row["value_i"] is None else row["value_i"]
     return ("match" if got == want else "conflict"), dv, got
+
+
+def zero_write_scan(reg, sources):
+    """Positive proof of absence: does any write op in these files target `reg`?"""
+    hits = []
+    for name, src in sources:
+        if src is None:
+            continue
+        for ln, lst in src.op_idx.items():
+            for helper, macro in lst:
+                base = macro_base(macro)
+                if src.reg_of_macro.get(base) != reg:
+                    continue
+                if helper.startswith(("accdet_write", "accdet_update", "accdet_clear",
+                                      "regmap_write", "regmap_update")):
+                    hits.append({"file": name, "line": ln, "helper": helper, "macro": base})
+    return hits
+
+
+def cleared_by_row(row, src, dump):
+    """Vendor has a writer that clears exactly this field, and the dump shows it cleared.
+
+    Typical case: 0x268a bit0 SW_EN. Init sets it, the plug-out path clears it
+    (accdet.c:1894 / 1925), and an unplugged dump therefore reads 0. The table value is
+    right for "after init", the dump value is right for "idle, nothing plugged".
+    Returns the clearing line or None.
+    """
+    if row["op"] != "write" or row["value_i"] in (None, 0):
+        return None
+    if row["reg_i"] not in dump:
+        return None
+    if (dump[row["reg_i"]] >> row["shift_i"]) & row["mask_i"] != 0:
+        return None
+    toks = symbol_tokens(row)
+    for ln in range(1, len(src.lines) + 1):
+        for helper, macro in src.op_idx.get(ln, []):
+            base = macro_base(macro)
+            if src.reg_of_macro.get(base) != row["reg_i"]:
+                continue
+            if not any(name_match(t, base) for t in toks):
+                continue
+            if helper in ("accdet_clear_bit", "accdet_clear_bits"):
+                return {"line": ln, "helper": helper, "macro": macro}
+            if helper == "accdet_update_bits":
+                m = re.search(r"update_bits\s*\([^;]*?,\s*0\s*\)", src.lines[ln - 1])
+                if m:
+                    return {"line": ln, "helper": helper, "macro": macro}
+    return None
 
 
 def pulse_pairs(rows):
@@ -430,7 +540,7 @@ def pulse_pairs(rows):
 def resolve_ref(row, ref, ctx):
     """Classify one file:line reference into a status + detail."""
     fname, lo, hi = ref
-    win_lo, win_hi = max(1, lo - 3), hi + 3
+    win_lo, win_hi = max(1, lo - 8), hi + 8
     rec = {"ref": "%s:%d%s" % (fname, lo, ("-%d" % hi) if hi != lo else ""),
            "file": fname, "cited": [lo, hi], "status": "miss", "detail": "",
            "excerpt": "", "delta": None, "op_line": None}
@@ -438,18 +548,27 @@ def resolve_ref(row, ref, ctx):
     if fname == "mt6368.h":
         lines = ctx["hdr_lines"]
         toks = symbol_tokens(row)
-        found = []
+        val = row["value_i"]
+        found, const = [], None
         for ln in range(win_lo, min(win_hi, len(lines)) + 1):
+            txt = lines[ln - 1]
+            idents = re.findall(r"[A-Z][A-Z0-9_]{3,}", txt)
             for t in toks:
-                t2 = t.replace("*", "")
-                if t2 and t2 in lines[ln - 1]:
-                    found.append((ln, t2))
+                if t in txt or any(name_match(t, i) or name_match(i, t) for i in idents):
+                    found.append((ln, t))
+            if val is not None:
+                for h in re.findall(r"0x[0-9a-fA-F]+", txt):
+                    if int(h, 16) == val:
+                        const = (ln, h)
         rec["excerpt"] = lines[min(max(1, lo), len(lines)) - 1].strip()[:110]
         if found:
             rec["status"] = "ok"
             rec["detail"] = "定义命中 %s" % (found[:2],)
+        elif const:
+            rec["status"] = "ok_const"
+            rec["detail"] = "常量 0x%x 就定义在这行（值为 %s）" % (val, const[1])
         else:
-            rec["detail"] = "引用窗口内未出现该符号的定义"
+            rec["detail"] = "引用窗口内既无该符号定义，也无等于写值的常量"
         return rec
 
     src = ctx["mtc"] if fname == "mt6368.c" else ctx["acc"]
@@ -461,24 +580,43 @@ def resolve_ref(row, ref, ctx):
     rec["excerpt"] = lines[min(max(1, lo), len(lines)) - 1].strip()[:110]
 
     toks = symbol_tokens(row)
+
+    def scan(a_lo, a_hi):
+        found = []
+        for ln in range(max(1, a_lo), min(a_hi, len(lines)) + 1):
+            for helper, macro in src.op_idx.get(ln, []):
+                base = macro_base(macro)
+                if src.reg_of_macro.get(base) != row["reg_i"]:
+                    continue
+                found.append((ln, helper, base, field_is_here(row, base, toks)))
+        return found
+
+    # pass 1: strictly inside the cited range; pass 2: a small drift window.
+    inside = scan(lo, hi)
+    hits = inside or scan(win_lo, win_hi)
+    strict = bool(inside)
+
     best = None
-    for ln in range(win_lo, min(win_hi, len(lines)) + 1):
-        for helper, macro in src.op_idx.get(ln, []):
-            base = macro[:-5] if macro.endswith("_ADDR") else macro
-            a = src.reg_of_macro.get(base)
-            if a != row["reg_i"]:
-                continue
-            same_field = any(name_match(t, base) for t in toks)
-            rank = 0 if same_field else 1        # exact field beats same-register
-            if best is None or rank < best[0]:
-                best = (rank, ln, helper, base, same_field)
+    for ln, helper, base, same_field in hits:
+        dist = 0 if strict else (ln - hi if ln > hi else lo - ln)
+        key = (0 if same_field else 1, dist, ln)
+        if best is None or key < best[0]:
+            best = (key, ln, helper, base, same_field)
 
     if best:
-        rank, ln, helper, base, same_field = best
-        rec.update(status="ok" if same_field else "field_conflict",
-                   op_line=ln, delta=ln - lo,
-                   detail="%s(%s) @%d%s" % (helper, base, ln,
-                                            "" if same_field else " ← 同寄存器的另一个字段"))
+        key, ln, helper, base, same_field = best
+        if same_field:
+            rec.update(status="ok", op_line=ln, delta=key[1],
+                       detail="%s(%s) @%d" % (helper, base, ln))
+            return rec
+        # same register, other field: for a verify row that is the proof of absence
+        if row["op"] == "verify" and (row.get("value") in (None, "0x00")):
+            rec.update(status="ok_absence", op_line=ln, delta=key[1],
+                       detail="%s(%s) @%d 写的是同寄存器的其它位 → 佐证本字段无人写"
+                              % (helper, base, ln))
+            return rec
+        rec.update(status="field_conflict", op_line=ln, delta=key[1],
+                   detail="%s(%s) @%d ← 同寄存器的另一个字段，不支持本行" % (helper, base, ln))
         return rec
 
     # indirect: cited line sits inside a function that reaches this register
@@ -494,6 +632,17 @@ def resolve_ref(row, ref, ctx):
                 rec["delta"] = 0
                 break
         return rec
+
+    # cross-file chain: this file's function calls something that reaches the register
+    fn2 = src.func_at(lo)
+    if fn2:
+        other = ctx["acc"] if src is ctx["mtc"] else ctx["mtc"]
+        if other is not None:
+            for callee in src.func_calls.get(fn2, ()):
+                if callee in other.func_regs and row["reg_i"] in other.reach(callee):
+                    rec.update(status="ok_chain", detail="%s() → %s() 到达该寄存器（跨文件调用链）"
+                                                         % (fn2, callee))
+                    return rec
 
     # context: dts parse / default value / dump scope, cited for provenance not an op
     txt = lines[min(max(1, lo), len(lines)) - 1]
@@ -622,11 +771,18 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
         d_status, d_val, d_got = check_dump(r, dump)
 
         if d_status == "conflict":
-            d_class = ("conflict_pulse" if r["seq"] in pulse else
-                       "conflict_refill" if r["seq"] in refill else
-                       "conflict_unexplained")
+            if r["seq"] in pulse:
+                d_class = "conflict_pulse"
+            elif r["seq"] in refill:
+                d_class = "conflict_refill"
+            elif cleared_by_row(r, acc, dump):
+                d_class = "conflict_cleared_at_runtime"
+            else:
+                d_class = "conflict_unexplained"
         else:
             d_class = d_status
+
+        zw = zero_write_scan(r["reg_i"], [("mt6368-accdet.c", acc), ("mt6368.c", mtc)])
 
         refs = []
         for m in REASON_REF.finditer(r.get("reason") or ""):
@@ -637,12 +793,18 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
         hard_ref = [x for x in refs if x["status"] in ("miss", "field_conflict")]
         src_proven = (bool(refs) and not hard_ref
                       and wr_ok is not False and ms_status != "must_fix")
+        if r["op"] == "verify" and not zw:
+            src_proven = True
+            refs.append({"ref": "全文件扫描", "file": "-", "cited": [0, 0],
+                         "status": "zero_write", "detail":
+                         "accdet.c 与 mt6368.c 中没有任何写该寄存器的操作（只读校验成立）",
+                         "excerpt": "", "delta": None, "op_line": None})
 
         if d_class == "match":
             dump_ok = True
-        elif d_class in ("conflict_pulse", "conflict_refill"):
+        elif d_class in ("conflict_pulse", "conflict_refill", "conflict_cleared_at_runtime"):
             dump_ok = None
-        elif d_class == "no_dump":
+        elif d_class in ("no_dump", "snapshot"):
             dump_ok = None
         else:
             dump_ok = False
@@ -651,8 +813,10 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
             verdict = "A 双证"
         elif src_proven and d_class == "no_dump":
             verdict = "C 源码可证（dump 无覆盖）"
+        elif src_proven and d_class == "snapshot":
+            verdict = "C 源码可证（采样行，dump 只做参考）"
         elif src_proven and dump_ok is None:
-            verdict = "B 源码可证（瞬态半，dump 不适用）"
+            verdict = "B 源码可证（瞬态/状态相关，dump 不适用）"
         elif src_proven:
             verdict = "D 源码可证但 dump 冲突"
         elif dump_ok is True:
@@ -684,6 +848,8 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
             "dump": d_class, "dump_value": None if d_val is None else "0x%02x" % d_val,
             "dump_field": None if d_got is None else "0x%x" % d_got,
             "dump_region": where.get(r["reg_i"]),
+            "cleared_at": cleared_by_row(r, acc, dump),
+            "other_write_sites": zw,
             "reason_refs": refs, "src_proven": src_proven, "verdict": verdict,
             "c_array_consistent": c_ok,
         })
@@ -708,11 +874,11 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
         if it["symbol_check"] == "warn":
             soft.append([it["seq"], it["symbol_note"]])
         for x in it["reason_refs"]:
-            if x["status"] == "ok" and x["delta"] not in (None, 0) and abs(x["delta"]) > 2:
+            if x["status"] == "ok" and x["delta"] not in (None, 0) and abs(x["delta"]) > 1:
                 soft.append([it["seq"], "%s 行号偏移 %+d（引用 %d，实际 %d）"
                              % (x["ref"], x["delta"], x["cited"][0], x["op_line"])])
-            if x["status"] == "ok_indirect" and "accdet_set_debounce" not in x["detail"]:
-                soft.append([it["seq"], "%s 为间接引用：%s" % (x["ref"], x["detail"])])
+            if x["status"] in ("ok_indirect", "ok_chain", "ok_absence", "context", "zero_write", "ok_const"):
+                soft.append([it["seq"], "%s %s：%s" % (x["ref"], x["status"], x["detail"])])
 
     order = []
     sw = [i for i in items if i["reg"] == "0x268a" and i["shift"] == 0

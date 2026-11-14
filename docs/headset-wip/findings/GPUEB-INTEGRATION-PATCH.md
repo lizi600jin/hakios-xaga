@@ -16,7 +16,7 @@
 | 总改动量 | **11 个 hunk / 843 增 61 删**（驱动 9 hunk / header 整文件 1 hunk（552 行）/ `drivers/map` 1 hunk；`git diff --stat`：3 文件、843 insertions、61 deletions） |
 | 能否编译 | **能**。`xnu-clang -fsyntax-only` 退出码 0，加 `-Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-field-initializers` 同样 0 条诊断 |
 | 默认是否启用 | **不会**。需要 `mali_gpueb=1`（或 2）。不传参数时行为与现在完全一致 |
-| `mali_gpueb` 是否重名 | **是，驱动里已有同名参数**（`[OUR]:5133`，即基线 `:5133`）。本补丁**复用并重定义**它，详见 §C.1 |
+| `mali_gpueb` 是否重名 | **是，驱动里已有同名参数**（5253 版 `:5135-5141`，`PE_parse_boot_argn` 在 `:5138`）。本补丁**复用并重定义**它，详见 §C.1 |
 | 那个矛盾 | **未解释**。见 §E。有两条实测把它收窄了，但没有一条能证明「GPUEB gate 了 GPU」 |
 
 改动文件：
@@ -27,10 +27,23 @@
 | `drivers/map` | 1 行，登记上面这个 header |
 | `mtk/mt6895/drivers/gpu/hakios.mali610.c` | 9 个 hunk |
 
-> **重要：行号基准。** 本文与补丁的行号对应
-> `hakios.mali610.c` 的 **5253 行版本，md5 `0608664f4fea011658b6ab65c8d1b666`，mtime 2026-11-15 00:13**。
-> 写作期间该文件被另一个进程改过一次（5219 → 5253，PMIF 相关），补丁已按 5253 行版本重新生成。
-> 若文件再次变化，`git apply` 会拒绝而不是错位应用——这是好事，见 §D.1。
+> **重要：行号基准，以及它在写作期间变了两次。**
+>
+> | 版本 | 行数 | md5 | 补丁 `@@` 行号对应 |
+> |---|---|---|---|
+> | 开工时 | 5219 | — | ✗ 已过时 |
+> | 生成补丁时 | 5253 | `0608664f4fea011658b6ab65c8d1b666` | **✓ 本文所有 `@@`/行号引用都指这一版** |
+> | 收尾复查时 | 5255 | `255a08d4369670d326380ffbe99f9db9` | 偏移 +1/+2 行，见下 |
+>
+> 两次变化都是**另一个进程在改 PMIF 部分**（5219→5253 改 `mali_pmif_*`，5253→5255 加
+> `#include <sys/hakios.pmif.h>`、把 `MALI_PMIF_SPINS` 换成 `hakios_pmif_budget`），与本补丁
+> 的 9 个 hunk **没有一处重叠**。
+>
+> 实测（§H）：补丁对 5253 版 `git apply --check` 通过；对收尾时的 5255 版**同样通过**，
+> `git apply -v` 报 offset +1/+2 行（9 个 hunk 全部成功，无 fuzz），应用后
+> `xnu-clang -fsyntax-only` 退出码 0。所以补丁在两个版本上都可用，行号偏移由 `git apply` 自己吸收。
+>
+> 本文正文的 `:NNN` 引用一律指 **5253 版**。若拿到的是 5255 版，加 1-2 即可；`git apply` 不受影响。
 
 ---
 
@@ -38,10 +51,12 @@
 
 分三块。可以合并成一个文件 `git apply`（已验证），也可以按块单独看。
 
-### A.1 驱动本体（9 hunk）
+### A.1 驱动本体（9 个 hunk）
+
+下面的文本是 `GPUEB-INTEGRATION.patch` 里驱动那一段的**逐字节复制**（去掉 `diff --git` 与 `index` 两行，
+`git apply` 不需要它们）。**不要手抄**：这个文件在写作期间被别的进程改过两次，手抄一定会漂。
 
 ```diff
-diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/hakios.mali610.c
 --- a/mtk/mt6895/drivers/gpu/hakios.mali610.c
 +++ b/mtk/mt6895/drivers/gpu/hakios.mali610.c
 @@ -41,6 +41,42 @@
@@ -87,9 +102,6 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
  
  extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
  extern uint64_t kvtophys(vm_offset_t va);
-```
-
-```diff
 @@ -246,25 +282,22 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
  #define MALI_MFG_I2M_OSTD       0x0f40u         /* 0x13FBFF40 */
  
@@ -128,9 +140,6 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
  /*
   * The MFG interconnect's own clock gates.
   *
-```
-
-```diff
 @@ -458,12 +491,21 @@ enum : uint32_t { kAsCmdUpdate = 1, kAsCmdLock = 2, kAsCmdFlushMem = 5, kAsCmdUp
  
  /* ------------------------------------------------------------------ state */
@@ -155,9 +164,6 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
  static unsigned gMaliRpc;                       /* mali_rpc=1 touches mfg_rpc, 2 reads it only */
  /*
   * mali_as0=1 parks address space 0 the way the other seven are parked, instead of giving it the
-```
-
-```diff
 @@ -2310,50 +2352,198 @@ mfg_debug_top(void)
  }
  
@@ -185,40 +191,10 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
 + * DRAM when the store retires, so there is no cache to clean before GPUEB reads the message, and
 + * GPUEB's store to the status block is in DRAM when the CPU reads it back. The barrier below is
 + * still there, because ordering between the message and the doorbell is not a cache question.
-  */
--static void
--gpueb_watch(const char *when)
++ */
 +static bool
 +gpueb_map(void)
- {
--	uint32_t a, b, raw, con;
--
--	if (gGpueb == 0) {
--		printf("mali: gpueb %s: not mapped\n", when);
--		return;
--	}
--	a = reg_rd(gGpueb, MALI_GPUEB_WDT_KICK);
--	delay(1000);
--	b = reg_rd(gGpueb, MALI_GPUEB_WDT_KICK);
--	raw = reg_rd(gGpueb, MALI_GPUEB_IRQ_RAW);
--	con = reg_rd(gGpueb, MALI_GPUEB_WDT_CON);
--	printf("mali: gpueb %s: kick %#x -> %#x (%s), irq raw %#x, wdt_con %#x\n",
--	    when, a, b, a == b ? "frozen" : "running", raw, con);
--	/*
--	 * The GPR word the protected-memory-allocator node points at.
--	 *
--	 * protected-memory-allocator in the device tree (xaga_live.dts) gives gpueb_base
--	 * 0x13c40000, gpr_offset 0x1fd1c and gpr_id 6, so the word is at
--	 * 0x13c40000 + 0x1fd1c + 6*4 = 0x13c5fd34. The MTK patch that implements the allocator
--	 * computes the page table base from it as (value << PAGE_SHIFT) + gmpu_table_size, which
--	 * means a non-zero value there is proof the GPU memory protection unit has been given a
--	 * table, and zero means it never was. On xaga the table area is me_GPUmputab_PMA at
--	 * 0x78c00000, so a programmed word should read 0x78c00 or thereabouts.
--	 */
--	printf("mali: gpueb %s: gpr[6] %#x (gmpu table %s at %#llx)\n", when,
--	    reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u),
--	    reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u) != 0 ? "programmed" : "never programmed",
--	    (unsigned long long)((uint64_t)reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u) << 12));
++{
 +	if (gGpueb.ctl != 0) {
 +		return true;
 +	}
@@ -253,16 +229,27 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
 + * sent us one (rx pending), and what GPUEB last wrote into the status block it owns. The last is
 + * history, not liveness: on a phone that boots Android, power_control is 1 there because GPUEB
 + * put it there, and on a board where nobody has ever spoken to it the whole block reads zero.
-+ */
-+static void
+  */
+ static void
+-gpueb_watch(const char *when)
 +gpueb_probe(const char *when)
-+{
+ {
+-	uint32_t a, b, raw, con;
 +	uint32_t tx, rx;
-+
+ 
+-	if (gGpueb == 0) {
+-		printf("mali: gpueb %s: not mapped\n", when);
 +	if (gMaliGpueb == 0) {
 +		printf("mali: gpueb %s: off (mali_gpueb=0)\n", when);
-+		return;
-+	}
+ 		return;
+ 	}
+-	a = reg_rd(gGpueb, MALI_GPUEB_WDT_KICK);
+-	delay(1000);
+-	b = reg_rd(gGpueb, MALI_GPUEB_WDT_KICK);
+-	raw = reg_rd(gGpueb, MALI_GPUEB_IRQ_RAW);
+-	con = reg_rd(gGpueb, MALI_GPUEB_WDT_CON);
+-	printf("mali: gpueb %s: kick %#x -> %#x (%s), irq raw %#x, wdt_con %#x\n",
+-	    when, a, b, a == b ? "frozen" : "running", raw, con);
 +	if (!gpueb_map()) {
 +		return;
 +	}
@@ -336,7 +323,16 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
 +	if (!gpueb_map()) {
 +		return false;
 +	}
-+	/*
+ 	/*
+-	 * The GPR word the protected-memory-allocator node points at.
+-	 *
+-	 * protected-memory-allocator in the device tree (xaga_live.dts) gives gpueb_base
+-	 * 0x13c40000, gpr_offset 0x1fd1c and gpr_id 6, so the word is at
+-	 * 0x13c40000 + 0x1fd1c + 6*4 = 0x13c5fd34. The MTK patch that implements the allocator
+-	 * computes the page table base from it as (value << PAGE_SHIFT) + gmpu_table_size, which
+-	 * means a non-zero value there is proof the GPU memory protection unit has been given a
+-	 * table, and zero means it never was. On xaga the table area is me_GPUmputab_PMA at
+-	 * 0x78c00000, so a programmed word should read 0x78c00 or thereabouts.
 +	 * Section 13, step 5: a message left unconsumed by Android occupies the channel, and the
 +	 * first command would then wait on a bit nobody is going to clear. Clearing it here is the
 +	 * same write the receive path makes after it has read a message.
@@ -363,7 +359,11 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
 +	/*
 +	 * No pointer to follow and no retry: the command only says where the memory is, so a
 +	 * rejection here leaves nothing to undo and a repeat would tell GPUEB the same thing twice.
-+	 */
+ 	 */
+-	printf("mali: gpueb %s: gpr[6] %#x (gmpu table %s at %#llx)\n", when,
+-	    reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u),
+-	    reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u) != 0 ? "programmed" : "never programmed",
+-	    (unsigned long long)((uint64_t)reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u) << 12));
 +	if (ack < 0) {
 +		printf("mali: gpueb: INIT_SHARED_MEM rejected (%d); not sending POWER_CONTROL\n", ack);
 +		return false;
@@ -397,9 +397,6 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
  }
  
  static void
-```
-
-```diff
 @@ -3866,6 +4056,30 @@ start_mcu(void)
  		    gMaliTrial, stable >= 8u ? "settled" : "NOT SETTLED", cur, cur & 0x3ffcu,
  		    spins < 200000u ? spins + 1u : spins, stable, changes, before);
@@ -431,9 +428,6 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
  	/*
  	 * mali_mcuseq=1: two writes instead of one.
  	 *
-```
-
-```diff
 @@ -4311,15 +4525,18 @@ mali_bring_up(void)
  	gInfracfg = ml_io_map(MALI_INFRACFG_PHYS, MALI_INFRACFG_SIZE);
  	gMfgrpc = ml_io_map(MALI_MFGRPC_PHYS, MALI_MFGRPC_SIZE);
@@ -460,9 +454,6 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
  	}
  	/*
  	 * mfgcfg is mapped here rather than inside the cold-start branch, because the interconnect
-```
-
-```diff
 @@ -4670,7 +4887,7 @@ mali_bring_up(void)
  	 * running? Asked at the earliest point this driver touches the block, so the answer is not
  	 * contaminated by anything it does later.
@@ -472,9 +463,6 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
  	gmpu_probe("before the address spaces");
  	if (gMaliPreAs0 && !gMaliAs0 && gMaliLevel > 4 && gMaliAs0First) {
  		if (!mali_early_as0()) {
-```
-
-```diff
 @@ -4969,7 +5186,7 @@ mali_bring_up(void)
  		 * be the one holding it. If GPUEB is still kicking its watchdog while the MFG channel
  		 * reads non-idle and the core has done nothing, the two facts are about each other.
@@ -484,9 +472,6 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
  		gmpu_probe("after the failed start");
  		cpe_probe();
  		/* Read fixed offsets in our allocated DRAM only. Do not follow firmware pointers
-```
-
-```diff
 @@ -5132,11 +5349,23 @@ hakios_mali610_init(void)
  			gMaliWitness = witness ? 1u : 0u;
  		}
@@ -517,17 +502,18 @@ diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/ha
 ### A.2 新增的 header（新文件，552 行）
 
 `drivers/gpu/hakios.gpueb-ipi.h` = `docs/headset-wip/findings/gpueb-ipi.h` **逐字节复制**，只改文件名。
+已用 md5 核对：补丁产出的 header = `78aa488140e71c2b5d1f95027edae8e6`，与源文件相同。
+
+正文不重复贴这 552 行；它在 `GPUEB-INTEGRATION.patch` 里是一个完整的 `@@ -0,0 +1,552 @@` hunk。
+这一节只给 hunk 头，供 reviewer 确认位置与行数：
 
 ```diff
-diff --git a/drivers/gpu/hakios.gpueb-ipi.h b/drivers/gpu/hakios.gpueb-ipi.h
-new file mode 100644
 --- /dev/null
 +++ b/drivers/gpu/hakios.gpueb-ipi.h
 @@ -0,0 +1,552 @@
-+（全文 = docs/headset-wip/findings/gpueb-ipi.h，此处省略，见随附的完整 patch）
 ```
 
-全量 patch 里这个文件占 552 行 `+`；正文不重复贴，避免抄写误差。要点：
+要点：
 
 - 文件头 `#ifndef _GPUEB_IPI_H_`（`gpueb-ipi.h:29`）
 - 四个可注入宏都有 `#ifndef` 兜底（`:36-48`），补丁在 `#include` **之前**定义，所以生效
@@ -536,7 +522,6 @@ new file mode 100644
 ### A.3 `drivers/map` 一行
 
 ```diff
-diff --git a/drivers/map b/drivers/map
 --- a/drivers/map
 +++ b/drivers/map
 @@ -69,3 +69,4 @@ power   bsd/dev/hakios.thermal.c
@@ -562,7 +547,7 @@ diff --git a/drivers/map b/drivers/map
 
 ## B. 逐条改动说明
 
-### H1 ｜ `:41` 注入四个宏 + `#include` + 四条 `_Static_assert`
+### H1 ｜ `:42-44`（hunk 头写 `-41`）注入四个宏 + `#include` + 四条 `_Static_assert`
 
 **改什么。** 在 `#include "hakios.mali610_fw.h"` 之后插入 `GPUEB_MMIO_READ32`/`WRITE32`/`BARRIER`/`UDELAY`
 四个宏、`#include "hakios.gpueb-ipi.h"`，以及四条编译期断言。
@@ -579,7 +564,7 @@ diff --git a/drivers/map b/drivers/map
 
 ---
 
-### H2 ｜ `:249-267` 删除七个 `MALI_GPUEB_*` 宏
+### H2 ｜ `:248-267` 删除七个 `MALI_GPUEB_*` 宏
 
 **改什么。** 删 `MALI_GPUEB_PHYS`(`:261`)、`SIZE`(`:262`)、`WDT_KICK`(`:263`)、`WDT_CON`(`:264`)、
 `IRQ_RAW`(`:265`)、`MBOX_RECV`(`:266`)、`GPR`(`:267`)，换成说明为什么不能读这段的注释。
@@ -611,7 +596,7 @@ diff --git a/drivers/map b/drivers/map
 
 ---
 
-### H4 ｜ `:2312-2357` `gpueb_watch()` → `gpueb_map()` + `gpueb_probe()` + `gpueb_now_ms()` + `gpueb_ipi_up()`
+### H4 ｜ `:2312-2357`（5253 版）`gpueb_watch()` → `gpueb_map()` + `gpueb_probe()` + `gpueb_now_ms()` + `gpueb_ipi_up()`
 
 **改什么。** 删掉读禁区四个寄存器的 `gpueb_watch()`，换成四个函数：
 
@@ -640,7 +625,7 @@ diff --git a/drivers/map b/drivers/map
 
 ---
 
-### H5 ｜ `:4287-4289`（`mali_bring_up`）`ml_io_map(MALI_GPUEB_PHYS, ...)` → `gpueb_map()`
+### H5 ｜ `:4321-4323`（`mali_bring_up`）`ml_io_map(MALI_GPUEB_PHYS, ...)` → `gpueb_map()`
 
 **改什么。** 条件分支保留（`if (gMaliGpueb)`），函数体从"映射禁区 0x24000 字节"改成"映射邮箱三个窗口"。
 
@@ -657,7 +642,7 @@ produces a boot loop is worse than no diagnostic"。也就是说：**`mali_gpueb
 
 ---
 
-### H6 ｜ `:3866`（`start_mcu`，`mali_mcuseq` 块之前）插入 IPI
+### H6 ｜ `:3869`（`start_mcu`，`mali_mcuseq` 注释块之前；hunk 头写 `-3866`）插入 IPI
 
 **改什么。** 在 `mali_mcuseq` 的 `if` 之前插入 `if (gMaliGpueb != 0 && !gpueb_ipi_up()) {...}`。
 
@@ -679,7 +664,7 @@ produces a boot loop is worse than no diagnostic"。也就是说：**`mali_gpueb
 
 ---
 
-### H7 ｜ `:4673` / `:4972` 两个调用点改名
+### H7 ｜ `:4673` / `:4972` 两个调用点改名（两处均核对属实）
 
 **改什么。** `gpueb_watch(...)` → `gpueb_probe(...)`，参数不变。
 
@@ -692,7 +677,7 @@ produces a boot loop is worse than no diagnostic"。也就是说：**`mali_gpueb
 
 ---
 
-### H8 ｜ `:5133-5139` `mali_gpueb` 语义扩展
+### H8 ｜ `:5135-5141` `mali_gpueb` 语义扩展
 
 **改什么。** 从 `gMaliGpueb = gpueb ? 1 : 0` 改成 `clamp(gpueb, 0, 2)`，并加注释说明旧语义已废弃。
 
@@ -950,9 +935,9 @@ mali_gpueb=0        # 或者干脆不传（默认 0）
 
 | 位置 | 内容 |
 |---|---|
-| `[OUR]:466`（基线 `:466`） | `static unsigned gMaliGpueb;` |
-| `[OUR]:4287`（基线 `:4287`） | `if (gMaliGpueb) { gGpueb = ml_io_map(MALI_GPUEB_PHYS, ...); }` |
-| `[OUR]:5104`（基线 `:5104`；5253 行版 `:5138`） | `PE_parse_boot_argn("mali_gpueb", &gpueb, sizeof(gpueb))` |
+| `:466` | `static unsigned gMaliGpueb;` |
+| `:4321-4323` | `if (gMaliGpueb) { gGpueb = ml_io_map(MALI_GPUEB_PHYS, ...); }` |
+| `:5138` | `PE_parse_boot_argn("mali_gpueb", &gpueb, sizeof(gpueb))` |
 | `configs/boot-args.lst:181` | `mali_gpueb	k` |
 | `docs/boot-args.md` | **没有这一条**（`grep -c mali_gpueb` = 0） |
 | `configs/symbols.tsv` | 需 `tools/boot-args.py --symbols` 重生成，当前 out of date |
@@ -1022,7 +1007,7 @@ Android 侧 `mfg_sel_0_ck = 299999955 Hz`），这段间隔 ≈ **1.14 ms**，�
 - 能推到：如果 `0x7c600000+0x60` 在 XNU 里读到 0，那 GPUEB 从来就没被要求管过这块 GPU，
   "GPUEB gate 住 GPU"这个假设的前提就不成立。
 - 不能推到：`power_control` 的值**至今没有在 XNU 下读过**（`0x7c600000` 从未被映射，
-  `[OUR]:grep 7c6` 在基线里零命中）。这一条是**可验证但未验证**的，
+  `grep -c 7c6` 在驱动里零命中）。这一条是**可验证但未验证**的，
   而本补丁的 R1 第 2 行输出正好就是它 —— **这是补丁的第一个真实收益，与 IPI 成功与否无关。**
 
 **解释 C｜根本矛盾：如果 MCU 是因为没电源而不跑，那 19 轮里"写 AUTO 后 status=1"这件事也不该发生。**
@@ -1074,18 +1059,25 @@ Android 侧 `mfg_sel_0_ck = 299999955 Hz`），这段间隔 ≈ **1.14 ms**，�
 
 ## H. 附：验证记录
 
+全部在 `/tmp` 的副本上做，`/home/lizi/IOS/hakios-mtk` 未被写入。
+
 | 项 | 命令 | 结果 |
 |---|---|---|
-| 补丁可应用 | `git apply --check` | 通过 |
-| 应用后一致性 | `md5sum` 对比应用结果与作者验证副本 | 相同：`c5d41235ece6adc73e8bee1e07f0358e` |
-| 语法 | `xnu-clang -fsyntax-only`（真实构建命令，替换源文件） | 退出码 0 |
+| 补丁可应用（5253 版基线） | `git apply --check` | 通过 |
+| 应用后一致性（5253 版） | `md5sum` 对比应用结果与作者验证副本 | 相同：`c5d41235ece6adc73e8bee1e07f0358e` |
+| 补丁可应用（5255 版，收尾时） | `git apply --check -v` | 通过，9/9 hunk 成功，offset +1/+2，无 fuzz |
+| 语法（5253 版） | `xnu-clang -fsyntax-only`（真实构建命令，替换源文件） | 退出码 0 |
+| 语法（5255 版） | 同上，对应用后的当前源文件 | 退出码 0 |
 | 警告 | 同上 + `-Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-field-initializers` | 0 条诊断 |
-| header 独立编译 | `xnu-clang -std=c11 -Wall -Wextra -fsyntax-only`（只 include header） | 退出码 0 |
-| header 字段布局 | `gcc -std=c11` 跑 `gpueb_build_init_shared_mem()` | `w[2]=0x7c600000 w[4]=0x7c600400 w[6]=0x400 w[7]=0xc00`；`offsetof(status_size)=24` |
-| 能源码无残留 | `grep MALI_GPUEB` / `grep gpueb_watch`（`gpueb_watch` 只剩注释里一处） | `MALI_GPUEB` 0 条 |
-| 基线行数/md5 | `wc -l` / `md5sum` | 5253 / `0608664f4fea011658b6ab65c8d1b666` |
+| header 独立编译 | `xnu-clang -std=c11 -Wall -Wextra -fsyntax-only`（只 include header）；`gcc` 同 | 两者退出码 0 |
+| header 逐字节一致 | `md5sum` 补丁产出的 header vs `findings/gpueb-ipi.h` | 相同：`78aa488140e71c2b5d1f95027edae8e6` |
+| header 字段布局 | `gcc -std=c11` 跑 `gpueb_build_init_shared_mem()` | `w[2]=0x7c600000 w[4]=0x7c600400 w[6]=0x400 w[7]=0xc00`；`offsetof(status_size)=24`、`sizeof=32` |
+| 源文件无残留 | `grep MALI_GPUEB` / `grep gpueb_watch` | `MALI_GPUEB` 0 条；`gpueb_watch` 只剩注释里 1 处（说明它变成了什么） |
+| 基线行数/md5 | `wc -l` / `md5sum` | 5253 / `0608664f4fea011658b6ab65c8d1b666`（收尾时已变成 5255 / `255a08d4…`） |
+| patch 自检脚本 `--selftest` | `python3 docs/headset-wip/gpueb-patch-check.py --selftest` | **6 of 6 assertions passed**，退出码 0 |
+| patch 自检脚本对真实补丁 | `cd /home/lizi/IOS/hakios-mtk && python3 …/docs/headset-wip/gpueb-patch-check.py …/GPUEB-INTEGRATION.patch` | **ok**，退出码 0；10 条 note 全是 offset +1/+2 |
 
-patch 全文与 patch 自检脚本见同目录：
+patch 全文与自检脚本：
 
-- `GPUEB-INTEGRATION.patch` — 完整 unified diff（1028 行）
-- `gpueb-patch-check.py` — 自检脚本，`--selftest` 见其输出
+- `GPUEB-INTEGRATION.patch` — 完整 unified diff，1009 行，3 个文件、11 个 hunk
+- `../gpueb-patch-check.py` — 自检脚本（在上一级目录，与其它 `*.py` 工具同处）
