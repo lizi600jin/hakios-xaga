@@ -99,6 +99,22 @@ def parse_header(path):
         rec["line"] = i + 1
         rec["target"] = target
         rec["addr"] = addr.get(target)
+    # fields whose *_ADDR macro does not exist: infer the parent register from the
+    # "/* LDO_VAUD18_CON0 */" style comment that heads their SFT/MASK block.
+    comments = {}
+    cur = None
+    for i, ln in enumerate(lines):
+        m = re.match(r"/\*\s*(\w+?)\s*\*/\s*$", ln.strip())
+        if m:
+            cur = m.group(1)
+            continue
+        m = re.match(r"#define\s+([A-Z][A-Z0-9_]*)_SFT\s+(-?\w+)\s*$", ln)
+        if m and cur:
+            base = m.group(1)
+            if base not in fields:
+                fields[base] = {"sft": None, "mask": None, "line": i + 1,
+                                "target": "MT6368_" + cur,
+                                "addr": addr.get("MT6368_" + cur)}
     for base, rec in fields.items():          # SFT/MASK may live in another block
         for ln in lines:
             if rec["sft"] is None:

@@ -281,28 +281,28 @@
    {
     "line": 3269,
     "mask": null,
-    "sft": null,
+    "sft": 5,
     "kind": null,
     "text": "MT6368_AUD_TOP_CKPDN_CON0,"
    },
    {
     "line": 3272,
     "mask": null,
-    "sft": null,
+    "sft": 1,
     "kind": null,
     "text": "MT6368_AUD_TOP_CKPDN_CON0,"
    },
    {
     "line": 3275,
     "mask": null,
-    "sft": null,
+    "sft": 1,
     "kind": null,
     "text": "MT6368_AUD_TOP_CKPDN_CON0,"
    },
    {
     "line": 3279,
     "mask": null,
-    "sft": null,
+    "sft": 2,
     "kind": null,
     "text": "MT6368_AUD_TOP_CKPDN_CON0,"
    },
@@ -604,7 +604,12 @@
    "mask_shift": "ok",
    "mask_shift_note": "",
    "fields_here": [
-    "RG_ACCDET_CK_PDN"
+    "RG_ACCDET_CK_PDN",
+    "RG_PAD_AUD_CLK_MISO_CK_PDN",
+    "RG_AUDNCP_CK_PDN",
+    "RG_ZCD13M_CK_PDN",
+    "RG_AUDIF_CK_PDN",
+    "RG_AUD_CK_PDN"
    ],
    "symbol_check": "ok",
    "symbol_note": "",
@@ -675,11 +680,13 @@
    "byte_val": "0x01",
    "width": "ok",
    "width_note": "",
-   "mask_shift": "unknown",
-   "mask_shift_note": "该地址在 regmap/头文件中无字段定义",
-   "fields_here": [],
-   "symbol_check": "unknown",
-   "symbol_note": "本地址无字段表可比（非 ACCDET 块或 regmap 未收录）",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_LDO_VAUD18_EN"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
    "dump": "no_dump",
    "dump_value": null,
    "dump_field": null,
@@ -2396,7 +2403,10 @@
    "mask_shift": "ok",
    "mask_shift_note": "",
    "fields_here": [
-    "RG_ACCDET_RST"
+    "RG_ACCDET_RST",
+    "RG_AUDNCP_RST",
+    "RG_ZCD_RST",
+    "RG_AUDIO_RST"
    ],
    "symbol_check": "ok",
    "symbol_note": "",
@@ -2478,7 +2488,10 @@
    "mask_shift": "ok",
    "mask_shift_note": "",
    "fields_here": [
-    "RG_ACCDET_RST"
+    "RG_ACCDET_RST",
+    "RG_AUDNCP_RST",
+    "RG_ZCD_RST",
+    "RG_AUDIO_RST"
    ],
    "symbol_check": "ok",
    "symbol_note": "",
@@ -2545,7 +2558,9 @@
    "fields_here": [
     "RG_AUDMICBIAS1HVEN",
     "RG_AUDMICBIAS1HVVREF",
-    "RG_AUDMICBIAS1DCSW1PEN"
+    "RG_AUDMICBIAS1DCSW1PEN",
+    "RG_AUDMICBIAS1DCSW1NEN",
+    "RG_BANDGAPGEN"
    ],
    "symbol_check": "ok",
    "symbol_note": "",
@@ -2636,7 +2651,8 @@
    "fields_here": [
     "RG_AUDMICBIAS1LOWPEN",
     "RG_AUDMICBIAS1VREF",
-    "RG_AUDPWDBMICBIAS1"
+    "RG_AUDPWDBMICBIAS1",
+    "RG_AUDMICBIAS1BYPASSEN"
    ],
    "symbol_check": "ok",
    "symbol_note": "",
@@ -3088,7 +3104,8 @@
    "fields_here": [
     "RG_AUDMICBIAS1LOWPEN",
     "RG_AUDMICBIAS1VREF",
-    "RG_AUDPWDBMICBIAS1"
+    "RG_AUDPWDBMICBIAS1",
+    "RG_AUDMICBIAS1BYPASSEN"
    ],
    "symbol_check": "ok",
    "symbol_note": "",
@@ -3185,7 +3202,9 @@
    "fields_here": [
     "RG_AUDMICBIAS1HVEN",
     "RG_AUDMICBIAS1HVVREF",
-    "RG_AUDMICBIAS1DCSW1PEN"
+    "RG_AUDMICBIAS1DCSW1PEN",
+    "RG_AUDMICBIAS1DCSW1NEN",
+    "RG_BANDGAPGEN"
    ],
    "symbol_check": "ok",
    "symbol_note": "",
@@ -3679,7 +3698,8 @@
    "mask_shift": "ok",
    "mask_shift_note": "",
    "fields_here": [
-    "RG_NCP_PDDIS_EN"
+    "RG_NCP_PDDIS_EN",
+    "RG_NCP_NONCLK_SET"
    ],
    "symbol_check": "ok",
    "symbol_note": "",

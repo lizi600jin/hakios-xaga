@@ -762,7 +762,7 @@ produces a boot loop is worse than no diagnostic"。也就是说：**`mali_gpueb
 | 包含顺序 | 必须晚于 `#include <kern/clock.h>`（`delay()` 与 `clock_get_uptime()` 的声明）。当前插入点 `:44` 之后、`:45` 之前，满足 |
 | `-Weverything -Werror` | 真实构建开的是 `-Weverything` 加 `WERROR := -Werror`（`makedefs/MakeInc.def:132`、`:136-173`），比 `-Wall -Wextra` 严格得多。**已按这一套 flags 实测**：基线 0 诊断，打补丁后 0 诊断。新增代码里 `-Wmissing-variable-declarations`（已 `-Wno-`）、`-Wswitch-enum`（已 `-Wno-`）都不构成问题 |
 | `-Wdeclaration-after-statement` | 未在 `WARNFLAGS_STD` 里，`-Weverything` 也不含它。header 与新增函数仍遵守了"声明在前"，不依赖这一点 |
-| 编译产物大小 | 基线 `.o` = 479664 B（`DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT/hakios.mali610.o`）。**打补丁后的大小未测**（该 `.o` 是旧构建，重编需要跑完整 `make kernel`，本次未做）。**未验证** |
+| 编译产物大小 | **已实测**，见 §D.1：`__text` 31588 → 32576（+988 字节 / +3.1%），`.o` 480656 → 491768 |
 
 ### C.3 命名空间前缀建议
 
@@ -1039,10 +1039,13 @@ core 时钟被 gate 了，那 2 ms 之后 cycle counter 不该递增。两者同
   而 cycle counter 在 **core 时钟域**（`work-notes-mcu-clock.md:298` 明确写"它是 core 时钟域的自由运行计数器"）。
   如果 GPUEB 把 core 域 gate 了，这个计数器不该动。**这一条直接削弱解释 A。**
 
-**解释 B｜GPUEB 只 gate 了「电源所有权」这件事，即 `power_control=0` 时 GPUEB 不管电源，但它不阻止 AP 访问。**
+**解释 B｜GPUEB 管的是「由谁管电源」这个所有权标志，而不是电流本身；`power_control=0` 时它不管电源，也不阻止 AP 访问。**
 
-- 支持：协议 §6.2（`power_control` 是使能标量，`== 0` 时 vendor 路径直接返回成功、根本不发 IPI）。
-  也就是说在 `power_control == 0` 的世界里，GPUEB 对 GPU 电源是**旁观者**，不是 gate。
+- 支持：协议 §6.2（`power_control` 是使能标量，不是位域）。vendor 的 `gpufreq_power_control()`
+  在 `power_control == 0` 时直接返回成功、根本**不发 IPI**（协议 §6.2 引 `gpufreq_v2.c:855-858`）。
+  也就是说在 `power_control == 0` 的世界里，vendor 的路径认为"AP 自己管电源"，
+  GPUEB 在这件事上是**旁观者**，不是 gate。**注意这是 vendor 的推断，不是硬件的保证**：
+  上游 `gpueb_power.c` 不看这个标志，无条件发 IPI（协议 §6.5），本补丁照抄的是上游。
 - 能推到：如果 `0x7c600000+0x60` 在 XNU 里读到 0，那 GPUEB 从来就没被要求管过这块 GPU，
   "GPUEB gate 住 GPU"这个假设的前提就不成立。
 - 不能推到：`power_control` 的值**至今没有在 XNU 下读过**（`0x7c600000` 从未被映射，
@@ -1119,7 +1122,7 @@ core 时钟被 gate 了，那 2 ms 之后 cycle counter 不该递增。两者同
 | 源文件无残留 | `grep MALI_GPUEB` / `grep gpueb_watch` | `MALI_GPUEB` 0 条；`gpueb_watch` 只剩注释里 1 处（说明它变成了什么） |
 | 基线行数/md5 | `wc -l` / `md5sum` | 5253 / `0608664f4fea011658b6ab65c8d1b666`（收尾时已变成 5255 / `255a08d4…`） |
 | patch 自检脚本 `--selftest` | `python3 docs/headset-wip/gpueb-patch-check.py --selftest` | **6 of 6 assertions passed**，退出码 0 |
-| patch 自检脚本对真实补丁 | `cd /home/lizi/IOS/hakios-mtk && python3 …/docs/headset-wip/gpueb-patch-check.py …/GPUEB-INTEGRATION.patch` | **ok**，退出码 0；10 条 note 全是 offset +1/+2 |
+| patch 自检脚本对真实补丁 | `cd /home/lizi/IOS/hakios-mtk && python3 …/docs/headset-wip/gpueb-patch-check.py …/GPUEB-INTEGRATION.patch` | **ok**，退出码 0；10 条 note：9 条是 offset +1/+2（文件被并发改过），1 条是 `drivers/map` 括号中性 |
 
 patch 全文与自检脚本：
 

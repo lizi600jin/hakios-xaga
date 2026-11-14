@@ -252,17 +252,19 @@ def audit(src, json_path):
                 ent2["end_line"] = ent2["end_line"] + delta
         current.append(ent2)
 
-    unjudged, exempt, code = [], [], []
+    covered, unjudged, exempt, code = [], [], [], []
     for ln, name, text in hits:
-        if entry_for(ln, current, lines) is not None:
-            continue
-        if is_comment(text):
-            if exempt_reason(text):
-                exempt.append((ln, name, text))
-            else:
-                unjudged.append((ln, name, text))
-        else:
+        # A store or a printf is never a claim, even when it sits inside the line range of an
+        # audited comment block. Classify by what the line is before asking what covers it.
+        if not is_comment(text):
             code.append((ln, name, text))
+            continue
+        if entry_for(ln, current, lines) is not None:
+            covered.append((ln, name, text))
+        elif exempt_reason(text):
+            exempt.append((ln, name, text))
+        else:
+            unjudged.append((ln, name, text))
 
     by_pattern = {}
     for _, name, _ in hits:
@@ -274,7 +276,7 @@ def audit(src, json_path):
         "audited": len(findings),
         "by_verdict": {v: sum(1 for e in findings if e["verdict"] == v) for v in VERDICTS},
         "accidentally_right": sum(1 for e in findings if e.get("accidentally_right")),
-        "unjudged": unjudged, "exempt": exempt, "code": code,
+        "unjudged": unjudged, "exempt": exempt, "code": code, "covered": covered,
         "unused_exempt": sorted(frag for frag in NARRATIVE_EXEMPT
                                 if not any(frag in norm(t) for _, _, t in hits)),
         "current": current,
@@ -299,8 +301,8 @@ def render(rep, verbose=False):
     out.append("           of which flagged 'accidentally right': %d"
                % rep["accidentally_right"])
     out.append("")
-    out.append("comment hits: %d audited / %d exempt-with-reason / %d UNJUDGED"
-               % (rep["audited"], len(rep["exempt"]), len(rep["unjudged"])))
+    out.append("comment hits: %d lines covered by %d audited paragraphs / %d exempt / %d UNJUDGED"
+               % (len(rep["covered"]), rep["audited"], len(rep["exempt"]), len(rep["unjudged"])))
     named = sum(1 for _, _, t in rep["code"] if code_claim(t))
     out.append("code hits   : %d (values and stores; %d of them named in CODE_CLAIMS)"
                % (len(rep["code"]), named))
@@ -468,6 +470,24 @@ def selftest():
             NARRATIVE_EXEMPT.update(saved)
 
 
+
+        # 8c. A code line inside the line range of an audited comment block is still code.
+        #     Classifying by coverage first would silently absorb a printf into a verdict about
+        #     the prose above it -- a real bug this assertion exists to prevent.
+        widened = [dict(FIXTURE_JSON[1], line=9, end_line=14)]
+        saved4 = list(FIXTURE_JSON)
+        try:
+            FIXTURE_JSON.clear()
+            FIXTURE_JSON.extend(widened)
+            json.dump(FIXTURE_JSON, open(jsp, "w", encoding="utf-8"))
+            rep2 = audit(src, jsp)
+            ok("classify: code inside an audited range stays code",
+               14 in [ln for ln, _, _ in rep2["code"]] and
+               14 not in [ln for ln, _, _ in rep2["covered"]])
+        finally:
+            FIXTURE_JSON.clear()
+            FIXTURE_JSON.extend(saved4)
+            json.dump(FIXTURE_JSON, open(jsp, "w", encoding="utf-8"))
 
         # 9. Code hits are never reported as unjudged claims.
         ok("gap: code hits stay out of the unjudged list",

@@ -335,13 +335,21 @@ def judge(regs, samples, stats, base, blocks_base, misc_base, post_init,
 
     if post_init:
         diff_block = [r for r in block if r in blocks_base and regs[r] != blocks_base[r]]
-        rep.add("B11", PASS if not diff_block else FAIL,
-                "跑完初始化后 124 个块寄存器与基线 0 差异",
-                "0 差异" if not diff_block else
-                "%d 个差异：%s" % (len(diff_block),
-                                  " ".join("0x%04x(0x%02x→0x%02x)"
-                                           % (r, blocks_base[r], regs[r])
-                                           for r in diff_block[:8])))
+        # 离线算过：50 项表按序套在 stock 值上，块内净变化只有 0x268a 0x40→0x41
+        # （第 48 步写 SW_EN=1）；现有驱动不写 SW_EN，净变化为 0。
+        # 所以「只差 0x268a 且等于 0x41」是表版本差异，不是错；其余任何差异都是错。
+        sw_en_only = (diff_block == [0x268a] and regs.get(0x268a) == 0x41)
+        if not diff_block:
+            detail = "0 差异（与不写 SW_EN 的实现一致）"
+        elif sw_en_only:
+            detail = "仅 0x268a 0x40→0x41：表第 48 步写了 SW_EN，属预期，非错误"
+        else:
+            detail = "%d 个差异：%s" % (len(diff_block),
+                                      " ".join("0x%04x(0x%02x→0x%02x)"
+                                               % (r, blocks_base[r], regs[r])
+                                               for r in diff_block[:8]))
+        rep.add("B11", PASS if (not diff_block or sw_en_only) else FAIL,
+                "跑完初始化后 124 个块寄存器与基线 0 差异", detail)
     else:
         rep.add("B11", SKIP, "跑完初始化后 124 个块寄存器与基线 0 差异",
                 "需要 --post-init（dump 取自初始化之后）")
@@ -734,11 +742,18 @@ def selftest():
     regs, samples, stats, rep, diff, code, notes, _ = run(clean_lines(), post_init=True)
     ok("12 post-init 且无差异 → B11 PASS",
        [r[1] for r in rep.rows if r[0] == "B11"] == [PASS])
+    # 只差 0x268a=0x41 是「表第 48 步写了 SW_EN」，属预期内的版本差异 → PASS。
     regs, samples, stats, rep, diff, code, notes, _ = run(
         clean_lines(**{"0x268a": 0x41}), post_init=True)
-    ok("12 post-init 且 0x268a=0x41 → B11 FAIL 并指出该字节",
-       [r[1] for r in rep.rows if r[0] == "B11"] == [FAIL]
-       and "0x268a" in [r[3] for r in rep.rows if r[0] == "B11"][0])
+    b11 = [r for r in rep.rows if r[0] == "B11"][0]
+    ok("12 post-init 且只差 0x268a=0x41 → B11 PASS 但注明 SW_EN",
+       b11[1] == PASS and "SW_EN" in b11[3], b11[3])
+    # 其它任何块内差异都必须 FAIL。
+    regs, samples, stats, rep, diff, code, notes, _ = run(
+        clean_lines(**{"0x26aa": 0x11}), post_init=True)
+    b11 = [r for r in rep.rows if r[0] == "B11"][0]
+    ok("12 post-init 且 0x26aa 多一个 bit → B11 FAIL 并指出该字节",
+       b11[1] == FAIL and "0x26aa" in b11[3], b11[3])
 
     # 13. 两次 dump 相同 → 差异为空；差一个字节 → 恰好一条。
     regs, samples, stats, rep, diff, code, notes, sd = run(clean_lines(), second=clean_lines())

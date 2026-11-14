@@ -177,7 +177,7 @@
     ]
    ],
    "needs_phone": false,
-   "means_pass": "PWM width/thresh 与 latch 类寄存器的成对值在 stock 里逐对相等（0xff/0x04、0x08/0x08、0x1f/0x1f、0xff/0xff、0x1f/0x1f）。全部相等 ⇒ 没有丢字节、没有错位。",
+   "means_pass": "这 7 对在 stock 里逐对完全相等：0x268e=0x2690=0xff、0x268f=0x2691=0x04、0x2698=0x269a=0x08、0x26c4=0x26c6=0x1f、0x26c5=0x26c7=0x00、0x26c8=0x26ca=0xff、0x26c9=0x26cb=0x1f。全部相等 ⇒ 没有丢字节、没有错位。",
    "means_fail": "任一对不等 ⇒ 读地址偏移了 1 或 4，或某次事务丢了一个字节。此时 B7 的逐项对比没有意义，先修地址。",
    "source": "accdet-baseline.json 逐对核对",
    "checked": "checked_by_script"
@@ -426,10 +426,18 @@
    "min_ratio": 1.0,
    "min_denominator": 100,
    "needs_phone": false,
-   "means_pass": "厂商 44 条写全是 read-modify-write，且 stock dump 本来就是『已初始化、已拔出、SW_EN=0』的状态，所以理论上净变化应为 0。0 差异 ⇒ 写通道、mask 运算、恢复逻辑全部正确。",
-   "means_fail": "只有 0x268a 由 0x40 变 0x41 ⇒ 多写了 SW_EN(bit0)；其它差异 ⇒ mask/shift 算错或写错地址。注意：若实现采用 50 项表的第 48 步（SW_EN=1），则预期差异恰为 1 个字节 0x268a=0x41，此时 1 差异也算 PASS，需在报告里注明用的哪一版表。",
-   "source": "离线模拟：50 项表净变化 4 个字节，其中块内仅 0x268a；现有驱动不写 SW_EN，块内净变化 0",
-   "checked": "checked_by_script"
+   "means_pass": "块内 0 差异（不写 SW_EN 的实现）或只差 0x268a=0x41（写 SW_EN 的实现）。**这不是推断**：拿 accdet-init-table.json 的 44 条写按序套在 stock 基线值上，块内净变化恰好 0 个字节。0 差异 ⇒ 写通道、mask 运算、写序全部与厂商一致。",
+   "means_fail": "块内出现除 0x268a=0x41 之外的任何差异 ⇒ mask/shift 算错、写错地址，或恢复逻辑没跑。注意这条判据不是推断：拿 44 条写按序套在 stock 值上，块内净变化恰好 0 字节。",
+   "source": "离线模拟：50 项表净变化 1 字节（0x268a 0x40→0x41）+ 2 个基线外新增（0x1cb2=0x01、0x248c=0x01）；现有驱动净变化 0 字节 + 1 个新增（0x248c=0x01）",
+   "checked": "checked_by_script",
+   "allow": [
+    {
+     "reg": "0x268a",
+     "mask": "0xff",
+     "value": "0x41",
+     "why": "表第 48 步写 SW_EN=1；离线模拟确认这是 50 项表与 44 项驱动的唯一块内净差异"
+    }
+   ]
   },
   {
    "id": "C1",

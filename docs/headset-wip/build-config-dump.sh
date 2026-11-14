@@ -116,123 +116,49 @@ sub "the same line in the file that sets it"
 grep -n '^CONFIG_BOOTARGS=' devices/xaga/configs/xaga.config 2>/dev/null || echo '(not in xaga.config)'
 
 # ---------------------------------------------------------------------------------------------------
-# A C string literal's parts, joined the way the compiler joins them: "a" " " "b" is "a b" -- the
-# whitespace between two literals is a token separator and is not in the string. Reads the expansion
-# on stdin, prints the string. No literal at all: what came in, unchanged. (The regex is in a file
-# of its own: it wants quotes of both kinds, which a single-quoted shell word cannot hold.)
-cat > "$TMPD/join.py" <<'JOINPY'
+# The macro rows and the command line are read out of clang -E -P output, and the compiler joins
+# adjacent string literals ("a" " " "b" is one string "a b"). So each thing asked for is wrapped in
+# markers that survive that join and cannot occur in a value:
+#   ROW(name)       ->  "@@" "@@" name "@@" "@@" value        i.e. @@name@@value
+#   the command line ->  "@CMDLINE@" <the loader's args> "@ENDCMDLINE@"
+# parse.py turns those back into "name<TAB>value" lines and one string. Nothing is guessed.
+cat > "$TMPD/parse.py" <<'PARSEPY'
 import re
 import sys
 
-# A line of a -E -P dump: literal pieces and the text between them. Adjacent literals ("a" "b", the
-# whitespace between them being a token separator) become one string; everything else on the line --
-# a tab, a name, spaces -- is left exactly where it was.
-token = re.compile(r'"((?:[^"\\]|\\.)*)"|[^"]+')
+mode = sys.argv[1]
+text = sys.stdin.read().replace('"', '')
 
-for line in sys.stdin:
-    line = line.rstrip("\n")
-    out = []
-    pending = None          # the string being built from adjacent literals
-    last_was_literal = False
-    for m in token.finditer(line):
-        if m.group(0).startswith('"'):
-            text = m.group(1).replace('\\"', '"')
-            pending = (pending or "") + text
-            last_was_literal = True
-        else:
-            gap = m.group(0)
-            if last_was_literal and gap.strip() == "" and pending is not None:
-                continue        # whitespace between two literals: not part of either
-            if pending is not None:
-                out.append(pending)
-                pending = None
-            out.append(gap)
-            last_was_literal = False
-    if pending is not None:
-        out.append(pending)
-    print("".join(out))
-JOINPY
-c_string_join() { "$PY" "$TMPD/join.py"; }
+if mode == "rows":
+    for line in text.splitlines():
+        m = re.search(r'@@\s*([A-Z][A-Z0-9_]*)\s*@@\s*(.*)$', line)
+        if not m:
+            continue
+        name, value = m.group(1), m.group(2).strip()
+        if value == name:
+            value = "(undefined: no #define here, and no #ifndef default)"
+        print("%s\t%s" % (name, value))
+else:
+    m = re.search(r'@CMDLINE@(.*?)@ENDCMDLINE@', text, re.S)
+    print(re.sub(r'\s+', ' ', m.group(1)).strip() if m else "")
+PARSEPY
 
 say "4  THE LOADER's VIEW: board.h, WITH THE DEFAULTS AND THE -D OVERRIDES RESOLVED"
 BOARD=mtk/mt6895/loader/board.h
 if [ -f "$BOARD" ] && have "$CC"; then
 	# The loader is built with -DBOARD_HEADER, which mtkloader.c includes before anything else, and
-	# then -DXNU_* from build.sh's "$@". This is those two steps and nothing more: no object, no link.
-	cat > "$TMPD/probe.c" <<'PROBE'
-#include BOARD_HEADER
-#define VAL_BOARD_NAME BOARD_NAME
-#define VAL_XNU_EXTRA_ARGS XNU_EXTRA_ARGS
-#define VAL_XNU_CORES XNU_CORES
-#define VAL_XNU_RETURN_AFTER XNU_RETURN_AFTER
-#define VAL_XNU_WATCH_SECONDS XNU_WATCH_SECONDS
-#define VAL_XNU_WDT_SECONDS XNU_WDT_SECONDS
-#define VAL_BOARD_NO_PLOG BOARD_NO_PLOG
-#define VAL_BOARD_NO_UART BOARD_NO_UART
-#define VAL_BOARD_NO_OVL BOARD_NO_OVL
-#define VAL_BOARD_NO_FB_TEXT BOARD_NO_FB_TEXT
-#define VAL_BOARD_TOUCH BOARD_TOUCH
-#define VAL_XNU_SYSTEM_IMAGE XNU_SYSTEM_IMAGE
-#define VAL_XNU_ROOT_EMMC XNU_ROOT_EMMC
-#define VAL_BOARD_STORAGE_UFS BOARD_STORAGE_UFS
-#define VAL_UFS_USE_LK_LIST UFS_USE_LK_LIST
-#define VAL_MENU_DEFAULT_XNU MENU_DEFAULT_XNU
-#define VAL_BOARD_RETURN_TO_ANDROID BOARD_RETURN_TO_ANDROID
-#define VAL_BOARD_MALI_POWER BOARD_MALI_POWER
-#define VAL_BOARD_MALI_PREPOWER BOARD_MALI_PREPOWER
-#define VAL_BOARD_MALI_DOMAINS BOARD_MALI_DOMAINS
-#define VAL_BOARD_MALI_STAGE BOARD_MALI_STAGE
-#define VAL_BOARD_MALI_EARLY BOARD_MALI_EARLY
-#define VAL_BOARD_MALI_STOP BOARD_MALI_STOP
-#define VAL_BOARD_REPORT_PAGES BOARD_REPORT_PAGES
-#define VAL_XNU_BIG_CLOCK XNU_BIG_CLOCK
-#define VAL_BOARD_REPORT_SYSTEM_IMAGE BOARD_REPORT_SYSTEM_IMAGE
-#define VAL_BOARD_USB_PROBE BOARD_USB_PROBE
-#define VAL_BOARD_PMIF_PROBE BOARD_PMIF_PROBE
-#define VAL_BOARD_DISP_PROBE BOARD_DISP_PROBE
-#define VAL_BOARD_MALI_PROBE BOARD_MALI_PROBE
-#include BOARD_HEADER
-"BOARD_NAME"	VAL_BOARD_NAME
-"XNU_EXTRA_ARGS"	VAL_XNU_EXTRA_ARGS
-"XNU_CORES"	VAL_XNU_CORES
-"XNU_RETURN_AFTER"	VAL_XNU_RETURN_AFTER
-"XNU_WATCH_SECONDS"	VAL_XNU_WATCH_SECONDS
-"XNU_WDT_SECONDS"	VAL_XNU_WDT_SECONDS
-"BOARD_NO_PLOG"	VAL_BOARD_NO_PLOG
-"BOARD_NO_UART"	VAL_BOARD_NO_UART
-"BOARD_NO_OVL"	VAL_BOARD_NO_OVL
-"BOARD_NO_FB_TEXT"	VAL_BOARD_NO_FB_TEXT
-"BOARD_TOUCH"	VAL_BOARD_TOUCH
-"XNU_SYSTEM_IMAGE"	VAL_XNU_SYSTEM_IMAGE
-"XNU_ROOT_EMMC"	VAL_XNU_ROOT_EMMC
-"BOARD_STORAGE_UFS"	VAL_BOARD_STORAGE_UFS
-"UFS_USE_LK_LIST"	VAL_UFS_USE_LK_LIST
-"MENU_DEFAULT_XNU"	VAL_MENU_DEFAULT_XNU
-"BOARD_RETURN_TO_ANDROID"	VAL_BOARD_RETURN_TO_ANDROID
-"BOARD_MALI_POWER"	VAL_BOARD_MALI_POWER
-"BOARD_MALI_PREPOWER"	VAL_BOARD_MALI_PREPOWER
-"BOARD_MALI_DOMAINS"	VAL_BOARD_MALI_DOMAINS
-"BOARD_MALI_STAGE"	VAL_BOARD_MALI_STAGE
-"BOARD_MALI_EARLY"	VAL_BOARD_MALI_EARLY
-"BOARD_MALI_STOP"	VAL_BOARD_MALI_STOP
-"BOARD_REPORT_PAGES"	VAL_BOARD_REPORT_PAGES
-"XNU_BIG_CLOCK"	VAL_XNU_BIG_CLOCK
-"BOARD_REPORT_SYSTEM_IMAGE"	VAL_BOARD_REPORT_SYSTEM_IMAGE
-"BOARD_USB_PROBE"	VAL_BOARD_USB_PROBE
-"BOARD_PMIF_PROBE"	VAL_BOARD_PMIF_PROBE
-"BOARD_DISP_PROBE"	VAL_BOARD_DISP_PROBE
-"BOARD_MALI_PROBE"	VAL_BOARD_MALI_PROBE
-PROBE
-	# "<name>"<tab>VAL_<name>  ->  the name, a tab, and the macro's own expansion, one per line.
+	# with -DXNU_* from build.sh's "$@". This is those two steps and nothing more: no object, no link.
+	{
+		echo '#include BOARD_HEADER'
+		echo '#define ROW(m) "@@" #m "@@" m'
+		for m in BOARD_NAME XNU_EXTRA_ARGS XNU_CORES XNU_RETURN_AFTER XNU_WATCH_SECONDS XNU_WDT_SECONDS BOARD_NO_PLOG BOARD_NO_UART BOARD_NO_OVL BOARD_NO_FB_TEXT BOARD_TOUCH XNU_SYSTEM_IMAGE XNU_ROOT_EMMC BOARD_STORAGE_UFS UFS_USE_LK_LIST MENU_DEFAULT_XNU BOARD_RETURN_TO_ANDROID BOARD_MALI_POWER BOARD_MALI_PREPOWER BOARD_MALI_DOMAINS BOARD_MALI_STAGE BOARD_MALI_EARLY BOARD_MALI_STOP BOARD_REPORT_PAGES XNU_BIG_CLOCK BOARD_REPORT_SYSTEM_IMAGE BOARD_USB_PROBE BOARD_PMIF_PROBE BOARD_DISP_PROBE BOARD_MALI_PROBE; do echo "ROW($m)"; done
+	} > "$TMPD/probe.c"
+
+	# "<name>"<tab><value>, one per line, as the preprocessor resolved it.
 	macro_dump() {
 		"$CC" --target=aarch64-linux-gnu -E -P -DBOARD_HEADER="\"$ROOT/$BOARD\"" "$@" "$TMPD/probe.c" 2>/dev/null |
-			c_string_join |
-			awk '{
-				i = index($0, " "); name = (i ? substr($0, 1, i - 1) : $0); v = (i ? substr($0, i + 1) : "")
-				gsub(/^[ \t]+|[ \t]+$/, "", v)
-				if (v == name) v = "(undefined: no #define, and no #ifndef default)"
-				printf "  %-25s %s\n", name, v
-			}'
+			"$PY" "$TMPD/parse.py" rows |
+			awk -F'\t' '{ printf "  %-26s %s\n", $1, $2 }'
 	}
 
 	sub "board.h as the build resolves it (no -D)"
@@ -245,9 +171,7 @@ PROBE
 	sub "the boot_args.commandLine the loader builds (rd=md0 + XNU_EXTRA_ARGS + loader_return_after)"
 	cat > "$TMPD/args.c" <<'ARGS'
 #include BOARD_HEADER
-BEGIN
-XNU_BOOT_ARGS
-END
+"@CMDLINE@" XNU_BOOT_ARGS "@ENDCMDLINE@"
 ARGS
 	# mtkloader.c's own two lines, reproduced so the string is the loader's and not a guess:
 	#   #define XNU_BOOT_ARGS  XNU_ROOT_ARG " " XNU_EXTRA_ARGS " loader_return_after=" XNU_RETURN_AFTER
@@ -255,24 +179,24 @@ ARGS
 		-DXNU_ROOT_ARG='"rd=md0"' \
 		-DXNU_BOOT_ARGS='XNU_ROOT_ARG " " XNU_EXTRA_ARGS " loader_return_after=" XNU_RETURN_AFTER' \
 		"$TMPD/args.c" 2>/dev/null |
-		sed -n '/^BEGIN$/,/^END$/p' | sed '1d;$d' |
-		c_string_join | tr -s ' ' | sed 's/^ //; s/ $//' > "$TMPD/cmdline.txt"
+		"$PY" "$TMPD/parse.py" cmdline > "$TMPD/cmdline.txt"
 	if [ -s "$TMPD/cmdline.txt" ]; then
 		cat "$TMPD/cmdline.txt"
 		printf '\ncharacters      %s of 607 (BOOT_LINE_LENGTH 608 less the terminator, mtkloader.c:344)\n' \
 			"$(wc -c < "$TMPD/cmdline.txt" | tr -d ' ')"
 		printf 'words           %s\n' "$(wc -w < "$TMPD/cmdline.txt" | tr -d ' ')"
-		sub "the same string as the last built loader has it"
-		if [ -f mtk/loader/mtkloader.bin ]; then
-			strings -a mtk/loader/mtkloader.bin 2>/dev/null | grep -m1 '^boot args: ' || echo '(no "boot args:" string in mtkloader.bin)'
-			printf 'mtkloader.bin   %s bytes, %s\n' \
-				"$(wc -c < mtk/loader/mtkloader.bin | tr -d ' ')" \
-				"$(date -r mtk/loader/mtkloader.bin '+%Y-%m-%d %H:%M:%S' 2>/dev/null)"
-		else
-			echo '(no mtk/loader/mtkloader.bin)'
-		fi
 	else
 		echo '(clang -E produced no command line)'
+	fi
+
+	sub "the same string as the last built loader has it"
+	if [ -f mtk/loader/mtkloader.bin ]; then
+		strings -a mtk/loader/mtkloader.bin 2>/dev/null | grep -m1 '^boot args: ' || echo '(no "boot args:" string in mtkloader.bin)'
+		printf 'mtkloader.bin   %s bytes, %s\n' \
+			"$(wc -c < mtk/loader/mtkloader.bin | tr -d ' ')" \
+			"$(date -r mtk/loader/mtkloader.bin '+%Y-%m-%d %H:%M:%S' 2>/dev/null)"
+	else
+		echo '(no mtk/loader/mtkloader.bin)'
 	fi
 else
 	echo "(no $BOARD, or no clang)"
@@ -335,27 +259,33 @@ FOUND=0
 flag() { FOUND=$((FOUND + 1)); printf '%2d. %s\n' "$FOUND" "$1"; }
 info() { printf '    %s\n' "$1"; }
 
-sub "7.1  headset=1: in board.h, and lost by the run's own arguments"
-if grep -q '^#define XNU_EXTRA_ARGS.*headset=1' "$BOARD" 2>/dev/null; then
-	LN=$(grep -n '^#define XNU_EXTRA_ARGS.*headset=1' "$BOARD" | cut -d: -f1)
-	info "present in $BOARD:$LN -- a loader built with no -DXNU_EXTRA_ARGS gets it"
+sub "7.1  headset=1: where it is written, and whether a run gets it"
+FRAG_HEAD=$(grep -m1 '^CONFIG_BOOTARGS=' devices/xaga/configs/xaga.config 2>/dev/null)
+LIVE_ARGS=${CONFIG_ARGS:-}
+case "$FRAG_HEAD" in
+*headset=*) FRAG_HAS=yes ;; *) FRAG_HAS=no ;;
+esac
+case "$LIVE_ARGS" in
+*headset=*) LIVE_HAS=yes ;; *) LIVE_HAS=no ;;
+esac
+info "devices/xaga/configs/xaga.config:40 says headset= : $FRAG_HAS"
+info "the .config's arguments (what xaga-cycle.sh passes) have headset= : $LIVE_HAS"
+if [ "$FRAG_HAS" = no ] && [ "$LIVE_HAS" = no ]; then
+	flag "headset= is in neither the fragment nor the .config: a run boots without it. Add it to devices/xaga/configs/xaga.config:40 CONFIG_BOOTARGS, then make xaga_defconfig"
+elif [ "$FRAG_HAS" = yes ] && [ "$LIVE_HAS" = no ]; then
+	flag "the fragment HAS headset= but the .config does not: the .config predates the edit, and mtk/tools/xaga-cycle.sh:35 reads the .config, so a run still boots WITHOUT headset=1. Run make xaga_defconfig (no kernel rebuild needed: the driver is already compiled in)"
+elif [ "$FRAG_HAS" = no ] && [ "$LIVE_HAS" = yes ]; then
+	flag "the .config has headset= but the fragment does not: the next make xaga_defconfig will drop it. Add it to devices/xaga/configs/xaga.config:40"
 else
-	flag "headset=1 is NOT in $BOARD's XNU_EXTRA_ARGS"
+	info "both agree; a run gets headset=1"
 fi
-if [ -n "${CONFIG_ARGS:-}" ]; then
-	case "$CONFIG_ARGS" in
-	*headset=*)
-		info "and the .config's arguments carry it too" ;;
-	*)
-		flag "the .config's arguments have NO headset=, and mtk/tools/xaga-cycle.sh:78 passes them as -DXNU_EXTRA_ARGS, which replaces board.h:874's line: a run through make phone / xaga-cycle.sh boots WITHOUT headset=1. The line to change is devices/xaga/configs/xaga.config:40 (CONFIG_BOOTARGS), then make xaga_defconfig" ;;
-	esac
-	case "$CONFIG_ARGS" in
-	*usb=*)
-		info "usb= is set: the USB driver comes up" ;;
-	*)
-		flag "CONFIG_HAKIOS_MT6895_USB=y but the arguments have no usb=, so hakios_mt6895_usb_init() returns at its first line (mtk/mt6895/drivers/usb/hakios.mt6895_usb.c:1866): the driver is compiled in and never runs. mtk/mt6895/configs/mt6895.config:83 says xaga.config turns it on -- it does not" ;;
-	esac
+if grep -q '^#define XNU_EXTRA_ARGS.*headset=1' "$BOARD" 2>/dev/null; then
+	info "board.h:$(grep -n '^#define XNU_EXTRA_ARGS.*headset=1' "$BOARD" | cut -d: -f1) also has headset=1 -- for a loader built with no -DXNU_EXTRA_ARGS (a bare mtk/loader/build.sh), not for a run"
 fi
+case "$LIVE_ARGS" in
+*usb=*) info "usb= is set: the USB driver comes up" ;;
+*) flag "CONFIG_HAKIOS_MT6895_USB=y but the arguments have no usb=, so hakios_mt6895_usb_init() returns at its first line (mtk/mt6895/drivers/usb/hakios.mt6895_usb.c:1866): the driver is compiled in and never runs. mtk/mt6895/configs/mt6895.config:83 says xaga.config turns it on -- it does not" ;;
+esac
 
 sub "7.2  arguments named in CONFIG_BOOTARGS that configs/boot-args.lst does not have"
 if [ -f configs/boot-args.lst ]; then
@@ -420,7 +350,9 @@ if [ -n "$HAKIOS_CONFIG" ] && [ -f .config ]; then
 fi
 
 sub "7.8  files a build depends on that git does not carry"
-for f in mtk/mt6895/configs/mt6895.config mtk/mt6895/loader/board.h xnu/files/bsd/sys/hakios.pmif.h; do
+for f in mtk/mt6895/configs/mt6895.config mtk/mt6895/loader/board.h \
+	devices/xaga/configs/xaga.config devices/xaga/configs/xaga_defconfig \
+	xnu/files/bsd/sys/hakios.pmif.h; do
 	[ -f "$f" ] || { info "$f: MISSING"; continue; }
 	if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
 		if git diff --quiet HEAD -- "$f" 2>/dev/null; then
@@ -429,9 +361,11 @@ for f in mtk/mt6895/configs/mt6895.config mtk/mt6895/loader/board.h xnu/files/bs
 			info "$f: tracked, changed since HEAD"
 		fi
 	elif git status --porcelain -- "$f" 2>/dev/null | grep -q '^A '; then
-		flag "$f is staged as an ADD but its index blob is empty (intent-to-add): git diff and git diff --cached both show it as new, and any commit that takes the index commits an empty file. git add it by path (never a stash/reset: the other A files would be half-written)"
+		flag "$f is staged as an ADD but its index blob is empty (intent-to-add, blob e69de29): a plain git commit records an EMPTY file. git add it by path -- never git stash / reset / checkout, which would leave the other A files half-written"
+	elif git check-ignore -q "$f" 2>/dev/null; then
+		info "$f: ignored on purpose ($(git check-ignore -v "$f" 2>/dev/null | awk '{print $1, $2}')) -- it is a device repository's own file, cloned rather than committed (devices/manifest.conf)"
 	else
-		flag "$f is not tracked at all: a fresh clone has no such file, and a build there fails or silently gets different values"
+		flag "$f is not tracked and not ignored: a fresh clone has no such file, and a build there fails or silently gets different values. git add it"
 	fi
 done
 

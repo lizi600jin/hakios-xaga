@@ -68,7 +68,7 @@ mali: AS7 parked, mmu irq 0x800000    bit23 = 16+7
 | 7 | 943-944 | `the upper IRQ bit after UPDATE does not prove a fault caused by this flag or a completed table walk` | 该位两义 | **需重写** | 前半句对（不是 fault），后半句错（bit[31:16] 正是完成信号）。改为：`UPDATE 之后出现的 16+as 位是该 AS 的 REQ_COMPLETE；它证明命令退休，不证明取指发生；fault 只看 bit[15:0]` |
 | 8 | 1122-1127 | `every leaf the MCU walked read back as an invalid descriptor, which is a translation failure that raises no MMU interrupt` | M1 期 leaf 低两位缺失 | **仍成立** | 保留。解释的是 M1 静默，不是本次误读 |
 | 9 | 1372-1375 | `the two page table entries that are already known good from the walk` | 走查已验证这两个 PTE | **需重写** | 限定为 CPU 侧：`已由 load_firmware() 的覆盖自检确认每个 leaf 写成 0b11`。不能说「硬件走查确认」——没有任何 GPU 侧回读 |
-| 10 | 1148-1151 | `if the fetch … is refused by the MMU there is no fault on AS0 because the fetch never becomes a transaction: status stays 1, debug_top goes busy and the version word keeps the sentinel. That is this board's exact shape.` | 「XN 拦截的取指不产生 AS fault」 | **未验证** + 前提已被自家日志否掉 | 与本位无关，但同样缺证据：panthor 的 `AS_FAULTSTATUS_ACCESS_TYPE_EX`（`panthor_mmu_regs.h:43`）说明执行访问被拒**是要记 fault 的**。且本段前提已失效——`section 1: flags 0xd (r-x)` 本身可执行（日志 195 行）。建议删掉该假说 |
+| 10 | 1148-1151 | `if the fetch … is refused by the MMU there is no fault on AS0 because the fetch never becomes a transaction: status stays 1, debug_top goes busy and the version word keeps the sentinel. That is this board's exact shape.` | 「XN 拦截的取指不产生 AS fault」 | **未验证** + 前提已被自家日志否掉 | 与本位无关，但同样缺证据：panthor 的 `AS_FAULTSTATUS_ACCESS_TYPE_EX`（`panthor_mmu_regs.h:43`）说明执行访问被拒**是要记 fault 的**。且本段前提已失效——`section 1: va 0x1000000-0x1010000 flags 0xd (r-x cached)` 本身可执行（日志 197 行）。建议删掉该假说 |
 | 11 | 2295 | `got 0x4 before the table walk, 0x4 after it, and 0x1b once the core had been told to run … may be exactly that` | debug_top 的位义未知 | **仍成立** | 保留。这是全文件最诚实的怀疑句（明说「两个词不构成证据」） |
 | 12 | 2726-2732 | `panthor_mmu.c:556-568 as_send_cmd_and_wait() brackets the write with wait_ready() on both sides: AS_STATUS bit0 is set while the command is outstanding` | panthor 的等待形状 | **仍成立** | 保留。与 `panthor_mmu.c:521-553` 逐字一致。**这是全文件唯一的「命令是否退休」独立判据**，见 §3 |
 | 13 | 2881-2885 | `Doing both before the very first UPDATE means … on some parts that is enough to make the UPDATE never complete` | panthor 只做三次写 + 一次 UPDATE | **仍成立** | 保留。论据是调用形状（`panthor_mmu.c:596-606`），不是中断位。「某些部件」仍属一般化，可弱化为「没有依据认为需要」 |
@@ -99,18 +99,25 @@ mali: AS7 parked, mmu irq 0x800000    bit23 = 16+7
 
 ### 2.1 「结论偶对、理由错」清单（最危险的一类）
 
-这四处的**结论**单独拿出来看是对的，但支撑它的理由已经被推翻或自相矛盾。只读结论会以为推理链还活着。
+链内 3 处（JSON 里标 `accidentally_right: true`）。这三处的**结论**单独拿出来看是对的，
+但支撑它的理由已经被推翻。只读结论会以为推理链还活着。
 
 | 行 | 结论（对的） | 理由（错的） | 危险在哪 |
 |---|---|---|---|
 | 2956-2961 | 第二次 UPDATE 会和第一次的完成位竞争 | 同一函数 `:2909` 把这位叫 BUS_ERROR | 同一段代码用两个互斥的名字指同一个位。后来者按注释理解，会把「完成位竞争」读成「两次 bus error」 |
 | 3478-3488 | 邻居空间的行为值得单独测 | 「若邻居也抬，就属于块而不是地址空间」——把抬位当成 error | 实验确实做了，数据也确实回答了问题，但答案是「每个 AS 各抬一位」，与这段预设的两种结果都不同。数据在，读法错 |
 | 4849-4850 | `bit[15:0]`=fault、`bit[31:16]`=完成 | 紧邻的 `:4843-4847` 说同一个值是 BUS_ERROR | 判据和结论写在同一处、互相矛盾。谁先被读到决定后面所有推理的方向 |
-| 3172-3174 | `JOB_INT_MASK` 写全 1 = 全开（行为对） | 注释说 `0xffffffff meaning masked`，正好相反 | 注释与 panthor `INT_MASK` 语义（使能集，`panthor_device.h:605-617`）相反。行为对，解释反；照注释改代码就会真的屏蔽掉中断 |
+
+链外 2 处，同一类病，但不在那 33 条之内（因此不计入 §2 的判定数）：
+
+| 行 | 结论/行为（对的） | 理由/描述（错的） | 危险在哪 |
+|---|---|---|---|
+| 3161-3164 | 启动前把 `JOB_INT_MASK` 写全 1，与厂商 trace 一致 | 注释说「job mask 写 0 是解除屏蔽」，与实际极性相反 | `INT_MASK` 是**使能集**（`panthor_device.h:605-617`：`pirq->mask |= mask` 后写回；`:567-575` suspend 写 0）。写 0 = 全关，写全 1 = 全开。照注释改代码会真的把中断关掉。详见 §4.1 |
+| 4021-4031 | 写 `0x1008 = 0` / `0x2008 = 0`，值与厂商 trace 一致 | 注释说「zero = 解除屏蔽」，`:4031` 打印 `interrupts unmasked after the boot` | 使能集语义下写 0 是**全关**：这一行之后 job 与 MMU 都不再产生可见中断，而 panthor 在运行时保留非零使能集（`panthor_mmu.c:3287` 使能全部 fault 位后 `panthor_mmu_irq_resume()` 把它们写回，`panthor_device.h:577-584`）。因为全程轮询，功能上无影响；但任何人以后要接 GIC 中断，会照这句注释以为中断已开 |
 
 另有 1 条同源但不同性质：`:2941-2945` 的**回读动作**是对的且有效（日志 244 证明三次写都落地），
-但挂在它下面的因果解释（「每次运行都报 bus error」）作废。动作留、理由删。
-这一条与上面四条的差别是：它的**动作**对、**解释**错；上面四条是**结论**对、**理由**错。
+但挂在它下面的因果解释（「每次运行都报 bus error」）作废。这一条的差别是**动作对、解释错**，
+上面五条是**结论或行为对、理由错**。
 
 ---
 
@@ -129,7 +136,7 @@ mali: AS7 parked, mmu irq 0x800000    bit23 = 16+7
 
 ### 3.2 命令退休：有独立证据
 
-`as_ready()`（`:2705-2716`）轮询 `AS_STATUS & 1`，最多 10 万次；`as_command()`（`:2718-2742`）在写前后各等一次。
+`as_ready()`（`:2705-2716`）轮询 `AS_STATUS & 1`，最多 10 万次；`as_command()`（`:2718-2739`）在写前后各等一次。
 判据与 `panthor_mmu.c:521-539`（`wait_ready()`，`!(val & AS_STATUS_AS_ACTIVE)`，10 µs × 100000）同构。
 
 实测：
@@ -450,7 +457,7 @@ panthor 的 `INT_MASK` 是**使能集**：`pirq->mask |= mask` 后写回（`pant
 
 ```sh
 cd /home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip
-./mmu-audit.py --selftest                    # 15 条断言
+./mmu-audit.py --selftest                    # 16 条断言
 ./mmu-audit.py                               # 审计当前驱动
 ./mmu-audit.py --src <任意快照>               # 审计指定版本
 ./mmu-audit.py --list-hits                   # 逐条列出并分类
@@ -459,12 +466,12 @@ cd /home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip
 
 脚本做五件事：
 
-1. 用 8 组模式扫源码，统计每个模式命中数（当前 121 行）。
-2. 把**注释**行当 claim 逐条核对 `findings/mmu-refuted.json`；代码行只计数（另有 9 处显式列入 `CODE_CLAIMS`）。
+1. 用 8 组模式扫源码，统计每个模式命中数（当前 121 行 = 注释 87 + 代码 34，四类判定之和与之相等）。
+2. 把**注释**行当 claim 逐条核对 `findings/mmu-refuted.json`（33 条覆盖 68 行、19 行按文本豁免、0 行漏审）；代码行只计数，其中 10 处显式列入 `CODE_CLAIMS`。
 3. 片段校验：JSON 里的 `snippet` 必须仍在该行的注释段落里。仅行号漂移的自动重定位并单独报告，
    文本消失的报 `SNIPPETS GONE` 并退出 1。
 4. 豁免表按**文本片段**匹配而非行号，所以并发编辑不会把豁免挪到另一条 claim 上；失效的豁免会被报为 `UNUSED EXEMPTIONS`。
-5. 代码行里 9 处承载争议语义的（`AS_STATUS` 轮询、单次 UPDATE、逐 AS 锁存读、对照分支、总线忙采样等）在 `CODE_CLAIMS` 里逐条命名理由。
+5. 代码行里 10 处承载争议语义的（`AS_STATUS` 轮询、单次 UPDATE、逐 AS 锁存读、对照分支、总线忙采样、两半区解码等）在 `CODE_CLAIMS` 里逐条命名理由。
 
 审计期间该文件被另一会话改动两次（5253 → 5255 行），脚本按设计重定位了 31 条并给出零未审项。
 
