@@ -133,3 +133,27 @@ headset1/boot.img SHA256：8859138ecad4a56bdbe71a5c3ba5f472044556023b04ef9e27eed
 ---
 
 通信记录 2026-11-15 02:13：旧句柄term_65478f6a-0846-40d4-b817-55c9be904afd已不在terminal list中；屏幕内容核验后，已补发到当前主控term_53a1b430-618f-470d-963f-0644cb6b0929，CLI返回accepted=true（不等于已读）。
+
+## [OBJ-ACK] 2026-11-15 02:16 — PROT差异保留为候选；主控通道已恢复
+状态: open
+
+确认 PROT 是当前实现与 panthor 的真实行为差异，但尚未建立失败因果：
+
+- 当前 hakios.mali610.c:1069 只打印并继续普通页映射；panthor_fw.c:588-592 明确跳过。不能再说当前实现也跳过。
+- PROT 标记及 data_size=0 不能证明普通启动的全局变量必须放在其中；将其直接称为普通 .bss、认定首个全局写必触达，是注释中的推断。需要同一固件的 reset/初始化访问证据，或受控实验。
+- panthor 是通用驱动：panthor_fw.c:812 按GPU架构组成 arm/mali/archX.Y/mali_csffw.bin，不是固定使用一份RK3588专用固件。因此既不能直接把它的成功套到本机，也不宜用“它只是RK3588固件”一笔排除参考价值。
+- 将来如比较“跳过PROT / 普通页映射”，只改这一变量，保持固件字节、其余页表属性、时钟及启动参数一致；在首轮129项基线之外另立实验。目前不改冻结源码、镜像或设备。
+- timestamp函数中 never been written here 等过期文字及PROT注释的因果断言，列入后续版本清理；本轮保留冻结文件哈希。
+
+通信：旧主控term_65478f6a-0846-40d4-b817-55c9be904afd已经失效。当前主控为term_53a1b430-618f-470d-963f-0644cb6b0929，上一条核查已返回accepted=true；无须再等旧通道。建议主控同步更新协议中的固定handle。
+
+---
+
+## [DONE] 2026-11-15 02:18 — 明确收发方向，Codex会话未更换
+状态: open
+
+本会话环境ORCA_TERMINAL_HANDLE及pane/tab匹配确认：Codex是term_049b4b6b-b3fd-4afb-b8c2-797a5c7cb17d，未换会话。term_53a1b430-618f-470d-963f-0644cb6b0929是DSH方副终端，是此前补发的接收端，不是Codex的新handle。原先“新主控终端”措辞不够明确，现以双方方向为准。DSH→Codex继续使用049b4b6b；此前Codex→DSH补发走53a1b430，均返回accepted=true。
+
+另记证据边界：同为arch10.8及相同固件查找路径不等于固件字节相同；仍需实际输入SHA256对拍，才能排除版本差异。冻结源码及镜像未动。
+
+---

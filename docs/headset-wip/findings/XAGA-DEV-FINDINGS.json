@@ -1,0 +1,226 @@
+[
+  {
+    "repo": "ShuiLan114514/SLNeko-XNU",
+    "branch": "Xaga",
+    "grade": "A",
+    "topic": "同一台 xaga 的 HakiOS XNU 移植（裸机 Mali 上电方法 + 实验流程）",
+    "why": "唯一同机同路线的 xaga XNU 树，16★，2026-11-14 更新。状态表覆盖 Boot/Display/Touch/OOBE/Audio/Keys，GPU 未列。其 Mali 驱动只覆盖 MT6768 的 Bifrost (G52)，不适用我们的 G610/CSF；但上电顺序（clock 先于 power）、SPM 位定义、以及 loader GPU 探针与取日志流程可直接借鉴。",
+    "key_file": "xnu/files/bsd/dev/redwood_mali.c (1146 行)、mtkloader/mtkmali.h、mtkloader/mtkmali.h:1-58、tools/gpu-probe.sh、mtkloader/mtkmali.h:37-58",
+    "evidence": "README.md:3-6 声明 xaga/MT6895；redwood_mali.c:6-8 明写 'A Bifrost Mali needs no firmware'；redwood_mali.c:46 MALI_PHYS=0x13040000（MT6768）；mtkmali.h:1-25 上电四阶段；mtkloader.c:3280-3364 提交 WRITE_VALUE 作业并读回 0xc0ffee01",
+    "action": "抄 mtkmali.h 的上电顺序逐条比对 hakios.mali610.c 的 gpu_l2_power_on()；抄 tools/gpu-probe.sh 的刷机+pmsg+ramoops 取日志流程，把探针内容换成 CSF。注意 SPM 地址不可搬（MT6768 用 0x180/0x184，MT6895 用 0xF3C/0xF40）。",
+    "cross_model": "方法可跨（同 XNU 裸机、同 ml_io_map+MMIO）；寄存器地址与「无需固件」结论不可跨"
+  },
+  {
+    "repo": "torvalds/linux (drivers/gpu/drm/panthor)",
+    "grade": "A",
+    "topic": "CSF MCU 启动的 JOB_INT_MASK 顺序 —— 我们可能在读一个主动关掉的视图",
+    "why": "panthor 在写 MCU_CONTROL=AUTO 之前就 panthor_irq_enable_events(~0) + panthor_irq_resume() 把 INT_MASK 写成 ~0（全解屏蔽），再做超时判定并读 INT_STAT。我们的驱动在 start_mcu() 之前由 gpu_irq_mask_prestart() 把 JOB_INT_MASK 写成 0xffffffff，整个 100 万次轮询循环里掩码一直是全屏蔽，只在 booted=true 之后才清零。这是 19 轮里唯一一个「读的是我们主动关掉的视图」的定位差异，且能同时解释 MCU_STATUS=1 而 JOB_INT_STATUS bit31 永不置位、不 HALT 不 FATAL。",
+    "key_file": "drivers/gpu/drm/panthor/panthor_fw.c:1136-1168、panthor_device.h:636-656、panthor_device.h:571-574、panthor_fw_regs.h:7-28",
+    "evidence": "panthor_fw.c:1136-1140 enable_events(~0)+resume()+MCU_CONTROL_AUTO；panthor_device.h:644-656 mask|=mask 且 ACTIVE 时立即 gpu_write(INT_MASK)；panthor_device.h:636-642 resume 写 INT_CLEAR+INT_MASK；panthor_fw.c:1146 读 INT_STAT & JOB_INT_GLOBAL_IF；对照 hakios.mali610.c:3132 (mask=0xffffffff)、:3897 (读 kJobIntStatus)、:3976 (成功后才 mask=0)",
+    "action": "在 start_mcu() 写 MCU_CONTROL=AUTO 之前加 mwr(kJobIntMask, 0u)，并在轮询里同时打印 kJobIntRaw(0x1000) 与 kJobIntStatus(0x100c)。若 RAWSTAT bit31 已置而 STATUS 不置 → 实锤是 mask；若两者都不置 → 回到 coherency/共享区方向。",
+    "cross_model": "完全可跨：CSF 架构的 mask/status 语义与 OS 无关"
+  },
+  {
+    "repo": "torvalds/linux (drivers/gpu/drm/panthor)",
+    "grade": "A",
+    "topic": "ASN_HASH / GPU_L2_CONFIG 在 G610 上不存在 —— 可以正式结案",
+    "why": "上游 panthor_gpu_l2_config_set() 有硬门槛 GPU_ARCH_MAJOR < 11 直接 return。我们的 GPU_ID=0xa8670004，arch_major=(gpu_id>>28)&0xf=10（G610 是 architecture 10）。我们自己的注释也已记录「写入后 l2_config 读回 bit24 不变、三个 hash 字全 0」。这条作为「最可能」的假设应当降级为已排除，别再投入。",
+    "key_file": "drivers/gpu/drm/panthor/panthor_gpu.c:66-87、panthor_gpu_regs.h:60-61,109",
+    "evidence": "panthor_gpu.c:76-79 'if (GPU_ARCH_MAJOR(ptdev->gpu_info.gpu_id) < 11) { drm_err(...); return; }'；GPU_L2_CONFIG=0x48 bit24；GPU_ASN_HASH(n)=0x2C0+n*4；docs/GPU-ROUND-1.md:173 记录 GPU_ID=0xa8670004；hakios.mali610.c:3200-3204 注释记录读回无效",
+    "action": "把 ASN_HASH 从候选原因里删除；保留只读回显作为每次启动的确认。省下的时间投到 §3.1 的 mask 实验。",
+    "cross_model": "完全可跨：硬件事实"
+  },
+  {
+    "repo": "torvalds/linux (drivers/gpu/drm/panthor)",
+    "grade": "A",
+    "topic": "CSF 启动 + 全局接口握手 9 步判据链（可照做自检）",
+    "why": "把「固件装载 → 段遍历 → 共享区 → L2 上电 → 解屏蔽 → 等 GLOBAL_IF → 判 HALT → init global iface → set MCU ACTIVE」的每一步判据、错误串、超时值都给出了。我们目前只做到第 6 步且在错误的 mask 状态下。第 8/9 步（写 core_en_mask/定时器/ack_irq_mask，发 GLB_STATE_ACTIVE + ring doorbell）是「固件起来后要它干活」的必要条件，疑未做。",
+    "key_file": "drivers/gpu/drm/panthor/panthor_fw.c:755-860 (load)、:1061-1090 (init_global_iface)、:1178-1188 (halt 双条件)、:1214-1223 (set ACTIVE + doorbell)",
+    "evidence": "panthor_fw.c:803-860 头部 magic/major/size 三重校验 + shared_section 必须存在；:1061-1090 ack_irq_mask 的 6 个位；:1178-1188 halted 需 MCU_STATUS==HALT 且 GLB_STATE_GET(ack)==GLB_STATE_HALT（我们的判据只看前者）；:1214-1223 set ACTIVE + CSF_GLB_DOORBELL_ID",
+    "action": "逐项核对我们写进共享区的 core_en_mask/poweroff_timer/progress_timer/idle_timer/ack_irq_mask/req 是否与 panthor 一致；确认是否发过 GLB_STATE_ACTIVE。",
+    "cross_model": "可跨：CSF 架构行为"
+  },
+  {
+    "repo": "BkaNeko/xaga-mali-r54-port",
+    "grade": "A",
+    "topic": "GPUEB 的 10 条新增硬事实（固件不写 SPM、xfile 格式、LK 无 SYS_GPUEB_XFILE）",
+    "why": "docs/GPUEB.zh-CN.md（837 行）给出了对 xaga 直接适用的硬结论：①三份 gpueb 固件对 SPM 基址 0x1C001xxx 的引用各只有一处且是「读」（只把 0x1C001EBC 读出来打日志），不写 MTCMOS；②固件靠 SPM 信号量协调；③13T 的 471KB 是主镜像127KB+cert+322KB 加密 xfile；④xaga 的 LK 里没有 SYS_GPUEB_XFILE（原厂 lk.img md5 1aa9b95d 复核 0 次）；⑤13T 固件新增共享内存尺寸校验；⑥xaga 无 gpueb logger，固件报错传不到 AP；⑦E0 实机：健康设备上 MFG1-12 就是全关（0x1112），MFG0=0xc000224d；⑧ioremap+readl 读 0x13000000 在健康设备上恒为 0，该读法无鉴别力；⑨原厂 kbase 没有 dev_pm_domain_attach_by_name/genpd_*，给 MFG 上电唯一手段是 gpufreq_power_control()。",
+    "key_file": "docs/GPUEB.zh-CN.md:305-330 (固件不写SPM)、:480-520 (E0实机)、:560-600 (xfile)、:640-670 (共享内存校验/无logger)、:700-712 (LK无SYS_GPUEB_XFILE)",
+    "evidence": "GPUEB.zh-CN.md:305-330 反汇编 lui 0x1c001 + c.jal 读函数；:332-336 'acquire SPM_SEMA_M4 timeout'；:480-500 三次快照 MFG1=0x00001112；:505-520 1500 次采样 GPU_ID 全 0；:700-712 原厂 lk.img SYS_GPUEB_XFILE 出现 0 次",
+    "action": "①放下「12 个 pd_mfg 没 attach」这条线——GPUEB 不是给 MFG 上电的那个人；②作废任何「读 GPU 寄存器为 0 ⇒ 没上电」的判据；③不要指望从 GPUEB 拿诊断，诊断只能在 GPU 侧（JOB_INT_RAWSTAT/MCU_STATUS/GLB_STATE）。",
+    "cross_model": "部分：固件/硬件事实可跨；13T 固件移植结论与我们无关"
+  },
+  {
+    "repo": "zhaoqing412/android_kernel_modules_xiaomi_mt6895-6.12",
+    "grade": "A",
+    "topic": "GPUEB 驱动完整源码树 + MFG0 上电走 ATF SMC（SIP 0x530 / op=6）",
+    "why": "这是「非 fork」的 6.12 模块仓库，含完整 drivers/gpu/mediatek/gpueb/ 源码（gpueb.c 309 / gpueb_ipi.c 581 / ghpm_swwa.c 482 / ghpm_wrapper.c 159 / gpueb_reserved_mem.c 242 / gpueb_timesync.c 295 / gpueb_logger.c 260 等），比 patch 完整。关键新机制：MFG0 上电不是 AP 写 SPM，而是 arm_smccc_smc(MTK_SIP_KERNEL_GPUEB_CONTROL=0x530, GHPM_SWWA_SMP_OP_MFG0_ON=6)。另外 gpueb_ctrl() 在 g_ghpm_support==0 时直接返回 0（假装成功），这正是「ret=0 不说明硬件动作」的代码根因。",
+    "key_file": "drivers/gpu/mediatek/gpueb/ghpm_swwa.c:98-180、ghpm_wrapper.c:74-98、include/gpueb_common.h:15-17、gpueb_init.c:149-160",
+    "evidence": "ghpm_swwa.c:124-131 / :171-178 / :225 arm_smccc_smc(MTK_SIP_KERNEL_GPUEB_CONTROL, GHPM_SWWA_SMP_OP_MFG0_ON, ...) 注释 'smc to power on mfg0 -> reset eb -> warm boot -> eb resume'；ghpm_wrapper.c:78-80 g_ghpm_support==0 return 0；gpueb_common.h:15-17 MFG0_PWR_ACK_BITS=BIT31|BIT30；NothingOSS mtk_sip_svc.h:160-161 MTK_SIP_SMC_CMD(0x530)",
+    "action": "若要 AP/裸机给 MFG0 上电，走 smc #0 的 SIP 0x530 / op=6，而不是直接写 0x1C001EB8。注意 MFG0 状态要两个 ACK 位（31:30）都置。",
+    "cross_model": "部分：SMC 接口可跨（EL1 可发）；驱动逻辑只能借语义"
+  },
+  {
+    "repo": "mytiantian001/Mu-Silicium",
+    "branch": "pearl",
+    "grade": "A",
+    "topic": "裸机 SPMI 读实现 —— 耳机任务最直接可用的代码",
+    "why": "pearlPkg/Library/KeypadDeviceLib/KeypadDeviceLib.c 是 UEFI 裸机代码：无中断、无锁、无 DMA、纯 MMIO 轮询，与我们的执行环境同构。它给出 PMIF 0x1C804000 + SWINF2 0x880/0x894/0x8A4/0x8A8、FSM =(STA>>1)&0x7、命令字 (3<<30)|(SID<<24)|addr、VLD_CLR 握手，与我们项目的 PMIF 设计逐条对上（我们注释里「用 PMIF_CMD_REG(1) 会让 FSM 停在 4」的结论被独立印证）。",
+    "key_file": "Platforms/Xiaomi/pearlPkg/Library/KeypadDeviceLib/KeypadDeviceLib.c:14-22 (地址)、:214-219 (FSM)、:223-264 (SpmiReadByte 全文 24 行)",
+    "evidence": "KeypadDeviceLib.c:15-19 #define PMIF_BASE 0x1C804000 / SPMI_SEND 0x0880 / SPMI_RDATA 0x0894 / SPMI_VLD_CLR 0x08A4 / SPMI_STA 0x08A8；:246-249 注释 'bit31:30 = 3 selects the extended-long read... the SWINF1 short-read form (1 << 30) returns a stale constant on pearl'；:218 FSM 取法",
+    "action": "照抄 SpmiReadByte()，把 SID 从 4（MT6363）改成 5（MT6368）。地址 0x26a9/0x26aa/0x26b6 是 16 位，正好落在命令字低 16 位。超时参考 2000×10us=20ms 两段。",
+    "cross_model": "完全可跨：纯 MMIO，无中断/无锁/无 DMA"
+  },
+  {
+    "repo": "mytiantian001/Mu-Silicium",
+    "branch": "pearl",
+    "grade": "A",
+    "topic": "MT6895 完整内存图（含 Res GPUEB 地址冲突线索）",
+    "why": "MemoryMapLib.c 给出 60+ 条物理内存区，包括 Res GPU mputab 0x78C00000+0x1400000（20 MiB GPU 页表区）、Res GPUEB 0x7C200000+0x200000（2 MiB）、Res sspm-ap 0x7C0F0000+0x110000、Res TEE SecMem 0x7C800000+0x700000。其中 Res GPUEB = 0x7C200000 与我们项目记录的 0x7c600000 冲突 4 MiB，需要核实——若我们的地址错，固件永远读不到共享区。",
+    "key_file": "Platforms/Xiaomi/pearlPkg/Library/MemoryMapLib/MemoryMapLib.c:44-58 (DDR 区)、:109-131 (寄存器区)",
+    "evidence": "MemoryMapLib.c:48 {\"Res GPUEB\", 0x007C200000, 0x00200000, ...}；:44 Res GPU mputab 0x0078C00000 0x01400000；:55 Res TEE SecMem 0x007C800000 0x00700000；:130 PMIF 0x001C804000；:131 SPMIMST 0x001C801000（我们目前只用 PMIF）",
+    "action": "核对 mt6895-xiaomi-xaga.dts 的 gpueb_mem_addr 与 mt6895.dtsi 的 mblock-38-me_GPUEB_SHARED，确认 xaga 到底是 0x7c600000 还是 0x7c200000（pearl≠xaga 的可能性也存在）。顺带确认是否需要 SPMIMST 做 FSM 复位。",
+    "cross_model": "可跨：物理地址是硬件事实"
+  },
+  {
+    "repo": "mytiantian001/Mu-Silicium",
+    "branch": "pearl",
+    "grade": "A-",
+    "topic": "UEFI 里完全没有 GPU 初始化 —— 结论本身有价值",
+    "why": "全树 grep mali|gpueb|mfg_pwr|0x13000000 只有 4 个文件级命中，3 个是误命中，唯一真命中只是把 Res GPUEB 标成 reserved。pearlPkg 全目录 20 个文件、Silicon/MediaTek/MT6895Pkg 26 个文件都没有 GPU 驱动。pearl.dsc:145-147 明写显示走 'MT6895 LK handoff takeover (OVL fixup)' + SimpleFbDxe。说明整条 bootchain（preloader→LK→UEFI）都没碰过 GPU，我们是第一个需要在 EL1 里自己拉起 GPU 的实体。",
+    "key_file": "Platforms/Xiaomi/pearlPkg/pearl.dsc:145-147、Silicon/MediaTek/MT6895Pkg/（26 文件全清单）",
+    "evidence": "pearl.dsc:145-147 'Custom display: MT6895 LK handoff takeover (OVL fixup)' → SimpleFbDxe.inf；MT6895Pkg 只有 MtkUfsDxe/MtkUfsPassThruDxe/MtkUsbDxe/PearlKeypadDxe/PearlPmicKeysDxe/PearlUfsDiagDxe/SimpleFbDxe/PlatformSecLib",
+    "action": "不要再找「UEFI 怎么初始化 GPU」——没有。把 Mu-Silicium 的价值限定在：裸机 SPMI 参考 + 内存图。",
+    "cross_model": "结论不可跨（只对 UEFI 阶段成立）；内存图可跨"
+  },
+  {
+    "repo": "zhaoqing412/xaga-mt6895-k6.12",
+    "grade": "A-",
+    "topic": "6.12 口径的 ACCDET：语义与 5.10 完全一致（可作交叉验证）",
+    "why": "把 6.12 的 mt6368-accdet.c（98,345 B）与项目已有的 5.10 版本做完整 diff（733 行），差异全部是外围（删 tcpc/debugfs/HEADSET_STATUS_RECORD、加 pinctrl/snprintf/gpiod_set_debounce、键码改成 KEY_PLAYPAUSE/VOLUMEDOWN/VOLUMEUP）。关键语义原封不动：res_value<5000 判耳机、ACCDET_IRQ_ADDR 读、ACCDET_IRQ_CLR_ADDR 写、cur_AB=(MEM_IN>>shift)&0x03、check_cable_type() 仍是有前态状态机。另给出厂商 dump 清单（0x2688..0x26d1 步长 4 全扫 + 5 个单点）。",
+    "key_file": "kernel_device_modules-6.12/sound/soc/codecs/mt6368-accdet.c:653 (5000)、:1765/1906 (check_cable_type)、:241-360 (mini_dump_register/dump_register)、:2467-2471 (DT 阈值)",
+    "evidence": "mt6368-accdet.c:653 'if (res_value < 5000)'；:997/:1008 ACCDET_IRQ_CLR_ADDR；:1645/:1769/:2953 cur_AB 读取；:557-558 cur_AB &= ACCDET_STATE_AB_MASK；:288-352 dump_register 扫 0x2688..0x26d1 与 0x230c/0x2319/0x231d/0x2320/0x2323",
+    "action": "已有寄存器语义不需修订。按 dump_register() 的清单做第一次真机读：19+5=24 个寄存器，成本极低，一次把基线做完。",
+    "cross_model": "寄存器语义可跨；regmap/snd_soc_jack/gpiod 不可跨"
+  },
+  {
+    "repo": "zhaoqing412/xaga-mt6895-k6.12",
+    "grade": "A-",
+    "topic": "ACCDET 寄存器绝对地址表（22 项，可当裸机常量）",
+    "why": "raw/mt6368.h 里所有 ACCDET 宏都指向 MT6368_ACCDET_CONn，本次把 n 全部解成绝对地址，并与已确证的三个地址逐一对上：0x26a9(CON33)=ACCDET_IRQ_ADDR、0x26aa(CON34)=ACCDET_IRQ_CLR_ADDR、0x26b6(CON46)=ACCDET_MEM_IN_ADDR（同时也是 AD_AUDACCDETCMPOB_ADDR，解释了同址双义）。另解出 SW_EN 0x268a、AUXADC_SEL 0x2688、EN 0x26c0、MON_FLAG_EN 0x26d1、HWMODE_EN 0x26ad、CMPEN_SW 0x26b3、EINT0 相关 0x26b8/0x26bc，以及时钟/复位/中断组 0x230c/0x2319/0x231d/0x2320/0x2323。",
+    "key_file": "docs/headset-wip/raw/mt6368.h:4150-5515",
+    "evidence": "mt6368.h:4593 ACCDET_IRQ_ADDR=MT6368_ACCDET_CON33(0x26a9)；:4613 CA_IRQ_CLR=CON34(0x26aa)；:4993 MEM_IN=CON46(0x26b6)；:5515 ACCDET_STATE_AB_MASK=0x03；:5514 移位=ACCDET_MEM_IN_SFT；各 MT6368_ACCDET_CONn/MT6368_AUD_TOP_*/MT6368_AUDENC_ANA_* 的具体 0x 值已在报告 §4.2 列表",
+    "action": "直接抄进裸机头文件；cur_AB = (acccdet_read(0x26b6) >> ACCDET_MEM_IN_SFT) & 0x03。",
+    "cross_model": "完全可跨"
+  },
+  {
+    "repo": "zhaoqing412/xaga-mt6895-k6.12",
+    "grade": "A-",
+    "topic": "xaga 的 ACCDET DT 契约（6.12 与 5.10 逐字段一致）",
+    "why": "mt6368.dtsi:9-11 确认 second_pmic@5 / reg=<0x5 SPMI_USID>（SID 5）；:22-45 accdet 节点给出 headset-three-key-threshold=<0 80 220 400>（与任务背景的 3-key 80/220/400 mV 完全一致）、headset-four-key-threshold、headset-mode-setting 15 个值、accdet-mic-vol=8(2.8V)、mic-mode=2。xaga-mt6895.dtsi:619-627 的板级覆盖只有 mic-vol 与 mic-mode 两项 —— xaga 没改阈值。",
+    "key_file": "kernel_device_modules-6.12/arch/arm64/boot/dts/mediatek/mt6368.dtsi:9-45、xaga-mt6895.dtsi:619-627",
+    "evidence": "mt6368.dtsi:10-11 reg=<0x5 SPMI_USID>；:36 headset-three-key-threshold=<0 80 220 400>；:37 <0 121 192 600>；:38 <0 58 121 192 400>；xaga-mt6895.dtsi:619-627 只覆盖 accdet-mic-vol 与 accdet-mic-mode",
+    "action": "阈值用 80/220/400 mV；不要以为是 xaga 定制的。",
+    "cross_model": "可跨：DT 数值就是硬件配置值"
+  },
+  {
+    "repo": "xiaomi-mediatek-devs/mt6895_eng_preloaders",
+    "grade": "A",
+    "topic": "签名的 xaga 工程 preloader（唯一一份 xaga 自己的 bootloader 二进制）",
+    "why": "preloader_xaga_eng.bin 492,172 B，sha1 4a7486c4...，README 标注 Signed。strings（4,745 条）显示 preloader 阶段就初始化了 GPU 的三路 PLL（mfg_pll_ctrl / gpueb_pll_ctrl / mfgsc_pll_ctrl 并存）、做 gpu_init_opp 与 gpu_avs_adjustment（OPP 来自 efuse 并与 signed-off 比对）、有 spm_mtcmos_ctrl_mfg0_shutdown / mfg1 与 'MTCMOS hang at %s flow step %d'、有 'XPU_PWR_STATUS, MFG0/1 abnormal' 检查、有完整的 PMIF 事务日志格式。地址扫描命中 0x1c001eb8(MFG0_PWR_CON) 与 0x1c001ebc(MFG1_PWR_CON) 各一处。",
+    "key_file": "preloader_xaga_eng.bin（strings 副本：raw/xaga-devs/preloader/preloader_xaga_eng.strings.txt）",
+    "evidence": "strings:2737 gpu_init_opp；:2739-2740 OPP critical Volt / efuse freq 比对；:2741 gpu_avs_adjustment；:3752-3753 XPU_PWR_STATUS MFG0/MFG1 abnormal；:3757-3759 mfg_pll_ctrl/gpueb_pll_ctrl/mfgsc_pll_ctrl；:3975-3977 spm_mtcmos_ctrl_mfg0_shutdown/mfg1/MTCMOS hang；:4006-4014 PMIF swinf 事务日志与 'Latest cmd lists before reboot'；字节扫描 0x1c001eb8@0x41dbc、0x1c001ebc@0x4628c",
+    "action": "①确认裸机起来时 GPU 三路 PLL 已在跑——不要重配 PLL；②MFG0/1 的 MTCMOS 可能已被 preloader 动过，读 0x1C001EB8/0x1C001EBC 拿基线；③这条也是灾难恢复路径（签名工程 preloader）。",
+    "cross_model": "完全可跨：bootloader 行为事实"
+  },
+  {
+    "repo": "BkaNeko/panvk-mtk-driver",
+    "grade": "B+",
+    "topic": "panvk 在 MTK kbase 上的适配（与 CSF 启动无关，但有两条可借的教训）",
+    "why": "10★。它不是 GPU 驱动，是把 Mesa panvk 接到 MTK kbase 上替代原厂 vulkan.mali.so。核心修 AFBC modifier/4096 对齐、SF RenderEngine DEVICE_LOST、作业超时挂起（去掉 userspace doorbell 快路径，总是 kick 调度器，超时 10s→120s）。对我们的直接价值只有两条：①'某些 MTK 内核声称 CSF uAPI≥1.9 却没实现 MEM_ALLOC_EX' → 版本号≠能力；②'doorbell 在 active→idle 切换会丢作业' → CSF doorbell 无排队语义，响之前必须先写好 req。",
+    "key_file": "README.md、patches/panvk_mtk.patch:32-34、:172-250",
+    "evidence": "README.md 'GPU 作业超时挂起（kick 竞态）... doorbell 会在 active→idle 切换时丢作业'；patches/panvk_mtk.patch:32-34 'Some MediaTek kernels report a CSF uAPI >= 1.9 yet do not implement MEM_ALLOC_EX'；:207 'kbase_kmod_csf_queue_kick'",
+    "action": "不要指望它解决 CSF 启动（它假设 kbase 已经能跑作业）。借两条教训：版本号不可信；doorbell 要在 req 写好之后再响。",
+    "cross_model": "大部分不可跨（Android HAL/AFBC/gralloc）；两条教训可跨"
+  },
+  {
+    "repo": "wxcvm/panvk-pgkm10",
+    "grade": "B",
+    "topic": "同 SoC（MT6895/G610 MC6）的第二份 panvk 实证",
+    "why": "0★但内容扎实：OnePlus PGKM10 / MT6895 / Mali-G610 MC6 / Android 17，基于 zenithblue-oss/panvk-kbase-android RC3 + patches 019-021 + diagnostics 022-030。与 bkaneko 那份同族（AFBC 对齐、kbase sync、gralloc_extra 误当 DMA-BUF）。结论是「游戏能显示但闪烁/重影，浏览器未通过」。唯一价值：独立确认 xaga 同 SoC 的 GPU 在 Android 下工作正常。",
+    "key_file": "README.md、patches/019-anb-import-fd-discovery.patch、diagnostics/025-afbc-body-alignment-diagnostic.patch",
+    "evidence": "README.md:5-8 目标设备 MT6895/Mali-G610 MC6/Android 17；README.md:57-62 '系统 native-buffer 路径误把 gralloc_extra 当作 DMA-BUF'；README.md 尾部 '星穹铁道已确认实际使用新版 Vulkan 并能显示画面，但仍有闪烁、重影或错位'",
+    "action": "不需要深入。已验证同 SoC GPU 硬件正常，我们的问题在上电/固件侧而非硬件缺陷。",
+    "cross_model": "不可跨"
+  },
+  {
+    "repo": "BkaNeko/xaga-mali-r54-port",
+    "grade": "B+",
+    "topic": "固件格式与 OPP 表（已在手，此处只补齐可复验的偏移）",
+    "why": "firmware/README.md 给出：mali_csffw.bin 282,624 B / UK 1.38 / 需与 r54p1 用户态+内核严格配对；gpueb_stock.bin 1,048,576 B，头 0x00 88 16 88 58 / 0x04 2c ef 01 00 / 0x08 'tinysys-gpueb-RV33_A'，未加密无签名；实际数据约 96 KB（0x0-0x17000），其余 0xFF；OPP 表在 0x15d60，6 项 × 24 B；固件选档循环 i>0 把 index 0 永久排除（旧 5 档表错位一格）。",
+    "key_file": "firmware/README.md（全文已拷 raw/xaga-devs/gpueb-ipi/README-firmware.md）",
+    "evidence": "README-firmware.md 固件头三行；OPP 表六档 950000/880000/800000/610000/430000/350000；'for (i = min_oppidx; i > 0; i--)'；5 字节补丁 0x15d78 与 0x15d80",
+    "action": "备查。注意 GPUEB 固件只管 DVFS，不写 SPM（见 GPUEB.zh-CN.md:305-330）。",
+    "cross_model": "可跨（固件格式是事实）；OPP 补丁与我们无关"
+  },
+  {
+    "repo": "woaphone/xnu-mtk + woaphone/UniXNU-rothko",
+    "grade": "B+",
+    "topic": "另一条 MTK XNU 路线（MT6989）的 GPU 状态：planned，零实现",
+    "why": "woaphone 34 个仓库里没有一个 GPU 仓库。但 UniXNU-rothko 的 porting.toml 把 GPU 明确标成 status='planned'、components=[]，并在 findings/limits 里写 'No native GPU driver, firmware contract or device rendering trace is recorded in this repository'，procedure 里写 'do not import Qualcomm GMU terminology as a MediaTek hardware fact'。这是对我们优先级判断的独立佐证：整条 MTK-XNU 生态都还没解决 CSF。",
+    "key_file": "UniXNU-rothko/porting.toml:128-140、README.md（已拷 raw/xaga-devs/lk-zhao/README-UniXNU-rothko.md）",
+    "evidence": "porting.toml:129-131 id='gpu' status='planned' components=[]；:136 'The MT6989 common repository intentionally exports no GPU, SMMU, firmware or Metal policy.'；:138 'No native GPU driver, firmware contract or device rendering trace is recorded'",
+    "action": "不要指望从 woaphone 拿 GPU 答案。它的价值在 bootchain（NoGZ/EL2/dtbo）与 XNU 移植方法学。",
+    "cross_model": "方法学可跨；无 GPU 内容"
+  },
+  {
+    "repo": "woaphone/mtk-mod-tee-nogz",
+    "grade": "B",
+    "topic": "EL 级别：LK 进 EL1h / 内核交接到 EL2h（含 xaga 精确 profile）",
+    "why": "6★。唯一有 xaga 精确 TEE/LK 配对 SHA-256 profile 的公开工具（references/profiles.json）。它做的是改 tee.img 里 ATF 的启动交接，保持 LK 进 EL1h、AArch64 内核交接到 EL2h，并同步 ATF/LK 共享的 GZ-info tag。三条反例很有价值：①D2A21E08 实际装入 0x10f00000 而非 0x50f00000，正确编码 D2AA1E08；②原版 LK 的 EL2 入口路径会访问 CPTR_EL3，不能把 LK 和内核一并强制 EL2h；③只改 ATF 的 GZ getter 不改共享 tag 无效。",
+    "key_file": "README.md（已拷 raw/xaga-devs/lk-zhao/README-mtk-mod-tee-nogz.md）、references/profiles.json、docs/technical-guide.md",
+    "evidence": "README.md 支持范围表含 xaga（Redmi Note 11T Pro 的 TEE/LK 配对，按完整 SHA-256 匹配）；'保持 LK 进入 EL1h、AArch64 内核交接到 EL2h，并同步 ATF/LK 共享的 GZ-info tag'；三条反例逐条列出",
+    "action": "先确认我们的 loader 出来时是 EL1 还是 EL2。若 ATF 把我们放在 EL2，stage-2 可能把 GPU 的 MMIO 或 DMA 挡掉——这是能单独解释「寄存器读得到但设备不工作」的一个层。不要刷 TEE。",
+    "cross_model": "部分：EL 级别结论可跨；patch 工具不可用"
+  },
+  {
+    "repo": "R0rt1z2/fenrir",
+    "grade": "B",
+    "topic": "MTK bootchain 的 bl2_ext 未校验漏洞（含 xaga payload）",
+    "why": "616★ 但仓库已归档。核心：unlocked(seccfg) 时 Preloader 跳过 bl2_ext 校验，而 bl2_ext 在 EL3 跑并负责后续一切，patch 它则整链崩塌。仓库里有 bin/xaga.bin。作者自评「只有 cert bypass 那部分真正有价值」。",
+    "key_file": "README.md（已拷 raw/xaga-devs/lk-zhao/README-fenrir.md）、bin/xaga.bin",
+    "evidence": "README.md:20-32 'When the bootloader is unlocked (seccfg), the Preloader skips verification of the bl2_ext partition'；正常/利用 boot chain 两张 mermaid 图；'This repository is deprecated and archived'",
+    "action": "只作为 bootchain 理解，不要用于刷机。",
+    "cross_model": "理解可跨；工具不用"
+  },
+  {
+    "repo": "LieppOS/LieppOS-ulefone-gq5012bf1-research",
+    "grade": "C+",
+    "topic": "MT6369 的寄存器→宏映射表（不是 6368，不是实机值）",
+    "why": "唯一一份把 MT63xx 音频寄存器整理成表的逆向材料：reverse-engineering/audio/mt6369/registers.tsv，列为 address / macro / source / references，例如 0x230c MT6369_AUD_TOP_CKPDN_CON0 mt6369.c 15。但是 MT6369 不是 MT6368，且内容是宏映射不是实机读数。",
+    "key_file": "reverse-engineering/audio/mt6369/registers.tsv",
+    "evidence": "registers.tsv 首行 'address\tmacro\tsource\treferences'；0x1108 AUXADC_RQST_CH5_ADDR mt6369-accdet.c 2；0x230c MT6369_AUD_TOP_CKPDN_CON0 mt6369.c 15；0x2319 RG_ACCDET_RST_ADDR mt6369-accdet.c 6",
+    "action": "可作为 MT63xx 家族寄存器布局的旁证，但不要当 6368 的真值。真正的 6368 表已在 raw/mt6368.h 解完。",
+    "cross_model": "映射可跨（同族布局）；数值需对 6368 复核"
+  },
+  {
+    "repo": "OnePlusOSS/android_kernel_5.10_oneplus_mt6895",
+    "grade": "C+",
+    "topic": "同 SoC 的第二份上游 OSS 内核（accdet 第二来源，未读）",
+    "why": "35★，oneplus/mt6895_s_12.1_oneplus_ace_race，2026-09-17 更新。GitHub code search 显示它含 sound/soc/codecs/mt6368-accdet.c 与 mt6369-accdet.c。是 xaga 之外同 SoC 的独立厂商树，可用来交叉验证 accdet 是否有板级差异。",
+    "key_file": "sound/soc/codecs/mt6368-accdet.c、sound/soc/codecs/mt6368.h",
+    "evidence": "gh api repos/OnePlusOSS/android_kernel_5.10_oneplus_mt6895 → 35★ / oneplus/mt6895_s_12.1_oneplus_ace_race / size 1975353；code search 'mt6368 accdet' 命中其 sound/soc/codecs/mt6368-accdet.c",
+    "action": "本次未读。若 5.10 与 6.12 的 accdet 出现分歧，用这份做第三方仲裁。",
+    "cross_model": "寄存器语义可跨"
+  },
+  {
+    "repo": "search: GitHub code search（4 组查询）",
+    "grade": "N/A（阴性结论）",
+    "topic": "ACCDET 的实机寄存器 dump 全网不存在",
+    "why": "跑了 0x26b6 accdet(328 命中) / ACCDET_IRQ+0x26a9(268) / cur_AB accdet(524) / mt6368 accdet(1244) 四组查询，前 20 条逐条看，全部是驱动源码/头文件/regmap 定义（MotorolaMobilityLLC、OnePlusOSS、NothingOSS、Rohail33、XagaForge、MT6895-Mainline、realme、physwizz 等），零日志/零 dump/零 issue。唯一接近的是 MT6369 的宏映射表。",
+    "key_file": "N/A",
+    "evidence": "gh api search/code?q=... 的 total_count 与 items 列表；无一条是 .log/.txt dump 或 issue",
+    "action": "确认「从未在真机读到过」不是我们漏找——确实没人公开过。第一次读出来的值就是全网第一份，值得完整记录（按报告 §4.3 的 24 个寄存器清单）。",
+    "cross_model": "N/A"
+  }
+]
