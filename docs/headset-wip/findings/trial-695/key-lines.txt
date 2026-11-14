@@ -1,0 +1,30 @@
+com.apple.xpc.launchd|1970-01-01 08:00:20.887129 <Notice>: boot-args = rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=0 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=0 mali_mcuwin=0 mali_mcuseq=0 mali_doorbell=0 mali_pdcsettle=0 mali_statussem=0 mali_assorder=1 mali_trial=695 mali_nopdc=1 headset=1 loader_return_after=150 hakios_kver=2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty
+[   34.006430]: mali: pdc setup skipped (mali_nopdc=1); inherited values unchanged
+[   34.006435]: mali: pdc: sc0 0 sc9 0 cg 0 st0 0 st4 0 st6 0
+[   34.006440]: mali: after pdc: mfg5 0xc000000d mfg6 0xc000000d mfg10 0xc000000d mfg12 0xc000000d
+[   34.006445]: mali: pwr status 0x1fc / 0x1fc (scpsys 0xF34/0xF38), gpufreq 0x3ffc (0xF3C); want 0x3ffc
+[   34.104025]: mali: AS0 step idle      mmu irq 0
+[   34.104047]: mali: AS0 step transcfg  mmu irq 0
+[   34.104067]: mali: AS0 step transtab  mmu irq 0
+[   34.104087]: mali: AS0 step memattr   mmu irq 0
+[   34.104104]: mali: as_enable trial 695: AS0 applied Android order (CFG->TAB->ATTR)
+[   34.104117]: mali: AS0 readback: transtab 0x1a6d70000 memattr 0x84c8d888d8f88 transcfg 0x42000006
+[   34.104130]: mali: AS0 step update    mmu irq 0x10000
+[   34.104141]: mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 695
+[   34.104153]: mali: AS0 enabled: root 0x1a6d70000 transcfg 0x42000006
+[   34.104161]: mali: mmu irq 0x10000 just after AS0 took the update
+[   34.260995]: mali: sentinel 0xff5aa5f0 written to the version word
+[   34.370527]: mali: MCU status 0 before the start request
+[   34.710644]: mali: jobirq probe trial 695 before AUTO spin 0: raw 0/0 stat 0 mask 0xffffffff raw_same 1
+[   34.712701]: mali: jobirq probe trial 695 sample spin 0: raw 0/0 stat 0 mask 0xffffffff raw_same 1
+[   34.721131]: mali: jobirq probe trial 695 sample spin 1000: raw 0/0 stat 0 mask 0xffffffff raw_same 1
+[   35.357387]: mali: jobirq probe trial 695 sample spin 100000: raw 0/0 stat 0 mask 0xffffffff raw_same 1
+[   38.881458]: mali: jobirq probe trial 695 sample spin 500000: raw 0/0 stat 0 mask 0xffffffff raw_same 1
+[   44.279980]: mali: the start loop ended after 1000000 spins (halt seen 0, fatal seen 0)
+[   44.280742]: mali: jobirq probe trial 695 loop end before any boot-success clear spin 1000000: raw 0/0 stat 0 mask 0xffffffff raw_same 1
+[   44.345824]: mali: MCU status 1 (raw state 1; boot unproven), job irq 0, gpu irq 0
+[   44.350262]: mali: gpu fault 0 at 0; shader ready 0 tiler ready 0 l2 ready 0x1
+[   44.352825]: mali: clock check: cycle 0xae473bbc -> 0xae4c7b83, timestamp 0x225d8280 -> 0x225dbcbf
+[   44.354111]: mali: version word 0xff5aa5f0 (untouched; no firmware version published) trial 695
+[   44.357979]: mali: the global interface never raised; the MCU did not boot
+[   44.364731]: mali: gpu fault 0 at 0 0; timestamp 0x3
