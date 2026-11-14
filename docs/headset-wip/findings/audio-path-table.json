@@ -11,7 +11,7 @@
   "model": "MT6685"
  },
  "mt6895_afe": "0x1e100000",
- "count": 93,
+ "count": 92,
  "entries": [
   {
    "seq": 0,
@@ -131,35 +131,18 @@
    "reg": "0x1c804000",
    "sid": 5,
    "addr": "0x230c",
-   "mask": "0x48",
+   "mask": "0x66",
    "value": "0x00",
    "delay_us": 0,
-   "reason": "sound/soc/codecs/mt6368.c:171-175 (mask 0x66); sound/soc/codecs/mt6368.h:589,592",
+   "reason": "sound/soc/codecs/mt6368.c:171-175 (mt6368_set_topck, mask 0x66/val 0x0); sound/soc/codecs/mt6368.h:589,592,595,598",
    "depends": [
     "layer1"
    ],
    "source_kind": "src",
-   "note": "AUDNCP_CK(bit6)+ZCD13M_CK(bit5) 解 PDN"
+   "note": "AUD_TOP_CKPDN_CON0 一次性解 4 个时钟 PDN：AUDNCP_CK(bit6)、ZCD13M_CK(bit5)、AUDIF_CK(bit2)、AUD_CK(bit1)。源码即 mask 0x66 / val 0x0"
   },
   {
    "seq": 8,
-   "layer": 2,
-   "bus": "spmi",
-   "reg": "0x1c804000",
-   "sid": 5,
-   "addr": "0x230c",
-   "mask": "0x06",
-   "value": "0x00",
-   "delay_us": 0,
-   "reason": "sound/soc/codecs/mt6368.c:171-175 (mask 0x66); sound/soc/codecs/mt6368.h:595,598",
-   "depends": [
-    "layer1"
-   ],
-   "source_kind": "src",
-   "note": "AUD_CK(bit1)+AUDIF_CK(bit2) 解 PDN。本条与上一条合并等价源码 mask 0x66 / val 0x0"
-  },
-  {
-   "seq": 9,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -176,7 +159,7 @@
    "note": "AUDIO_TOP_CON0 全清（源码即 mask 0xff/val 0x00 + 250us）。必需的是 bit7 PDN_AFE_CTL / bit6 PDN_DAC_CTL / bit2 PWR_CLK_DIS / bit0 PDN_AFE_DL_PREDIST"
   },
   {
-   "seq": 10,
+   "seq": 9,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -193,7 +176,7 @@
    "note": "ESD_RESIST：RG_AUDREFN_DERES_EN bit0=1（降低 AU_REFN 的 ESD 电阻）+250us"
   },
   {
-   "seq": 11,
+   "seq": 10,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -210,7 +193,7 @@
    "note": "LDO(bit0)+LDO_REMOTE(bit2)=0x05：cap-less 1.5V LDO + remote sense（源码写 0x5）"
   },
   {
-   "seq": 12,
+   "seq": 11,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -227,7 +210,7 @@
    "note": "NV_REGULATOR(-1.2V) bit4=1（源码第二次写 0x15，最终值 0x15）"
   },
   {
-   "seq": 13,
+   "seq": 12,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -241,10 +224,10 @@
     "layer1"
    ],
    "source_kind": "src",
-   "note": "IBIST：清 RG_AUDIBIASPWRDN bit4"
+   "note": "IBIST：清 RG_AUDIBIASPWRDN bit4。注：其 DAPM subseq=SUPPLY_SEQ_DL_IBIST(27) 是最后一个；此处按 mt6368_rcv_dcc_set 的顺序提前，若严格照 DAPM 应放到 HP_ANA_TRIM 之后"
   },
   {
-   "seq": 14,
+   "seq": 13,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -261,7 +244,7 @@
    "note": "CCI_AFIFO_CLK_PWDB bit1=1（SDM FIFO 共享时钟）"
   },
   {
-   "seq": 15,
+   "seq": 14,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -278,7 +261,7 @@
    "note": "AFE_NCP_CFG1=0xC8（NCP 预充电，先写配置）"
   },
   {
-   "seq": 16,
+   "seq": 15,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -295,7 +278,7 @@
    "note": "AFE_NCP_CFG0=0x00（清 NCP_ON）"
   },
   {
-   "seq": 17,
+   "seq": 16,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -312,7 +295,7 @@
    "note": "NCP ON bit0=1（NCP widget 的寄存器位，DAPM 在 PRE_PMU 事件之后统一置位）"
   },
   {
-   "seq": 18,
+   "seq": 17,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -329,7 +312,7 @@
    "note": "AFE_UL_DL_CON0 bit0 = AFE_ON"
   },
   {
-   "seq": 19,
+   "seq": 18,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -346,7 +329,7 @@
    "note": "AFE_DL_SRC2_CON0 bit0 = DL_2_SRC_ON_TMP_CTL"
   },
   {
-   "seq": 20,
+   "seq": 19,
    "layer": 2,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -363,7 +346,7 @@
    "note": "MT6685(SID 9) XO_BBCK5_EN_M bit2=1：DCXO 26MHz 缓冲。CONFIG_MT6685_AUDCLK=m 在 xiaomi_mt6895.config 中开启 → 厂商路径确实写它。裸机是否必须【未验证】；SID9 不通时可跳过"
   },
   {
-   "seq": 21,
+   "seq": 20,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -380,7 +363,7 @@
    "note": "SDM step1：sdm audio fifo clock power on。必须 mask 0xfd（源码即 update_bits(0xfd)），bit1 属 SDM_FIFO_CLK 不能被抹掉"
   },
   {
-   "seq": 22,
+   "seq": 21,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -397,7 +380,7 @@
    "note": "SDM step2：scrambler clock on enable"
   },
   {
-   "seq": 23,
+   "seq": 22,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -414,7 +397,7 @@
    "note": "SDM step3：scrambler 使能"
   },
   {
-   "seq": 24,
+   "seq": 23,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -431,7 +414,7 @@
    "note": "SDM step4：sdm power on。0x2396 三写是阶段式，不可合并"
   },
   {
-   "seq": 25,
+   "seq": 24,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -448,7 +431,7 @@
    "note": "SDM step5：sdm fifo enable"
   },
   {
-   "seq": 26,
+   "seq": 25,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -465,7 +448,7 @@
    "note": "SDM_3RD(CH_3) step1。DACL/DACR 只挂 CH_1_2（mt6368.c:3897-3901），故本组对出声非必需，优先级低"
   },
   {
-   "seq": 27,
+   "seq": 26,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -482,7 +465,7 @@
    "note": "CH_3 scrambler clock"
   },
   {
-   "seq": 28,
+   "seq": 27,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -499,7 +482,7 @@
    "note": "CH_3 scrambler 使能"
   },
   {
-   "seq": 29,
+   "seq": 28,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -516,7 +499,7 @@
    "note": "CH_3 sdm power on"
   },
   {
-   "seq": 30,
+   "seq": 29,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -533,7 +516,7 @@
    "note": "CH_3 sdm fifo enable"
   },
   {
-   "seq": 31,
+   "seq": 30,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -550,7 +533,7 @@
    "note": "HP_PULL_DOWN widget(PRE_PMU)：RG_HPPSHORT2VCM 0→7，8 步 ×100-150us。DAPM supply subseq=5，在 CLKSQ 之前"
   },
   {
-   "seq": 32,
+   "seq": 31,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -567,7 +550,7 @@
    "note": "HP_MUTE widget(PRE_PMU)：HPL 先压到 -22dB（DL_GAIN_N_22DB_REG=index30<<7|30，mt6368.h:5932）"
   },
   {
-   "seq": 33,
+   "seq": 32,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -584,7 +567,7 @@
    "note": "HPR 同上"
   },
   {
-   "seq": 34,
+   "seq": 33,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -601,7 +584,7 @@
    "note": "CON23 bits[2:0]：DRBIAS_HP=5uA（DRBIAS_5UA=1）。hp_hifi_mode 默认 0，见 mt6368.c:5667"
   },
   {
-   "seq": 35,
+   "seq": 34,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -618,7 +601,7 @@
    "note": "CON25 bits[7:6]：IBIAS_ZCD=3uA（IBIAS_ZCD_3UA=0）"
   },
   {
-   "seq": 36,
+   "seq": 35,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -635,7 +618,7 @@
    "note": "CON25 bits[1:0]：IBIAS_HP=4uA（IBIAS_4UA=0）"
   },
   {
-   "seq": 37,
+   "seq": 36,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -652,7 +635,7 @@
    "note": "CON20=0x87：HP damp 使能 + HPLN/HPRN 输出 4K 接 VCM"
   },
   {
-   "seq": 38,
+   "seq": 37,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -669,7 +652,7 @@
    "note": "CON9=0x0：<96kHz 分支，HP feedback cap=15pF。若 dl_rate>=96k 改为 bit4=1（0x10）"
   },
   {
-   "seq": 39,
+   "seq": 38,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -686,7 +669,7 @@
    "note": "CON4=0x33：HPP/HPRN STB enhance"
   },
   {
-   "seq": 40,
+   "seq": 39,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -703,7 +686,7 @@
    "note": "CON5=0xF1：bit7 trim_en + bits[6:4] pull-down=7 + bit0 de-res（是层2 ESD 那条的超集，按序覆盖即可）"
   },
   {
-   "seq": 41,
+   "seq": 40,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -720,7 +703,7 @@
    "note": "CON3=0：输出级增益 step 先清 0"
   },
   {
-   "seq": 42,
+   "seq": 41,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -737,7 +720,7 @@
    "note": "CON2=0x0C：HP aux output stage"
   },
   {
-   "seq": 43,
+   "seq": 42,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -754,7 +737,7 @@
    "note": "CON2=0x3C：HP aux feedback loop"
   },
   {
-   "seq": 44,
+   "seq": 43,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -771,7 +754,7 @@
    "note": "CON18=0x00：HP aux CMFB loop"
   },
   {
-   "seq": 45,
+   "seq": 44,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -788,7 +771,7 @@
    "note": "CON19=0x0C"
   },
   {
-   "seq": 46,
+   "seq": 45,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -805,7 +788,7 @@
    "note": "CON1=0x30：HPL/HPR 短路保护 disable（bits[5:4]）"
   },
   {
-   "seq": 47,
+   "seq": 46,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -822,7 +805,7 @@
    "note": "CON0=0xC0：HP driver bias circuits"
   },
   {
-   "seq": 48,
+   "seq": 47,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -839,7 +822,7 @@
    "note": "CON0=0xF0：HP driver core circuits"
   },
   {
-   "seq": 49,
+   "seq": 48,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -856,7 +839,7 @@
    "note": "CON2=0xFC：main 短接 aux"
   },
   {
-   "seq": 50,
+   "seq": 49,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -873,7 +856,7 @@
    "note": "CON19=0x0E：main CMFB loop on"
   },
   {
-   "seq": 51,
+   "seq": 50,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -890,7 +873,7 @@
    "note": "CON19=0x02：aux CMFB loop off"
   },
   {
-   "seq": 52,
+   "seq": 51,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -907,7 +890,7 @@
    "note": "CON2=0xFF：HP main output stage on"
   },
   {
-   "seq": 53,
+   "seq": 52,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -924,7 +907,7 @@
    "note": "CON3 bits[2:0]+bits[6:4] 同步 0→7，8 步 ×600-650us（≈4.8-5.2ms）"
   },
   {
-   "seq": 54,
+   "seq": 53,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -941,7 +924,7 @@
    "note": "CON19 bits[7:4] 0→0xF，16 步 ×600-650us（≈9.6-10.4ms）"
   },
   {
-   "seq": 55,
+   "seq": 54,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -958,7 +941,7 @@
    "note": "CON2=0xCF：降低 aux feedback loop 增益"
   },
   {
-   "seq": 56,
+   "seq": 55,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -975,7 +958,7 @@
    "note": "CON3=0x77"
   },
   {
-   "seq": 57,
+   "seq": 56,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -992,7 +975,7 @@
    "note": "HPL 音量 -22dB→0dB 逐步 ramp：30→8，22 步 ×600-650us（≈13.2-14.3ms）。mask 0x0f9f 含 bits[11:7]，该 5 位 mt6368.h 无定义 → 语义需dump；bits[4:0]=RG_AUDHPLGAIN"
   },
   {
-   "seq": 58,
+   "seq": 57,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1009,7 +992,7 @@
    "note": "HPR 同上"
   },
   {
-   "seq": 59,
+   "seq": 58,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1026,7 +1009,7 @@
    "note": "CON2=0xC3：aux output stage off"
   },
   {
-   "seq": 60,
+   "seq": 59,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1043,7 +1026,7 @@
    "note": "CON2=0x03：解除 main 与 aux 短接 +100-120us"
   },
   {
-   "seq": 61,
+   "seq": 60,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1060,7 +1043,7 @@
    "note": "RG_RSTB_DECODER_VA32 bit0=1：放 AUD_CLK（decoder reset 释放）"
   },
   {
-   "seq": 62,
+   "seq": 61,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1077,7 +1060,7 @@
    "note": "CON1=0x30"
   },
   {
-   "seq": 63,
+   "seq": 62,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1094,7 +1077,7 @@
    "note": "CON0=0xFF：RG_AUDDACLPWRUP/RPWRUP + DAC_PWR_UP + HPL/HPR PWRUP + IBIAS 全开（位定义 mt6368.h:3366-3389）"
   },
   {
-   "seq": 64,
+   "seq": 63,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1111,7 +1094,7 @@
    "note": "CON18=0x00：hifi=0 → 关 DAC low-noise 模式"
   },
   {
-   "seq": 65,
+   "seq": 64,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1128,6 +1111,23 @@
    "note": "CON19=0xF2 +100-120us"
   },
   {
+   "seq": 65,
+   "layer": 3,
+   "bus": "spmi",
+   "reg": "0x1c804000",
+   "sid": 5,
+   "addr": "0x2589",
+   "mask": "0x03",
+   "value": "0x02",
+   "delay_us": 0,
+   "reason": "sound/soc/codecs/mt6368.c:1253-1255; sound/soc/codecs/mt6368.h:3392-3394",
+   "depends": [
+    "layer3:CON19d"
+   ],
+   "source_kind": "src",
+   "note": "CON1 bits[1:0]=HP_MUX_HP(2)：HPL MUX 切 DACL（源码 HPL 在 HPR 之前，1253 早于 1258）"
+  },
+  {
    "seq": 66,
    "layer": 3,
    "bus": "spmi",
@@ -1139,30 +1139,13 @@
    "delay_us": 0,
    "reason": "sound/soc/codecs/mt6368.c:1258-1260; sound/soc/codecs/mt6368.h:3395-3397",
    "depends": [
-    "layer3:CON19d"
+    "layer3:CON1c"
    ],
    "source_kind": "src",
    "note": "CON1 bits[3:2]=HP_MUX_HP(2)：HPR MUX 切 DACR"
   },
   {
    "seq": 67,
-   "layer": 3,
-   "bus": "spmi",
-   "reg": "0x1c804000",
-   "sid": 5,
-   "addr": "0x2589",
-   "mask": "0x03",
-   "value": "0x02",
-   "delay_us": 0,
-   "reason": "sound/soc/codecs/mt6368.c:1253-1255; sound/soc/codecs/mt6368.h:3392-3394",
-   "depends": [
-    "layer3:CON1c"
-   ],
-   "source_kind": "src",
-   "note": "CON1 bits[1:0]=HP_MUX_HP(2)：HPL MUX 切 DACL。注意本分支由 MUX 值决定，xaga 走 Audio Playback(=2)"
-  },
-  {
-   "seq": 68,
    "layer": 3,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1179,7 +1162,7 @@
    "note": "hp_pull_down(false)：bits[6:4] 7→0，8 步 ×100-150us"
   },
   {
-   "seq": 69,
+   "seq": 68,
    "layer": 4,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1196,7 +1179,7 @@
    "note": "SGEN_CFG0 清 0（bit7 DAC_EN=0 / bit6 MUTE=0 的初值，位定义 mt6368.h:1565-1583）"
   },
   {
-   "seq": 70,
+   "seq": 69,
    "layer": 4,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1213,7 +1196,7 @@
    "note": "SGEN_CFG1：PMIC6368_C_AMP_DIV_CH1_CTL(bits[3:0])=1。放大倍率换算表源码未给 → 【需dump/实测】"
   },
   {
-   "seq": 71,
+   "seq": 70,
    "layer": 4,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1230,7 +1213,7 @@
    "note": "SGEN_CFG2：FREQ_DIV_CH1_CTL(bits[4:0])=0。频率换算表源码未给 → 【需dump/实测】"
   },
   {
-   "seq": 72,
+   "seq": 71,
    "layer": 4,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1247,7 +1230,7 @@
    "note": "SGEN_CFG0 bit7 PMIC6368_C_DAC_EN_CTL=1：SGEN 的 DAC 使能（DAPM 在 PRE_PMU 之后置位）"
   },
   {
-   "seq": 73,
+   "seq": 72,
    "layer": 4,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1264,7 +1247,7 @@
    "note": "bit6 MUTE_SW=0 即不静音。第 1 笔已整字节写 0x00，本条幂等，列此仅为对齐 widget 语义"
   },
   {
-   "seq": 74,
+   "seq": 73,
    "layer": 4,
    "bus": "spmi",
    "reg": "0x1c804000",
@@ -1282,7 +1265,7 @@
    "note": "【路径a最后一步】AFE_TOP_CON0 bit0=1：DAC 输入从 AIF_RX 切到内部正弦发生器。写完这一笔才可能有声音"
   },
   {
-   "seq": 75,
+   "seq": 74,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1299,7 +1282,7 @@
    "note": "AFE_DAC_CON0.AFE_ON bit0=1。AFE base 0x1e100000 见 mt6895.dtsi:2523-2527"
   },
   {
-   "seq": 76,
+   "seq": 75,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1316,7 +1299,7 @@
    "note": "AFE_DL1_CON0 字段 MODE[27:24]/MINLEN[23:20]/MAXLEN[19:16]/PBUF[13:12]/MONO[8]/HD[1:0]。48k 的 MODE 编码与 MINLEN/PBUF 源码无表 → 需dump"
   },
   {
-   "seq": 77,
+   "seq": 76,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1333,7 +1316,7 @@
    "note": "AFE_DL1_BASE：环形缓冲物理地址低 32 位"
   },
   {
-   "seq": 78,
+   "seq": 77,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1350,7 +1333,7 @@
    "note": "AFE_DL1_END"
   },
   {
-   "seq": 79,
+   "seq": 78,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1367,7 +1350,7 @@
    "note": "AFE_AGENT_ON bit4=1：DL1 memif 使能"
   },
   {
-   "seq": 80,
+   "seq": 79,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1384,7 +1367,7 @@
    "note": "AFE_CONN3 bit5：DL1_CH1→ADDA_DL_CH1（I_DL1_CH1=5，见 mt6895-interconnection.h:20）"
   },
   {
-   "seq": 81,
+   "seq": 80,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1401,7 +1384,7 @@
    "note": "AFE_CONN4 bit6：DL1_CH2→ADDA_DL_CH2（I_DL1_CH2=6）"
   },
   {
-   "seq": 82,
+   "seq": 81,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1418,7 +1401,7 @@
    "note": "AFE_ADDA_UL_DL_CON0 bit0 = ADDA_AFE_ON"
   },
   {
-   "seq": 83,
+   "seq": 82,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1435,7 +1418,7 @@
    "note": "AFE_ADDA_DL_SRC2_CON0 中源码明确的位：OUTPUT_SEL[25:24]=3(UP_SAMPLE_X8)、MUTE_CH1/2_OFF[13:12]=1、GAIN_ON[1]+SRC_ON[0]=1"
   },
   {
-   "seq": 84,
+   "seq": 83,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1452,7 +1435,7 @@
    "note": "同寄存器 RATE[31:28]=DL_2_INPUT_MODE_CTL。48k 的 MTK_AFE_ADDA_DL_RATE_48K 宏值引用处 mt6895-dai-adda.c:113 但定义未取到 → 需dump"
   },
   {
-   "seq": 85,
+   "seq": 84,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1469,7 +1452,7 @@
    "note": "AFE_ADDA_DL_SRC2_CON1：DL_2_GAIN_CTL_PRE[23:16]，MTK_AFE_ADDA_DL_GAIN_NORMAL 取值未取到 → 需dump"
   },
   {
-   "seq": 86,
+   "seq": 85,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1486,7 +1469,7 @@
    "note": "AFE_AUD_PAD_TOP bit0 RG_RX_FIFO_ON：MTKAIF RX fifo on"
   },
   {
-   "seq": 87,
+   "seq": 86,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1503,7 +1486,7 @@
    "note": "AFE_ADDA_MTKAIF_CFG0（AFE 侧）。源码是 if/else 分支，DL 取哪支需运行时条件 → 需dump。参照 codec 侧 0x23bc 在同协议下写 0x10（mt6368.c:189-191）"
   },
   {
-   "seq": 88,
+   "seq": 87,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1520,7 +1503,7 @@
    "note": "AFE_IRQ_MCU_CON0 bit0 IRQ0_MCU_ON（DL1 用 IRQ0，见 mt6895-afe-pcm.c:2962）"
   },
   {
-   "seq": 89,
+   "seq": 88,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1537,7 +1520,7 @@
    "note": "AFE_IRQ_MCU_EN bit0：IRQ 送 AP"
   },
   {
-   "seq": 90,
+   "seq": 89,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1554,7 +1537,7 @@
    "note": "AFE_IRQ_MCU_CNT0：IRQ0 周期计数，按 period size 计算"
   },
   {
-   "seq": 91,
+   "seq": 90,
    "layer": 4,
    "bus": "mmio",
    "reg": "0x1e100000",
@@ -1571,7 +1554,7 @@
    "note": "AFE_IRQ_MCU_CLR bit0：清 IRQ0 状态（W1C）"
   },
   {
-   "seq": 92,
+   "seq": 91,
    "layer": 5,
    "bus": "spmi",
    "reg": "0x1c804000",
