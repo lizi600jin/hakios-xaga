@@ -1,0 +1,32 @@
+[
+  {
+    "local_path": "/tmp/kenmali",
+    "commit": "7167b67ccb20d6c8a29260c0bb1ee30d487617f5",
+    "source_url": "https://github.com/Ken-u/Mali.git"
+  },
+  {
+    "local_path": "/tmp/r54",
+    "commit": "1350bc1e7be56e2281bbab8b806aa34c88fb21ec",
+    "source_url": "https://github.com/bkaneko/xaga-mali-r54-port.git"
+  },
+  {
+    "local_path": "/tmp/mt6895-mainline",
+    "commit": "25fd36e67958d96086b8542340477948ab40c2a2",
+    "source_url": "https://github.com/MT6895-Mainline/linux"
+  },
+  {
+    "local_path": "/tmp/gpueb/ml",
+    "commit": "25fd36e67958d96086b8542340477948ab40c2a2",
+    "source_url": "https://github.com/MT6895-Mainline/linux.git"
+  },
+  {
+    "local_path": "/home/lizi/IOS/work-xaga/k-xaga",
+    "commit": "0a8d13c1a180fed82803f56337a0b065ff704fb4",
+    "source_url": "https://github.com/XagaForge/android_kernel_xiaomi_mt6895.git"
+  },
+  {
+    "local_path": "/home/lizi/IOS/work-xaga/research/raw/MaliMetal-main",
+    "commit": null,
+    "source_url": "archive; see project metadata"
+  }
+]

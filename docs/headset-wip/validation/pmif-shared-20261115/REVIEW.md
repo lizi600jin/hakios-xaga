@@ -1,3 +1,5 @@
+> 本审阅记录冻结于构建完成时；其中“未commit/22项未暂存”描述当时状态。之后已本地保存为c9b4632并推送源码导出5606fa8，详见最新交接；真实手机验证仍未进行。公开源码按source-export.json重建，本机review-tree未上传。
+
 B1+B3 共享集成已完成离线验证，供 DSH 独立复核。未执行任何设备命令、未刷机、未 commit。
 
 kernel.bin SHA256：9dc40973afff3cf1551275d2da0fe80b8b4e9aa3089d32e1bcf1b26941cf191a

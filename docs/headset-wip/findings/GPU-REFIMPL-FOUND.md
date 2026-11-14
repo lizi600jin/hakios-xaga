@@ -69,7 +69,7 @@ global interface config + ping ACKNOWLEDGED (req 0x10e ack 0x10e)
 | 项 | 我们 | `Ken-u/Mali` | 判定 |
 |---|---|---|---|
 | `MCU_STATUS` | `1` | `1` | **相同** |
-| `JOB_INT` raw | **bit31 从不置位** | **`0x80000000`（bit31 置位）** | 🔴 **决定性差异** |
+| `JOB_INT` | **当前轮询INT_STATUS(0x100c)未见bit31；RAW需补采** | **`0x80000000`（bit31 置位）** | 🔴 **决定性差异** |
 | `AS_TRANSCFG` | `0x42000006` | **`0x420001c6`** | 🔴 差 `0x1c0` |
 | `AS_MEMATTR` | `0x00084c8d888d8f88` | **`0x4c4c4c4c9c4c9f4c`** | 待比 |
 | 固件大小 | `258048` | `274432` | 不同 |

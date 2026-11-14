@@ -2,7 +2,7 @@
 
 把 Apple 开源的 XNU 内核和 iOS 16.5 用户态跑在联发科天玑 8100 上。目标机 Redmi Note 11T Pro（`xaga`，MT6895），已点亮桌面。
 
-> 2026-11-15 源码快照：共享 PMIF 串行化、日志持久化修复和 `headset=1` 的129项纯读已通过宿主模型与内核构建，**该版本尚未刷机**。`headset=2` 的 VAUD18/时钟前置仍待补，GPU 也尚无固件发布版本或 GLOBAL_IF 的证据。验证范围与镜像哈希见 [本轮审阅记录](docs/headset-wip/validation/pmif-shared-20261115/REVIEW.md)；下文各轮实验保留为历史记录。
+> 2026-11-15 源码快照：共享 PMIF 串行化、日志持久化修复和 `headset=1` 的129项纯读已通过宿主模型与内核构建，**该版本尚未刷机**。`headset=2` 的 VAUD18/时钟前置仍待补，GPU 也尚无固件发布版本或 GLOBAL_IF 的证据。最新状态先读 [交接文件](docs/headset-wip/HANDOFF-CODEX-20261115-0132.md)；验证范围与镜像哈希见 [本轮审阅记录](docs/headset-wip/validation/pmif-shared-20261115/REVIEW.md)；下文各轮实验保留为历史记录。
 
 <p align="center">
   <img src="docs/hero.png" alt="HakiOS on MT6895：iOS 16.5 桌面真的跑在 Redmi Note 11T Pro 上" width="100%">

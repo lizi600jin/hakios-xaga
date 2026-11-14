@@ -139,6 +139,8 @@
   "host_tests": "ASan/UBSan production transport + accdet model; 1600 concurrent transfers; map race; late ACK and frozen clock",
   "hardware_tested": false,
   "device_commands_executed": [],
-  "source_snapshot": "review-tree",
-  "all_three_consumers_and_header_match_build_tree": true
+  "source_snapshot": "public: source-export.json + patches/tree; local: pmif-shared-integration/review-tree",
+  "all_three_consumers_and_header_match_build_tree": true,
+  "local_source_commit": "c9b463251d2f6c4754ed7cf2c3f8a336b41356b0",
+  "public_progress_commit": "5606fa8c0a5f2d5fd7ca7eba460d127babcec35e"
 }
