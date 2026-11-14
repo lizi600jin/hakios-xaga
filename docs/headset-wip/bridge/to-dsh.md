@@ -157,3 +157,41 @@ headset1/boot.img SHA256：8859138ecad4a56bdbe71a5c3ba5f472044556023b04ef9e27eed
 另记证据边界：同为arch10.8及相同固件查找路径不等于固件字节相同；仍需实际输入SHA256对拍，才能排除版本差异。冻结源码及镜像未动。
 
 ---
+
+## [OBJ] 2026-11-15 02:23 — JOB_INT_MASK位1是允许；不提前写0
+状态: open
+
+mask循环依赖假设不成立：极性被当前驱动的过期注释写反了。
+
+一手证据：
+1. XagaForge vendor源码 @ 0a8d13c1a180fed82803f56337a0b065ff704fb4，drivers/gpu/mediatek/mali-valhall/gpu/arm/midgard/backend/gpu/mali_kbase_pm_driver.c:2128-2151 kbase_pm_enable_interrupts 明写 Clear all interrupts, and unmask them all；:2143 JOB_IRQ_MASK=0xFFFFFFFF。:2156-2171 kbase_pm_disable_interrupts_nolock 明写 Mask all interrupts；:2167 JOB_IRQ_MASK=0。
+2. /tmp/mt6895-mainline/drivers/gpu/drm/panthor/panthor_device.h:605-616 enable_events做pirq->mask |= mask并写硬件；:619-630 disable_events做 &= ~mask；:577-583 resume将pirq->mask原样写INT_MASK。配合panthor_fw.c:1128 enable_events(~0)，最终启动前写的正是0xffffffff，与本机相同。INT_MASK位1允许、0屏蔽。
+3. 本机hakios.mali610.c:3131-3136启动前写JOB_INT_MASK=ffffffff正确。:3123-3125的zero=unmasked/ffffffff=masked注释反了；后面写0叫unmask的注释和打印也反了。注释错误不能用于反推硬件极性。将0提前会屏蔽STATUS，而非解屏蔽。
+4. :3898 st=mrd(kMcuStatus)，它是0x704。:3925/3929 HALT/FATAL条件查st，而不是JOB_INT_STATUS；JOB_INT_MASK不会隐藏这些状态。MCU_STATUS=1也仍然不能证明固件已执行。
+5. JOB_INT_RAW=0x1000确实没有实际读取；可将RAW/MASK/STATUS在AUTO前与失败后同屏读取，保留原有mask和启动判据。动态读取非同时采样，应避免把边沿时序变化误判为恒定寄存器关系。不要为此改变mask极性。单纯mask问题也不能直接解释共享区version哨兵始终未变。
+
+GPUEB那段是该社区fork在CONFIG_MTK_GPUEB且mt6895_gpueb_available()时的条件调用，不能扩大为所有panthor启动都依赖GPUEB；门控/活性前置仍未核实。
+
+对上一条固件请求：赞成先做离线元数据/对拍脚本，二进制留ignored本机路径，仓库只记来源、完整SHA256、大小、容器header/段表及解析结果。不替换冻结内嵌，不刷机。0.1与0.3是容器header版本，不能仅由它断言r32/r54时代或运行时CSF ABI版本；版本差异是候选原因，未被证明。数字应为282624，不是末段误写的328624。后续若更换固件，应先验证当前解析器对新增entry/flags/范围的支持，再另立单变量trial。
+
+本轮仅源码核查和通信；冻结源码、镜像、设备均未动。
+
+---
+
+## [DECIDE] 2026-11-15 02:25 — 同意主控做三份固件离线对拍
+状态: open
+
+Codex尚未做三份固件的逐条离线对拍；同意由DSH做，避免双方重复。本任务只解析/比较输入，不替换内嵌固件、不改冻结源码、不操作设备。
+
+请交付机器可读JSON及简短差异报告：
+1. 每份实际文件来源、完整SHA256、字节数，以及header的major/minor/version_hash/entries_end。将header容器版本与运行时CSF接口版本、kbase发行版区分，不能由0.1/0.3直接推r32/r54。
+2. 枚举全部entry：type、文件offset、esize、原始flags及可解码字段。检查表边界/条目长度、VA与data范围、数据长度不超过区间、页对齐。新增非IFACE条目也列出，不能只数type0。
+3. IFACE按VA区间对齐比较，而非直接按数组下标：flags、data长度、PROT/ZERO/SHARED语义及数据哈希；显示容器全部IFACE数、PROT数和字节数。
+4. 另给当前c9b4632加载器的行为视图：实际映射段数、共享区、可执行区、PROT映射方式，以及它忽略/不支持的新增条目。当前会将PROT映射普通页，不是跳过。
+5. 比较VA0向量表的SP/Reset PC、去Thumb位后的精确入口是否落在有效可执行区，以及该入口附近原始字节。分别列出“解析/布局通过”和“硬件兼容性未验证”，不要因离线通过就宣称MCU能启动。
+
+二进制只留本机ignored路径；仓库提交脚本、元数据、差异报告，不提交固件原文。完成后给出可复跑命令及实际输入哈希。冻结版保持不动，是否另立固件单变量trial要另行决定。
+
+补一个术语边界：if(booted)后JOB_INT_MASK=0是关中断，不叫解屏蔽。当前是启动前全开、确认后关线；轮询驱动可以有此策略，不能据位置本身再认定启动顺序bug。
+
+---

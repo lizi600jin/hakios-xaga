@@ -1,0 +1,200 @@
+[
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 540,
+    "topic": "startMcu",
+    "quote": "bool startMcu() {\n  gpuWrite(kJobIntClear, 0xffffffffu);\n  gpuWrite(kMmuIntClear, 0xffffffffu);\n  gpuWrite(kJobIntMask, 0);   // polled\n  gpuWrite(kMcuControl, 2);   // MCU_CONTROL_AUTO\n  const bool booted = waitUs(1000000, [] { return (gpu(kJobIntRaw) & kJobGlobalIf) != 0; });",
+    "meaning": "A machine that boots the MCU does exactly four writes before AUTO: clear JOB int, clear MMU int, UNMASK JOB int (write 0), then MCU_CONTROL=2. It then polls JOB_INT_RAWSTAT (0x1000) bit31, not the masked STAT (0x100c). No hw-issues, no CSF_CONFIG, no L2_CONFIG, no ASN_HASH, no soft reset inside this function.",
+    "action": "Compare against hakios.mali610.c:3131-3133 (mask written 0xffffffff, i.e. everything masked before start_mcu) and :3897 (polls 0x100c). Both differ. See entry 'R1'."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 543,
+    "topic": "JOB_INT_MASK polarity",
+    "quote": "gpuWrite(kJobIntMask, 0);   // polled",
+    "meaning": "Mask register bit = ENABLE bit; 0 means unmasked. This driver unmasks everything so that its RAWSTAT poll (line 545) can see bit31 arrive.",
+    "action": "hakios.mali610.c:3132 writes mwr(kJobIntMask, 0xffffffffu) in gpu_irq_mask_prestart(), which runs unconditionally at :4641, before start_mcu(). Flip to 0 (or re-write 0 at the top of start_mcu) so RAWSTAT is observable."
+  },
+  {
+    "repo": "torvalds/linux (drivers/gpu/drm/panthor, v6.12)",
+    "file": "panthor_regs.h",
+    "line": 152,
+    "topic": "JOB_INT register semantics",
+    "quote": "#define JOB_INT_RAWSTAT 0x1000\n#define JOB_INT_CLEAR   0x1004\n#define JOB_INT_MASK    0x1008\n#define JOB_INT_STAT    0x100c\n#define   JOB_INT_GLOBAL_IF  BIT(31)",
+    "meaning": "0x1000 is the raw latch, 0x100c is the masked view. 0x100c = RAWSTAT & ~MASK. With MASK bit31 set, reading 0x100c can never show GLOBAL_IF regardless of whether the MCU raised it.",
+    "action": "This is the mechanism behind R1. It explains 'we never see GLOBAL_IF' without requiring the MCU to be dead, but it does NOT explain a version word that still holds the sentinel."
+  },
+  {
+    "repo": "torvalds/linux (drivers/gpu/drm/panthor, v6.12)",
+    "file": "panthor_device.h",
+    "line": 333,
+    "topic": "irq_resume writes MASK = enable mask",
+    "quote": "static inline void panthor_ ## __name ## _irq_resume(struct panthor_irq *pirq, u32 mask)\n{\n\tatomic_set(&pirq->suspended, false);\n\tpirq->mask = mask;\n\tgpu_write(pirq->ptdev, __reg_prefix ## _INT_CLEAR, mask);\n\tgpu_write(pirq->ptdev, __reg_prefix ## _INT_MASK, mask);\n}",
+    "meaning": "PanTGor writes the events it wants into MASK. The handler at line 308 reads 'gpu_read(RAWSTAT) & pirq->mask', i.e. it filters RAWSTAT itself rather than trusting STAT.",
+    "action": "Second independent source for the MASK polarity. Combined with the kbase disassembly (0x3b7c0 writes 0 then 0x3ba60 writes 0xffffffff to 0x1008) the polarity is settled."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 544,
+    "topic": "MCU_CONTROL",
+    "quote": "gpuWrite(kMcuControl, 2);   // MCU_CONTROL_AUTO",
+    "meaning": "Only AUTO (2) is ever written to start. No ENABLE (1). Matches kbase, where the whole module writes only {0, 0, 0, 2, 2, 2} at offset 0x700.",
+    "action": "hakios.mali610.c:3843 already writes kMcuControlAuto. No change. Note :3837 writes kMcuControlEnable=1 on a probe path - check it does not run before AUTO in the current build."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 3097,
+    "topic": "soft reset before L2/MCU (platform difference)",
+    "quote": "if (!softReset()) return;\nprintf(\"mali: soft reset done\\n\");",
+    "meaning": "Ken-u resets the block (GPU_CMD = 0x101, kSoftReset at line 79) BEFORE L2 power-up and before the firmware is loaded. Its MCU therefore starts from a known reset state.",
+    "action": "hakios.mali610.c only resets under !gMaliCold, and gMaliCold defaults to 1 (:522), so the default path never resets. The reason to skip it is documented at :3618-3624 (panthor never resets on the fw_init path). This is a path difference, not a proven defect. Do not flip blindly."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 512,
+    "topic": "AS0 enable sequence (platform difference)",
+    "quote": "gpuWrite64(asReg(as, kAsLockaddr), 63);   // lock_region(0, ~0): width 64 - 1, start 0\nif (!asCommand(as, kAsCmdLock) || !asCommand(as, kAsCmdFlushMem) || !asReady(as)) { ... }",
+    "meaning": "Ken-u sends LOCK then FLUSH_MEM then UPDATE on AS0. This project deliberately sends only UPDATE (hakios.mali610.c:2885-2887 explains the removal).",
+    "action": "Platform/design difference. Both reach UPDATE successfully on this board (AS0 fault status 0, MMU int 0x10000 = REQ_COMPLETE). Not the variable."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 514,
+    "topic": "AS_TRANSCFG value",
+    "quote": "const uint64_t transcfg = (2ull << 24) /* PTW_MEMATTR_WB */ | (1ull << 30) /* PTW_RA */ | 6 /* AARCH64_4K */ | (static_cast<uint64_t>(55 - vaBits) << 6);",
+    "meaning": "With vaBits=48 this is 0x420001c6 (includes INA_BITS(55-48)=0x1c0 in bits 11:6). The project writes 0x42000006 instead, matching kbase.",
+    "action": "Both values have been tried on this board and both let AS0 UPDATE complete. This is not a distinguishing variable for the MCU symptom. task description already says so - confirmed here from the source."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 338,
+    "topic": "AS_MEMATTR value",
+    "quote": "constexpr uint64_t kMemAttr = 0x4c4c4c4c9c4c9f4cULL;",
+    "meaning": "Ken-u installs panthor's mair_to_memattr() table (index 0 = 0x4c). This project installs kbase's seven-entry table 0x00084c8d888d8f88 (index 0 = 0x88), documented at hakios.mali610.c:864-883.",
+    "action": "Unverified which is correct on MT6895. Both are derived from a real driver. If firmware sections are mapped with index 0, the two tables disagree about what index 0 means (0x4c = NC vs 0x88 = impl-def cached). Worth one A/B run, cost is one boot."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 461,
+    "topic": "PROT sections skipped",
+    "quote": "if (flags & kSecProt) {   // protected mode is not supported: Panthor ignores these too\n  printf(\"mali: section %#x-%#x is protected-mode only, skipped\\n\", vaStart, vaEnd);\n} else if (vaEnd > vaStart) {",
+    "meaning": "Ken-u skips protected-mode sections entirely, matching panthor_fw.c:531-534 ('Firmware protected mode entry not be supported, ignoring').",
+    "action": "hakios.mali610.c:1069-1072 only prints 'is protected-mode, mapped with ordinary memory' and then DOES map it (:1074 onwards, no continue). The task description says '3 PROT skipped' but the code maps them. Reconcile code and log text before trusting either."
+  },
+  {
+    "repo": "MT6895 vendor firmware (mali_csffw.bin)",
+    "file": "mali_csffw.bin",
+    "line": 0,
+    "topic": "PROT section flags have no ZERO bit",
+    "quote": "sec6/sec7/sec8: flags 0x0000002b va 0x3000000-0x3040000 data 0 (PROT, no bit31)",
+    "meaning": "The three protected sections carry R|W|cached|PROT but NOT the ZERO flag (bit31). panthor_fw.c:403 only memsets the tail when ZERO is set, so nothing requires the host to zero them. They are just unmapped-by-design regions.",
+    "action": "Mapping them with ordinary zeroed pages is harmless (mem_alloc uses KMA_ZERO at :737). Skipping them is also harmless. This cannot be the cause of MCU not executing - drop it from the candidate list."
+  },
+  {
+    "repo": "MT6895 vendor firmware (mali_csffw.bin)",
+    "file": "mali_csffw.bin",
+    "line": 0,
+    "topic": "glb_control initial contents",
+    "quote": "version=0x00000000 features=0x0 input_va=0x04002000 output_va=0x04003000 group_num=8 group_stride=0xa0 perfcnt_size=0 instr_features=0x71",
+    "meaning": "The image ships a fully populated glb_control except version==0. So version is the only word that proves execution, which is exactly what the sentinel technique at hakios.mali610.c:3955 exploits.",
+    "action": "Keep the sentinel. Note output_va here is 0x04003000 while Ken-u's board read 0x04006000 - different firmware layout, both inside the 4 MiB shared region, so no action (globalInterface follows control->output_va anyway)."
+  },
+  {
+    "repo": "MT6895 vendor firmware (mali_csffw.bin)",
+    "file": "mali_csffw.bin",
+    "line": 0,
+    "topic": "vector table",
+    "quote": "VA 0: MSP = 0x02040000, Reset = 0x010018ed (bit0 = 1, Thumb)",
+    "meaning": "Confirms the task description. Reset target lies in section 1 (va 0x1000000-0x1010000, flags 0x0d = rwx cached), leaf 1 at 0x01001000.",
+    "action": "The project already found and fixed a 16K-PAGE_SIZE mapping hole that left section 1 25% mapped (:1170-1191). Verify the fix is in the built kernel: a walk log for VA 0x1000000 should show a leaf whose low two bits are 11."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 567,
+    "topic": "globalInterface handshake",
+    "quote": "input->coreEnMask = gpu(kShaderPresent);\ninput->poweroffTimer = 235;\ninput->progressTimer = (5u * 500 * 1024 * 1024) >> 10;\ninput->ackIrqMask = kGlbCfgAlloc | kGlbPing | kGlbCfgProgress | kGlbCfgPoweroff | kGlbIdleEn | kGlbIdle;\ninput->req = (input->req & ~toggles) | ((output->ack ^ toggles) & toggles);",
+    "meaning": "The full field set and the toggle-from-ack rule. Identical to what this project already does at hakios.mali610.c:4196-4204.",
+    "action": "No change needed. Our version additionally does mem_flush(&gShared->mem) at :4207 because our shared section is cacheable - that is more correct than Ken-u, which maps it non-cacheable."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 221,
+    "topic": "coherency never written",
+    "quote": "printf(\"mali: present: shader %#x tiler %#x l2 %#x stack %#x; threads %u features %#x; coherency features %#x\\n\", ... gpu(kCoherencyFeatures));",
+    "meaning": "0x300 is read for reporting only. grep for 0x304 across the whole 3155-line file returns zero hits: Ken-u never writes GPU_COHERENCY_PROTOCOL.",
+    "action": "On MT6895 kbase DOES write 0x304 (work-notes-kbase-mcu-boot-sequence.md:64, at 0x3b9a0). Platform difference. This project writes 31 only under !gMaliCold or mali_cohnone (:3174), so the default path leaves it alone - same as Ken-u. Fine."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 3113,
+    "topic": "GPU_CMD = 0x103",
+    "quote": "gpuWrite(kCmd, 0x103);",
+    "meaning": "Ken-u does issue GPU_COMMAND_TIME_ENABLE, but only inside its clock probe block (comment at :3108 'GPU_COMMAND_TIME_ENABLE starts it'). It is for measuring MHz, not for booting the MCU.",
+    "action": "hakios.mali610.c never writes 0x103. Adding it has diagnostic value only: if the GPU cycle counter (0x88..0x94) advances, the clock reaches the MCU domain. This is not a fix."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 285,
+    "topic": "L2 power-up",
+    "quote": "gpuWrite(kL2PwrOn, mask);\nconst bool ok = waitUs(20000, [mask] { return (gpu(kL2Ready) & mask) == mask; });",
+    "meaning": "Ken-u waits only for READY, never for PWRTRANS to fall. PWRTRANS is printed, not tested.",
+    "action": "hakios.mali610.c:3222-3237 tests PWRTRANS first. We are stricter. Nothing to borrow."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "Mali.cpp",
+    "line": 544,
+    "topic": "nothing MTK-specific exists in this driver",
+    "quote": "grep -c -i for: csf_config / asn / 0x2c0 / L2_CONFIG / 0x48 / ipi / mbox / gpueb / pdc / mtcmos / 0xf00 / shader_pwron  =>  all zero",
+    "meaning": "A driver that boots Mali-G610 CSF on RK3588 writes none of CSF_CONFIG(0xF00), L2_CONFIG(0x48), ASN_HASH(0x2C0), SHADER_PWRON(0x180), nor any hw-issue workaround. So none of these can be claimed as the missing step by analogy.",
+    "action": "Remove 'we forgot hw-issues / CSF_CONFIG / ASN_HASH / L2_CONFIG' from the candidate list. If MT6895 needs them it must be argued from MTK's own driver, not from Ken-u."
+  },
+  {
+    "repo": "UniXNU/AirNir",
+    "file": "README.md",
+    "line": 1,
+    "topic": "what AirNir is",
+    "quote": "AIR shader translation support. Offline compilation supports original UI shaders. The runtime uses metal2vulkan and Turnip.",
+    "meaning": "It compiles Metal AIR to NIR and feeds IR3 (Adreno's backend). It is an Adreno-route component.",
+    "action": "Not usable for the Mali route. PanVK needs NIR -> Valhall, which lives in Mesa's panfrost compiler. Ken-u's stack goes metal2vulkan -> SPIR-V -> PanVK instead. No action."
+  },
+  {
+    "repo": "topic:unixnu (155 repos)",
+    "file": "-",
+    "line": 0,
+    "topic": "no second CSF/Mali implementation exists",
+    "quote": "GPU-related repos returned: Adreno740, AdrenoMetal, AdrenoFirmware, AdrenoPM4, Adreno610, Adreno830 - all Qualcomm. Zero Mali repos in UniXNU org.",
+    "meaning": "Ken-u/Mali is the only Mali implementation in the entire UniXNU ecosystem. There is no independent second source to cross-check its bring-up against.",
+    "action": "Any claim of the form 'other UniXNU devices do X for GPU' is only available for Adreno. Cross-checking the CSF path must fall back to panthor (upstream) and to MTK's own kbase."
+  },
+  {
+    "repo": "Ken-u/Mali",
+    "file": "docs/notes.zh-CN.md",
+    "line": 97,
+    "topic": "the one bring-up trap Ken-u documents",
+    "quote": "MCU \u7684\u961f\u5217\u63a5\u53e3\u548c suspend buffer \u5fc5\u987b\u653e\u5728 MCU \u7684 shared region\uff080x04000000\u20130x08000000\uff09\u91cc ... \u653e\u5230 0x10000000 \u65f6 CSG \u80fd\u542f\u52a8\u3001\u4f46 stream \u6c38\u8fdc\u4e0d ACK START\uff0cAS0 \u4e0a\u62a5\u300c\u5199 0x1000 \u7684 translation fault\u300d",
+    "meaning": "Firmware masks MCU-side addresses with 0x0fffffff. Anything outside 0x04000000-0x08000000 aliases and faults. Cost Ken-u 4 rounds.",
+    "action": "Relevant only after GLOBAL_IF is seen. Our shared section is at 0x04000000 (MALI_SHARED_VA :992), so we are inside the region. Also: our fw declares output_va 0x04003000 - inside. No action now, but keep for the M2 stage."
+  },
+  {
+    "repo": "Ken-u/MaliMetal",
+    "file": "docs/notes.zh-CN.md",
+    "line": 74,
+    "topic": "no kernel bring-up detail in MaliMetal",
+    "quote": "grep -i \"mcu|firmware|power domain|soft reset\" over 541 lines -> only one hit, about per-client VM/group virtualisation",
+    "meaning": "The MaliMetal notes are entirely user-space (PanVK build, metal2vulkan, sandbox grants, frame rate, backboardd crashes). The task's hypothesis that this file holds more bring-up detail is false.",
+    "action": "Do not spend more time on MaliMetal for CSF bring-up. The kernel-side detail is all in Ken-u/Mali's own docs/notes.zh-CN.md and its Mali.cpp."
+  }
+]

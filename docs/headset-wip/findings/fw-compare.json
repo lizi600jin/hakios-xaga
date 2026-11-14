@@ -1,0 +1,1464 @@
+{
+  "generated_from": "panthor_fw.c:96-97 bitfields",
+  "images": [
+    {
+      "label": "ours_0.1",
+      "path": "/tmp/our_fw.bin",
+      "bytes": 258048,
+      "sha256": "de22d2fc06bc8a859968499a6e609c27fe838be062bf5c97d92ea9f904f7229a",
+      "problems": [],
+      "entries": [
+        {
+          "index": 0,
+          "file_offset": 20,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "config",
+          "flags": "0x00000009",
+          "flag_names": [
+            "RD",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 0,
+          "va_end": 4096,
+          "va_bytes": 4096,
+          "data_start": 896,
+          "data_end": 3732,
+          "data_bytes": 2836,
+          "first8": "00000402ed180001b1190001b1190001b1190001b1190001b119000100000000"
+        },
+        {
+          "index": 1,
+          "file_offset": 52,
+          "type": 0,
+          "esize": 28,
+          "kind": "IFACE",
+          "name": " ",
+          "flags": "0x0000000d",
+          "flag_names": [
+            "RD",
+            "EX",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 16777216,
+          "va_end": 16842752,
+          "va_bytes": 65536,
+          "data_start": 3732,
+          "data_end": 67292,
+          "data_bytes": 63560,
+          "first8": "dff80cd002f032f800480047ed2a000110c202022de9f04f03af85b06c466ff3"
+        },
+        {
+          "index": 2,
+          "file_offset": 80,
+          "type": 0,
+          "esize": 28,
+          "kind": "IFACE",
+          "name": " ",
+          "flags": "0x8000000b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "ZERO",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 33554432,
+          "va_end": 33808384,
+          "va_bytes": 253952,
+          "data_start": 67296,
+          "data_end": 248048,
+          "data_bytes": 180752,
+          "first8": "0000000000000000000000000040000400c0000414000002140000021c000002"
+        },
+        {
+          "index": 3,
+          "file_offset": 108,
+          "type": 0,
+          "esize": 28,
+          "kind": "IFACE",
+          "name": " ",
+          "flags": "0x8000000b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "ZERO",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 33808384,
+          "va_end": 33812480,
+          "va_bytes": 4096,
+          "data_start": 248048,
+          "data_end": 248048,
+          "data_bytes": 0,
+          "first8": ""
+        },
+        {
+          "index": 4,
+          "file_offset": 136,
+          "type": 0,
+          "esize": 28,
+          "kind": "IFACE",
+          "name": " ",
+          "flags": "0x8000000b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "ZERO",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 33812480,
+          "va_end": 33816576,
+          "va_bytes": 4096,
+          "data_start": 248048,
+          "data_end": 248048,
+          "data_bytes": 0,
+          "first8": ""
+        },
+        {
+          "index": 5,
+          "file_offset": 164,
+          "type": 0,
+          "esize": 28,
+          "kind": "IFACE",
+          "name": " ",
+          "flags": "0x80000009",
+          "flag_names": [
+            "RD",
+            "ZERO",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 41943040,
+          "va_end": 42205184,
+          "va_bytes": 262144,
+          "data_start": 67296,
+          "data_end": 248048,
+          "data_bytes": 180752,
+          "first8": "0000000000000000000000000040000400c0000414000002140000021c000002"
+        },
+        {
+          "index": 6,
+          "file_offset": 192,
+          "type": 0,
+          "esize": 28,
+          "kind": "IFACE",
+          "name": " ",
+          "flags": "0x0000002b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "PROT",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 50331648,
+          "va_end": 50585600,
+          "va_bytes": 253952,
+          "data_start": 0,
+          "data_end": 0,
+          "data_bytes": 0,
+          "first8": ""
+        },
+        {
+          "index": 7,
+          "file_offset": 220,
+          "type": 0,
+          "esize": 28,
+          "kind": "IFACE",
+          "name": " ",
+          "flags": "0x0000002b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "PROT",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 50585600,
+          "va_end": 50589696,
+          "va_bytes": 4096,
+          "data_start": 0,
+          "data_end": 0,
+          "data_bytes": 0,
+          "first8": ""
+        },
+        {
+          "index": 8,
+          "file_offset": 248,
+          "type": 0,
+          "esize": 28,
+          "kind": "IFACE",
+          "name": " ",
+          "flags": "0x0000002b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "PROT",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 50589696,
+          "va_end": 50593792,
+          "va_bytes": 4096,
+          "data_start": 0,
+          "data_end": 0,
+          "data_bytes": 0,
+          "first8": ""
+        },
+        {
+          "index": 9,
+          "file_offset": 276,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "shared",
+          "flags": "0xc000001b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "SHARED",
+            "ZERO",
+            "CACHE_3_CACHED_COH"
+          ],
+          "va_start": 67108864,
+          "va_end": 67715072,
+          "va_bytes": 606208,
+          "data_start": 249856,
+          "data_end": 258048,
+          "data_bytes": 8192,
+          "first8": "0000000000000000002000040030000408000000a00000000000000071000000"
+        },
+        {
+          "index": 10,
+          "file_offset": 308,
+          "type": 1,
+          "esize": 60,
+          "kind": "OTHER"
+        },
+        {
+          "index": 11,
+          "file_offset": 368,
+          "type": 1,
+          "esize": 60,
+          "kind": "OTHER"
+        },
+        {
+          "index": 12,
+          "file_offset": 428,
+          "type": 1,
+          "esize": 56,
+          "kind": "OTHER"
+        },
+        {
+          "index": 13,
+          "file_offset": 484,
+          "type": 1,
+          "esize": 32,
+          "kind": "OTHER"
+        },
+        {
+          "index": 14,
+          "file_offset": 516,
+          "type": 3,
+          "esize": 40,
+          "kind": "OTHER"
+        },
+        {
+          "index": 15,
+          "file_offset": 556,
+          "type": 3,
+          "esize": 48,
+          "kind": "OTHER"
+        },
+        {
+          "index": 16,
+          "file_offset": 604,
+          "type": 3,
+          "esize": 40,
+          "kind": "OTHER"
+        },
+        {
+          "index": 17,
+          "file_offset": 644,
+          "type": 3,
+          "esize": 44,
+          "kind": "OTHER"
+        },
+        {
+          "index": 18,
+          "file_offset": 688,
+          "type": 3,
+          "esize": 44,
+          "kind": "OTHER"
+        },
+        {
+          "index": 19,
+          "file_offset": 732,
+          "type": 6,
+          "esize": 16,
+          "kind": "OTHER"
+        },
+        {
+          "index": 20,
+          "file_offset": 748,
+          "type": 5,
+          "esize": 20,
+          "kind": "OTHER"
+        }
+      ],
+      "header": {
+        "magic": "0xc3f13a6e",
+        "magic_ok": true,
+        "minor": 1,
+        "major": 0,
+        "padding1": 0,
+        "version": "0.1",
+        "version_hash": "0x01010000",
+        "padding2": 0,
+        "entries_end": 768
+      },
+      "entry_count": 21,
+      "iface_count": 10,
+      "other_count": 11,
+      "vectors": {
+        "msp": "0x02040000",
+        "reset_pc": "0x010018ed",
+        "reset_pc_odd": true,
+        "reset_true": "0x010018ec",
+        "vectors": [
+          "0x010019b1",
+          "0x010019b1",
+          "0x010019b1",
+          "0x010019b1",
+          "0x010019b1"
+        ],
+        "first_32_hex": "00000402ed180001b1190001b1190001b1190001b1190001b119000100000000",
+        "va0_section_bytes": 2836,
+        "va0_span": "0x0-0x1000"
+      },
+      "entry_point": {
+        "at": "0x10018ec",
+        "section_va": "0x1000000-0x1010000",
+        "section_flags": "0x0000000d",
+        "ex_bit": true,
+        "first_32_hex": "72b626484ff00b01016025484ff00701016024484ff4e0210160234880f30988",
+        "as_u32": [
+          "0x4826b672",
+          "0x010bf04f",
+          "0x48256001",
+          "0x0107f04f",
+          "0x48246001",
+          "0x21e0f44f",
+          "0x48236001",
+          "0x8809f380"
+        ]
+      }
+    },
+    {
+      "label": "upstream_0.3",
+      "path": "/tmp/cmpfw/upstream/mali_csffw_arch10.8.bin",
+      "bytes": 282624,
+      "sha256": "a27847ea11f8efb3136340c3ba8aab413ae25145eeb4a7f64ff5edd829a2405b",
+      "problems": [],
+      "entries": [
+        {
+          "index": 0,
+          "file_offset": 20,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x00000009",
+          "flag_names": [
+            "RD",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 4194304,
+          "va_end": 4259840,
+          "va_bytes": 65536,
+          "data_start": 4892,
+          "data_end": 5016,
+          "data_bytes": 124,
+          "first8": "00000302bd1f8000812080008120800081208000812080008120800000000000"
+        },
+        {
+          "index": 1,
+          "file_offset": 52,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x00000009",
+          "flag_names": [
+            "RD",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 4259840,
+          "va_end": 4325376,
+          "va_bytes": 65536,
+          "data_start": 5024,
+          "data_end": 9924,
+          "data_bytes": 4900,
+          "first8": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "index": 2,
+          "file_offset": 84,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x00000009",
+          "flag_names": [
+            "RD",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 0,
+          "va_end": 65536,
+          "va_bytes": 65536,
+          "data_start": 4892,
+          "data_end": 5016,
+          "data_bytes": 124,
+          "first8": "00000302bd1f8000812080008120800081208000812080008120800000000000"
+        },
+        {
+          "index": 3,
+          "file_offset": 116,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x0000000d",
+          "flag_names": [
+            "RD",
+            "EX",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 8388608,
+          "va_end": 8519680,
+          "va_bytes": 131072,
+          "data_start": 9924,
+          "data_end": 92872,
+          "data_bytes": 82948,
+          "first8": "dff80cd002f0f4fb0048004719378000e4b702021ef0040f18bf7047eff30880"
+        },
+        {
+          "index": 4,
+          "file_offset": 148,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x8000000b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "ZERO",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 33554432,
+          "va_end": 33816576,
+          "va_bytes": 262144,
+          "data_start": 92872,
+          "data_end": 271016,
+          "data_bytes": 178144,
+          "first8": "0000000000300004007000040c0000020c000002140000021400000200000000"
+        },
+        {
+          "index": 5,
+          "file_offset": 180,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x80000009",
+          "flag_names": [
+            "RD",
+            "ZERO",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 16777216,
+          "va_end": 17039360,
+          "va_bytes": 262144,
+          "data_start": 92872,
+          "data_end": 271016,
+          "data_bytes": 178144,
+          "first8": "0000000000300004007000040c0000020c000002140000021400000200000000"
+        },
+        {
+          "index": 6,
+          "file_offset": 212,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x0000002b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "PROT",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 50331648,
+          "va_end": 50593792,
+          "va_bytes": 262144,
+          "data_start": 0,
+          "data_end": 0,
+          "data_bytes": 0,
+          "first8": ""
+        },
+        {
+          "index": 7,
+          "file_offset": 244,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0xc000001b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "SHARED",
+            "ZERO",
+            "CACHE_3_CACHED_COH"
+          ],
+          "va_start": 67108864,
+          "va_end": 67174400,
+          "va_bytes": 65536,
+          "data_start": 274432,
+          "data_end": 282624,
+          "data_bytes": 8192,
+          "first8": "0000000000000000002000040060000408000000a00000000000000071000000"
+        },
+        {
+          "index": 8,
+          "file_offset": 276,
+          "type": 1,
+          "esize": 32,
+          "kind": "OTHER"
+        },
+        {
+          "index": 9,
+          "file_offset": 308,
+          "type": 1,
+          "esize": 24,
+          "kind": "OTHER"
+        },
+        {
+          "index": 10,
+          "file_offset": 332,
+          "type": 3,
+          "esize": 40,
+          "kind": "OTHER"
+        },
+        {
+          "index": 11,
+          "file_offset": 372,
+          "type": 3,
+          "esize": 48,
+          "kind": "OTHER"
+        },
+        {
+          "index": 12,
+          "file_offset": 420,
+          "type": 3,
+          "esize": 40,
+          "kind": "OTHER"
+        },
+        {
+          "index": 13,
+          "file_offset": 460,
+          "type": 3,
+          "esize": 44,
+          "kind": "OTHER"
+        },
+        {
+          "index": 14,
+          "file_offset": 504,
+          "type": 3,
+          "esize": 44,
+          "kind": "OTHER"
+        },
+        {
+          "index": 15,
+          "file_offset": 548,
+          "type": 3,
+          "esize": 52,
+          "kind": "OTHER"
+        },
+        {
+          "index": 16,
+          "file_offset": 600,
+          "type": 3,
+          "esize": 52,
+          "kind": "OTHER"
+        },
+        {
+          "index": 17,
+          "file_offset": 652,
+          "type": 3,
+          "esize": 44,
+          "kind": "OTHER"
+        },
+        {
+          "index": 18,
+          "file_offset": 696,
+          "type": 7,
+          "esize": 16,
+          "kind": "OTHER"
+        },
+        {
+          "index": 19,
+          "file_offset": 712,
+          "type": 6,
+          "esize": 12,
+          "kind": "OTHER"
+        },
+        {
+          "index": 20,
+          "file_offset": 724,
+          "type": 5,
+          "esize": 20,
+          "kind": "OTHER"
+        },
+        {
+          "index": 21,
+          "file_offset": 744,
+          "type": 9,
+          "esize": 12,
+          "kind": "OTHER"
+        },
+        {
+          "index": 22,
+          "file_offset": 756,
+          "type": 4,
+          "esize": 28,
+          "kind": "OTHER"
+        },
+        {
+          "index": 23,
+          "file_offset": 784,
+          "type": 8,
+          "esize": 8,
+          "kind": "OTHER"
+        }
+      ],
+      "header": {
+        "magic": "0xc3f13a6e",
+        "magic_ok": true,
+        "minor": 3,
+        "major": 0,
+        "padding1": 0,
+        "version": "0.3",
+        "version_hash": "0x01050000",
+        "padding2": 0,
+        "entries_end": 792
+      },
+      "entry_count": 24,
+      "iface_count": 8,
+      "other_count": 16,
+      "vectors": {
+        "msp": "0x02030000",
+        "reset_pc": "0x00801fbd",
+        "reset_pc_odd": true,
+        "reset_true": "0x00801fbc",
+        "vectors": [
+          "0x00802081",
+          "0x00802081",
+          "0x00802081",
+          "0x00802081",
+          "0x00802081"
+        ],
+        "first_32_hex": "00000302bd1f8000812080008120800081208000812080008120800000000000",
+        "va0_section_bytes": 124,
+        "va0_span": "0x0-0x10000"
+      },
+      "entry_point": {
+        "at": "0x801fbc",
+        "section_va": "0x800000-0x820000",
+        "section_flags": "0x0000000d",
+        "ex_bit": true,
+        "first_32_hex": "72b625484ff00b01016024484ff00701016023484ff4e021016022484ff00201",
+        "as_u32": [
+          "0x4825b672",
+          "0x010bf04f",
+          "0x48246001",
+          "0x0107f04f",
+          "0x48236001",
+          "0x21e0f44f",
+          "0x48226001",
+          "0x0102f04f"
+        ]
+      }
+    },
+    {
+      "label": "xaga_vendor_0.3",
+      "path": "/tmp/repo-search/clones/mali_r54/firmware/mali_csffw.bin",
+      "bytes": 282624,
+      "sha256": "9f67b2c3e4886f8d3f51ceac5170d0731bd44cb7c9ae5b094081e95f4028c7f8",
+      "problems": [],
+      "entries": [
+        {
+          "index": 0,
+          "file_offset": 20,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x00000009",
+          "flag_names": [
+            "RD",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 4194304,
+          "va_end": 4259840,
+          "va_bytes": 65536,
+          "data_start": 4892,
+          "data_end": 5016,
+          "data_bytes": 124,
+          "first8": "000003024d1f8000112080001120800011208000112080001120800000000000"
+        },
+        {
+          "index": 1,
+          "file_offset": 52,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x00000009",
+          "flag_names": [
+            "RD",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 4259840,
+          "va_end": 4325376,
+          "va_bytes": 65536,
+          "data_start": 5024,
+          "data_end": 9924,
+          "data_bytes": 4900,
+          "first8": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "index": 2,
+          "file_offset": 84,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x00000009",
+          "flag_names": [
+            "RD",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 0,
+          "va_end": 65536,
+          "va_bytes": 65536,
+          "data_start": 4892,
+          "data_end": 5016,
+          "data_bytes": 124,
+          "first8": "000003024d1f8000112080001120800011208000112080001120800000000000"
+        },
+        {
+          "index": 3,
+          "file_offset": 116,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x0000000d",
+          "flag_names": [
+            "RD",
+            "EX",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 8388608,
+          "va_end": 8519680,
+          "va_bytes": 131072,
+          "data_start": 9924,
+          "data_end": 92752,
+          "data_bytes": 82828,
+          "first8": "dff80cd002f0bcfb00480047a9368000e4b702021ef0040f18bf7047eff30880"
+        },
+        {
+          "index": 4,
+          "file_offset": 148,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x8000000b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "ZERO",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 33554432,
+          "va_end": 33816576,
+          "va_bytes": 262144,
+          "data_start": 92752,
+          "data_end": 270896,
+          "data_bytes": 178144,
+          "first8": "0000000000300004007000040c0000020c000002140000021400000200000000"
+        },
+        {
+          "index": 5,
+          "file_offset": 180,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x80000009",
+          "flag_names": [
+            "RD",
+            "ZERO",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 16777216,
+          "va_end": 17039360,
+          "va_bytes": 262144,
+          "data_start": 92752,
+          "data_end": 270896,
+          "data_bytes": 178144,
+          "first8": "0000000000300004007000040c0000020c000002140000021400000200000000"
+        },
+        {
+          "index": 6,
+          "file_offset": 212,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0x0000002b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "PROT",
+            "CACHE_1_UNCACHED_COH"
+          ],
+          "va_start": 50331648,
+          "va_end": 50593792,
+          "va_bytes": 262144,
+          "data_start": 0,
+          "data_end": 0,
+          "data_bytes": 0,
+          "first8": ""
+        },
+        {
+          "index": 7,
+          "file_offset": 244,
+          "type": 0,
+          "esize": 32,
+          "kind": "IFACE",
+          "name": "",
+          "flags": "0xc000001b",
+          "flag_names": [
+            "RD",
+            "WR",
+            "SHARED",
+            "ZERO",
+            "CACHE_3_CACHED_COH"
+          ],
+          "va_start": 67108864,
+          "va_end": 67174400,
+          "va_bytes": 65536,
+          "data_start": 274432,
+          "data_end": 282624,
+          "data_bytes": 8192,
+          "first8": "0000000000000000002000040060000408000000a00000000000000071000000"
+        },
+        {
+          "index": 8,
+          "file_offset": 276,
+          "type": 1,
+          "esize": 32,
+          "kind": "OTHER"
+        },
+        {
+          "index": 9,
+          "file_offset": 308,
+          "type": 1,
+          "esize": 24,
+          "kind": "OTHER"
+        },
+        {
+          "index": 10,
+          "file_offset": 332,
+          "type": 3,
+          "esize": 40,
+          "kind": "OTHER"
+        },
+        {
+          "index": 11,
+          "file_offset": 372,
+          "type": 3,
+          "esize": 48,
+          "kind": "OTHER"
+        },
+        {
+          "index": 12,
+          "file_offset": 420,
+          "type": 3,
+          "esize": 40,
+          "kind": "OTHER"
+        },
+        {
+          "index": 13,
+          "file_offset": 460,
+          "type": 3,
+          "esize": 44,
+          "kind": "OTHER"
+        },
+        {
+          "index": 14,
+          "file_offset": 504,
+          "type": 3,
+          "esize": 44,
+          "kind": "OTHER"
+        },
+        {
+          "index": 15,
+          "file_offset": 548,
+          "type": 3,
+          "esize": 52,
+          "kind": "OTHER"
+        },
+        {
+          "index": 16,
+          "file_offset": 600,
+          "type": 3,
+          "esize": 52,
+          "kind": "OTHER"
+        },
+        {
+          "index": 17,
+          "file_offset": 652,
+          "type": 3,
+          "esize": 44,
+          "kind": "OTHER"
+        },
+        {
+          "index": 18,
+          "file_offset": 696,
+          "type": 7,
+          "esize": 16,
+          "kind": "OTHER"
+        },
+        {
+          "index": 19,
+          "file_offset": 712,
+          "type": 6,
+          "esize": 12,
+          "kind": "OTHER"
+        },
+        {
+          "index": 20,
+          "file_offset": 724,
+          "type": 5,
+          "esize": 20,
+          "kind": "OTHER"
+        },
+        {
+          "index": 21,
+          "file_offset": 744,
+          "type": 9,
+          "esize": 12,
+          "kind": "OTHER"
+        },
+        {
+          "index": 22,
+          "file_offset": 756,
+          "type": 4,
+          "esize": 28,
+          "kind": "OTHER"
+        },
+        {
+          "index": 23,
+          "file_offset": 784,
+          "type": 8,
+          "esize": 8,
+          "kind": "OTHER"
+        }
+      ],
+      "header": {
+        "magic": "0xc3f13a6e",
+        "magic_ok": true,
+        "minor": 3,
+        "major": 0,
+        "padding1": 0,
+        "version": "0.3",
+        "version_hash": "0x01050000",
+        "padding2": 0,
+        "entries_end": 792
+      },
+      "entry_count": 24,
+      "iface_count": 8,
+      "other_count": 16,
+      "vectors": {
+        "msp": "0x02030000",
+        "reset_pc": "0x00801f4d",
+        "reset_pc_odd": true,
+        "reset_true": "0x00801f4c",
+        "vectors": [
+          "0x00802011",
+          "0x00802011",
+          "0x00802011",
+          "0x00802011",
+          "0x00802011"
+        ],
+        "first_32_hex": "000003024d1f8000112080001120800011208000112080001120800000000000",
+        "va0_section_bytes": 124,
+        "va0_span": "0x0-0x10000"
+      },
+      "entry_point": {
+        "at": "0x801f4c",
+        "section_va": "0x800000-0x820000",
+        "section_flags": "0x0000000d",
+        "ex_bit": true,
+        "first_32_hex": "72b625484ff00b01016024484ff00701016023484ff4e021016022484ff00201",
+        "as_u32": [
+          "0x4825b672",
+          "0x010bf04f",
+          "0x48246001",
+          "0x0107f04f",
+          "0x48236001",
+          "0x21e0f44f",
+          "0x48226001",
+          "0x0102f04f"
+        ]
+      }
+    }
+  ],
+  "va_diff": {
+    "0x0": {
+      "ours_0.1": {
+        "present": true,
+        "va_end": 4096,
+        "va_bytes": 4096,
+        "flags": "0x00000009",
+        "flag_names": [
+          "RD",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 2836,
+        "name": "config"
+      },
+      "upstream_0.3": {
+        "present": true,
+        "va_end": 65536,
+        "va_bytes": 65536,
+        "flags": "0x00000009",
+        "flag_names": [
+          "RD",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 124,
+        "name": ""
+      },
+      "xaga_vendor_0.3": {
+        "present": true,
+        "va_end": 65536,
+        "va_bytes": 65536,
+        "flags": "0x00000009",
+        "flag_names": [
+          "RD",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 124,
+        "name": ""
+      }
+    },
+    "0x400000": {
+      "ours_0.1": {
+        "present": false
+      },
+      "upstream_0.3": {
+        "present": true,
+        "va_end": 4259840,
+        "va_bytes": 65536,
+        "flags": "0x00000009",
+        "flag_names": [
+          "RD",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 124,
+        "name": ""
+      },
+      "xaga_vendor_0.3": {
+        "present": true,
+        "va_end": 4259840,
+        "va_bytes": 65536,
+        "flags": "0x00000009",
+        "flag_names": [
+          "RD",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 124,
+        "name": ""
+      }
+    },
+    "0x410000": {
+      "ours_0.1": {
+        "present": false
+      },
+      "upstream_0.3": {
+        "present": true,
+        "va_end": 4325376,
+        "va_bytes": 65536,
+        "flags": "0x00000009",
+        "flag_names": [
+          "RD",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 4900,
+        "name": ""
+      },
+      "xaga_vendor_0.3": {
+        "present": true,
+        "va_end": 4325376,
+        "va_bytes": 65536,
+        "flags": "0x00000009",
+        "flag_names": [
+          "RD",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 4900,
+        "name": ""
+      }
+    },
+    "0x800000": {
+      "ours_0.1": {
+        "present": false
+      },
+      "upstream_0.3": {
+        "present": true,
+        "va_end": 8519680,
+        "va_bytes": 131072,
+        "flags": "0x0000000d",
+        "flag_names": [
+          "RD",
+          "EX",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 82948,
+        "name": ""
+      },
+      "xaga_vendor_0.3": {
+        "present": true,
+        "va_end": 8519680,
+        "va_bytes": 131072,
+        "flags": "0x0000000d",
+        "flag_names": [
+          "RD",
+          "EX",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 82828,
+        "name": ""
+      }
+    },
+    "0x1000000": {
+      "ours_0.1": {
+        "present": true,
+        "va_end": 16842752,
+        "va_bytes": 65536,
+        "flags": "0x0000000d",
+        "flag_names": [
+          "RD",
+          "EX",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 63560,
+        "name": " "
+      },
+      "upstream_0.3": {
+        "present": true,
+        "va_end": 17039360,
+        "va_bytes": 262144,
+        "flags": "0x80000009",
+        "flag_names": [
+          "RD",
+          "ZERO",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 178144,
+        "name": ""
+      },
+      "xaga_vendor_0.3": {
+        "present": true,
+        "va_end": 17039360,
+        "va_bytes": 262144,
+        "flags": "0x80000009",
+        "flag_names": [
+          "RD",
+          "ZERO",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 178144,
+        "name": ""
+      }
+    },
+    "0x2000000": {
+      "ours_0.1": {
+        "present": true,
+        "va_end": 33808384,
+        "va_bytes": 253952,
+        "flags": "0x8000000b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "ZERO",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 180752,
+        "name": " "
+      },
+      "upstream_0.3": {
+        "present": true,
+        "va_end": 33816576,
+        "va_bytes": 262144,
+        "flags": "0x8000000b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "ZERO",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 178144,
+        "name": ""
+      },
+      "xaga_vendor_0.3": {
+        "present": true,
+        "va_end": 33816576,
+        "va_bytes": 262144,
+        "flags": "0x8000000b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "ZERO",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 178144,
+        "name": ""
+      }
+    },
+    "0x203e000": {
+      "ours_0.1": {
+        "present": true,
+        "va_end": 33812480,
+        "va_bytes": 4096,
+        "flags": "0x8000000b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "ZERO",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 0,
+        "name": " "
+      },
+      "upstream_0.3": {
+        "present": false
+      },
+      "xaga_vendor_0.3": {
+        "present": false
+      }
+    },
+    "0x203f000": {
+      "ours_0.1": {
+        "present": true,
+        "va_end": 33816576,
+        "va_bytes": 4096,
+        "flags": "0x8000000b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "ZERO",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 0,
+        "name": " "
+      },
+      "upstream_0.3": {
+        "present": false
+      },
+      "xaga_vendor_0.3": {
+        "present": false
+      }
+    },
+    "0x2800000": {
+      "ours_0.1": {
+        "present": true,
+        "va_end": 42205184,
+        "va_bytes": 262144,
+        "flags": "0x80000009",
+        "flag_names": [
+          "RD",
+          "ZERO",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 180752,
+        "name": " "
+      },
+      "upstream_0.3": {
+        "present": false
+      },
+      "xaga_vendor_0.3": {
+        "present": false
+      }
+    },
+    "0x3000000": {
+      "ours_0.1": {
+        "present": true,
+        "va_end": 50585600,
+        "va_bytes": 253952,
+        "flags": "0x0000002b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "PROT",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 0,
+        "name": " "
+      },
+      "upstream_0.3": {
+        "present": true,
+        "va_end": 50593792,
+        "va_bytes": 262144,
+        "flags": "0x0000002b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "PROT",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 0,
+        "name": ""
+      },
+      "xaga_vendor_0.3": {
+        "present": true,
+        "va_end": 50593792,
+        "va_bytes": 262144,
+        "flags": "0x0000002b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "PROT",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 0,
+        "name": ""
+      }
+    },
+    "0x303e000": {
+      "ours_0.1": {
+        "present": true,
+        "va_end": 50589696,
+        "va_bytes": 4096,
+        "flags": "0x0000002b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "PROT",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 0,
+        "name": " "
+      },
+      "upstream_0.3": {
+        "present": false
+      },
+      "xaga_vendor_0.3": {
+        "present": false
+      }
+    },
+    "0x303f000": {
+      "ours_0.1": {
+        "present": true,
+        "va_end": 50593792,
+        "va_bytes": 4096,
+        "flags": "0x0000002b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "PROT",
+          "CACHE_1_UNCACHED_COH"
+        ],
+        "data_bytes": 0,
+        "name": " "
+      },
+      "upstream_0.3": {
+        "present": false
+      },
+      "xaga_vendor_0.3": {
+        "present": false
+      }
+    },
+    "0x4000000": {
+      "ours_0.1": {
+        "present": true,
+        "va_end": 67715072,
+        "va_bytes": 606208,
+        "flags": "0xc000001b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "SHARED",
+          "ZERO",
+          "CACHE_3_CACHED_COH"
+        ],
+        "data_bytes": 8192,
+        "name": "shared"
+      },
+      "upstream_0.3": {
+        "present": true,
+        "va_end": 67174400,
+        "va_bytes": 65536,
+        "flags": "0xc000001b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "SHARED",
+          "ZERO",
+          "CACHE_3_CACHED_COH"
+        ],
+        "data_bytes": 8192,
+        "name": ""
+      },
+      "xaga_vendor_0.3": {
+        "present": true,
+        "va_end": 67174400,
+        "va_bytes": 65536,
+        "flags": "0xc000001b",
+        "flag_names": [
+          "RD",
+          "WR",
+          "SHARED",
+          "ZERO",
+          "CACHE_3_CACHED_COH"
+        ],
+        "data_bytes": 8192,
+        "name": ""
+      }
+    }
+  },
+  "summary": {
+    "our_version": "0.1",
+    "upstream_version": "0.3",
+    "our_iface": 10,
+    "upstream_iface": 8,
+    "our_reset_pc": "0x010018ed",
+    "upstream_reset_pc": "0x00801fbd",
+    "problem_total": 0,
+    "va_only_in_ours": [
+      "0x203e000",
+      "0x203f000",
+      "0x2800000",
+      "0x303e000",
+      "0x303f000"
+    ],
+    "va_only_in_upstream": [
+      "0x400000",
+      "0x410000",
+      "0x800000"
+    ]
+  }
+}
