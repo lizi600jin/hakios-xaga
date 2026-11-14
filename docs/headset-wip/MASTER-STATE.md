@@ -24,6 +24,10 @@ HakiOS（XNU → Xiaomi xaga / MT6895 / Mali-G610）。
 | **主控** | DSH（我），tab `aa6aca61`，终端 `term_65478f6a-0846-40d4-b817-55c9be904afd` | 调度、扇出调研、独立复核、文档、设备风险 |
 | **代码** | Codex 6.1 Sol，终端 `term_049b4b6b-b3fd-4afb-b8c2-797a5c7cb17d` | 生产代码、寄存器语义、构建、实机验证 |
 
+🔴 **子代理并发上限 = 4**（2026-11-15 02:30 用户定，原为 8）。
+已有的不停止、跑完自然退出；新派前先 `list_agents`，`running + 新派 ≤ 4`。
+理由：8 路时出现过 6 个连续因限流失败、零产出（02:00 那轮）。
+
 **Codex 可直接给 DSH 发消息**（已实测）：
 ```bash
 orca terminal send --terminal term_65478f6a-0846-40d4-b817-55c9be904afd --text "[DONE] 内容" --enter
