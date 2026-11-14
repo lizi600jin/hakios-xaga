@@ -1,0 +1,265 @@
+[
+  {
+    "line": 450,
+    "snippet": "UPDATE is one, and the phone's own register trace settles it for this address space: the very first thing kbase does on a cold start is program AS0 -- transcfig, transtab, memattr -- and then write one to AS_COMMAND at 0x2418 (record 7 of the trace). The three that appears at 0x4636c in the module is a different path, for the address spaces the scheduler hands to contexts, and copying it here would have been a change away from the one sequence that is known to work on this part.",
+    "premise": "trace 记录 7 = AS_COMMAND=UPDATE(1)，据此定 kAsCmdUpdate=1",
+    "verdict": "holds",
+    "fix": "保留。与 0x10000 无关：论据是厂商 register trace 的记录序号，不是中断位。",
+    "end_line": 455,
+    "note": "panthor_mmu_regs.h:34 AS_COMMAND_UPDATE=1 同值，可加引一条独立旁证。"
+  },
+  {
+    "line": 472,
+    "snippet": "This is the one comparison that separates the two halves of a question every run so far has answered ambiguously. AS0 is handed an AArch64 table and its UPDATE raises MMU_BUS_ERROR(0); AS2 through AS7 are handed a zero table with ADRMODE_UNMAPPED and their UPDATEs raise nothing, on every single boot, seven times over. Two readings, two outcomes, four candidate causes: the granule, the table contents, the root address, or address space zero itself.",
+    "premise": "0x10000 = MMU_BUS_ERROR(0)，且 AS2..AS7 的 UPDATE 不置任何位",
+    "verdict": "void",
+    "fix": "删除整段。事实是：AS0 置 bit16，AS2..AS7 各置 bit(16+as)；两者是同一现象（REQ_COMPLETE），差别只在位号。'四个候选原因'（granule/表内容/根地址/槽位）随之全部失去意义。",
+    "end_line": 476,
+    "task_line": 473,
+    "note": "同一份日志里 AS2..AS7 分别读 0x40000/0x80000/0x100000/0x200000/0x400000/0x800000（logs/headset-resume-20261114-220244/nopdc/kernel-lines.txt:176-181），'raise nothing' 与自家日志直接矛盾。"
+  },
+  {
+    "line": 478,
+    "snippet": "Parking AS0 collapses it. If a parked AS0 also raises the bus error, the fault is in the slot or in how it is being addressed and no amount of table work will move it. If a parked AS0 is silent -- as its seven neighbours are -- then the slot is fine and the error comes from the walk over what was written into TRANSTAB, which leaves the table as the only thing to fix.",
+    "premise": "停用 AS0 后若也出现该位，则故障在槽位；若静默，则故障在表",
+    "verdict": "void",
+    "fix": "删除。该二分法的两个分支都以'AS0 会报错、邻居不报错'为前提；两者都不成立。替换为：'mali_as0=1 只用来确认静默/完成位与映射内容无关'。",
+    "end_line": 481,
+    "task_line": 478
+  },
+  {
+    "line": 655,
+    "snippet": "The original reason for this window was an interpretation of IRQ bit16 after AS UPDATE as a root-fetch bus error. That interpretation was not established: parked/unmapped AS2..7 also latch their respective upper IRQ bits, without fault status/address. Keep this allocator as an experimental option, not as proof that addresses above 4GB are inaccessible to the GPU.",
+    "premise": "IRQ bit16 曾被读成 root-fetch bus error（作者自述'该解读未被确立'）",
+    "verdict": "rewrite",
+    "fix": "不是'未被确立'，是'已被证伪'。改为：bit[31:16] 是 REQ_COMPLETE（panthor_mmu.c:646-650），bit16 是 AS0 的 UPDATE 完成；AS2..AS7 各置 16+as 位即同一机制的算术证据。低地址分配器保留，理由换成下面一句（uncached/WCOMB，免缓存维护）。",
+    "end_line": 658,
+    "task_line": 656,
+    "note": "本条是全文件唯一一处主动怀疑旧解读的地方，但用了'未被确立'而不是'已证伪'，且反证材料（AS2..7 也置位）就在同一句里，没有推到底。"
+  },
+  {
+    "line": 811,
+    "snippet": "0b11 as well. What matters here is that a leaf without them is 0b00, which the walker reads as an invalid descriptor: it produces no translation and, on this walker, no fault either.",
+    "premise": "AArch64 描述符低两位 0b11 = 有效；0b00 在本 walker 上不产生 fault",
+    "verdict": "holds",
+    "fix": "保留。不依赖 0x10000。'0b00 不报 fault' 这一硬件行为本身仍无独立证据，若要严谨可标'未验证'，但与该位无关。",
+    "end_line": 812,
+    "note": "该句是后面'没有 fault 所以没有取指'整条推理的支点，值得单独验证（例如故意写一个 0b00 leaf 看是否有 fault）。"
+  },
+  {
+    "line": 943,
+    "snippet": "Match that encoding; the upper IRQ bit after UPDATE does not prove a fault caused by this flag or a completed table walk. */",
+    "premise": "'UPDATE 之后的上半区中断位不能证明该标志导致 fault，也不能证明走查完成'",
+    "verdict": "rewrite",
+    "fix": "前半句对（不是 fault），后半句错（bit[31:16] 正是完成信号）。改为：'UPDATE 之后出现的 16+as 位是该地址空间的 REQ_COMPLETE，它证明命令退休，不证明取指发生；fault 只看 bit[15:0]。'",
+    "end_line": 944
+  },
+  {
+    "line": 1122,
+    "snippet": "\"this is a level 3 page and the walk stops here\". They were missing for the whole of M1: every leaf the MCU walked read back as an invalid descriptor, which is a translation failure that raises no MMU interrupt and writes no fault address -- exactly the silence this driver spent days chasing. The firmware's own vector",
+    "premise": "leaf 低两位缺失 → 无效描述符 → 无中断、无 fault 地址",
+    "verdict": "holds",
+    "fix": "保留。与 0x10000 无关；这条解释的是 M1 期的静默，不是本次误读。",
+    "end_line": 1127,
+    "note": "与 :811-812 同一claim；'无 fault' 仍未独立验证。"
+  },
+  {
+    "line": 1372,
+    "snippet": "No stack, no memory beyond the two words, no dependency on anything the driver set up other than the two page table entries that are already known good from the walk. If this runs, the MCU works and the vendor image is what fails. If it does not, nothing about the firmware is worth investigating until the fetch path itself is understood.",
+    "premise": "witness 用的两个 PTE '已由走查确认可用'",
+    "verdict": "rewrite",
+    "fix": "把'走查'限定为 CPU 侧自检：'已由 load_firmware() 的 CPU 侧覆盖自检确认每个 leaf 写成 0b11'。不能说'硬件走查确认'——没有任何 GPU 侧回读。",
+    "end_line": 1375
+  },
+  {
+    "line": 2295,
+    "snippet": "The first run that sampled the channel got 0x4 before the table walk, 0x4 after it, and 0x1b",
+    "premise": "debug_top 从 0x4 变 0x1b 可能是 idle/busy 也可能是复用状态字",
+    "verdict": "holds",
+    "fix": "保留。描述的是 MFG_DEBUG_TOP 的采样，与 MMU 中断无关。"
+  },
+  {
+    "line": 2726,
+    "snippet": "And wait for it to finish.  panthor_mmu.c:556-568 as_send_cmd_and_wait() brackets the write with wait_ready() on both sides: AS_STATUS bit0 is set while the command is outstanding and the hardware clears it when the command retires. Waiting only before the write, which is what this function used to do, cannot tell a command that completed from one that was never accepted, and the caller then reads AS_FAULTSTATUS on a space that may still be mid-update.",
+    "premise": "panthor as_send_cmd_and_wait 在写前后各等一次 AS_STATUS.bit0",
+    "verdict": "holds",
+    "fix": "保留。与 0x10000 无关，且与 panthor_mmu.c:521-553 一致。",
+    "end_line": 2732,
+    "note": "这是全文件唯一的'命令是否退休'独立判据，见报告 §E。"
+  },
+  {
+    "line": 2881,
+    "snippet": "then sends one UPDATE. LOCK only exists for the region-locking feature a user VM can ask for (panthor_mmu.c:1813), and FLUSH_MEM is used when a VM is torn down. Doing both before the very first UPDATE means the address space is handed an operation whose meaning depends on a lock region that was never requested, and on some parts that is enough to make the UPDATE never complete.",
+    "premise": "首个 UPDATE 前不做 LOCK/FLUSH_MEM；某些部件上会让 UPDATE 永不完成",
+    "verdict": "holds",
+    "fix": "保留。论据是 panthor 的调用形状（panthor_mmu.c:596-606 只有三次写 + 一次 UPDATE），不是中断位。'某些部件'仍属未验证的一般化，可弱化为'没有依据认为需要'。",
+    "end_line": 2885
+  },
+  {
+    "line": 2894,
+    "snippet": "The value 0x420001c6 came from panthor_mmu.c:790, which does put INA_BITS(55 - va_bits) in bits 11:6. kbase has no such field: kbase_mmu_hw_direct() (mmu/mali_kbase_mmu_hw_direct.c :125-152) starts from ADRMODE_AARCH64_4K, clears PTW_MEMATTR, sets PTW_MEMATTR_WRITE_BACK and R_ALLOCATE, and stops there -- 0x42000006. The phone agrees: every address space on it is programmed with 0x42000006, and with 0x420001c6 the walk geometry is wrong in a way that would keep the MCU from fetching anything.",
+    "premise": "transcfg 用 0x42000006（kbase 值），0x420001c6 是 panthor 带 INA_BITS 的值",
+    "verdict": "holds",
+    "fix": "保留。与 0x10000 无关。'walk geometry 会错到取不到指'是推断，标未验证。",
+    "end_line": 2899,
+    "note": "panthor_mmu.c:782-788 确写 INA_BITS(55-va_bits)；本机 va_bits=48 → 0x420001c6。"
+  },
+  {
+    "line": 2906,
+    "snippet": "Which write raises the bus error, asked one write at a time.  Clearing the latch before AS0 was touched and reading it straight after showed the error appearing somewhere inside this function: zero after the clear, 0x10000 -- MMU_BUS_ERROR(0) -- once the address space had taken the update. That narrows it to four candidate writes but not to one, and the difference matters: if the error appears on the first of the three configuration writes then the error is the register write itself being refused, and no amount of table work will help; if it appears only after UPDATE, then it is the walk reading the tables and the tables are what has to change.  So each step clears the latch before its own write and reads it after. Four extra register accesses, and they answer a question that has been guessed at across a dozen runs.",
+    "premise": "0x10000 = MMU_BUS_ERROR(0)，出现在 UPDATE 之后；据此判断是'寄存器写被拒'还是'走查读表'",
+    "verdict": "rewrite",
+    "fix": "保留 AS_STEP 这套逐步清/读的插桩（它恰好是本次推翻的证据来源），删掉'bus error'框架。改为：'fault 只看 bit[15:0]；bit[31:16] 是各 AS 的 REQ_COMPLETE。逐步读的目的：确认三个配置写不产生任何事件、UPDATE 之后才出现 16+as 位，即命令在 UPDATE 处退休。'",
+    "end_line": 2917,
+    "task_line": 2909,
+    "note": "实测结果（kernel-lines.txt:239-245）是 0,0,0,0 然后 0x10000——正是'配置写无事件、UPDATE 完成'，与该段设想的两种故障都不符。"
+  },
+  {
+    "line": 2941,
+    "snippet": "Every step so far has been judged by the interrupt latch, which says whether the write was refused, not whether it landed. If a write had silently gone nowhere, the walker would be handed a TRANSTAB of zero and would read its root table from physical address zero -- a bus error with no page fault, which is what every run has reported. Two lines settle it. ",
+    "premise": "写若静默丢失，walker 会从物理 0 读根表，表现为'bus error 且无 page fault'，而每次运行都如此",
+    "verdict": "void",
+    "fix": "删除。回读本身保留（transtab/memattr/transcfg 三项回读是有效证据：日志 244 行三项都非零、与写入值一致），但'每次运行都报 bus error'不存在，推理落脚点消失。",
+    "end_line": 2945,
+    "note": "日志 244 行 transtab 0x1a0550000 / memattr 0x84c8d888d8f88 / transcfg 0x42000006，与写入值相同 → 三次写都没有静默丢失。"
+  },
+  {
+    "line": 2956,
+    "snippet": " One UPDATE, not two.  This used to follow the step with a second one through as_command(), so every space took the command twice and the second one raced the first one's completion bit in the interrupt latch. The reply is already visible in the step line above.",
+    "premise": "第二次 UPDATE 会与第一次的完成位竞争中断锁存",
+    "verdict": "holds",
+    "fix": "保留。这里本来就把它叫'completion bit'，是全文件用词最准的一处。",
+    "end_line": 2961,
+    "accidentally_right": true,
+    "note": "同一份代码里 :2909 叫它 BUS_ERROR、:2960 叫它 completion bit，两种读法并存。"
+  },
+  {
+    "line": 3459,
+    "snippet": "block powered up with still answers walks, and a walk into one of them is a fault raised into a line nobody is watching.",
+    "premise": "未编程的 AS 仍会响应 walk，走进去会抬一个没人看的中断",
+    "verdict": "unverified",
+    "fix": "保留但标未验证。没有一次运行读过'未编程 AS 被取指'的中断；ADRMODE_UNMAPPED 下的行为是推断。",
+    "end_line": 3460,
+    "note": "与本条 0x10000 无关；不影响主链。"
+  },
+  {
+    "line": 3478,
+    "snippet": " Measure each space's UPDATE, one at a time.  Every argument about MMU_BUS_ERROR(0) so far rested on the claim that spaces two through seven take the same write without raising it, and that claim was never measured: the loop below wrote and moved on, and only AS0's latch was ever read. If those spaces raise the error too then it belongs to the block, not to the address space, and the whole line of reasoning that treats zero as an AS0-specific wall is wrong.  So: clear, write, read, per space. Seven extra register accesses and the claim becomes a fact either way.",
+    "premise": "AS2..AS7 '取同样的写而不抬中断'，该claim从未被测量",
+    "verdict": "void",
+    "fix": "这段是实验设计说明，实验本身（:3490-3503）已经跑过并给出结论：每个空间都抬自己的位（日志 176-181）。所以：claim 被自家数据否证，'AS0 特有的是零'整条作废；但实验保留，注释改成记录结论。",
+    "end_line": 3488,
+    "accidentally_right": true,
+    "task_line": 3447,
+    "note": "该段预言的'若那些空间也抬，就属于块而不是地址空间'方向正确，但它把抬起来的位当成 error；实际是每个 AS 的 REQ_COMPLETE。"
+  },
+  {
+    "line": 3760,
+    "snippet": "It has been carrying MMU_BUS_ERROR(0) since AS0 took its update, and nothing in this driver has ever cleared it again -- so every reading taken after the start request so far has been the same stale bit, and \"the core faulted while fetching\" and \"the core never fetched\" have been indistinguishable at that register. What the walk's fault means and what a fetch fault would mean are different questions; separating them costs one write.",
+    "premise": "锁存器自 AS0 UPDATE 起一直携带 MMU_BUS_ERROR(0)，从未被清",
+    "verdict": "rewrite",
+    "fix": "动作（启动前清一次再读）保留且必要；叙述改为：'自 AS0 UPDATE 起锁存器携带 bit16 = AS0 的 REQ_COMPLETE。启动前清零是为了让之后读到的任何 bit[15:0] 只能来自取指。'",
+    "end_line": 3764,
+    "task_line": 3726,
+    "note": "实测：清零后读 0（日志 262），启动循环内四次采样都是 0（264/265/321/408）→ 取指期确实没有 fault。"
+  },
+  {
+    "line": 3963,
+    "snippet": "A fetch that leaves the core and is refused by the address space raises a page fault or a bus error on AS0 and records the offending address; a fetch that never leaves the core raises neither. Reading both the latch and the fault address at the same",
+    "premise": "取指被地址空间拒绝会 'raise a page fault or a bus error on AS0'",
+    "verdict": "rewrite",
+    "fix": "改为：'被拒绝的取指在 bit[15:0] 对应 AS 的位置 fault，并在 AS_FAULTSTATUS/AS_FAULTADDRESS 留下类型与地址；不会在 bit[31:16] 留下任何东西——那里是完成位。'",
+    "end_line": 3965,
+    "task_line": 3930,
+    "note": "实测：启动后 as0 faultstatus 0 faultaddress 0（日志 574），四次采样 mmu 全 0 → 没有 fault，即'取指从未离开核'这一侧的证据成立（但它是零值证据，不是正证据）。"
+  },
+  {
+    "line": 4054,
+    "snippet": "MCU_STATUS only reports the state machine we poked with MCU_CONTROL; it is one if the request was taken, not proof that a single instruction ran. The registers that can tell the difference are these, and not one of them had ever been read: an MCU that walked into a translation fault leaves the address in AS_FAULTADDRESS and the access type in AS_FAULTSTATUS, and the MMU interrupt latch says the walk failed. Without them \"did not start\" and \"started and faulted on its first fetch\" look identical, which is exactly the corner this has been stuck in.",
+    "premise": "MMU 中断锁存器 says the walk failed",
+    "verdict": "void",
+    "fix": "删掉'the walk failed'。保留 AS_FAULTSTATUS/AS_FAULTADDRESS 这两个寄存器的读取价值（它们是独立于中断位的判据）。",
+    "end_line": 4060
+  },
+  {
+    "line": 4087,
+    "snippet": "Every register read so far has been the MMU's opinion of the MCU's memory accesses, and it has been unanimous and uninformative: no fault, no fault address, no walk error. The GPU has a second set entirely its own -- GPU_FAULTSTATUS at 0x03c and the 64-bit GPU_FAULTADDRESS split over 0x040 and 0x044 -- and this driver had never read either. A core that faults on its own fetch or hits an illegal opcode without going through a page walk lands here instead, and would look exactly like \"did not start\" from the MMU's side.",
+    "premise": "MMU 侧读数一致且无信息量：no fault / no fault address / no walk error",
+    "verdict": "holds",
+    "fix": "保留。三个'无'都与实测一致（fault 0、addr 0、bits[15:0]=0）；这里没有把 bit16 当 fault。",
+    "end_line": 4092
+  },
+  {
+    "line": 4661,
+    "snippet": "not cosmetic: a space left at whatever the block powered up with still answers walks, and a walk into one of them raises an interrupt. Parking them while the lines are still open means anything that does leak through is visible; parking them after would hide it under the mask this driver is about to install.",
+    "premise": "未编程的 AS 仍会响应 walk，走进去会抬中断（与 :3459 同一 claim）",
+    "verdict": "unverified",
+    "fix": "同 :3459，标未验证。",
+    "end_line": 4664
+  },
+  {
+    "line": 4698,
+    "snippet": " mali_preas0=1 puts AS0's update where the phone's trace has it: before the L2 request.  Record seven of that trace is AS0's AS_COMMAND=UPDATE and record ninety-eight is L2_PWRON. This driver has always done it the other way round, and after the page tables and the walk were cleared one by one that order is the only structural difference left. The parked spaces AS2..AS7 are written before the L2 comes up and raise no interrupt at all; AS0 is written after it and raises MMU_BUS_ERROR(0) every single run. Two facts, one variable, never separated.",
+    "premise": "AS2..AS7 在 L2 之前写且'不抬任何中断'；AS0 在 L2 之后写且每次都抬 MMU_BUS_ERROR(0)；两个事实一个变量",
+    "verdict": "void",
+    "fix": "整段删除。两个'事实'里第二个是错的（AS2..AS7 各自抬 bit(16+as)，见日志 176-181），所以'两个事实一个变量'的对照根本不存在。mali_preas0 这个 boot-arg 可以留，但理由要换成'与厂商 trace 的记录顺序一致'，不能声称它对照了中断行为。",
+    "end_line": 4706,
+    "task_line": 4671,
+    "note": "这是全文件最危险的一条：它把'邻居不报错'当成已观测事实写进实验理由，而同一份日志的 176-181 行就写着邻居各自报了一个位。"
+  },
+  {
+    "line": 4779,
+    "snippet": " The other seven were parked before the masks went on; this one could not be, because the root it needs does not exist until the images are mapped.   Whether the block's own AXI channel is idle, read either side of the walk.  This is the one observation nothing in the driver has made. Every other explanation for an MCU that reports ENABLED and executes nothing has been eliminated by experiment: power and clocks settle (POWER_CHANGED_ALL is raised), the firmware image and its page tables are accepted, AS0 takes the update, the bus protections are released, and a hand-written thirty-two byte Cortex-M7 stub at the same address does not run either. What is left is that the fetch itself never leaves the core -- and a channel that never goes idle is a mechanical reason for exactly that, with the same signature: no fault, no progress.  Taken twice because a bus that goes busy during the table walk and never comes back is a different finding from one that was busy before the walk even began.",
+    "premise": "'AS0 takes the update' 被当作已消除的解释之一；总线忙=取指没出核",
+    "verdict": "rewrite",
+    "fix": "把'AS0 takes the update'改为'AS0 的 UPDATE 退休（AS_STATUS.bit0 归零 + REQ_COMPLETE 置位）'——这仍然成立，且现在是唯一成立的。总线忙那条（debug_top 0x4→0x1b）保留为独立观察，但要注明 0x1b 的位含义未验证。",
+    "end_line": 4795,
+    "task_line": 4767
+  },
+  {
+    "line": 4799,
+    "snippet": "Clear the MMU latch immediately before the table walk, and read it immediately after.  Without this the run only ever reports mmu irq 0x10000 as a standing value by the time the start request is about to be written, and that cannot distinguish a fault raised by this walk from one left behind by the firmware mapping or by the loader. Writing the clear and reading back right away turns the question into a single step: whatever is latched after the clear was raised by as_enable() and by nothing else.",
+    "premise": "清零是为了区分'本次走查抬的 fault'与'之前留下的'",
+    "verdict": "rewrite",
+    "fix": "动作保留（这是本次推翻的证据来源）；措辞改为：'清零后出现的 bit[31:16] 只可能由 as_enable() 产生；bit[15:0] 才代表 fault。'",
+    "end_line": 4805
+  },
+  {
+    "line": 4808,
+    "snippet": " The control run: AS0 gets exactly what AS2..AS7 got, and nothing else changes.  Written as its own branch rather than as a flag inside as_enable() so that the three register writes and the one UPDATE are textually the same shape as the parking loop that has never raised an error. If this is silent and the real path is not, the difference between the two is the table and only the table.",
+    "premise": "对照组若静默而真实路径不静默，则差别只在表",
+    "verdict": "void",
+    "fix": "删除。两条路径都不静默（都抬 16+as 位），该对照无法区分任何东西；而且 mali_as0=1 从未真正跑过（全仓库日志无 'AS0 parked:' 行）。",
+    "end_line": 4814,
+    "task_line": 4809
+  },
+  {
+    "line": 4843,
+    "snippet": "The first run that showed anything at all had mmu irq 0x10000 -- MMU_BUS_ERROR for address space 0, a walk the bus refused -- while AS_FAULTSTATUS stayed zero, which is not a page fault. Whether that latch was set by the walker itself or by something earlier decides which half of the address space setup to look at, and a single reading taken afterwards cannot tell the two apart.",
+    "premise": "0x10000 = MMU_BUS_ERROR for AS0，一次被总线拒绝的走查",
+    "verdict": "void",
+    "fix": "删除。紧接其下的 :4849 打印已经把同一个值解码成 'request completions 0x1'——同一处代码两种读法。",
+    "end_line": 4847,
+    "task_line": 4809
+  },
+  {
+    "line": 4849,
+    "snippet": "printf(\"mali: mmu irq %#x before the start request (page faults %#x, request completions %#x)\\n\", mrd(kMmuIntRaw), mrd(kMmuIntRaw) & 0xffu, (mrd(kMmuIntRaw) >> 16) & 0xffu);",
+    "premise": "把 bit[15:0] 记作 page faults、bit[31:16] 记作 request completions",
+    "verdict": "holds",
+    "fix": "保留，并且提升为主判据。这是全文件唯一与 panthor 语义一致的解码（(& 0xff) 与 (>>16 & 0xff)）。",
+    "end_line": 4850,
+    "accidentally_right": true,
+    "note": "结论对、且理由也对，但和上方注释互相矛盾；矛盾的一方（注释）要删。"
+  },
+  {
+    "line": 5175,
+    "snippet": " The interesting reading this run is built around: the walker reported MMU_BUS_ERROR(0) on AS_COMMAND=UPDATE and on nothing before it, with the root table at 8.5 GiB. A walk that cannot read its own root produces exactly that signature. One image with a boot-arg answers both sides of the question.",
+    "premise": "walker 在 UPDATE 上报 MMU_BUS_ERROR(0)，根表在 8.5 GiB，'读不到自己根表的走查'正好这个签名",
+    "verdict": "rewrite",
+    "fix": "删掉 bus-error 因果。mali_low 保留，理由用 :660-668 已经写好的那条（低窗 uncached/WCOMB，免缓存维护，且地址可预测）；'高于 4 GiB 不可达'这个假说随本条一起作废。",
+    "end_line": 5179,
+    "task_line": 5143,
+    "note": "实测反证：trial 675/676/677 根表在 0x50000000（低窗内）时同样读到 0x10000；trial 679-692 根表在 4 GiB 以上时也是 0x10000。地址高低与该位无关。"
+  }
+]

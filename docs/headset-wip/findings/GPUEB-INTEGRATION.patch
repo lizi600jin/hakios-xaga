@@ -1,0 +1,1009 @@
+diff --git a/drivers/gpu/hakios.gpueb-ipi.h b/drivers/gpu/hakios.gpueb-ipi.h
+new file mode 100644
+index 0000000..e8fbb34
+--- /dev/null
++++ b/drivers/gpu/hakios.gpueb-ipi.h
+@@ -0,0 +1,552 @@
++/* -*- c -*-
++ * gpueb-ipi.h — MT6895 GPUEB mailbox / IPI 协议常量与结构
++ *
++ * 状态：待集成草稿。不在 /home/lizi/IOS/hakios-mtk 内，不参与现有构建。
++ * 目标：可直接 #include 进 XNU 的 Mali 驱动，提供常量 + 结构 + 内联原语。
++ *
++ * 设计约束
++ *   1. 不依赖任何内核 API。没有 readl/writel/mb/udelay 的默认定义，
++ *      由调用方通过 GPUEB_MMIO_* / GPUEB_BARRIER / GPUEB_UDELAY 注入。
++ *   2. 所有地址、slot、位定义都有源码出处（见各条注释的 §编号，
++ *      对应同目录 GPUEB-IPI-PROTOCOL.md）。
++ *   3. 纯轮询，零中断。不注册 GIC，不依赖 completion。
++ *
++ * 证据来源
++ *   [ML]  MT6895-Mainline/linux branch 7.2-mt6895-xiaomi-xaga
++ *   [VND] 厂商 5.10 树 drivers/gpu/mediatek/gpueb/
++ *   [DTS] xaga 真机反编译 DT
++ *   [IOMEM] xaga 真机 /proc/iomem
++ */
++
++#ifndef _GPUEB_IPI_H_
++#define _GPUEB_IPI_H_
++
++/* ═══════════════════════════════════════════════════════════════════════
++ * 0. 移植层：调用方必须提供这三个宏（或保留默认）
++ * ═══════════════════════════════════════════════════════════════════════ */
++
++/* MMIO 读写。XNU 侧传进已映射的虚拟地址；这里只做解引用。 */
++#ifndef GPUEB_MMIO_READ32
++#  define GPUEB_MMIO_READ32(va)        (*(volatile unsigned int *)(va))
++#endif
++#ifndef GPUEB_MMIO_WRITE32
++#  define GPUEB_MMIO_WRITE32(va, v)    (*(volatile unsigned int *)(va) = (v))
++#endif
++
++/* 内存屏障。写 SRAM 之后、写 IRQ_SET 之前必须有。 */
++#ifndef GPUEB_BARRIER
++#  define GPUEB_BARRIER()              __asm__ __volatile__("" ::: "memory")
++#endif
++
++/* 微秒延时。轮询间隔 10 µs，与 [ML] mtk_tinysys_ipi.c:21 ipi_delay() 一致 */
++#ifndef GPUEB_UDELAY
++#  define GPUEB_UDELAY(us)             do { (void)(us); } while (0)
++#endif
++
++#ifndef GPUEB_NULL
++#  define GPUEB_NULL                   ((void *)0)
++#endif
++
++/* ═══════════════════════════════════════════════════════════════════════
++ * 1. 物理地址（[DTS] xaga_live.dts:4895-4898, [IOMEM] dump/iomem.txt:97-101）
++ *
++ *   13c5fd80-13c5ffff : 13c40000.gpueb mbox0_base   ← 640 B 消息 SRAM
++ *   13c62000-13c62003 : 13c40000.gpueb mbox0_send
++ *   13c62004-13c62007 : 13c40000.gpueb mbox0_set
++ *   13c62074-13c62077 : 13c40000.gpueb mbox0_clr
++ *   13c62078-13c6207b : 13c40000.gpueb mbox0_recv
++ *
++ * ⚠ 0x13c5fd80 是消息 SRAM，不是寄存器块。
++ * ⚠ 0x13c40000 (gpueb_base) 严禁触碰 —— 门控未确认。
++ * ⚠ 0x13c60000..0x13c61fff 未映射（iomem 无条目），不要按偏移推算过去。
++ * ═══════════════════════════════════════════════════════════════════════ */
++
++#define GPUEB_PHYS_BASE             0x13c40000u   /* 禁读，仅作记录 */
++#define GPUEB_PHYS_SIZE             0x22000u
++
++#define GPUEB_MBOX_SRAM_PHYS        0x13c5fd80u   /* 消息 SRAM 基址 */
++#define GPUEB_MBOX_SRAM_SIZE        0x280u        /* 640 B = 160 slots × 4 B */
++
++#define GPUEB_MBOX_SEND_PHYS        0x13c62000u   /* RO: TX busy  (bitmap) */
++#define GPUEB_MBOX_SET_PHYS         0x13c62004u   /* WO: raise IRQ (bitmap) */
++#define GPUEB_MBOX_CLR_PHYS         0x13c62074u   /* WO: clear IRQ (bitmap) */
++#define GPUEB_MBOX_RECV_PHYS        0x13c62078u   /* RO: RX pending (bitmap) */
++
++/* 共享内存：mblock-38-me_GPUEB_SHARED，2 MiB 预留；
++ * MEM_ID_GPUFREQ 是其中第一块 0x1000（[DTS]:4899 gpueb_mem_table = <0 0x1000>, <1 0x180000>） */
++#define GPUEB_SHARED_PHYS           0x7c600000u
++#define GPUEB_SHARED_SIZE           0x200000u     /* 2 MiB 总预留 */
++#define GPUFREQ_MEM_SIZE            0x1000u       /* MEM_ID_GPUFREQ 实际大小 */
++#define GPUFREQ_STATUS_MEM_SZ       0x400u        /* status 区，[VND] gpufreq_v2.h:19 */
++#define GPUFREQ_DEBUG_MEM_SZ        (GPUFREQ_MEM_SIZE - GPUFREQ_STATUS_MEM_SZ)  /* 0xc00 */
++
++/* GPUEB 的 MMIO 在固件内是 +0x10000000 重映射（[FW] GPUEB-RE.md:101）。
++ * AP 侧不需要，这里只作记录，防止有人误用。 */
++#define GPUEB_FW_MMIO_BIAS          0x10000000u
++
++/* 中断（我们不注册，仅记录以便排查） */
++#define GPUEB_IRQ_SPI               516           /* DT interrupts <0 0x204 4> */
++#define GPUEB_IRQ_GIC_INTID         (GPUEB_IRQ_SPI + 32)   /* = 548 */
++
++/* ═══════════════════════════════════════════════════════════════════════
++ * 2. ctl bank 内部偏移（权威：[ML] drivers/mailbox/mtk-gpueb-mailbox.c:22-25）
++ *
++ *   绝对地址 = GPUEB_MBOX_*_PHYS，下面给的是相对 0x13c62000 的偏移。
++ *   全部是 1 bit / 通道 的位图，不是队列指针。
++ * ═══════════════════════════════════════════════════════════════════════ */
++
++#define GPUEB_MBOX_CTL_TX_STS       0x00u   /* RO, 1 = 上一条还没被取走 */
++#define GPUEB_MBOX_CTL_IRQ_SET      0x04u   /* WO, 写 BIT(chan) 触发 */
++#define GPUEB_MBOX_CTL_IRQ_CLR      0x74u   /* WO, 写 BIT(chan) 清位/应答 */
++#define GPUEB_MBOX_CTL_RX_STS       0x78u   /* RO, 1 = 对方给我发了消息 */
++
++/* ═══════════════════════════════════════════════════════════════════════
++ * 3. 通道表（[DTS]:4891-4894）
++ *
++ *   send_table = <id mbox slots>          recv_table = <id mbox slots recv_opt>
++ *   slot 分配：[VND] gpueb_ipi.c:250-274 —— TX 全排完才排 RX，共用一个累加器
++ *
++ *   recv_opt：0 = MBOX_RECV_MESSAGE（普通消息），1 = MBOX_RECV_ACK（这是应答）
++ * ═══════════════════════════════════════════════════════════════════════ */
++
++#define GPUEB_MBOX_SLOT_SIZE        4u       /* [VND] mtk-mbox.h:18 */
++#define GPUEB_MBOX_TOTAL_SLOTS      160u     /* [DTS] mbox_size = <160> */
++
++/* 通道 ID（同时也是 mbox 的 pin_index / bit 号） */
++enum gpueb_ipi_chan {
++    GPUEB_CHAN_FAST_DVFS_EVENT = 0,
++    GPUEB_CHAN_GPUFREQ         = 1,   /* ★ 我们只用这一条 */
++    GPUEB_CHAN_SLEEP           = 2,
++    GPUEB_CHAN_TIMER           = 3,
++    GPUEB_CHAN_FHCTL           = 4,
++    GPUEB_CHAN_CCF             = 5,
++    GPUEB_CHAN_GPUMPU          = 6,
++    GPUEB_CHAN_FAST_DVFS       = 7,
++    GPUEB_CHAN_NUM             = 8
++};
++
++/* TX slot / 字节偏移（AP → GPUEB） */
++#define GPUEB_TX_SLOT_FAST_DVFS_EVENT   0u    /* 0x000,  4 slots / 16 B */
++#define GPUEB_TX_SLOT_GPUFREQ           4u    /* 0x010,  8 slots / 32 B ★ */
++#define GPUEB_TX_SLOT_SLEEP            12u    /* 0x030,  3 slots / 12 B */
++#define GPUEB_TX_SLOT_TIMER            15u    /* 0x03c,  3 slots / 12 B */
++#define GPUEB_TX_SLOT_FHCTL            18u    /* 0x048,  9 slots / 36 B */
++#define GPUEB_TX_SLOT_CCF              27u    /* 0x06c,  4 slots / 16 B */
++#define GPUEB_TX_SLOT_GPUMPU           31u    /* 0x07c,  6 slots / 24 B */
++#define GPUEB_TX_SLOT_FAST_DVFS        37u    /* 0x094,  6 slots / 24 B */
++/* TX 总占用 43 slots → RX 从此处开始 */
++
++/* RX slot / 字节偏移（GPUEB → AP）—— ★ 注意不是和 TX 同号 */
++#define GPUEB_RX_SLOT_FAST_DVFS_EVENT  43u    /* 0x0ac,  4 slots / 16 B */
++#define GPUEB_RX_SLOT_GPUFREQ          47u    /* 0x0bc,  8 slots / 32 B ★★ */
++#define GPUEB_RX_SLOT_SLEEP            55u    /* 0x0dc,  1 slots /  4 B */
++#define GPUEB_RX_SLOT_TIMER            56u    /* 0x0e0,  1 slots /  4 B */
++#define GPUEB_RX_SLOT_FHCTL            57u    /* 0x0e4,  1 slots /  4 B */
++#define GPUEB_RX_SLOT_CCF              58u    /* 0x0e8,  4 slots / 16 B */
++#define GPUEB_RX_SLOT_GPUMPU           62u    /* 0x0f8,  1 slots /  4 B */
++#define GPUEB_RX_SLOT_FAST_DVFS        63u    /* 0x0fc,  6 slots / 24 B */
++/* RX 结束 69 slots (0x114) < 160 slots 上限 */
++
++/* GPUFREQ 通道的绝对字节偏移（相对 GPUEB_MBOX_SRAM_PHYS） */
++#define GPUEB_GPUFREQ_TX_OFF          (GPUEB_TX_SLOT_GPUFREQ * GPUEB_MBOX_SLOT_SIZE)  /* 0x010 */
++#define GPUEB_GPUFREQ_RX_OFF          (GPUEB_RX_SLOT_GPUFREQ * GPUEB_MBOX_SLOT_SIZE)  /* 0x0bc */
++
++/* GPUFREQ 通道的绝对物理地址（省掉运行时加法，便于日志打印） */
++#define GPUEB_GPUFREQ_TX_PHYS        (GPUEB_MBOX_SRAM_PHYS + GPUEB_GPUFREQ_TX_OFF)   /* 0x13c5fd90 */
++#define GPUEB_GPUFREQ_RX_PHYS        (GPUEB_MBOX_SRAM_PHYS + GPUEB_GPUFREQ_RX_OFF)   /* 0x13c5fe3c */
++
++/* ═══════════════════════════════════════════════════════════════════════
++ * 4. 消息（32 字节 / 8 × u32）
++ *    [ML] drivers/gpu/mediatek/gpueb/include/gpufreq_ipi.h:51-78
++ *
++ *    struct {
++ *        u32 cmd_id;               // u32[0] off 0x00
++ *        u32 target;               // u32[1] off 0x04
++ *        union { ... };            // u32[2..7] off 0x08..0x1c
++ *    };                            // sizeof == 32, GPUFREQ_IPI_DATA_LEN == 8
++ *
++ *    ⚠ addr 子结构是「两个 u64 在前，两个 u32 在后」：
++ *        u64 status_base;  u64 debug_base;  u32 status_size;  u32 debug_size;
++ *      不是 base/size/base/size 交错！
++ * ═══════════════════════════════════════════════════════════════════════ */
++
++#define GPUFREQ_IPI_MSG_WORDS       8u
++#define GPUFREQ_IPI_MSG_BYTES       (GPUFREQ_IPI_MSG_WORDS * 4u)   /* 32 */
++
++/* 命令号（[ML] gpufreq_ipi.h:29-49） */
++enum gpufreq_ipi_cmd {
++    CMD_INIT_SHARED_MEM    = 0,    /* ★ 必须先发，且只发一次 */
++    CMD_GET_FREQ_BY_IDX    = 1,
++    CMD_GET_POWER_BY_IDX   = 2,
++    CMD_GET_OPPIDX_BY_FREQ = 3,
++    CMD_GET_LEAKAGE_POWER  = 4,
++    CMD_SET_LIMIT          = 5,
++    CMD_POWER_CONTROL      = 6,    /* ★ 上电 */
++    CMD_COMMIT             = 7,
++    CMD_GET_DEBUG_OPP_INFO = 8,
++    CMD_GET_DEBUG_LIMIT_INFO = 9,
++    CMD_GET_WORKING_TABLE  = 10,
++    CMD_GET_SIGNED_TABLE   = 11,
++    CMD_GET_LIMIT_TABLE    = 12,
++    CMD_SWITCH_LIMIT       = 13,
++    CMD_FIX_TARGET_OPPIDX  = 14,
++    CMD_FIX_CUSTOM_FREQ_VOLT = 15,
++    CMD_SET_STRESS_TEST    = 16,
++    CMD_SET_AGING_MODE     = 17,
++    CMD_SET_GPM_MODE       = 18,
++    CMD_SET_TEST_MODE      = 19,
++    CMD_NUM                = 20
++};
++
++/* target 取值（[VND] gpufreq_v2.h:78-83） */
++enum gpufreq_target {
++    TARGET_DEFAULT = 0,
++    TARGET_GPU     = 1,
++    TARGET_STACK   = 2,
++    TARGET_INVALID = 3
++};
++
++/* 电源状态（[VND] gpufreq_v2.h:85-88） */
++enum gpufreq_power_state {
++    POWER_OFF = 0,
++    POWER_ON  = 1
++};
++
++/* 32 字节消息。用 union 保证既能按字看也能按字段看。 */
++union gpufreq_ipi_msg {
++    unsigned int w[GPUFREQ_IPI_MSG_WORDS];
++
++    struct {
++        unsigned int cmd_id;   /* w[0] */
++        unsigned int target;   /* w[1] */
++        union {
++            int          oppidx;        /* CMD_COMMIT / 应答 */
++            int          return_value;  /* ★ 应答的返回值，读这里（w[2]） */
++            unsigned int freq;
++            unsigned int volt;
++            unsigned int power;
++            unsigned int power_state;   /* ★ CMD_POWER_CONTROL 用（w[2]） */
++            unsigned int mode;
++            struct {                    /* CMD_INIT_SHARED_MEM 用（w[2..7]） */
++                unsigned long long status_base;   /* w[2..3] */
++                unsigned long long debug_base;    /* w[4..5] */
++                unsigned int       status_size;   /* w[6]    */
++                unsigned int       debug_size;    /* w[7]    */
++            } addr;
++            struct {
++                unsigned int freq;
++                unsigned int volt;
++            } custom;
++            struct {
++                unsigned int limiter;
++                int          ceiling_info;
++                int          floor_info;
++            } setlimit;
++        } u;
++    } f;
++};
++
++/* ═══════════════════════════════════════════════════════════════════════
++ * 5. 共享状态区（struct gpufreq_shared_status 的前 32 个字）
++ *    [ML] gpufreq_ipi.h:80-114 —— 字段顺序即内存顺序
++ *
++ *    ⚠ GPUEB 固件写，AP 只读。唯一例外：谁都不写，全靠固件。
++ *    ⚠ power_count == 0 不能证明「没上过电」（原厂 Android 也是 0）。
++ *    ⚠ power_control 是「使能开关」标量，不是位域：
++ *         != 0 → GPU 电源归 GPUEB 管；== 0 → AP 自己管。
++ *       没有「上电位」也没有「shader power 位」。
++ * ═══════════════════════════════════════════════════════════════════════ */
++
++/* status 区字段的字节偏移（已用 gcc offsetof 验证） */
++#define GPUSTAT_OFF_CUR_OPPIDX_GPU      0x00u
++#define GPUSTAT_OFF_CUR_OPPIDX_STACK    0x04u
++#define GPUSTAT_OFF_OPP_NUM_GPU         0x08u
++#define GPUSTAT_OFF_OPP_NUM_STACK       0x0cu
++#define GPUSTAT_OFF_CUR_FGPU            0x10u
++#define GPUSTAT_OFF_CUR_FSTACK          0x14u
++#define GPUSTAT_OFF_CUR_VGPU            0x18u
++#define GPUSTAT_OFF_CUR_VSTACK          0x1cu
++#define GPUSTAT_OFF_CUR_VSRAM_GPU       0x20u
++#define GPUSTAT_OFF_CUR_VSRAM_STACK     0x24u
++#define GPUSTAT_OFF_CUR_POWER_GPU       0x28u
++#define GPUSTAT_OFF_CUR_POWER_STACK     0x2cu
++#define GPUSTAT_OFF_MAX_POWER_GPU       0x30u
++#define GPUSTAT_OFF_MAX_POWER_STACK     0x34u
++#define GPUSTAT_OFF_MIN_POWER_GPU       0x38u
++#define GPUSTAT_OFF_MIN_POWER_STACK     0x3cu
++#define GPUSTAT_OFF_CUR_CEILING_GPU     0x40u
++#define GPUSTAT_OFF_CUR_FLOOR_GPU       0x44u
++#define GPUSTAT_OFF_CUR_CEILING_STACK   0x48u
++#define GPUSTAT_OFF_CUR_FLOOR_STACK     0x4cu
++#define GPUSTAT_OFF_CUR_C_LIMITER_GPU   0x50u
++#define GPUSTAT_OFF_CUR_F_LIMITER_GPU   0x54u
++#define GPUSTAT_OFF_CUR_C_LIMITER_STACK 0x58u
++#define GPUSTAT_OFF_CUR_F_LIMITER_STACK 0x5cu
++#define GPUSTAT_OFF_POWER_CONTROL       0x60u   /* ★ 使能开关，非位域 */
++#define GPUSTAT_OFF_DVFS_STATE          0x64u   /* ★ 见 enum gpufreq_dvfs_state */
++#define GPUSTAT_OFF_SHADER_PRESENT      0x68u   /* ★ 固件写的 shader 核位图 */
++#define GPUSTAT_OFF_POWER_COUNT         0x6cu   /* ★ 引用计数，0 不代表没上过电 */
++#define GPUSTAT_OFF_AGING_ENABLE        0x70u
++#define GPUSTAT_OFF_AVS_ENABLE          0x74u
++#define GPUSTAT_OFF_SB_VERSION          0x78u
++#define GPUSTAT_OFF_PTP_VERSION         0x7cu
++
++/* dvfs_state 位（[VND] gpufreq_v2.h:69-76） */
++#define DVFS_FREE                   0x00u
++#define DVFS_DISABLE                (1u << 0)
++#define DVFS_POWEROFF               (1u << 1)   /* ★ 上电后固件应清掉这一位 */
++#define DVFS_DEBUG_KEEP             (1u << 2)
++#define DVFS_AVS_KEEP               (1u << 3)
++#define DVFS_AGING_KEEP             (1u << 4)
++
++/* shader_present 位（[VND] gpufreq_mt6895.h:81-97 + gpufreq/v1 mt6885:30-38）
++ *
++ * ⚠ T0C1 / T4C0 / T4C1 的位索引在公开代码里没有定义（MT6885 v1 头无 T4）
++ *   → 完整 6 核值未知，需真机 dump 确认。
++ *   下面只给已确证的三个位。 */
++#define SHADER_T0C0                 (1u << 0)     /* 已确证 */
++#define SHADER_T1C0                 (1u << 1)     /* 已确证 */
++#define SHADER_T5C0                 (1u << 17)    /* 已确证 */
++#define SHADER_MFG3_STACK0_PARTIAL  (SHADER_T0C0)              /* T0C1 未知 */
++#define SHADER_MFG4_STACK1          (SHADER_T1C0)
++#define SHADER_MFG5_STACK2_UNKNOWN  (0u)                       /* T4C0|T4C1 未知 */
++#define SHADER_MFG6_STACK4          (SHADER_T5C0)
++#define SHADER_CORE_NUM             6u
++
++/* 已确证的下界掩码：若 shader_present 连这三位都没有，一定不对 */
++#define SHADER_PRESENT_KNOWN_BITS \
++    (SHADER_MFG4_STACK1 | SHADER_MFG6_STACK4)
++
++/* ═══════════════════════════════════════════════════════════════════════
++ * 6. 超时与错误码
++ * ═══════════════════════════════════════════════════════════════════════ */
++
++#define IPI_TIMEOUT_MS_DEFAULT      10000u   /* [VND] gpueb_ipi.h:10，厂商默认 10 s */
++#define IPI_POLL_INTERVAL_US        10u      /* [ML] mtk_tinysys_ipi.c:21 udelay(10) */
++
++/* 建议值：启动路径上不要用 10 s，见报告 §7.4 */
++#define GPUEB_TMO_INIT_SHARED_MS    1000u
++#define GPUEB_TMO_POWER_CTRL_MS     1000u
++
++enum gpueb_status {
++    GPUEB_OK              =  0,
++    GPUEB_ETXSTUCK        = -1,   /* TX_STS bit 一直为 1，上一条没被取走 */
++    GPUEB_ETIMEOUT        = -2,   /* 等应答超时 */
++    GPUEB_EREFUSED        = -3,   /* 收到应答但 return_value < 0 */
++    GPUEB_EBADPARAM       = -4,
++    GPUEB_ENOTREADY       = -5    /* 预检判定 GPUEB 不在 */
++};
++
++/* ═══════════════════════════════════════════════════════════════════════
++ * 7. 内联原语（纯轮询，零中断）
++ *
++ *    全部以 "基址 + 偏移" 形式接受已映射的虚拟地址，
++ *    这样同一份代码能跑在 XNU 的 ml_io_map 结果上。
++ * ═══════════════════════════════════════════════════════════════════════ */
++
++/* 通道 n 的位 */
++#define GPUEB_BIT(n)                (1u << (n))
++
++/* 7.1 TX 是否空闲。返回非 0 = 忙，不能发。 */
++static inline int
++gpueb_tx_busy(unsigned long ctl_va)
++{
++    return (GPUEB_MMIO_READ32(ctl_va + GPUEB_MBOX_CTL_TX_STS)
++            & GPUEB_BIT(GPUEB_CHAN_GPUFREQ)) != 0;
++}
++
++/* 7.2 RX 是否有待收。返回非 0 = 有待收。 */
++static inline int
++gpueb_rx_pending(unsigned long ctl_va)
++{
++    return (GPUEB_MMIO_READ32(ctl_va + GPUEB_MBOX_CTL_RX_STS)
++            & GPUEB_BIT(GPUEB_CHAN_GPUFREQ)) != 0;
++}
++
++/* 7.3 触发（raise）—— 必须在写完 SRAM 且 GPUEB_BARRIER() 之后调用 */
++static inline void
++gpueb_irq_raise(unsigned long ctl_va)
++{
++    GPUEB_MMIO_WRITE32(ctl_va + GPUEB_MBOX_CTL_IRQ_SET,
++                       GPUEB_BIT(GPUEB_CHAN_GPUFREQ));
++}
++
++/* 7.4 清位（clear / ack） */
++static inline void
++gpueb_irq_clear(unsigned long ctl_va)
++{
++    GPUEB_MMIO_WRITE32(ctl_va + GPUEB_MBOX_CTL_IRQ_CLR,
++                       GPUEB_BIT(GPUEB_CHAN_GPUFREQ));
++}
++
++/* 7.5 把 32 字节消息逐字写入 TX slot。
++ *     逐字写（不是 memcpy）——[ML] mtk-gpueb-mailbox.c:136-143 明确要求。 */
++static inline void
++gpueb_msg_write(unsigned long sram_va, const union gpufreq_ipi_msg *m)
++{
++    unsigned int i;
++    for (i = 0; i < GPUFREQ_IPI_MSG_WORDS; i++)
++        GPUEB_MMIO_WRITE32(sram_va + GPUEB_GPUFREQ_TX_OFF + i * 4u, m->w[i]);
++}
++
++/* 7.6 从 RX slot 逐字读出 32 字节消息。
++ *     ⚠ 顺序：[ML] 是先读体后清位；[VND] 是先清位后读体。
++ *       这里跟 [ML]（mainline 审过）。 */
++static inline void
++gpueb_msg_read(unsigned long sram_va, union gpufreq_ipi_msg *m)
++{
++    unsigned int i;
++    for (i = 0; i < GPUFREQ_IPI_MSG_WORDS; i++)
++        m->w[i] = GPUEB_MMIO_READ32(sram_va + GPUEB_GPUFREQ_RX_OFF + i * 4u);
++}
++
++/* 7.7 一次性构造两条命令的消息（编译期常量友好） */
++static inline void
++gpueb_build_init_shared_mem(union gpufreq_ipi_msg *m,
++                            unsigned long long status_pa,
++                            unsigned long long debug_pa,
++                            unsigned int status_sz,
++                            unsigned int debug_sz)
++{
++    unsigned int i;
++    for (i = 0; i < GPUFREQ_IPI_MSG_WORDS; i++)
++        m->w[i] = 0;
++    m->f.cmd_id               = (unsigned int)CMD_INIT_SHARED_MEM;
++    m->f.target               = (unsigned int)TARGET_DEFAULT;
++    m->f.u.addr.status_base   = status_pa;
++    m->f.u.addr.debug_base    = debug_pa;
++    m->f.u.addr.status_size   = status_sz;
++    m->f.u.addr.debug_size    = debug_sz;
++}
++
++static inline void
++gpueb_build_power_control(union gpufreq_ipi_msg *m, int power_on)
++{
++    unsigned int i;
++    for (i = 0; i < GPUFREQ_IPI_MSG_WORDS; i++)
++        m->w[i] = 0;
++    m->f.cmd_id             = (unsigned int)CMD_POWER_CONTROL;
++    m->f.target             = (unsigned int)TARGET_DEFAULT;
++    m->f.u.power_state      = power_on ? (unsigned int)POWER_ON
++                                       : (unsigned int)POWER_OFF;
++}
++
++/* 7.8 应答解析 */
++static inline int
++gpueb_ack_return(const union gpufreq_ipi_msg *m)
++{
++    return m->f.u.return_value;      /* w[2]，有符号 */
++}
++
++/* 7.9 共享状态读取（sram_va = 共享内存 status 区映射地址） */
++static inline unsigned int
++gpueb_status_read(unsigned long status_va, unsigned int off)
++{
++    return GPUEB_MMIO_READ32(status_va + off);
++}
++
++/* ═══════════════════════════════════════════════════════════════════════
++ * 8. 需要调用方实现的高层函数（原型；实现见报告 §10）
++ * ═══════════════════════════════════════════════════════════════════════ */
++
++/*
++ * 一次完整的请求-应答事务。纯轮询，零中断。
++ *
++ *   sram_va   GPUEB_MBOX_SRAM_PHYS 的映射
++ *   ctl_va    GPUEB_MBOX_SEND_PHYS  的映射（四个寄存器相邻，一次映射 0x80 够）
++ *   msg       8 个字，函数内部会写 TX slot
++ *   ack       输出，收到应答时填 ack_return()；可传 GPUEB_NULL
++ *   now_ms    调用方提供的毫秒时钟
++ *   timeout_ms 单次事务总超时
++ *
++ * 返回 GPUEB_OK / GPUEB_ETXSTUCK / GPUEB_ETIMEOUT
++ *
++ * 失败语义：
++ *   ETXSTUCK  — 未写任何东西，无副作用
++ *   ETIMEOUT  — 已写 SRAM + 已触发，函数内部会 gpueb_irq_clear() 回滚
++ */
++static inline int
++gpueb_ipi_xfer(unsigned long sram_va,
++               unsigned long ctl_va,
++               const union gpufreq_ipi_msg *msg,
++               int *ack,
++               unsigned int (*now_ms)(void),
++               unsigned int timeout_ms)
++{
++    unsigned int deadline;
++
++    /* 1. 等 TX 空闲 */
++    deadline = now_ms() + timeout_ms;
++    while (gpueb_tx_busy(ctl_va)) {
++        if ((int)(now_ms() - deadline) >= 0)
++            return GPUEB_ETXSTUCK;
++        GPUEB_UDELAY(IPI_POLL_INTERVAL_US);
++    }
++
++    /* 2. 写 SRAM */
++    gpueb_msg_write(sram_va, msg);
++
++    /* 3. 屏障 —— 必须 */
++    GPUEB_BARRIER();
++
++    /* 4. 触发 */
++    gpueb_irq_raise(ctl_va);
++
++    /* 5. 轮询 RX */
++    deadline = now_ms() + timeout_ms;
++    for (;;) {
++        if (gpueb_rx_pending(ctl_va))
++            break;
++        if ((int)(now_ms() - deadline) >= 0) {
++            gpueb_irq_clear(ctl_va);      /* 回滚，避免下次误判 */
++            return GPUEB_ETIMEOUT;
++        }
++        GPUEB_UDELAY(IPI_POLL_INTERVAL_US);
++    }
++
++    /* 6. 读应答（先读后清，跟 [ML]） */
++    {
++        union gpufreq_ipi_msg rx;
++        gpueb_msg_read(sram_va, &rx);
++        if (ack)
++            *ack = gpueb_ack_return(&rx);
++    }
++
++    /* 7. 清位 */
++    gpueb_irq_clear(ctl_va);
++
++    return GPUEB_OK;
++}
++
++/* ═══════════════════════════════════════════════════════════════════════
++ * 9. 调试辅助（可选，编译期开关）
++ * ═══════════════════════════════════════════════════════════════════════ */
++
++#ifdef GPUEB_DEBUG
++/*
++ * 打印共享状态区前 32 个字。这是「零风险观测面板」：
++ * 0x7c600000 是普通 DRAM 保留区，读它不会挂机。
++ */
++static inline void
++gpueb_dump_status(unsigned long status_va, void (*pr)(const char *, ...))
++{
++    static const char *const names[32] = {
++        "cur_oppidx_gpu", "cur_oppidx_stack", "opp_num_gpu", "opp_num_stack",
++        "cur_fgpu", "cur_fstack", "cur_vgpu", "cur_vstack",
++        "cur_vsram_gpu", "cur_vsram_stack", "cur_power_gpu", "cur_power_stack",
++        "max_power_gpu", "max_power_stack", "min_power_gpu", "min_power_stack",
++        "cur_ceiling_gpu", "cur_floor_gpu", "cur_ceiling_stack", "cur_floor_stack",
++        "cur_c_limiter_gpu", "cur_f_limiter_gpu",
++        "cur_c_limiter_stack", "cur_f_limiter_stack",
++        "power_control", "dvfs_state", "shader_present", "power_count",
++        "aging_enable", "avs_enable", "sb_version", "ptp_version"
++    };
++    unsigned int i;
++    for (i = 0; i < 32; i++)
++        pr("gpueb[%02u] %-20s = 0x%08x (%d)\n", i, names[i],
++           GPUEB_MMIO_READ32(status_va + i * 4u),
++           (int)GPUEB_MMIO_READ32(status_va + i * 4u));
++}
++#endif /* GPUEB_DEBUG */
++
++#endif /* _GPUEB_IPI_H_ */
+diff --git a/drivers/map b/drivers/map
+index d19a65a..9f02b26 100644
+--- a/drivers/map
++++ b/drivers/map
+@@ -69,3 +69,4 @@ power   bsd/dev/hakios.thermal.c
+ power   bsd/dev/hakios.pmic.c
+ power   bsd/dev/hakios.battguard.c
+ bluetooth bsd/dev/hakios.bt.c
++gpu      bsd/dev/hakios.gpueb-ipi.h
+diff --git a/mtk/mt6895/drivers/gpu/hakios.mali610.c b/mtk/mt6895/drivers/gpu/hakios.mali610.c
+index a4029da..f3c5de7 100644
+--- a/mtk/mt6895/drivers/gpu/hakios.mali610.c
++++ b/mtk/mt6895/drivers/gpu/hakios.mali610.c
+@@ -41,6 +41,42 @@
+ #include <vm/vm_kern.h>
+ 
+ #include "hakios.mali610_fw.h"
++/*
++ * GPUEB's mailbox, and the two commands that give it this GPU's power.
++ *
++ * GPUEB is the RV33 at 0x13c40000 that the loader starts and that owns this SoC's GPU power and
++ * clock sequencing. Until now this driver never sent it anything, and the one probe it had read
++ * four registers inside that block, which is the one thing that cannot be done safely here: a
++ * gated MTK peripheral does not fault on a read, it never answers (see gmpu_probe() below).
++ *
++ * What is safe is the mailbox, and that is what the header carries: 0x13c5fd80 for the 640-byte
++ * message SRAM, 0x13c62000 for the four control registers, 0x7c600000 for the status block GPUEB
++ * writes. None of the three is inside gpueb_base. Every address, slot and bit in it has a source
++ * line, in docs/headset-wip/findings/GPUEB-IPI-PROTOCOL.md.
++ *
++ * The header needs MMIO, a barrier and a microsecond delay, and asks for them by name so that it
++ * needs no kernel API of its own; the three below are this driver's, and match what every other
++ * block in this file does (reg_rd/reg_wr and mali_gpu_write use the same two idioms).
++ */
++#define GPUEB_MMIO_READ32(va)           (*(volatile uint32_t *)(va))
++#define GPUEB_MMIO_WRITE32(va, v)       (*(volatile uint32_t *)(va) = (v))
++#define GPUEB_BARRIER()                 __asm__ volatile ("dsb sy" ::: "memory")
++#define GPUEB_UDELAY(us)                delay((int)(us))
++#include "hakios.gpueb-ipi.h"
++/*
++ * The one field layout that has a wrong answer that still compiles.
++ *
++ * A 32-byte message is eight words, and CMD_INIT_SHARED_MEM's four numbers are two 64-bit bases
++ * followed by two 32-bit sizes -- not base/size/base/size. Written the wrong way round it is still
++ * 32 bytes and still four values, so nothing complains until GPUEB dereferences an address that
++ * is half a size. These four lines make the compiler say so instead.
++ */
++_Static_assert(sizeof(union gpufreq_ipi_msg) == 32u, "GPUFREQ_IPI_DATA_LEN is 8 words");
++_Static_assert(GPUFREQ_IPI_MSG_BYTES == 32u, "the message is 32 bytes");
++_Static_assert(offsetof(union gpufreq_ipi_msg, f.u.addr.status_base) == 8u,
++    "status_base is the first 64-bit word of the union");
++_Static_assert(offsetof(union gpufreq_ipi_msg, f.u.addr.status_size) == 24u,
++    "status_size follows the two 64-bit bases, it does not interleave with them");
+ 
+ extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
+ extern uint64_t kvtophys(vm_offset_t va);
+@@ -246,25 +282,22 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
+ #define MALI_MFG_I2M_OSTD       0x0f40u         /* 0x13FBFF40 */
+ 
+ /*
+- * GPUEB: a separate Cortex-M4-ish coprocessor at 0x13C40000 that the vendor firmware leaves in
+- * charge of the GPU's own power and clock sequencing on this SoC (the DTS says
++ * GPUEB: the RV33 coprocessor at 0x13C40000 that the loader starts and that the vendor firmware
++ * leaves in charge of this SoC's GPU power and clock sequencing (the DTS says
+  * `gpueb-support = <1>`, and gpufreq_mt6895.c:5166 jumps over its entire power_control path
+  * because of that flag).
+  *
+- * Its watchdog kick register is the cheapest liveness probe there is: the firmware rewrites it
+- * continuously, so two reads a millisecond apart that differ mean the coprocessor is still
+- * running -- in Android or in here. What that implies for a core that will not fetch is the
+- * question this whole probe exists to answer: if GPUEB is alive while XNU owns the GPU, then it
+- * may be the one holding the MFG bus, and no amount of registering from the AP side would show
+- * up as anything but "busy".
++ * Nothing in this file reads 0x13c40000 or any offset from it, and the seven macros that used to
++ * sit here are gone rather than unused. They were 0x2061c (WDT_KICK, 0x13c6061c), 0x20618 (WDT_CON),
++ * 0x2033c (IRQ_RAW), 0x1fd1c (GPR) and 0x22078 (MBOX_RECV, 0x13c62078 -- the one of the five that
++ * is *outside* the block, which is why the mailbox can be used and the other four cannot). The
++ * fourth probe is the one to remember: MBOX_RECV was already the absolute address of a register
++ * that works, spelled as an offset from a base that does not.
++ *
++ * gpueb_probe() below is what replaced the watchdog liveness test: the mailbox's own two status
++ * registers and GPUEB's status block in reserved DRAM. They answer "has it spoken lately", not
++ * "is it executing", and that is the honest limit of what can be read without touching the block.
+  */
+-#define MALI_GPUEB_PHYS         0x13c40000ULL
+-#define MALI_GPUEB_SIZE         0x24000u
+-#define MALI_GPUEB_WDT_KICK     0x2061cu
+-#define MALI_GPUEB_WDT_CON      0x20618u
+-#define MALI_GPUEB_IRQ_RAW      0x2033cu
+-#define MALI_GPUEB_MBOX_RECV    0x22078u
+-#define MALI_GPUEB_GPR          0x1fd1cu        /* gpr_offset from the allocator's node */
+ /*
+  * The MFG interconnect's own clock gates.
+  *
+@@ -458,12 +491,21 @@ enum : uint32_t { kAsCmdUpdate = 1, kAsCmdLock = 2, kAsCmdFlushMem = 5, kAsCmdUp
+ 
+ /* ------------------------------------------------------------------ state */
+ 
+-static vm_offset_t gSpm, gTopckgen, gMfgcfg, gMfgpll, gGpu, gInfracfg, gMfgrpc, gGpueb;
++static vm_offset_t gSpm, gTopckgen, gMfgcfg, gMfgpll, gGpu, gInfracfg, gMfgrpc;
++/*
++ * GPUEB's mailbox, mapped once and only when mali_gpueb asks for it. A zero field means "not
++ * mapped", which is the state every run before this one was in.
++ */
++static struct {
++	vm_offset_t sram;       /* 0x13c5fd80: 640 B of message SRAM, 160 slots of 4 B */
++	vm_offset_t ctl;        /* 0x13c62000: four 1-bit-per-channel registers in one page */
++	vm_offset_t status;     /* 0x7c600000: GPUFREQ's status block, written by GPUEB */
++} gGpueb;
+ static unsigned gMaliProgress;                  /* how far bring-up got; 1 and 2 are the milestones */
+ static unsigned gMaliLevel = 2;                 /* the boot-arg's number: 1 power, 2 all, 3..5 stop earlier */
+ static unsigned gMaliAsnHash = 1;               /* mali_asn=0 turns off the custom ASN hash */
+ static unsigned gMaliWitness;                   /* mali_witness=1 runs 32 bytes of our own code instead */
+-static unsigned gMaliGpueb;                     /* mali_gpueb=1 maps a block whose clock is off */
++static unsigned gMaliGpueb;                     /* mali_gpueb: 0 off, 1 IPI then AUTO, 2 withhold AUTO */
+ static unsigned gMaliRpc;                       /* mali_rpc=1 touches mfg_rpc, 2 reads it only */
+ /*
+  * mali_as0=1 parks address space 0 the way the other seven are parked, instead of giving it the
+@@ -2310,50 +2352,198 @@ mfg_debug_top(void)
+ }
+ 
+ /*
+- * Is the GPUEB coprocessor still running?
++ * GPUEB's mailbox, and the two questions that can be asked of it without touching its block.
+  *
+- * Two reads of its watchdog kick register, one millisecond apart. The firmware rewrites that word
+- * continuously while it is alive, so a difference is proof it is still executing and a match is
+- * strong evidence it is not. The interrupt raw status is read alongside because a live coprocessor
+- * that is talking to the AP leaves bits set in it.
++ * Map first, once. The three windows are the message SRAM, the control page and GPUEB's status
++ * block in the phone's reserved RAM (0x7c600000, 2 MiB, outside the 4 GiB window XNU is given --
++ * board.h:123 puts the kernel's own memory at 0x100000000). None of the three is inside
++ * gpueb_base, so none of them is the read that stopped a run at 33.287 s.
+  *
+- * This matters here for one specific reason: if GPUEB survives the jump to XNU and keeps driving
+- * the GPU's power and clock sequencing, then it owns the MFG bus. That would explain, in one
+- * stroke, the two things this driver cannot otherwise reconcile -- a bus that reads non-idle from
+- * the instant the MCU is enabled and never falls back, and a core that fetches nothing at all
+- * while every register the AP can see looks correct.
++ * ml_io_map() is VM_WIMG_IO, i.e. device-nGnRnE and uncached, which is what the protocol asks for
++ * on the control registers and is stronger than it asks for on the SRAM (that one wants normal
++ * memory plus a barrier). Uncached is the safe direction here: the CPU's store to a slot is in
++ * DRAM when the store retires, so there is no cache to clean before GPUEB reads the message, and
++ * GPUEB's store to the status block is in DRAM when the CPU reads it back. The barrier below is
++ * still there, because ordering between the message and the doorbell is not a cache question.
++ */
++static bool
++gpueb_map(void)
++{
++	if (gGpueb.ctl != 0) {
++		return true;
++	}
++	/*
++	 * The SRAM's page starts at 0x13c5f000 and the block at 0x13c5fd80, so this maps 640 bytes
++	 * of mailbox plus the 0x180 bytes in front of it. io_map() rounds down to the page and
++	 * returns the offset, so the pointer arithmetic above is still the block's.
++	 */
++	gGpueb.sram = ml_io_map((vm_offset_t)GPUEB_MBOX_SRAM_PHYS,
++	    (vm_size_t)GPUEB_MBOX_SRAM_SIZE);
++	gGpueb.ctl = ml_io_map((vm_offset_t)GPUEB_MBOX_SEND_PHYS, (vm_size_t)0x80u);
++	gGpueb.status = ml_io_map((vm_offset_t)GPUEB_SHARED_PHYS,
++	    (vm_size_t)GPUFREQ_MEM_SIZE);
++	if (gGpueb.sram == 0 || gGpueb.ctl == 0 || gGpueb.status == 0) {
++		printf("mali: gpueb: the mailbox will not map (sram %#lx ctl %#lx status %#lx)\n",
++		    (unsigned long)gGpueb.sram, (unsigned long)gGpueb.ctl,
++		    (unsigned long)gGpueb.status);
++		gGpueb.sram = gGpueb.ctl = gGpueb.status = 0;
++		return false;
++	}
++	printf("mali: gpueb: mailbox mapped: sram %#lx ctl %#lx status %#lx\n",
++	    (unsigned long)gGpueb.sram, (unsigned long)gGpueb.ctl, (unsigned long)gGpueb.status);
++	return true;
++}
++
++/*
++ * What the mailbox and the status block say, read-only.
++ *
++ * This is what gpueb_watch() became. It cannot say whether GPUEB is executing -- only its own
++ * block could, and that is the block that must not be read -- but it can say three things that
++ * matter: whether a message is still in flight on the GPUFREQ channel (tx busy), whether GPUEB
++ * sent us one (rx pending), and what GPUEB last wrote into the status block it owns. The last is
++ * history, not liveness: on a phone that boots Android, power_control is 1 there because GPUEB
++ * put it there, and on a board where nobody has ever spoken to it the whole block reads zero.
+  */
+ static void
+-gpueb_watch(const char *when)
++gpueb_probe(const char *when)
+ {
+-	uint32_t a, b, raw, con;
++	uint32_t tx, rx;
+ 
+-	if (gGpueb == 0) {
+-		printf("mali: gpueb %s: not mapped\n", when);
++	if (gMaliGpueb == 0) {
++		printf("mali: gpueb %s: off (mali_gpueb=0)\n", when);
+ 		return;
+ 	}
+-	a = reg_rd(gGpueb, MALI_GPUEB_WDT_KICK);
+-	delay(1000);
+-	b = reg_rd(gGpueb, MALI_GPUEB_WDT_KICK);
+-	raw = reg_rd(gGpueb, MALI_GPUEB_IRQ_RAW);
+-	con = reg_rd(gGpueb, MALI_GPUEB_WDT_CON);
+-	printf("mali: gpueb %s: kick %#x -> %#x (%s), irq raw %#x, wdt_con %#x\n",
+-	    when, a, b, a == b ? "frozen" : "running", raw, con);
++	if (!gpueb_map()) {
++		return;
++	}
++	tx = GPUEB_MMIO_READ32(gGpueb.ctl + GPUEB_MBOX_CTL_TX_STS);
++	rx = GPUEB_MMIO_READ32(gGpueb.ctl + GPUEB_MBOX_CTL_RX_STS);
++	printf("mali: gpueb %s: tx_busy %u rx_pending %u (chan %u); status power_control %u"
++	    " dvfs %#x shader_present %#x power_count %u sb %#x ptp %#x\n", when,
++	    (tx >> GPUEB_CHAN_GPUFREQ) & 1u, (rx >> GPUEB_CHAN_GPUFREQ) & 1u,
++	    (unsigned)GPUEB_CHAN_GPUFREQ,
++	    gpueb_status_read(gGpueb.status, GPUSTAT_OFF_POWER_CONTROL),
++	    gpueb_status_read(gGpueb.status, GPUSTAT_OFF_DVFS_STATE),
++	    gpueb_status_read(gGpueb.status, GPUSTAT_OFF_SHADER_PRESENT),
++	    gpueb_status_read(gGpueb.status, GPUSTAT_OFF_POWER_COUNT),
++	    gpueb_status_read(gGpueb.status, GPUSTAT_OFF_SB_VERSION),
++	    gpueb_status_read(gGpueb.status, GPUSTAT_OFF_PTP_VERSION));
++}
++
++/* The name the IPI layer wants for "milliseconds now"; clock.h is already included. */
++static unsigned
++gpueb_now_ms(void)
++{
++	uint64_t abstime = 0;
++	uint64_t ns = 0;
++
++	clock_get_uptime(&abstime);
++	absolutetime_to_nanoseconds(abstime, &ns);
++	return (unsigned)(ns / 1000000ull);
++}
++
++static const char *
++gpueb_strerror(int status)
++{
++	switch (status) {
++	case GPUEB_OK:          return "ok";
++	case GPUEB_ETXSTUCK:    return "tx busy, the previous message was never taken";
++	case GPUEB_ETIMEOUT:    return "no answer inside the timeout";
++	case GPUEB_EREFUSED:    return "the firmware refused the command";
++	case GPUEB_EBADPARAM:   return "bad parameters";
++	case GPUEB_ENOTREADY:   return "the mailbox is not there";
++	}
++	return "unknown";
++}
++
++/*
++ * The two commands, in the order the vendor sends them, and nothing else.
++ *
++ * 1. CMD_INIT_SHARED_MEM (0) tells GPUEB where the block it writes lives: status_base 0x7c600000
++ *    over 0x400 bytes, debug_base 0x7c600400 over 0xc00. The two bases are 64-bit and each takes
++ *    two words, which is the one field layout that is easy to get wrong -- it is base, size, base,
++ *    size in the vendor's struct, not base/size/base/size interleaved (PROTOCOL.md section 3, and
++ *    the header's addr sub-struct with its static assertions).
++ *
++ * 2. CMD_POWER_CONTROL (6) with power_state 1. There is no separate "power on bit": the command
++ *    is the power-on, and what it does is hand the GPU's power to GPUEB (power_control in the
++ *    status block is a scalar, not a bitfield). shader_present and power_count are GPUEB's to
++ *    write; the AP only reads them.
++ *
++ * Both are polled, no interrupt is registered anywhere: the mailbox's four registers are enough
++ * to see a message out and an answer in, and this driver has no GIC line for GPUEB (SPI 516).
++ * One second per command, not the vendor's ten: a boot path that waits twenty seconds to learn
++ * that nobody is answering is worse than one that says so after two.
++ */
++static bool
++gpueb_ipi_up(void)
++{
++	union gpufreq_ipi_msg msg;
++	uint32_t shader;
++	int ack = 0;
++	int ret;
++
++	if (!gpueb_map()) {
++		return false;
++	}
+ 	/*
+-	 * The GPR word the protected-memory-allocator node points at.
+-	 *
+-	 * protected-memory-allocator in the device tree (xaga_live.dts) gives gpueb_base
+-	 * 0x13c40000, gpr_offset 0x1fd1c and gpr_id 6, so the word is at
+-	 * 0x13c40000 + 0x1fd1c + 6*4 = 0x13c5fd34. The MTK patch that implements the allocator
+-	 * computes the page table base from it as (value << PAGE_SHIFT) + gmpu_table_size, which
+-	 * means a non-zero value there is proof the GPU memory protection unit has been given a
+-	 * table, and zero means it never was. On xaga the table area is me_GPUmputab_PMA at
+-	 * 0x78c00000, so a programmed word should read 0x78c00 or thereabouts.
++	 * Section 13, step 5: a message left unconsumed by Android occupies the channel, and the
++	 * first command would then wait on a bit nobody is going to clear. Clearing it here is the
++	 * same write the receive path makes after it has read a message.
++	 */
++	if (gpueb_rx_pending(gGpueb.ctl)) {
++		printf("mali: gpueb: channel %u had a message pending; clearing it before the first"
++		    " command\n", (unsigned)GPUEB_CHAN_GPUFREQ);
++		gpueb_irq_clear(gGpueb.ctl);
++	}
++	gpueb_build_init_shared_mem(&msg, (unsigned long long)GPUEB_SHARED_PHYS,
++	    (unsigned long long)(GPUEB_SHARED_PHYS + GPUFREQ_STATUS_MEM_SZ),
++	    (unsigned int)GPUFREQ_STATUS_MEM_SZ, (unsigned int)GPUFREQ_DEBUG_MEM_SZ);
++	printf("mali: gpueb: INIT_SHARED_MEM status %#llx size %#x, debug %#llx size %#x\n",
++	    (unsigned long long)GPUEB_SHARED_PHYS, GPUFREQ_STATUS_MEM_SZ,
++	    (unsigned long long)(GPUEB_SHARED_PHYS + GPUFREQ_STATUS_MEM_SZ),
++	    GPUFREQ_DEBUG_MEM_SZ);
++	ret = gpueb_ipi_xfer(gGpueb.sram, gGpueb.ctl, &msg, &ack, gpueb_now_ms,
++	    GPUEB_TMO_INIT_SHARED_MS);
++	if (ret != GPUEB_OK) {
++		printf("mali: gpueb: INIT_SHARED_MEM failed: %s (%d)\n", gpueb_strerror(ret), ret);
++		return false;
++	}
++	printf("mali: gpueb: INIT_SHARED_MEM answered, return %d\n", ack);
++	/*
++	 * No pointer to follow and no retry: the command only says where the memory is, so a
++	 * rejection here leaves nothing to undo and a repeat would tell GPUEB the same thing twice.
+ 	 */
+-	printf("mali: gpueb %s: gpr[6] %#x (gmpu table %s at %#llx)\n", when,
+-	    reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u),
+-	    reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u) != 0 ? "programmed" : "never programmed",
+-	    (unsigned long long)((uint64_t)reg_rd(gGpueb, MALI_GPUEB_GPR + 6u * 4u) << 12));
++	if (ack < 0) {
++		printf("mali: gpueb: INIT_SHARED_MEM rejected (%d); not sending POWER_CONTROL\n", ack);
++		return false;
++	}
++	ack = 0;
++	gpueb_build_power_control(&msg, 1);
++	ret = gpueb_ipi_xfer(gGpueb.sram, gGpueb.ctl, &msg, &ack, gpueb_now_ms,
++	    GPUEB_TMO_POWER_CTRL_MS);
++	if (ret != GPUEB_OK) {
++		printf("mali: gpueb: POWER_CONTROL failed: %s (%d)\n", gpueb_strerror(ret), ret);
++		return false;
++	}
++	if (ack < 0) {
++		printf("mali: gpueb: POWER_ON refused, return %d\n", ack);
++		return false;
++	}
++	printf("mali: gpueb: POWER_ON accepted, return %d\n", ack);
++	/*
++	 * Step 9: a soft check that does not block. shader_present is GPUEB's own count of the cores
++	 * it believes it has; zero after a successful power-on means it took the request but has not
++	 * enumerated anything, which is worth a line in the log and not worth skipping the MCU start
++	 * for -- the run that would tell us whether the start works is the run after this one.
++	 */
++	shader = gpueb_status_read(gGpueb.status, GPUSTAT_OFF_SHADER_PRESENT);
++	if (shader == 0) {
++		printf("mali: gpueb: warning: shader_present still 0 after POWER_ON\n");
++	} else {
++		printf("mali: gpueb: shader_present %#x after POWER_ON\n", shader);
++	}
++	return true;
+ }
+ 
+ static void
+@@ -3866,6 +4056,30 @@ start_mcu(void)
+ 		    gMaliTrial, stable >= 8u ? "settled" : "NOT SETTLED", cur, cur & 0x3ffcu,
+ 		    spins < 200000u ? spins + 1u : spins, stable, changes, before);
+ 	}
++	/*
++	 * GPUEB first, and this is the line the whole patch is for.
++	 *
++	 * panthor does exactly this in that order: mt6895_gpueb_power_on() and then
++	 * MCU_CONTROL = AUTO (panthor_fw.c:1131-1143, and again earlier in panthor_device.c:256-268).
++	 * Nineteen runs of this driver reached AUTO with GPUEB never having been spoken to, so
++	 * "the MCU does not start" has never been tested with the GPU's power handed over.
++	 *
++	 * It goes here, above the mali_mcuseq block, rather than immediately above the AUTO write:
++	 * that block writes MCU_CONTROL = ENABLE, and "the two commands precede the first write to
++	 * MCU_CONTROL" is a stronger statement than "they precede AUTO" -- it is the one panthor
++	 * makes, and it is the one that stays true if mali_mcuseq is ever left on by default.
++	 *
++	 * mali_gpueb=1 sends the two commands and goes on to AUTO whatever the answer, which is what
++	 * keeps this run comparable with the nineteen before it. mali_gpueb=2 withholds AUTO when the
++	 * commands fail, which is what panthor does. Neither value changes the MCU start itself.
++	 */
++	if (gMaliGpueb != 0 && !gpueb_ipi_up()) {
++		printf("mali: gpueb: power-on not confirmed; MCU_CONTROL=AUTO %s\n",
++		    gMaliGpueb >= 2u ? "withheld (mali_gpueb=2)" : "still follows (mali_gpueb=1)");
++		if (gMaliGpueb >= 2u) {
++			return false;
++		}
++	}
+ 	/*
+ 	 * mali_mcuseq=1: two writes instead of one.
+ 	 *
+@@ -4311,15 +4525,18 @@ mali_bring_up(void)
+ 	gInfracfg = ml_io_map(MALI_INFRACFG_PHYS, MALI_INFRACFG_SIZE);
+ 	gMfgrpc = ml_io_map(MALI_MFGRPC_PHYS, MALI_MFGRPC_SIZE);
+ 	/*
+-	 * GPUEB is behind its own clock gate. The phone's gpueb driver opens it through the clock
+-	 * framework; nothing in this kernel does. Reading a gated MTK peripheral does not return an
+-	 * error -- the access never completes, the core waits, and the hardware watchdog resets the
+-	 * board. A diagnostic that produces a boot loop is worse than no diagnostic, so the block is
+-	 * only mapped when mali_gpueb=1, and only after the gate has been opened by whoever turns it
+-	 * on. Left off, every read here reports "not mapped" and costs nothing.
++	 * GPUEB's block at 0x13c40000 is behind its own clock gate and is never mapped here.
++	 *
++	 * The phone's gpueb driver opens that gate through the clock framework; nothing in this
++	 * kernel does, and reading a gated MTK peripheral does not return an error -- the access never
++	 * completes, the core waits, and the hardware watchdog resets the board (gmpu_probe()'s
++	 * comment, and the run that stopped at 33.287 s). What is mapped instead, when mali_gpueb
++	 * asks for it, is the mailbox: 0x13c5fd80 and 0x13c62000 are their own iomem entries outside
++	 * the block, and 0x7c600000 is reserved DRAM. Left off, every read below reports "off" and
++	 * costs nothing.
+ 	 */
+ 	if (gMaliGpueb) {
+-		gGpueb = ml_io_map(MALI_GPUEB_PHYS, MALI_GPUEB_SIZE);
++		(void)gpueb_map();
+ 	}
+ 	/*
+ 	 * mfgcfg is mapped here rather than inside the cold-start branch, because the interconnect
+@@ -4670,7 +4887,7 @@ mali_bring_up(void)
+ 	 * running? Asked at the earliest point this driver touches the block, so the answer is not
+ 	 * contaminated by anything it does later.
+ 	 */
+-	gpueb_watch("before the address spaces");
++	gpueb_probe("before the address spaces");
+ 	gmpu_probe("before the address spaces");
+ 	if (gMaliPreAs0 && !gMaliAs0 && gMaliLevel > 4 && gMaliAs0First) {
+ 		if (!mali_early_as0()) {
+@@ -4969,7 +5186,7 @@ mali_bring_up(void)
+ 		 * be the one holding it. If GPUEB is still kicking its watchdog while the MFG channel
+ 		 * reads non-idle and the core has done nothing, the two facts are about each other.
+ 		 */
+-		gpueb_watch("after the failed start");
++		gpueb_probe("after the failed start");
+ 		gmpu_probe("after the failed start");
+ 		cpe_probe();
+ 		/* Read fixed offsets in our allocated DRAM only. Do not follow firmware pointers
+@@ -5132,11 +5349,23 @@ hakios_mali610_init(void)
+ 			gMaliWitness = witness ? 1u : 0u;
+ 		}
+ 	}
++	/*
++	 * mali_gpueb: 0 off, 1 send the two commands and start the MCU anyway, 2 send them and withhold
++	 * AUTO if they fail.
++	 *
++	 * The name is the one this driver already had, and its old meaning -- "map the block at
++	 * 0x13c40000" -- is gone with the block: that map is what the comment in mali_bring_up()
++	 * says must never happen, and the run that did it stopped at 33.287 s. So there is one
++	 * reader of this argument, not two, and value 1 no longer maps anything inside gpueb_base.
++	 */
+ 	{
+ 		int gpueb = 0;
+ 
+ 		if (PE_parse_boot_argn("mali_gpueb", &gpueb, sizeof(gpueb))) {
+-			gMaliGpueb = gpueb ? 1u : 0u;
++			gMaliGpueb = gpueb <= 0 ? 0u : (unsigned)gpueb;
++			if (gMaliGpueb > 2u) {
++				gMaliGpueb = 2u;
++			}
+ 		}
+ 	}
+ 	{

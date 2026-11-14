@@ -109,7 +109,7 @@ CODE_LINES = {
     5185: "boot-arg parse of mali_parkattrs",
 }
 
-VERDICTS = {"void", "rewrite", "holds"}
+VERDICTS = {"void", "rewrite", "holds", "unverified"}
 REQUIRED_KEYS = ("line", "snippet", "premise", "verdict", "fix")
 
 

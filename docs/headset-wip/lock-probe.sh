@@ -175,8 +175,14 @@ LOCKS_ARM_C=$XNU_SRC/osfmk/arm/locks_arm.c
 if need_file "$LOCKS_ARM_C"; then
 	show "lck_spin_init: grp is guarded by if (grp); KT_LCK_SPIN for the dynamic form" \
 		'lck_spin_alloc_init\|zalloc(KT_LCK_SPIN)\|^lck_spin_init\|if (grp)' "$LOCKS_ARM_C"
-	show "arm64 lck_spin_lock is a ticket lock" \
-		'^lck_spin_lock\|lck_ticket_lock\|LCK_SPIN_IS_TICKET_LOCK' "$LOCKS_ARM_C"
+	show "which lck_spin body arm64 builds: LCK_SPIN_IS_TICKET_LOCK" \
+		'LCK_SPIN_IS_TICKET_LOCK\|lck_spin_lock(lck_spin_t\|hw_lock_lock(&lock->hwlock' "$LOCKS_ARM_C"
+fi
+
+ARM_LOCKS_H=$XNU_SRC/osfmk/arm/locks.h
+if need_file "$ARM_LOCKS_H"; then
+	show "arm64 default: LCK_SPIN_IS_TICKET_LOCK 0 => the hw_lock body, not the ticket one" \
+		'LCK_SPIN_IS_TICKET_LOCK' "$ARM_LOCKS_H"
 fi
 
 LOCK_TICKET_C=$XNU_SRC/osfmk/kern/lock_ticket.c
@@ -192,6 +198,14 @@ head2 "5. the runtime invariants: mutex in IRQ, mutex with preemption off, delay
 if need_file "$LOCK_MTX_C"; then
 	show "mutex panics in IRQ context and with preemption disabled (DEVELOPMENT||DEBUG)" \
 		'lck_mtx_check_irq\|__lck_mtx_at_irq_panic\|lck_mtx_check_preemption\|startup_phase < STARTUP_SUB_EARLY_BOOT' "$LOCK_MTX_C"
+fi
+
+if need_file "$LOCKS_C"; then
+	printf -- '-- hw_lock_lock/unlock: the preemption pair arm64 lck_spin uses\n'
+	grep -n '^(hw_lock_lock)\|^(hw_lock_unlock)\|lock_disable_preemption_for_thread\|lock_enable_preemption' \
+		"$LOCKS_C" 2>/dev/null | head -12 | sed 's/^/   /'
+	printf -- '-- hw_lock_t spin policy: which timeout does a contended lck_spin use\n'
+	grep -n 'hw_lock_spin_policy' -A 4 "$LOCKS_C" 2>/dev/null | head -10 | sed 's/^/   /'
 fi
 
 CLOCK_C=$XNU_SRC/osfmk/kern/clock.c

@@ -14,6 +14,12 @@
 - 驱动：`/home/lizi/IOS/hakios-mtk/mtk/mt6895/drivers/`、`/home/lizi/IOS/hakios-mtk/drivers/`
 - 复核脚本：`docs/headset-wip/lock-probe.sh`（本文每条 grep 都在里面，可重跑）
 
+> **行号会漂。** 本文写就期间（2026-11-15 00:06–00:22），`mtk/mt6895/drivers/` 下三份驱动被
+> 并行改动过（`keys.c` 里 `pmic_read_on` 从 220 移到 244，`for(;;)` 从 548 移到 549，
+> `headset_init` 调用从 472 移到 508）。本文行号已按 00:22 的版本校正。
+> **XNU 源码（`XNU/`）在本轮未被改动**，那些行号稳定。
+> 引用驱动行号前请先跑一遍 `lock-probe.sh`——它以实际文件为准，不依赖本文。
+
 ---
 
 ## 0. 一句话判定
@@ -22,10 +28,10 @@
 |---|---|---|
 | `hakios_input_init()` 时 `lck_mtx` 能用吗 | **能** | 它在 `bsd_init()` 里（`XNU/bsd/kern/bsd_init.c:988`），`bsd_init()` 由 `kernel_bootstrap_thread()` 在 `STARTUP_SUB_LOCKDOWN` 之后调用（`XNU/osfmk/kern/startup.c:751,794`）；`LOCKS` 是第 3 号相位（`XNU/osfmk/kern/startup.h:62`） |
 | 需要 `lck_grp_alloc_init()` 吗 | **不需要** | `LCK_GRP_DECLARE` 把组放进 `__startup_data` 段，由 `STARTUP_ARG(LOCKS, RANK_SECOND, lck_grp_startup_init)` 自动初始化（`XNU/osfmk/kern/lock_group.h:196-201`）——**不碰 zalloc** |
-| 能传 `grp = NULL` 给 `lck_mtx_init` 吗 | **不能** | `lck_mtx_init` 无条件 `grp->lck_grp_attr_id`（`XNU/osfmk/kern/lock_mtx.c:280`）与 `grp->lck_grp_mtxcnt`（`:285`），无 NULL 检查 → 解引用 0 → 崩 |
+| 能传 `grp = NULL` 给 `lck_mtx_init` 吗 | **不能** | `lck_mtx_init` 无条件 `grp->lck_grp_attr_id`（`XNU/osfmk/kern/lock_mtx.c:279`）与 `grp->lck_grp_mtxcnt`（`:285`），无 NULL 检查 → 解引用 0 → 崩 |
 | 能传 `grp = NULL` 给 `lck_spin_init` 吗 | **能** | `if (grp) { ... }` 保护（`XNU/osfmk/arm/locks_arm.c:777`；ticket 版 `XNU/osfmk/kern/lock_ticket.c:242`） |
 | `lck_mtx` 能在中断上下文用吗 | **不能** | `ml_at_interrupt_context()` 直接 panic（`XNU/osfmk/kern/lock_mtx.c:229-233`，仅 `DEVELOPMENT\|\|DEBUG`） |
-| 持 `lck_spin` 期间 `delay()` 会怎样 | **超过 0.125 s 就 panic** | ticket 超时 `TLockTimeOut` 默认 `3e6` timebase ticks = 0.125 s（`XNU/osfmk/arm64/machine_routines.c:97`），`spinlock_timeout_panic` 默认 `TRUE`（`XNU/osfmk/kern/locks.c:110`） |
+| 持 `lck_spin` 期间 `delay()` 会怎样 | **超过 524 ms 就 panic** | `hw_lock_spin_policy.hwsp_timeout_atomic = &lock_panic_timeout`（`XNU/osfmk/kern/locks.c:449-453`），`lock-panic` 默认 `0xc00000` timebase ticks ≈ 524 ms（`XNU/osfmk/arm/locks_arm.c:106-107`） |
 | 项目里已有现成用法吗 | **有，且有一把就是给 PMIC 仲裁器的** | `hakios_spmi_lock()`（`/home/lizi/IOS/hakios-mtk/drivers/core/hakios.platform.c:32-44`，`LCK_SPIN_DECLARE`） |
 
 ---
@@ -106,8 +112,8 @@ STARTUP_SUB_LOCKDOWN  = ~0  OSKextRemoveKextBootstrap,
 
 | 驱动 | 初始化调用点 | 真正跑 PMIF 的地方 | 上下文 |
 |---|---|---|---|
-| `hakios.mt6895_keys.c` | `hakios_input_init()` → `:236` | `keys_thread` `for (unsigned tick = 1;; tick++)`（`:548`），每圈 `delay(poll_ms * 1000)`（`:655`） | 内核线程，**可睡眠**（3000 发起） |
-| `hakios.mt6895_headset.c` | keys 线程内联调用 `hakios_mt6895_headset_init()`（`keys.c:472`）、`hakios_mt6895_headset_poll()`（`keys.c:654`） | 同 keys 线程 | 内核线程，与 keys 串行 |
+| `hakios.mt6895_keys.c` | `hakios_input_init()` → `:236` | `keys_thread` `for (unsigned tick = 1;; tick++)`（`:549`），每圈 `delay(poll_ms * 1000)`（`:656`） | 内核线程，**可睡眠**（抢占未关） |
+| `hakios.mt6895_headset.c` | keys 线程内联调用 `hakios_mt6895_headset_init()`（`keys.c:508`）、`hakios_mt6895_headset_poll()`（`keys.c:655`） | 同 keys 线程 | 内核线程，与 keys 串行 |
 | `hakios.mali610.c` | `hakios_input_init()` → `:243` → `kernel_thread_start(mali_thread,...)`（`:5248`） | `mali_thread` 先 `delay(2000 * 1000)`（`:5088`）再 `mali_bring_up()` | **独立内核线程**，与 keys 线程真并发 |
 
 关键词在 `mali610.c:5088`：`delay(2000 * 1000)` 是 2 s，注释写 "let the rest of the machine settle first"。
@@ -174,36 +180,55 @@ lck_spin_init(lck_spin_t *lck, lck_grp_t *grp, __unused lck_attr_t *attr)
 }
 ```
 
-（`XNU/osfmk/arm/locks_arm.c:772-780`；ticket 版同构，`XNU/osfmk/kern/lock_ticket.c:228-247`）
+（`XNU/osfmk/arm/locks_arm.c:773-780`；ticket 版同构，`XNU/osfmk/kern/lock_ticket.c:228-247`）
 
 ### 2.2 自旋锁 `lck_spin_t`
 
-arm64 上 `lck_spin_t` **就是 ticket lock**（`LCK_SPIN_IS_TICKET_LOCK`，`XNU/osfmk/arm/locks_arm.c:623`；
-`lck_spin_lock` → `lck_ticket_lock(lock, LCK_GRP_NULL)`，`:670-673`）。
+**先纠正一个容易搞错的点**：arm64 上的 `lck_spin_t` **不是** ticket lock。
+`LCK_SPIN_IS_TICKET_LOCK` 在全树只出现于 `XNU/osfmk/arm/locks.h:33-34`，定义为 `0`，**没有任何地方覆盖它**
+（`rg LCK_SPIN_IS_TICKET_LOCK` 全树 6 处，均为 `#if`/`#define 0`）。arm64 通过
+`XNU/osfmk/machine/locks.h:34` → `#include "arm/locks.h"` 拿到这个 0，
+所以 `locks_arm.c:725-919`（`!LCK_SPIN_IS_TICKET_LOCK` 分支）才是实际编译的那一套：
+`lck_spin_t` = `{ type, hwlock }`，`lck_spin_lock` 直接落到 `hw_lock_lock`。
+
+（ticket 那一套在 `locks_arm.c:623-724`，**本移植不编译**。但它仍是 `lck_ticket_t` 自己的实现，
+`lck_spin` 与 `lck_ticket` 是两个类型。）
 
 | 接口 | 最早可用 | `hakios_input_init` 时可用 | 中断上下文 | 依据 |
 |---|---|---|---|---|
 | `LCK_SPIN_DECLARE(var, grp)` | `LOCKS`(3) | ✅ | ✅（不会睡） | `XNU/osfmk/kern/locks.h:1255-1263`；`STARTUP_ARG(LOCKS, RANK_FOURTH, lck_spin_startup_init)` |
-| `lck_spin_init(lck, grp, attr)` | `LOCKS` 之后；**`grp` 可 NULL** | ✅ | ✅ | `XNU/osfmk/arm/locks_arm.c:772-780`（`if (grp)`） |
-| `lck_spin_alloc_init(grp, attr)` | `ZALLOC`(7) | ✅ | ✅ | 同文件 `:755-762`，`zalloc(KT_LCK_SPIN)` |
-| `lck_spin_lock` | 同上 | ✅ | ✅ | `:669-673` → `lck_ticket_lock` |
-| `lck_spin_unlock` | 同上 | ✅ | ✅ | `:880-886` → `lck_ticket_unlock` |
+| `lck_spin_init(lck, grp, attr)` | `LOCKS` 之后；**`grp` 可 NULL** | ✅ | ✅ | `XNU/osfmk/arm/locks_arm.c:773-780`（`if (grp)`） |
+| `lck_spin_alloc_init(grp, attr)` | `ZALLOC`(7) | ✅ | ✅ | 同文件 `:756-762`，`zalloc(KT_LCK_SPIN)` |
+| `lck_spin_lock` | 同上 | ✅ | ✅ | `:820-824` → `hw_lock_lock(&lock->hwlock, LCK_GRP_NULL)` |
+| `lck_spin_unlock` | 同上 | ✅ | ✅ | `:880-884` → `hw_lock_unlock` |
 
-**抢占语义（重要）**：`lck_ticket_lock` 自己就关抢占，`unlock` 自己恢复：
+**抢占语义（重要）**：`hw_lock_lock` 自己关抢占，`hw_lock_unlock` 自己恢复：
 
 ```c
-lck_ticket_lock(lck_ticket_t *tlock, __unused lck_grp_t *grp)
+void
+(hw_lock_lock)(hw_lock_t lock LCK_GRP_ARG(lck_grp_t *grp))
 {
-	thread_t cthread = current_thread();
-	lock_disable_preemption_for_thread(cthread);      /* lock_ticket.c:704 */
-	lck_ticket_lock_internal(tlock, cthread, grp);
+	thread_t thread = current_thread();
+	lock_disable_preemption_for_thread(thread);       /* locks.c:696 */
+	(void)hw_lock_to_internal(lock, thread, &hw_lock_spin_policy
+	    LCK_GRP_ARG(grp));
+}
+
+void
+(hw_lock_unlock)(hw_lock_t lock)
+{
+	hw_lock_unlock_internal(lock);
+	lock_enable_preemption();                         /* locks.c:821 */
 }
 ```
-恢复在 `hw_lck_ticket_unlock_internal`：`lock_enable_preemption()`（`lock_ticket.c:461-465`）。
-`_nopreempt` 变体不碰抢占（`:709-712`、`:444-458`）。
+（`XNU/osfmk/kern/locks.c:692-699`、`:817-822`）
+
+`_nopreempt` 变体：`hw_lock_lock_nopreempt` 先用 `__lck_require_preemption_disabled` 断言抢占已关
+（`locks.c:706-713`），`hw_lock_unlock_nopreempt` 只放锁不动抢占（`:824-828`）。
 
 > 含义：**用 `lck_spin_lock/unlock` 成对调用即可，不需要自己 `disable_preemption()`**；
 > 但**不能**用 `lck_spin_lock` 配 `lck_spin_unlock_nopreempt`，那样抢占计数会泄漏。
+> `lck_spin_lock` 在中断上下文是安全的（不睡眠、不查 IRQ），这是它相对 `lck_mtx` 的关键优势。
 
 ### 2.3 静态 vs 动态（任务问的「有没有不需要 zalloc 的静态初始化方式」）
 
@@ -244,7 +269,7 @@ lck_ticket_lock(lck_ticket_t *tlock, __unused lck_grp_t *grp)
 | 接口 | 最早可用 | 可用性 | 中断上下文 | 依据 |
 |---|---|---|---|---|
 | `hw_lock_init(lock)` | 任意（`ordered_store_hw(lock, 0)`） | ✅ | ✅ | `XNU/osfmk/kern/locks.c:340-343` |
-| `hw_lock_lock(lock, grp)` | 任意；`grp` 仅用于统计，可为 `LCK_GRP_NULL` | ✅ | ✅ | `XNU/osfmk/arm/locks_arm.c:823`；`lock_ticket.c` 的 `LCK_GRP_ARG`/`if (grp)` 模式 |
+| `hw_lock_lock(lock, grp)` | 任意；`grp` 仅用于统计，可为 `LCK_GRP_NULL` | ✅ | ✅ | `XNU/osfmk/kern/locks.c:692-699`（`lock_disable_preemption_for_thread` + `hw_lock_to_internal`）；`arm/locks_arm.c:823` 的 `lck_spin_lock` 正是调它 |
 | `hw_lock_try` / `hw_lock_unlock` | 同上 | ✅ | ✅ | `locks_arm.c:853`、`:883` |
 | 类型 | `struct hslock { uintptr_t lock_data; }`，一个机器字 | — | — | `XNU/osfmk/kern/lock_types.h:89-92` |
 
@@ -292,7 +317,7 @@ lck_ticket_lock(lck_ticket_t *tlock, __unused lck_grp_t *grp)
 
 | 接口 | 状态 | 依据 |
 |---|---|---|
-| `simple_lock_init(&l, 0)` / `simple_lock(&l, grp)` | **存在，但只是 ticket lock 的别名** | `PATCHED/osfmk/minicrypto/mc_provider.c:54,61,78` 在用；arm64 上 `arm_usimple_lock_init` → `lck_ticket_init(..., LCK_GRP_NULL)`（`XNU/osfmk/arm/locks_arm.c:651-655`） |
+| `simple_lock_init(&l, 0)` / `simple_lock(&l, grp)` | **存在，但只是 `lck_spin` 的宏** | `PATCHED/osfmk/minicrypto/mc_provider.c:54,61,78` 在用；arm64 上 `simple_lock_init` = `arm_usimple_lock_init`（`XNU/osfmk/arm/simple_lock.h:119`），`simple_lock(l,grp)` = `lck_spin_lock_grp(l,grp)`（`:122`） |
 | 建议 | **不要新用**。它的名字暗示“简单”，实际语义与 `lck_spin` 相同，且 `simple_lock_init` 的第二参数（`0`）是遗留位，容易被误读 | — |
 
 ---
@@ -381,6 +406,18 @@ static LCK_MTX_DECLARE(touch_lock, &touch_lck_grp);
 这印证了任务背景：“三份驱动无锁共用 SWINF_2”。（`xnu/files` 是补丁树，`drivers/` 是实际源码树，
 两者内容一致；`mtk/mt6895/drivers/` 是本轮要改的地方。）
 
+三份驱动的逐个计数（`lock-probe.sh` §7 实测，2026-11-15 00:22，在它们被并行改动之后重跑）：
+
+```
+hakios.mt6895_keys.c     : 0 lock-primitive occurrences
+hakios.mt6895_headset.c  : 0 lock-primitive occurrences
+hakios.mali610.c         : 0 lock-primitive occurrences
+```
+
+> 各文件的 `ml_io_map(PMIF_BASE, ...)` 与 `PMIF_SWINF_ACC 0x0880` 都还在原位
+> （`keys.c:455`/`:132`、`headset.c:523`/`:29`、`mali610.c:3126`/`:3008`），
+> 说明改动没有触及 PMIF 访问路径——**锁的缺口仍然存在，本报告的结论不变**。
+
 ### 3.4 旧文档的「零命中」结论需修正
 
 `docs/headset-wip/findings/SPMI-PMIF-SPEC.md:428` 写：
@@ -403,14 +440,14 @@ static LCK_MTX_DECLARE(touch_lock, &touch_lck_grp);
 1. **它就是为这件事建的。** 注释原文：*"One transfer at a time through the PMIC arbiter for this system, whoever asks"*
    （`hakios.platform.c:28-31`）。四个驱动已在用（§3.1），新增第五、六、七个调用者不需要任何新设施。
 2. **`lck_spin` 而不是 `lck_mtx` 是正确的选择。** PMIF 一笔事务是“写 ACC → 轮询 STA → 读 RDATA → 写 VLDCLR”，
-   几十微秒（` hakios.platform.c:31` 注释），**不是可睡眠区间**。用 `lck_mtx` 会有三个坏处：
+   几十微秒（`hakios.platform.c:31` 注释），**不是可睡眠区间**。用 `lck_mtx` 会有三个坏处：
    - 一旦在持锁期间 `delay()`，`lck_mtx` 的持有者会 `thread_block`，把睡眠带进 PMIF 事务；
    - `lck_mtx` 在中断上下文 panic（`lock_mtx.c:229-233`），将来若有人从 ISR 摸 PMIF 会炸；
-   - `lck_mtx` 抢占语义复杂（`lck_mtx_lock` 是 `LCK_MTX_MODE_SLEEPABLE`，`lock_mtx.c:250-253`），
-     而 `lck_spin` 的 `lock/unlock` 自己管抢占（`lock_ticket.c:700-707`、`:461-465`）。
+   - `lck_mtx` 抢占语义复杂（`lck_mtx_lock` 是 `LCK_MTX_MODE_SLEEPABLE`，`lock_mtx.c:1031-1034`），
+     而 `lck_spin` 的 `lock/unlock` 自己管抢占（`locks.c:692-699`、`:817-822`）。
 3. **零初始化成本、零 zalloc 依赖。** `LCK_SPIN_DECLARE` 走 `LOCKS` 相位（`locks.h:1255-1263`），
    早于 `bsd_init()`，无需 `lck_grp_alloc_init`，不需要判空、不需要 destroy。
-4. **超时可控。** 持锁超过 0.125 s 会 panic（`TLockTimeOut`，`machine_routines.c:97`），
+4. **超时可控。** 持自旋锁超过 ≈524 ms（`lock_panic_timeout`，`locks_arm.c:106-107`）会 panic，
    而 PMIF 事务本身有 `PMIF_SPIN_LIMIT 200000`（`hakios.mt6895_headset.c:37`）次轮询的自我保护。
    两者叠加，出错时**是可诊断的 panic，不是静默数据损坏**。
 
@@ -440,9 +477,9 @@ hakios_spmi_unlock();
 
 **关键：锁必须在最外层事务函数上取，不能放在 `pmif_rd`/`pmif_wr` 里**——否则
 “写 ACC → 轮询 → 读 RDATA → 写 VLDCLR”会被别的驱动插进来。现有代码里对应的事务边界是：
-- `keys.c`：`pmic_read_on()`（`:220-`，含 ACC 写 / STA 轮询 / RDATA 读 / VLDCLR 写）
-- `headset.c`：读是 `:118-134`，写是 `:138-149`
-- `mali610.c`：`mali_pmif_xfer` 一类（`:3040-3072`，含 `:3055-3071` 的完整序列）
+- `keys.c`：`pmic_read_on()`（`:244-`，含 ACC 写 / STA 轮询 / RDATA 读 / VLDCLR 写）
+- `headset.c`：读是 `mt6368_read()`（`:135-156`），写是 `mt6368_write()`（`:158-176`）
+- `mali610.c`：`:3040-3072` 区间内的那段（含 `:3055-3071` 的完整序列）
 
 ---
 
@@ -555,7 +592,7 @@ pmif_retry_locked(uint8_t addr)
  *   (lock_mtx.c:819-825；LCK_TYPE_MUTEX=0x22 而 bss 里是 0，locks_internal.h:151-156) */
 static lck_mtx_t my_lock;
 
-/* ✗ grp 传 NULL：lck_mtx_init 在 lock_mtx.c:280 直接解引用，必崩 */
+/* ✗ grp 传 NULL：lck_mtx_init 在 lock_mtx.c:279 直接解引用，必崩 */
 lck_mtx_init(&my_lock, NULL, LCK_ATTR_NULL);
 
 /* ✗ 在 startup 之前用 lck_mtx_alloc_init：ZALLOC 相位未到，zalloc 不可用 */
@@ -609,8 +646,8 @@ pmif_release(void)
 - 跨 CPU 有效（`os_atomic_cmpxchg` 是 `ldaxr/stxr` 或 `casal`）。
 - 缺点：**忙等**（持锁者若在别的核上被抢占，等待者空转）；**没有超时诊断**；
   不能用 `delay()` 做退让（见 §7 —— `delay` 在无抢占时是忙等，会占死 CPU）。
-- 这正是 `osfmk/kern/lock_ticket.c` 内部的做法（`hw_lck_ticket_reserve_orig` 一类），
-  只是把超时与统计都省掉了。
+- 这正是 `osfmk/kern/locks.c` 里 `hw_lock_trylock_contended` 的做法（`locks.c:345-370`，`OS_ATOMIC_USE_LLSC` 的
+  `os_atomic_rmw_loop` + `wait_for_event()`），只是把超时、统计、抢占计数都省掉了。
 
 ### 6.3 退路 C：`__sync_lock_test_and_set`（编译器内建，最不依赖头文件）
 
@@ -647,8 +684,8 @@ pmif_release(void)
 
 | 场景 | `delay()` 走哪条 | 后果 |
 |---|---|---|
-| **持 `lck_spin`** 时 `delay(2000)`（2 ms） | `get_preemption_level() != 0`（`lck_ticket_lock` 已关抢占）→ **忙等** | 本 CPU 空转 2 ms；**若超过 0.125 s 且别人在等锁 → panic**（`TLockTimeOut`，`machine_routines.c:97`；`spinlock_timeout_panic=TRUE`，`locks.c:110`）。注意这个超时是**等待者**的预算，不是持有者 |
-| **持 `lck_spin`** 时 `delay(2000 * 1000)`（2 s，`mali610.c:5088`） | 同上，忙等 | 2 s 内本 CPU 完全不响应调度；**任何在另一核上等这把锁的线程都会在 0.125 s 处 panic** |
+| **持 `lck_spin`** 时 `delay(2000)`（2 ms） | `get_preemption_level() != 0`（`hw_lock_lock` 已关抢占，`locks.c:696`）→ **忙等** | 本 CPU 空转 2 ms。**不 panic**（< 524 ms），但另一核上等这把锁的线程会一起空转 |
+| **持 `lck_spin`** 时 `delay(2000 * 1000)`（2 s，`mali610.c:5088`） | 同上，忙等 | 2 s 内本 CPU 完全不响应调度；**任何在另一核上等这把锁的线程，在 ≈524 ms 处 panic**（`lock_panic_timeout`，`locks_arm.c:106-107`）。注意这个超时是**等待者**的预算，不是持有者的 |
 | **持 `lck_mtx`** 时 `delay()` | 抢占级别为 0、中断开着 → `thread_block()` → **睡眠** | 睡着的线程**仍持有 `lck_mtx`**；别人 `lck_mtx_lock` 会阻塞。若睡眠期间有人在同一线程上下文重入 → `__lck_mtx_owned_panic`（`lock_mtx.c:818-820`）。**这才是真正的死锁** |
 
 > **所以：绝对不要在持锁期间 `delay()`。** 需要延时，先 `unlock()`，`delay()`，再 `lock()`
@@ -657,7 +694,7 @@ pmif_release(void)
 **具体到本项目：** `mali_thread` 的 `delay(2000 * 1000)`（`mali610.c:5088`）在**加锁之前**，
 本身没问题。但 `headset.c:241` 的 `delay(2000)`（2 ms）在 `accdet_init()` 里、**夹在两笔 PMIF 事务之间**
 （`:240` configure 与 `:243` configure 之间）。如果按“把整个 `accdet_init` 包进锁”的粗粒度做法，
-就会变成「持 `lck_spin` 睡 2 ms + 再睡 1 ms（`:245`）」 —— 不会 panic（< 0.125 s），
+就会变成「持 `lck_spin` 忙等 2 ms + 再 1 ms（`:245`）」 —— **不会 panic**（3 ms ≪ 524 ms），
 但**会让 mali 的每次 PMIF 事务都白等 3 ms**，且 mali 侧 `pmif_wait` 的 `PMIF_SPIN_LIMIT` 可能耗尽。
 **正确做法：锁的粒度是单笔事务，不是整个初始化序列。**
 
@@ -665,23 +702,27 @@ pmif_release(void)
 
 | 陷阱 | 后果 | 依据 |
 |---|---|---|
-| `lck_spin_lock` 配 `lck_spin_unlock_nopreempt` | 抢占计数泄漏，永不恢复 | `lock_ticket.c:461-465`（`unlock` 才 `lock_enable_preemption()`） |
-| 同一个锁在两处用不同变体（`lock` / `lock_nopreempt`） | 抢占计数错乱 | `lock_ticket.c:700-712` |
+| `lck_spin_lock` 配 `lck_spin_unlock_nopreempt` | 抢占计数泄漏，永不恢复 | `locks.c:817-822`（只有 `hw_lock_unlock` 调 `lock_enable_preemption()`；`nopreempt` 版 `:824-828` 不调） |
+| 同一个锁在两处用不同变体（`lock` / `lock_nopreempt`） | 抢占计数错乱；`nopreempt` 版还会先断言抢占已关 | `locks.c:692-713` |
 | `lck_mtx` 在 ISR 里加锁 | `panic("Attempt to take mutex %p in IRQ context")` | `lock_mtx.c:199-203, 229-233`（`DEVELOPMENT\|\|DEBUG` 才编译） |
 | 递归加同一把 `lck_mtx` | `__lck_mtx_owned_panic` | `lock_mtx.c:818-820` |
-| 递归加同一把 `lck_spin` | `__lck_ticket_owned_panic` | `lock_ticket.c:586-589` |
+| 递归加同一把 `lck_spin` | `panic("hwlock: thread %p is trying to lock %p recursively")` | `locks.c:550-554`（`lck_spin_lock` 落 `hw_lock_lock`） |
 | 两把锁反序获取 | 经典死锁 | — |
 | 在 `STARTUP_SUB_LOCKS` 之前用静态锁 | 锁字段是 0，`type != LCK_TYPE_MUTEX` → invalid panic | `locks_internal.h:151-156`、`lock_mtx.c:819-825` |
 | `lck_grp_alloc_init` / `lck_mtx_alloc_init` 在 `ZALLOC` 之前 | zalloc 未就绪（**具体行为未验证**：可能 panic「zone not ready」，也可能返回未初始化内存） | `lock_group.c:175`、`lock_mtx.c:258`；zone 建立于 `zalloc.c:10179`（`STARTUP(ZALLOC, RANK_FIRST)`） |
 
 ### 7.3 关于「XNU 在某阶段会不会 panic」的证据边界
 
-- **§7.1 表格里的 panic 路径**是**读代码**得出的（`spinlock_timeout_panic` 默认值、`TLockTimeOut` 默认值、
-  `lck_mtx_check_irq` 的分支），**未在本机复现**。标注：**推断（高置信，代码路径明确）**。
+- **§7.1 表格里的 panic 路径**是**读代码**得出的（`lock_panic_timeout` 默认值、
+  `hw_lock_spin_policy.hwsp_timeout_atomic` 的指向、`lck_mtx_check_irq` 的分支），
+  **未在本机复现**。标注：**推断（高置信，代码路径明确）**。
 - **`-no_slto_panic` boot-arg 能关掉自旋超时 panic**：`startup.c:472-475` 里
   `PE_parse_boot_argn("-no_slto_panic", ...)` 会把 `spinlock_timeout_panic = FALSE`（`locks.c:110` 初值为 `TRUE`）。
-  **这条是死代码级别的细节**：需要 `PE_i_can_has_debugger()` 为真（`startup.c:470`）才会解析。
-  标注：**代码可证，运行时行为未验证**。
+  但要注意**它管的是 `hw_spin_timeout_panic` 这一层**（`locks.c:417,506,599,621` 的 `if (!spinlock_timeout_panic)` 短路）。
+  而 `hw_lock_t` 的 `hwsp_op_timeout` 是 `hw_spin_timeout_panic`（`locks.c:449-453`）→ 这个开关对 `lck_spin` **有效**。
+  需要 `PE_i_can_has_debugger()` 为真（`startup.c:470`）才会解析。标注：**代码可证，运行时行为未验证**。
+- **`TLockTimeOut`（0.125 s）不适用于 `lck_spin`**：它是 `lck_ticket_t` 的超时（`lock_ticket.c:63-66`、
+  `machine_routines.c:97`），而 arm64 的 `lck_spin` 走 `hw_lock`（§2.2）。**别把这两个数字搞混。**
 - **`hakios_input_init()` 时 `lck_mtx_alloc_init` 一定成功**：依赖 `STARTUP_SUB_ZALLOC` 已跑完。
   本文只证明了相位顺序（`startup.h:62,67` + `startup.c:751,794`），
   **没有验证 `kalloc_init` 在这个特定移植上是否被裁掉**。标注：**推断（相位顺序可证，构建产物未验证）**。
