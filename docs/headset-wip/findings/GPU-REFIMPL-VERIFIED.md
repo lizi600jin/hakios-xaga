@@ -197,21 +197,67 @@ VA 0 的向量表实测（`:412-420`）：
 
 ---
 
-## 5. 真实剩余方向（来自我们自己的 work-notes，剔除已做的）
+## 5. 真实剩余方向（2026-11-15 02:10 逐条核实后的最终结论）
 
-| # | 项 | 状态 | 成本 |
-|---|---|---|---|
-| **【2】** | `CSF_CONFIG(0xF00)` 等 4 个 hw-issues 寄存器**回读原值**（我们写 0，没确认过硬件默认值） | **未做** | 极低（4 行 printf） |
-| **【3】** | `GPU_CMD = 0x103`（`GPU_COMMAND_TIME_ENABLE`）—— `Ken-u` 在 M0 就写了，我们从未写。不写可能导致 `GPU_CYCLE_COUNT` 探针读假象 | **未做** | 低（1 行） |
-| 【4】 | `GPU_L2_CONFIG(0x48)` / `ASN_HASH(0x2C0)`：mt8196 的失败根因在这里，但那段代码对 arch<11 直接 return（我们 10.8） | 不适用 | — |
-| 【5】 | 固件在物理内存上是否真接在 MCU 取指路径（`work-notes` 说"已做"） | 已做 | — |
+### 5.1 【2】已排除：厂商冷启动 trace 里这四个寄存器就是写 0
 
-`work-notes-csf-boot-others.md:640` 对【2】的提醒：
-> 我们的笔记口径不一：`work-notes-kbase-fwload.md:606` 说「真机 debugfs `quirks_gpu = 0`、
-> 日志 `hardware issues: csf 0` ⇒ 数值上等价，不是原因」；`work-notes-gpu-status.md:96` 说
-> 「没回读确认过厂商值」。**这两条冲突。**
+我先前的怀疑（「我们写 0，没确认硬件默认值」）**不成立**。
 
-→ 所以【2】值得花 4 行 printf 一次性定案。
+`hakios.mali610.c:3500-3505` 原文，引用手机自己的冷启动 trace：
+```
+The phone's cold-start trace has the same four writes back to back, all zero,
+at records 269-272 -- after the soft reset and before the address space is programmed:
+
+	269 w 0x0f04 = 0x00000000	SHADER_CONFIG
+	270 w 0x0f08 = 0x00000000	TILER_CONFIG
+	271 w 0x0f0c = 0x00000000	L2_MMU_CONFIG
+	272 w 0x0f00 = 0x00000000	CSF_CONFIG
+```
+
+同文件 `:3506-3507`：这四条**只出现在复位路径**，bootloader 已经把块配好了。
+
+→ **厂商也写 0。** 与 `work-notes-kbase-fwload.md:606`「真机 debugfs `quirks_gpu = 0`」
+一致。`work-notes-gpu-status.md:96` 的「没回读确认过」这个疑虑到此消除。
+
+### 5.2 【3】确认存在：`kGpuCmdCycleCountStart` 宏定义了，但**零引用**
+
+`work-notes-mcu-clock.md:330-336` 明确列出三件要做的事，其中②是：
+> 按 panthor / DDK 的做法显式启动 cycle counter（`GPU_COMMAND = CYCLE_COUNT_START`）
+
+宏也确实定义了（`hakios.mali610.c:335-336`）：
+```c
+#define kGpuCmdCycleCountStart  0x0103u   /* GPU_CMD_DEF(CODE_TIME=3, TIME_ENABLE=1) */
+#define kGpuStatusCcActive      (1u << 6)
+```
+
+**但 `grep -n "kGpuCmdCycleCountStart\|kGpuStatusCcActive"` 全文件零命中** —— 两个宏从未被引用。
+
+我们实际只写：
+- `:3480` `mwr(kGpuCmd, kGpuCmdSoftReset)` = `0x101`
+- `:3583` / `:3774` `mwr(kGpuCmd, kGpuCmdFlushCaches)` = `0x3304`
+
+**从来没有 `0x103`，也从来没检查过 `GPU_STATUS(0x034)` bit6 `CYCLE_COUNT_ACTIVE`。**
+
+`work-notes-mcu-clock.md:268-271` 原文：
+> panthor / kbase 都是先写 `GPU_COMMAND(0x030) = 0x0103`
+> （`GPU_CMD_DEF(CODE_TIME=3, TIME_ENABLE=1)`，`mali_kbase_gpu_regmap_csf.h:216`），
+> 再读 `GPU_STATUS(0x034) bit6 CYCLE_COUNT_ACTIVE` 确认生效，才去读 `0x090/0x094`。
+> **我们跳过这两步直接读。**
+
+**后果**：我们「`GPU_CYCLE_COUNT` 在跑 ⇒ 时钟已锁」这个结论**可能不成立**。
+未 enable 时计数器是否照常递增，取决于硬件设计——这一点**没有核实过**。
+
+→ 这是目前唯一一条「计划做了、文档写了、代码没接」的缺口。成本：2 行写 + 1 行读。
+
+### 5.3 其余项
+
+| # | 项 | 状态 |
+|---|---|---|
+| 【4】 | `GPU_L2_CONFIG(0x48)` / `ASN_HASH(0x2C0)`：mt8196 的失败根因，但那段代码对 arch<11 直接 return（我们 10.8） | 不适用 |
+| 【5】 | 固件在物理内存上是否真接在 MCU 取指路径 | `work-notes` 说已做 |
+| 【6】 | `GPU_TIMESTAMP` 需要 `0x13FBF130 = 0x3`（`work-notes-mcu-clock.md:266`） | 我们没写，所以 `timestamp 0 -> 0` 是**必然的假象**，不能当证据 |
+
+→ **`timestamp 0 -> 0` 是我们自己的测量缺陷，不是硬件事实。** 历史日志里这条要作废。
 
 ---
 
