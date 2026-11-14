@@ -161,3 +161,92 @@
 - `timestamp` 在走，但**未测**它在 `mali_nopdc=0` 时是否也走（历史说法是「NOPDC 实测在走」）
 - 固件 0.3 与本机的运行时 CSF ABI 兼容性**未验证**（`CSF_IFACE_VERSION` 要 MCU 跑起来才能读）
 - 本 trial 的诊断本身有 MMIO + printf 开销（共 7 次快照，每次 4 次 MMIO 读 + 1 次 printf）
+
+
+---
+
+## 8. 🔴 刷机后 Android 未完全启动，已刷回原厂（2026-11-15 03:05）
+
+### 8.1 现象
+
+刷 trial 695 后 XNU 正常跑完 166 秒、日志完整拉出，但**返回 Android 后 `sys.boot_completed`
+一直未置位**（等 4 分钟以上，load 稳定在 20 = CPU 满载）。
+
+`logcat -b crash` 有 **38 条**记录，栈指向：
+
+```
+SkiaGLRenderEngine::chooseEglConfig(void*, int, bool)+600
+SkiaGLRenderEngine::create(android::renderengine::RenderEngineCreationArgs const&)+156
+RenderEngineThreaded::threadMain(...)+540
+/system_ext/lib64/libsurfaceflinger.so
+```
+
+**`surfaceflinger` 的 Skia GL RenderEngine 创建失败并反复崩溃 → Android 图形栈起不来。**
+
+用户观察到屏幕卡了 8 分钟以上，手动回 fastboot。
+
+### 8.2 恢复
+
+```sh
+fastboot flash boot_a backup/boot_a_stock_real.img     # md5 a63b2e35a7c2522cb24a6a10332b9bc8
+fastboot reboot
+```
+
+**结果**：`sys.boot_completed = 1`，Android **17** 正常启动。
+
+设备侧核实（`su -c md5sum /dev/block/by-name/boot_a`）：
+```
+a63b2e35a7c2522cb24a6a10332b9bc8  /dev/block/by-name/boot_a
+```
+**与 `backup/boot_a_stock_real.img` 逐字节一致 —— 原厂镜像已完整恢复。**
+
+### 8.3 一个此前没记录的现象（待查）
+
+这是本项目**第一次**出现「XNU 跑完但 Android 起不来」。
+
+历史上（`logs/headset-resume-20261114-220244/nopdc/device-final.txt:1`）同样 `mali=5 mali_nopdc=1`
+的镜像返回 Android 后 `boot_completed = 1` 正常。
+
+trial 695 与它的差异**只有 18 行只读诊断**（`jobirq_snapshot`）——**从代码上无法解释。**
+
+**可能方向（全部未验证）**：
+- 诊断的 7 次快照在 `start_mcu` 内增加了约 6 秒总时长（`34.71s → 44.28s`），
+  可能改变了 XNU 返回时的 GPU/显示收尾时序
+- 历史那次的 `mali_trial` 不是 695，可能有其他参数差异
+- 与本 trial 无关的偶发（`surfaceflinger` 崩溃也可能由别的因素引起）
+
+**⚠️ 结论：这条现象必须记录在案，下次刷机实验前要先确认它可复现，且恢复路径可用。**
+
+### 8.4 屏幕截图里的重要信息
+
+用户在手动回 fastboot 前拍到的屏幕显示：
+
+```
+mfg2 back to 0x1112
+pdc down; iso_con. 0xf30 0x1701
+gpu: the domains are back as Android expects them
+starting Android, so that the log above can be pulled
+starting Android
+
+=== XNU log (469781 bytes) ===
+=== end of XNU log ===
+logbook: 458 KB at byte 0x1dc97f8
+000 of xnusys
+mfg1 back to 0x1112
+```
+
+**三条独立的重要事实：**
+
+1. **`XNU log (469781 bytes)` + `logbook: 458 KB at byte 0x1dc97f8`** ——
+   **日志修复真的生效了。** 历史上正常返回时 HLOG 被 `probe_flash(38u)` 覆盖成 **79 字节**，
+   这次是 **458 KB 完整日志**。这是 Codex 那三个日志 bug 修复的直接证据。
+2. **`gpu: the domains are back as Android expects them`** + `mfg2/mfg1 back to 0x1112` +
+   `pdc down; iso_con. 0xf30 0x1701` —— **XNU 返回前把 GPU 电源域还原了**，
+   这条路径是工作的。
+3. **屏幕同时显示了一段 panic/backtrace**（`(no panic string)`、`TCR_EL1 0x22a51a251a`、
+   `pc 0x19d6abf10 sym debugger_panic`、backtrace 里有 `_loader_jump`、`_psci_smp_stop_here`、
+   `_gic_irq_handler`、`_sleh_irq`、`_machine_idle`、`_processor_idle`、`_idle_thread`、
+   `_Call_continuation`）—— 这看起来是 **XNU 返回路径上的一个异常记录**，
+   但标注 `(no panic string)`，且系统仍完成了「返回 Android」的流程。
+
+   **⚠️ 这段未解读，下次接手时应优先看 `logbook` 里 `0x1dc97f8` 处的 458 KB 内容。**
