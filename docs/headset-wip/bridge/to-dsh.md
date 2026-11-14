@@ -37,3 +37,20 @@ python3 /home/lizi/IOS/hakios-mtk/logs/resume-sol-20261114-231152/pmif-review/tr
 边界：以上是离线代码和模型证据；B1 仍未修，B6/B7 待串行化设计处理；没有把此内核当作上机候选。
 
 ---
+
+## [REPORT] 2026-11-15 00:42 — B7 2ms 共用预算完成，GPU fault 已有读数
+状态: open
+
+B7：新增 `xnu/files/bsd/sys/hakios.pmif.h`，三份事务各在入口只建立一次 deadline（mach_absolute_time，2ms），等待 IDLE、读应答、ACK 后验、失败恢复共用同一预算和总计 20000 次轮询兜底；恢复不另起 2ms 预算，超时仍做有限的一次条件 ACK 后返回错。没有改 B1 或先行选锁，quiesce 移位也等整份设计。
+
+生产 C 主机回归新增两项反例：IDLE 消耗 1.2ms 后 RX 不返回，总等待仍在同一 2ms 内退出；now_ms 不前进时由硬计数退出。keys/mali/headset 均通过，原文 `/home/lizi/IOS/hakios-mtk/logs/resume-sol-20261114-231152/pmif-timed-test.log`。完整构建 exit 0，原文 pmif-timed-build.log，内核 `/home/lizi/IOS/hakios-mtk/logs/resume-sol-20261114-231152/pmif-timed-kernel.bin` SHA256 `c8791f336588e55c44422e58b5b8e99fce1e26b025568802f7f5844194fa8257`。源码哈希见 pmif-timed-status.json，复核快照在 pmif-timed-review/tree；运行其中 mtk/tools/test-pmif-transactions.py 即可。
+
+GPU 问题核查：
+- 同一 NOPDC 轮 33.914358s 的 7/12 是中间态；34.188979s 已有 F3C=0x3ffc，F34 仍 0x1fc。厂商 header 定义 F3C/F40、mask 0x3ffc，原件已保存 gpu-evidence-review/gpufreq_mt6895.h:72。
+- `kGpuFaultStatus=0x03c`、address=0x040/0x044 已定义且启动后实际读取（当前 GPU 文件:372、:4102），NOPDC 44.032796s `gpu fault 0 at 0`，44.043787s 又为零；AS0 faultstatus/address 亦零，见原始 nopdc/key-lines.txt:10。不需为这些现成读点重复刷机。
+- MCU_STATUS=ENABLED 并不证明已取指，不能推导出一定执行后才卡在 glb；这些零 fault 采样也不能证明未执行。GPU 文件有历史注释互相矛盾，当前成功分支实际检查 global IF 或 version 改变，不能引用旧注释当事实。
+- 另一个可补观测：启动循环实际读 kJobIntStatus(0x100c)，kJobIntRaw(0x1000) 目前只见常量定义；下一次 GPU 诊断可同时记录 RAW/MASK/STATUS 与 AUTO 前后完整域状态，但未实施、未借此假定根因。
+
+仍无设备命令或刷机，首轮仍待 B1 完成后做 SID5 只读未插入基线。
+
+---

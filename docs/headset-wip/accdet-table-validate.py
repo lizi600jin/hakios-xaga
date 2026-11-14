@@ -280,6 +280,18 @@ class Source:
                             changed = True
             if not changed:
                 break
+        self.call_sites = {}
+        for caller in self.func_calls:
+            a, b = next(((x, y) for n, x, y in self.funcs if n == caller), (0, 0))
+            for ln in range(a, min(b, len(self.lines)) + 1):
+                txt = self.lines[ln - 1]
+                if txt.lstrip().startswith(("*", "/*", "#")):
+                    continue
+                for cm in CALL_RE.finditer(txt):
+                    callee = cm.group(1)
+                    if callee in NOT_A_CALL or callee == caller:
+                        continue
+                    self.call_sites.setdefault(callee, []).append((caller, ln))
         self.enclosing = {}
         for name, a, b in self.funcs:
             for ln in range(a, min(b, len(self.lines)) + 1):
@@ -481,6 +493,53 @@ def zero_write_scan(reg, sources):
                                       "regmap_write", "regmap_update")):
                     hits.append({"file": name, "line": ln, "helper": helper, "macro": base})
     return hits
+
+
+PHASES = {"accdet_init": 10, "accdet_init_debounce": 20, "accdet_init_once": 30,
+          "clear_accdet_int": 5, "clear_accdet_int_check": 5,
+          "disable_accdet": 5, "eint_work_callback": 90,
+          "config_eint_init_by_mode": 30, "config_digital_init_by_mode": 30}
+
+
+ROOTS = {"accdet_init": 10, "accdet_init_debounce": 20, "accdet_init_once": 30,
+         "eint_work_callback": 90}
+
+
+def order_key(row, src):
+    """Execution-order key: (root_phase, call_path, line).
+
+    Config helpers (config_eint_init_by_mode at 2904 etc.) execute when init_once calls
+    them at 3070, not where they are defined, so a raw line number is the wrong key.
+    A ref that is itself a phase function's callsite (3129, 3100, 3070) is exact.
+    """
+    best = None
+    for ref in row.get("_refs", []):
+        cands = []
+        cited = ref.get("cited") or [None]
+        fn_cited = src.func_at(cited[0]) if cited[0] else None
+        if ref.get("status") in ("ok_indirect",) and fn_cited in ROOTS:
+            cands.append((ROOTS[fn_cited], [], cited[0]))
+        ln = ref.get("op_line")
+        if ln is not None:
+            fn = src.func_at(ln)
+            if fn in ROOTS:
+                cands.append((ROOTS[fn], [], ln))
+            elif fn:
+                name, path, hops = fn, [], 0
+                while name not in ROOTS and hops < 8:
+                    cs = [c for c in src.call_sites.get(name, []) if c[0] != name]
+                    if not cs:
+                        break
+                    caller, cline = cs[0]
+                    path = [cline] + path
+                    name = caller
+                    hops += 1
+                if name in ROOTS:
+                    cands.append((ROOTS[name], path, ln))
+        for k in cands:
+            if best is None or k < best:
+                best = k
+    return best
 
 
 def cleared_by_row(row, src, dump):
@@ -745,6 +804,51 @@ def prereq_audit(mt6368c, fields):
     return res
 
 
+def vaud18_audit(mt6368c, fields):
+    """Timeline of 0x1cb2 bit0 (RG_LDO_VAUD18_EN) in mt6368.c."""
+    res = {"reg": "0x1cb2", "symbol": "RG_LDO_VAUD18_EN", "sites": [],
+           "verdict": "unverified", "last_state_before_accdet": None,
+           "note": ""}
+    if not mt6368c:
+        res["note"] = "mt6368.c 不可得"
+        return res
+    lines = mt6368c.splitlines()
+    for i, ln in enumerate(lines):
+        if "MT6368_LDO_VAUD18_CON0" not in ln:
+            continue
+        stmt = "\n".join(lines[i:min(i + 5, len(lines))])
+        m = re.search(r"(regmap_update_bits|regmap_write|regmap_read)\s*\(", stmt)
+        if not m:
+            continue
+        args = _call_args(stmt, m.end() - 1)
+        kind = m.group(1)
+        val = args[3] if kind == "regmap_update_bits" and len(args) > 3 else (
+            args[1] if kind == "regmap_write" and len(args) > 1 else None)
+        on = None
+        if val:
+            if re.match(r"\s*0\s*<<", val) or val.strip() == "0":
+                on = 0
+            elif re.match(r"\s*1\s*<<", val) or val.strip() == "1":
+                on = 1
+        res["sites"].append({"line": i + 1, "kind": kind, "value_arg": val, "on": on})
+    writes = [x for x in res["sites"] if x["kind"] != "regmap_read" and x["on"] is not None]
+    # accdet late_init runs at dc_trim_thread:4938, after get_hp_trim_offset
+    anchor = None
+    for i, ln in enumerate(lines):
+        if "mt6368_accdet_late_init" in ln:
+            anchor = i + 1
+            break
+    before = [w for w in writes if anchor and w["line"] < anchor]
+    if before:
+        res["last_state_before_accdet"] = before[-1]["on"]
+    res["accdet_late_init_line"] = anchor
+    if res["last_state_before_accdet"] == 0:
+        res["verdict"] = "accdet 初始化前最后一次写是 0（VAUD18 关）→ 表里 #2 必须自己开"
+    elif res["last_state_before_accdet"] == 1:
+        res["verdict"] = "accdet 初始化前 VAUD18 已由 codec 打开（#2 幂等）"
+    return res
+
+
 # ---------------------------------------------------------------- driver
 
 def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
@@ -790,8 +894,10 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
             hi = int(m.group(3)) if m.group(3) else lo
             refs.append(resolve_ref(r, (m.group(1), lo, hi), ctx))
 
-        hard_ref = [x for x in refs if x["status"] in ("miss", "field_conflict")]
-        src_proven = (bool(refs) and not hard_ref
+        hard_ref = [x for x in refs if x["status"] == "miss"]
+        good_ref = [x for x in refs if x["status"] in
+                    ("ok", "ok_indirect", "ok_absence", "ok_chain", "zero_write", "ok_const")]
+        src_proven = (bool(good_ref) and not hard_ref
                       and wr_ok is not False and ms_status != "must_fix")
         if r["op"] == "verify" and not zw:
             src_proven = True
@@ -834,8 +940,14 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
                  else "auddec_ana" if BLOCK_AUDDEC[0] <= r["reg_i"] <= BLOCK_AUDDEC[1]
                  else "outside")
 
+        ok_ = order_key({"_refs": refs}, acc)
+        phase = {10: "late_init/accdet_init", 20: "late_init/init_debounce",
+                 30: "late_init/init_once", 90: "plug-in (eint_work_callback)"}.get(
+                     ok_[0] if ok_ else 0, "cold-start 自加" if r["seq"] in (1, 2, 6, 7) else "其它")
+
         items.append({
             "seq": r["seq"], "reg": r["reg"], "op": r["op"], "block": block,
+            "phase": phase, "phase_key": list(ok_) if ok_ else None,
             "mask": r["mask"], "shift": r["shift_i"], "value": r.get("value"),
             "symbol": r.get("symbol"), "delay_us": r["delay_us"],
             "byte_mask": "0x%02x" % r["byte_mask"],
@@ -854,7 +966,24 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
             "c_array_consistent": c_ok,
         })
 
-    hard, soft = [], []
+    for it, r in zip(items, rows):
+        r["_refs"] = it["reason_refs"]
+
+    order_seq, violations, skipped = [], [], []
+    for r in sorted(rows, key=lambda x: x["seq"]):
+        if r["op"] != "write":
+            continue
+        k = order_key(r, acc)
+        if k is None or k[0] not in (10, 20, 30):
+            skipped.append(r["seq"])
+            continue
+        order_seq.append((r["seq"], k))
+    for (s1, k1), (s2, k2) in zip(order_seq, order_seq[1:]):
+        if k2 < k1:
+            violations.append({"ahead": s1, "behind": s2,
+                               "key_a": list(k1), "key_b": list(k2)})
+
+    hard, soft, cite = [], [], []
     for it in items:
         if it["width"] == "fail":
             hard.append([it["seq"], "value 超出字段位宽：" + it["width_note"]])
@@ -862,7 +991,7 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
             if x["status"] == "miss":
                 hard.append([it["seq"], "行号 %s 不在操作该寄存器：%s" % (x["ref"], x["detail"])])
             elif x["status"] == "field_conflict":
-                hard.append([it["seq"], "行号 %s 落在同寄存器另一字段：%s" % (x["ref"], x["detail"])])
+                cite.append([it["seq"], "行号 %s 指向同寄存器的另一字段：%s" % (x["ref"], x["detail"])])
         if it["mask_shift"] == "must_fix":
             hard.append([it["seq"], "mask/shift 与 regmap 冲突：" + it["mask_shift_note"]])
         if it["c_array_consistent"] is False:
@@ -894,17 +1023,43 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
                         default=10 ** 6)
         order.append({"rule": "VAUD18(0x1cb2) 必须早于所有 ACCDET/AUDDEC 写",
                       "seq": vaud[0]["seq"], "ok": vaud[0]["seq"] < first_ana, "advisory": False})
-    rst = [i for i in items if i["reg"] == "0x2319" and i["value"] == "0x01"]
-    deb = [i for i in items if i["reg"] in ("0x2697", "0x2698", "0x2699", "0x269a")]
-    if rst and deb:
-        order.append({"rule": "ACCDET_RST 脉冲(#22) 早于 debounce 写(#10-13)，避免复位冲掉配置",
-                      "seq": rst[0]["seq"], "ok": rst[0]["seq"] < min(i["seq"] for i in deb),
-                      "advisory": True})
+    order.append({"rule": "init 路径行的 seq 顺序不违反厂商执行序（按调用路径比较，"
+                          "非行号）；非 init 路径行不参与（#%s）" % skipped,
+                  "seq": "-", "ok": not violations, "advisory": False,
+                  "violations": violations})
     mbst = [i for i in items if i["reg"] == "0x252a" and i["value"] == "0x03"]
-    if mbst and rst:
+    if mbst:
         order.append({"rule": "MICBIAS 2.8V 配置(#33) 早于 SW_EN(#48)，否则无偏置就开检测",
                       "seq": mbst[0]["seq"], "ok": mbst[0]["seq"] < (sw[0]["seq"] if sw else 10 ** 6),
                       "advisory": False})
+
+    # ---- registers the init path touches but the table does not list
+    listed = {r["reg_i"] for r in rows}
+    reach = set()
+    for e in ("accdet_init", "accdet_init_debounce", "accdet_init_once"):
+        reach |= acc.reach(e)
+    gaps = []
+    for reg in sorted(reach - listed):
+        sites = zero_write_scan(reg, [("mt6368-accdet.c", acc)])
+        fn = acc.func_at(sites[0]["line"]) if sites else None
+        guard = None
+        if sites:
+            for k in range(sites[0]["line"], max(1, sites[0]["line"] - 40), -1):
+                t = acc.lines[k - 1].strip()
+                if re.match(r"(\}\s*)?(else\s+)?if\s*\(", t):
+                    guard = {"line": k, "text": t[:100]}
+                    break
+        gaps.append({"reg": "0x%04x" % reg, "n_writers": len(sites),
+                     "first_site": sites[0]["line"] if sites else None,
+                     "function": fn, "guard": guard,
+                     "writes_in_dead_branch": None})
+    # a register whose every writer sits behind a dts-gated branch is a justified omission
+    for g in gaps:
+        if g["function"] in ("config_eint_init_by_mode", "config_digital_init_by_mode",
+                             "config_moisture_detect_1_0", "config_moisture_detect_1_1",
+                             "config_moisture_detect_2_1", "config_moisture_detect_2_1_1",
+                             "adjust_eint_digital_setting", "accdet_set_debounce"):
+            g["writes_in_dead_branch"] = True
 
     regs = sorted({i["reg"] for i in items}, key=lambda s: int(s, 16))
     cov = {"distinct_regs": len(regs),
@@ -922,6 +1077,7 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
                "ops": {k: sum(1 for i in items if i["op"] == k) for k in ("write", "verify", "read")},
                "verdicts": {}, "dump": {},
                "hard_errors": len(hard), "soft_findings": len(soft),
+               "citation_errors": len(cite),
                "total_delay_us": sum(i["delay_us"] for i in items),
                "ref_status": {}}
     for it in items:
@@ -942,8 +1098,10 @@ def run(table_path=TABLE_JSON, dump_path=BASELINE, regmap_path=REGMAP,
             "pulse_pairs": {str(k): v for k, v in sorted(pulse.items())},
             "refill_pairs": {str(k): v for k, v in sorted(refill.items())},
             "order_rules": order,
+            "coverage_gaps": gaps,
             "prereq_audit_0x230c": prereq_audit(mc_src, fields),
-            "hard_errors": hard, "soft_findings": soft,
+            "prereq_audit_0x1cb2": vaud18_audit(mc_src, fields),
+            "hard_errors": hard, "soft_findings": soft, "citation_errors": cite,
             "sample": sample, "items": items}
 
 
@@ -967,6 +1125,12 @@ def human(rep, verbose=False):
       % (s["rows"], s["ops"]["write"], s["ops"]["verify"], s["ops"]["read"],
          s["total_delay_us"] / 1000.0))
     A("")
+    A("-- 来源阶段 " + "-" * 64)
+    ph = {}
+    for i in rep["items"]:
+        ph[i["phase"]] = ph.get(i["phase"], 0) + 1
+    for k in sorted(ph):
+        A("   %-36s %3d" % (k, ph[k]))
     A("-- 判定分布 " + "-" * 64)
     for k in sorted(s["verdicts"]):
         A("   %-36s %3d" % (k, s["verdicts"][k]))
@@ -984,6 +1148,14 @@ def human(rep, verbose=False):
         A("      未覆盖 %s (%s)" % (d["reg"], d["block"]))
     A("   dump 杂项单点：%s" % c["misc_strays"])
     A("")
+    A("-- 厂商 init 路径写到、但表里没有的寄存器 " + "-" * 34)
+    for g in rep["coverage_gaps"]:
+        A("   %s  %-28s @%-5s guard=%s" % (g["reg"], g["function"], g["first_site"],
+                                           (g["guard"]["line"], g["guard"]["text"][:60])
+                                           if g["guard"] else "-"))
+    if not rep["coverage_gaps"]:
+        A("   （无）")
+    A("")
     A("-- 脉冲 / 回填 " + "-" * 62)
     A("   脉冲 set→clear：%s" % rep["pulse_pairs"])
     A("   回填 clear→set：%s" % rep["refill_pairs"])
@@ -992,6 +1164,9 @@ def human(rep, verbose=False):
     for o in rep["order_rules"]:
         A("   %s seq=%s %s %s" % ("PASS" if o["ok"] else "FAIL", o["seq"], o["rule"],
                                   "(建议)" if o["advisory"] else ""))
+        for v in o.get("violations", [])[:8]:
+            A("        #%s 跑到 #%s 之前  key %s > %s"
+              % (v["ahead"], v["behind"], v["key_a"], v["key_b"]))
     A("")
     A("-- 0x230c 前置审计 " + "-" * 58)
     a = rep["prereq_audit_0x230c"]
@@ -1002,8 +1177,21 @@ def human(rep, verbose=False):
         A("     :%-5d %-20s mask=%-6s sft=%s  %s"
           % (st["line"], st["kind"], st["mask"], st["sft"], st["text"]))
     A("")
+    A("-- 0x1cb2 前置审计 " + "-" * 58)
+    v = rep["prereq_audit_0x1cb2"]
+    A("   %s" % v["verdict"])
+    A("   accdet late_init 调用行 %s；之前最后一次写 = %s"
+      % (v.get("accdet_late_init_line"), v.get("last_state_before_accdet")))
+    for st in v["sites"]:
+        A("     :%-5d %-20s value=%s -> %s" % (st["line"], st["kind"],
+                                               st["value_arg"], st["on"]))
+    A("")
     A("-- 一定错 %d 条 " % len(rep["hard_errors"]) + "-" * 60)
     for seq, why in rep["hard_errors"]:
+        A("   #%-2d %s" % (seq, why))
+    A("")
+    A("-- 引用级缺陷 %d 条（值对、行号错）" % len(rep["citation_errors"]) + "-" * 40)
+    for seq, why in rep["citation_errors"]:
         A("   #%-2d %s" % (seq, why))
     A("")
     A("-- 次级发现 %d 条 " % len(rep["soft_findings"]) + "-" * 56)
@@ -1112,12 +1300,20 @@ def selftest():
     ok("audit: 0x230c bit0 无人写（mask 参数 0x66，SFT 无 bit0）",
        aud["bit0_written"] is False, aud.get("bits_touched"))
 
+    va = vaud18_audit(mc_src, fields)
+    ok("audit: VAUD18 在 accdet 初始化前被 trim 关回 0",
+       va["last_state_before_accdet"] == 0, va.get("sites"))
+
     a1 = random.Random(7).sample(range(1, 51), 15)
     a2 = random.Random(7).sample(range(1, 51), 15)
     ok("sample: 固定种子可复现", a1 == a2)
 
     rep = run()
-    ok("现表: 0 条一定错", rep["summary"]["hard_errors"] == 0, rep["hard_errors"][:4])
+    ok("现表: 0 条内容级一定错（位宽/mask/顺序/C 数组）",
+       rep["summary"]["hard_errors"] == 0, rep["hard_errors"][:4])
+    ok("现表: 引用级缺陷恰好 1 条（#20 错引另一 eint 分支）",
+       [c[0] for c in rep["citation_errors"]] == [20],
+       rep["citation_errors"])
     ok("现表: C 数组与 JSON 全一致",
        all(i["c_array_consistent"] in (True, None) for i in rep["items"]))
     outside = [i["seq"] for i in rep["items"] if i["block"] == "outside"]

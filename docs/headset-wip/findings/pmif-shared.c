@@ -159,15 +159,39 @@ pmif_wr(uint32_t at, uint32_t value)
  * On failure the FSM value that was last read is left in pmif_sta_after, which is what the
  * caller's error code is derived from.
  */
-static bool
-pmif_wait(uint32_t state)
+/*
+ * One budget for a whole transaction, not one per wait.
+ *
+ * This is the difference between a bounded lock hold and an unbounded one. A read has three
+ * waits in it -- IDLE, WFVLDCLR, and IDLE again after the ACK -- and each failure path may
+ * add a recovery wait. With a fresh deadline per wait the worst case is four budgets; with
+ * one budget it is one, which is what makes the worst-case hold time a number that can be
+ * compared against the lock's own panic timeout (524 ms, osfmk/arm/locks_arm.c:106).
+ *
+ * PMIF_SPIN_HARD_CAP is the second bound, counted rather than timed, because the clock and
+ * the MMIO read are the two things that might themselves be what is broken.
+ */
+struct pmif_budget {
+	uint64_t deadline;
+	unsigned polls;
+};
+
+static struct pmif_budget
+pmif_budget_begin(void)
 {
-	uint64_t deadline, now;
-	unsigned spins;
+	struct pmif_budget budget;
+
+	clock_interval_to_deadline(PMIF_POLL_BUDGET_US, NSEC_PER_USEC, &budget.deadline);
+	budget.polls = 0;
+	return budget;
+}
+
+static bool
+pmif_wait(struct pmif_budget *budget, uint32_t state)
+{
 	uint32_t sta;
 
-	clock_interval_to_deadline(PMIF_POLL_BUDGET_US, NSEC_PER_USEC, &deadline);
-	for (spins = 0; spins < PMIF_SPIN_HARD_CAP; spins++) {
+	for (;;) {
 		sta = pmif_rd(PMIF_SWINF_2_STA);
 		pmif_sta_after = sta;
 		if (PMIF_STA_FSM(sta) == state) {
@@ -175,18 +199,19 @@ pmif_wait(uint32_t state)
 		}
 		/*
 		 * ERR is checked here rather than after the wait: a NAK parks the FSM at WFDLE
-		 * (4) and sets bit 18, and waiting the whole budget for a state that will never
-		 * come is 100 ms of a 20 ms poll period spent on a decision already made.
+		 * (4) and sets bit 18, so waiting out the budget for a state that will never
+		 * come spends the whole transaction's allowance on a decision already made.
 		 */
 		if ((sta & PMIF_STA_ERR) != 0u) {
 			return false;
 		}
-		now = mach_absolute_time();
-		if (now >= deadline) {
+		if (++budget->polls >= PMIF_SPIN_HARD_CAP) {
+			return false;
+		}
+		if (mach_absolute_time() >= budget->deadline) {
 			return false;
 		}
 	}
-	return false;
 }
 
 /* Why a wait failed, from the FSM and the error bit that were last read. */
@@ -214,7 +239,7 @@ pmif_wait_failure(void)
  * TIMER_CTRL are global to every channel and every consumer.
  */
 static pmif_status_t
-pmif_ack_locked(void)
+pmif_ack_locked(struct pmif_budget *budget)
 {
 	uint32_t sta = pmif_rd(PMIF_SWINF_2_STA);
 
@@ -230,7 +255,7 @@ pmif_ack_locked(void)
 		return PMIF_E_BUSY;
 	}
 	pmif_wr(PMIF_SWINF_2_VLD_CLR, PMIF_VLDCLR_ACK);
-	if (!pmif_wait(PMIF_FSM_IDLE)) {
+	if (!pmif_wait(budget, PMIF_FSM_IDLE)) {
 		return PMIF_E_STUCK;
 	}
 	return PMIF_OK;
@@ -244,7 +269,7 @@ pmif_ack_locked(void)
  * is over -- its data is gone and nobody is going to collect it (SPEC §4.4, [U]:379-386).
  */
 static pmif_status_t
-pmif_wait_idle_locked(void)
+pmif_wait_idle_locked(struct pmif_budget *budget)
 {
 	uint32_t sta;
 
@@ -256,12 +281,12 @@ pmif_wait_idle_locked(void)
 	}
 	if (PMIF_STA_FSM(sta) == PMIF_FSM_WFVLDCLR) {
 		pmif_wr(PMIF_SWINF_2_VLD_CLR, PMIF_VLDCLR_ACK);
-		if (pmif_wait(PMIF_FSM_IDLE)) {
+		if (pmif_wait(budget, PMIF_FSM_IDLE)) {
 			return PMIF_OK;
 		}
 		return PMIF_E_STUCK;
 	}
-	if (!pmif_wait(PMIF_FSM_IDLE)) {
+	if (!pmif_wait(budget, PMIF_FSM_IDLE)) {
 		return pmif_wait_failure();
 	}
 	return PMIF_OK;
@@ -270,8 +295,8 @@ pmif_wait_idle_locked(void)
 pmif_status_t
 pmif_read8(uint8_t sid, uint16_t addr, uint8_t *out)
 {
+	struct pmif_budget budget;
 	pmif_status_t status;
-	uint32_t sta;
 	uint8_t byte;
 
 	if (out == NULL) {
@@ -286,15 +311,16 @@ pmif_read8(uint8_t sid, uint16_t addr, uint8_t *out)
 		hakios_spmi_unlock();
 		return PMIF_E_DEAD;
 	}
-	status = pmif_wait_idle_locked();
+	budget = pmif_budget_begin();
+	status = pmif_wait_idle_locked(&budget);
 	if (status != PMIF_OK) {
 		hakios_spmi_unlock();
 		return status;
 	}
 	pmif_wr(PMIF_SWINF_2_ACC, PMIF_CMD_READ8(sid, addr));
-	if (!pmif_wait(PMIF_FSM_WFVLDCLR)) {
+	if (!pmif_wait(&budget, PMIF_FSM_WFVLDCLR)) {
 		status = pmif_wait_failure();
-		(void)pmif_ack_locked();        /* a late valid word must not outlive the failure */
+		(void)pmif_ack_locked(&budget);  /* a late valid word must not outlive the failure */
 		hakios_spmi_unlock();
 		return status;
 	}
@@ -304,10 +330,9 @@ pmif_read8(uint8_t sid, uint16_t addr, uint8_t *out)
 	 */
 	byte = (uint8_t)(pmif_rd(PMIF_SWINF_2_RDATA) & 0xffu);
 	pmif_wr(PMIF_SWINF_2_VLD_CLR, PMIF_VLDCLR_ACK);
-	if (!pmif_wait(PMIF_FSM_IDLE)) {
-		sta = pmif_sta_after;
-		status = (PMIF_STA_FSM(sta) == PMIF_FSM_WFVLDCLR) ? PMIF_E_STUCK : PMIF_E_ACK;
-		(void)pmif_ack_locked();
+	if (!pmif_wait(&budget, PMIF_FSM_IDLE)) {
+		status = (PMIF_STA_FSM(pmif_sta_after) == PMIF_FSM_WFVLDCLR) ? PMIF_E_STUCK : PMIF_E_ACK;
+		(void)pmif_ack_locked(&budget);
 		hakios_spmi_unlock();
 		return status;
 	}
@@ -320,6 +345,7 @@ pmif_read8(uint8_t sid, uint16_t addr, uint8_t *out)
 pmif_status_t
 pmif_write8(uint8_t sid, uint16_t addr, uint8_t val)
 {
+	struct pmif_budget budget;
 	pmif_status_t status;
 
 	status = pmif_hdr_admit(sid, addr, true);
@@ -331,7 +357,8 @@ pmif_write8(uint8_t sid, uint16_t addr, uint8_t val)
 		hakios_spmi_unlock();
 		return PMIF_E_DEAD;
 	}
-	status = pmif_wait_idle_locked();
+	budget = pmif_budget_begin();
+	status = pmif_wait_idle_locked(&budget);
 	if (status != PMIF_OK) {
 		hakios_spmi_unlock();
 		return status;
@@ -344,9 +371,9 @@ pmif_write8(uint8_t sid, uint16_t addr, uint8_t val)
 	 * that made every write to 0x241 report a timeout after a full budget while the write
 	 * itself had landed.
 	 */
-	if (!pmif_wait(PMIF_FSM_IDLE)) {
+	if (!pmif_wait(&budget, PMIF_FSM_IDLE)) {
 		status = pmif_wait_failure();
-		(void)pmif_ack_locked();
+		(void)pmif_ack_locked(&budget);
 		hakios_spmi_unlock();
 		return status;
 	}
@@ -363,7 +390,13 @@ pmif_recover(void)
 	pmif_status_t status;
 
 	hakios_spmi_lock();
-	status = (pmif_base == 0) ? PMIF_E_DEAD : pmif_ack_locked();
+	if (pmif_base == 0) {
+		status = PMIF_E_DEAD;
+	} else {
+		struct pmif_budget budget = pmif_budget_begin();
+
+		status = pmif_ack_locked(&budget);
+	}
 	hakios_spmi_unlock();
 	return status;
 }

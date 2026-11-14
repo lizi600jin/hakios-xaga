@@ -41,6 +41,9 @@ ACCDET_LO, ACCDET_HI = 0x2688, 0x26d3
 AUDDEC_LO, AUDDEC_HI = 0x2508, 0x2537
 
 PASS, FAIL, SKIP, INFO = "PASS", "FAIL", "SKIP", "INFO"
+# VOID 与 SKIP 的区别：SKIP = 这次 dump 没带这个地址；
+# VOID = 带了，但读通道已死，数值对上也没有信息量。两者都不算通过。
+VOID = "VOID"
 
 # 驱动的一次读数。允许 "headset: 0x2688 = 0x00"、"headset: 0x2688=0x00"，
 # 也允许行首有内核时间戳（XNU 的 printf 会带）。值必须恰好 1..2 位十六进制。
@@ -52,6 +55,8 @@ SAMPLE_LINE = re.compile(
     r"sample\s+IRQ\s+0x([0-9a-fA-F]{1,2})\s+AB\s+(\d)\s+EINT0\s+(\d)"
     r"\s+FSM\s+(\d)\s+sync\s+(\d)")
 MARKER = re.compile(r"headset\s*:", re.IGNORECASE)
+# 一行里有没有寄存器地址（用来区分「坏行」与「无值的合法提示行」）。
+HEX_ADDR = re.compile(r"0x[0-9a-fA-F]{4}")
 
 # 死总线判据里的两个常数，来自 accdet-baseline.json 的实际统计：
 #   124 个块寄存器里 0x00 有 74 个、0xFF 有 7 个、不同值 27 种。
@@ -79,7 +84,7 @@ def parse_dump(path):
     """-> dict reg->value, 以及统计。坏行不静默丢弃，计数并留样。"""
     parsed, samples = {}, []
     stats = {"lines": 0, "marked": 0, "malformed": [], "timeouts": [],
-             "duplicates": []}
+             "duplicates": [], "notes": []}
     with open(path, encoding="utf-8", errors="replace") as f:
         for raw in f:
             stats["lines"] += 1
@@ -99,7 +104,12 @@ def parse_dump(path):
                 continue
             v = VALUE_LINE.search(line)
             if not v:
-                if len(stats["malformed"]) < 20:
+                # 驱动还有两种合法但无值的行：横幅（"headset: mode 1 on SID 5..."）与
+                # 待实现提示（"headset: headset=2 is not implemented"）。它们不含 0x 地址，
+                # 不当坏行；含地址却没有值的才算坏行，因为那多半是值被截断。
+                if not HEX_ADDR.search(line):
+                    stats["notes"].append(line.strip())
+                elif len(stats["malformed"]) < 20:
                     stats["malformed"].append(line.strip())
                 continue
             reg, value = int(v.group(1), 16), int(v.group(2), 16)
@@ -136,7 +146,8 @@ class Report(object):
         return PASS
 
 
-def judge(regs, samples, stats, base, blocks_base, misc_base, post_init):
+def judge(regs, samples, stats, base, blocks_base, misc_base, post_init,
+          second_regs=None):
     """按 headsetless-checks.json 的口径逐项判定。返回 Report。"""
     rep = Report()
     block = blocks_of(regs)
@@ -214,8 +225,19 @@ def judge(regs, samples, stats, base, blocks_base, misc_base, post_init):
             d += "；超时于 " + " ".join("0x%04x" % a for a in stats["timeouts"][:5])
         rep.add("A7", FAIL, "124 个块寄存器全部读到", d)
 
-    # A8 两次 dump 一致性（--second）
-    rep._a8 = (rep, regs)   # 占位，由 main 填
+    # A8 两次 dump 一致性。放在 judge 里而不是 main 里，自检才能覆盖它。
+    if second_regs is None:
+        rep.add("A8", SKIP, "两次 dump 逐字节相同", "需要 --second 指向第二次 dump")
+    else:
+        d = compare_dumps(regs, second_regs)
+        if not d:
+            rep.add("A8", PASS, "两次 dump 逐字节相同", "0 差异")
+        else:
+            value_diff = [x for x in d if x[1] is not None and x[2] is not None]
+            cover_diff = len(d) - len(value_diff)
+            rep.add("A8", FAIL, "两次 dump 逐字节相同",
+                    "%d 个地址不同（值不同 %d，只在一侧出现 %d）"
+                    % (len(d), len(value_diff), cover_diff))
 
     # ---------- B 组：空插座基线 ----------
     def byte_check(cid, reg, want, name):
@@ -403,8 +425,39 @@ def judge(regs, samples, stats, base, blocks_base, misc_base, post_init):
         rep.add(cid, SKIP, write_checks[cid],
                 "headset=1 只读，dump 无法判定；需阶段 1")
 
+    # 死总线的覆盖判定。全 0x00 / 全 0xFF 时，下面这些项会「真空通过」：
+    #   A3「0xFF 不多」在全 0 时当然成立；A6「镜像对相等」在全常数时当然相等；
+    #   A7「124 个都读到」只说明事务完成了 124 次，不说明读到了不同内容；
+    #   B3/B4/D5 的期望值本来就是 0x00，全 0 读回自然相等。
+    # 这些 PASS 不能计入「通过」，否则死总线会拿一半 PASS。改判 VOID：
+    # 不是失败，是这次 dump 对该项没有信息量。
+    dead, reason = bus_dead(block)
+    if dead:
+        for i, (cid, status, name, detail, phase) in enumerate(rep.rows):
+            if cid in VOID_IF_DEAD and status == PASS:
+                rep.rows[i] = (cid, VOID, name,
+                               "%s；但读通道已死（%s），此项无信息量" % (detail, reason),
+                               phase)
+
     return rep, dict(total=total, agreed=agreed, differed=differed,
                      missing=missing, ratio=ratio, present=present)
+
+
+# 读通道已死时，这些项即使数值上「对」也不能算通过。
+VOID_IF_DEAD = {"A3", "A6", "A7", "B3", "B4", "B10", "D5", "D6"}
+
+
+def bus_dead(block):
+    """一个块的读回是不是死总线。返回 (bool, 原因)。
+
+    只有「很多寄存器」才有资格这样判：单个寄存器读 0x00 是个诚实答案。
+    """
+    if len(block) >= 8 and len(set(block.values())) == 1:
+        return True, "%d 个寄存器全是 0x%02x" % (len(block), list(block.values())[0])
+    if len(block) >= 16 and len(set(block.values())) == 2:
+        return True, "%d 个寄存器只有两个值 %s" % (
+            len(block), "/".join("0x%02x" % v for v in sorted(set(block.values()))))
+    return False, ""
 
 
 # 每项属于哪个阶段。必须与 findings/headsetless-checks.json 的 "phase" 一致。
@@ -456,20 +509,26 @@ def format_report(rep, diffinfo, base, second_diff=None):
         else:
             out.append("差异 %d 个：" % len(second_diff))
             for reg, a, b in second_diff[:20]:
-                out.append("  0x%04x  0x%02x vs 0x%02x" % (reg, a, b))
+                # 两次 dump 覆盖的地址可以不同（改过 dump 范围），缺失侧写 --。
+                out.append("  0x%04x  %s vs %s"
+                           % (reg,
+                              ("0x%02x" % a) if a is not None else " -- ",
+                              ("0x%02x" % b) if b is not None else " -- "))
         out.append("")
 
     out.append("== 汇总 ==")
-    out.append("PASS %d   FAIL %d   SKIP %d   INFO %d"
-               % (rep.count(PASS), rep.count(FAIL), rep.count(SKIP), rep.count(INFO)))
+    out.append("PASS %d   FAIL %d   SKIP %d   VOID %d   INFO %d"
+               % (rep.count(PASS), rep.count(FAIL), rep.count(SKIP),
+                  rep.count(VOID), rep.count(INFO)))
     out.append("")
     out.append("按阶段（可判定 = PASS+FAIL；SKIP/INFO 不计入分母）：")
     for phase, label in ((0, "只读零风险"), (1, "最小写验证"), (2, "初始化表后回读")):
         judged = rep.phase_count(phase, PASS) + rep.phase_count(phase, FAIL)
-        out.append("  阶段 %d %-14s 可判定 %2d 项：PASS %2d  FAIL %2d  SKIP/INFO %2d"
+        out.append("  阶段 %d %-14s 可判定 %2d 项：PASS %2d  FAIL %2d  其余 %2d"
                    % (phase, label, judged, rep.phase_count(phase, PASS),
                       rep.phase_count(phase, FAIL),
-                      rep.phase_count(phase, SKIP) + rep.phase_count(phase, INFO)))
+                      rep.phase_count(phase, SKIP) + rep.phase_count(phase, VOID)
+                      + rep.phase_count(phase, INFO)))
     return out
 
 
@@ -539,20 +598,20 @@ def selftest():
             path = f.name
         try:
             regs, samples, stats = parse_dump(path)
-            rep, diffinfo = judge(regs, samples, stats, base, blocks_base,
-                                  misc_base, post_init)
             code, notes = bus_verdict(regs, stats)
-            second_diff = None
+            other = None
             if second is not None:
                 with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False,
                                                 encoding="utf-8") as g:
                     g.write("\n".join(second) + ("\n" if second else ""))
                     p2 = g.name
                 try:
-                    other, _, _ = parse_dump(p2)
+                    other = parse_dump(p2)[0]
                 finally:
                     os.unlink(p2)
-                second_diff = compare_dumps(regs, other)
+            rep, diffinfo = judge(regs, samples, stats, base, blocks_base,
+                                  misc_base, post_init, other)
+            second_diff = compare_dumps(regs, other) if other is not None else None
             return regs, samples, stats, rep, diffinfo, code, notes, second_diff
         finally:
             os.unlink(path)
@@ -602,6 +661,14 @@ def selftest():
     ok("4 全 0x00 的 B7 得分必须低于阈值",
        [r[1] for r in rep.rows if r[0] == "B7"] == [FAIL],
        [(r[0], r[1], r[3]) for r in rep.rows if r[0] == "B7"])
+    # 这一条是整套脚本里最重要的一条：死总线上「0xFF 不多」「镜像对相等」
+    # 「124 个都读到」「期望值是 0x00 的三项」在数值上全对，必须被判 VOID 而不是 PASS。
+    # 这份合成 dump 只含 124 个块寄存器，块外的 D5 会是 SKIP 而不是 VOID，两者都可接受。
+    ok("4 全 0x00 时 VOID_IF_DEAD 里没有一项是 PASS",
+       all(r[1] in (VOID, SKIP) for r in rep.rows if r[0] in VOID_IF_DEAD),
+       [(r[0], r[1]) for r in rep.rows if r[0] in VOID_IF_DEAD])
+    ok("4 全 0x00 时 PASS 数为 0", rep.count(PASS) == 0,
+       "PASS=%d" % rep.count(PASS))
 
     # 5. 只有部分寄存器：A7 FAIL，A2/A3/A4 SKIP（不足 100），B7 SKIP。
     partial = clean_lines()[:3]
@@ -680,12 +747,32 @@ def selftest():
         clean_lines(), second=clean_lines(**{"0x26b6": 0x00}))
     ok("13 差一个字节 → 恰好 1 条差异且是 0x26b6",
        len(sd) == 1 and sd[0][0] == 0x26b6, sd)
+    # 覆盖范围不同（第二次少读了两个地址）不能当成值不同，也不能崩。
+    # 覆盖范围不同（第二次少读 0x231d 与 0x2320）不能当成值不同，也不能崩。
+    # 这两个地址都在真实基线的 misc 段里，所以「少读」是确定性的 2 个。
+    regs, samples, stats, rep, diff, code, notes, sd = run(
+        clean_lines(), second=[l for l in clean_lines()
+                               if not l.startswith("headset: 0x231d")
+                               and not l.startswith("headset: 0x2320")])
+    a8 = [r for r in rep.rows if r[0] == "A8"][0]
+    ok("13 第二次少读两个地址 → A8 FAIL 但报「值不同 0，只在一侧出现 2」",
+       a8[1] == FAIL and "值不同 0" in a8[3] and "只在一侧出现 2" in a8[3], a8[3])
 
     # 14. 只有 marker 没有值（headset=2 未实现时的打印）：exit 2 但不崩。
     regs, samples, stats, rep, diff, code, notes, _ = run(
         ["headset: headset=2 is not implemented"])
-    ok("14 只有提示行 → exit 2 且 malformed=1",
-       code == 2 and len(stats["malformed"]) == 1)
+    # 提示行不含 0x 地址 → 不算坏行，记为 note。这样「headset=2 未实现」不会被误报成格式错。
+    ok("14 只有提示行 → exit 2，且不计坏行只记 note",
+       code == 2 and len(stats["malformed"]) == 0 and len(stats["notes"]) == 1,
+       "code=%d malformed=%d notes=%d"
+       % (code, len(stats["malformed"]), len(stats["notes"])))
+    # 一条坏行 + 一条提示行，必须只有坏行被计数。
+    regs, samples, stats, rep, diff, code, notes, _ = run(
+        ["headset: mode 1 on SID 5, serialised in keys worker",
+         "headset: 0x2688 = 0xYY"])
+    ok("14 横幅行不计坏行、坏值行计坏行",
+       len(stats["notes"]) == 1 and len(stats["malformed"]) == 1,
+       "notes=%r malformed=%r" % (stats["notes"], stats["malformed"]))
 
     failed = [r for r in results if not r[1]]
     for name, cond, extra in results:
@@ -724,21 +811,11 @@ def main():
         return 3
 
     regs, samples, stats = parse_dump(args.dump)
+    second_regs = parse_dump(args.second)[0] if args.second else None
+    second_diff = compare_dumps(regs, second_regs) if second_regs is not None else None
     rep, diffinfo = judge(regs, samples, stats, base, blocks_base, misc_base,
-                          args.post_init)
+                          args.post_init, second_regs)
     diffinfo["got"] = regs
-
-    second_diff = None
-    if args.second:
-        other, _, _ = parse_dump(args.second)
-        second_diff = compare_dumps(regs, other)
-        if second_diff:
-            rep.add("A8", FAIL, "两次 dump 逐字节相同",
-                    "%d 个寄存器不同" % len(second_diff))
-        else:
-            rep.add("A8", PASS, "两次 dump 逐字节相同", "0 差异")
-    else:
-        rep.add("A8", SKIP, "两次 dump 逐字节相同", "需要 --second 指向第二次 dump")
 
     print("== dump ==")
     print("文件     %s" % args.dump)
@@ -747,6 +824,10 @@ def main():
     print("寄存器   %d 个（块内 %d，distinct 值 %d）"
           % (len(regs), len(blocks_of(regs)),
              len(set(blocks_of(regs).values()))))
+    if stats["notes"]:
+        print("提示行   %d 行（无寄存器值，不算坏行）：" % len(stats["notes"]))
+        for line in stats["notes"][:3]:
+            print("           %s" % line)
     if stats["malformed"]:
         print("坏行     %d 行，前几条：" % len(stats["malformed"]))
         for line in stats["malformed"][:3]:

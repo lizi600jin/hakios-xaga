@@ -33,7 +33,7 @@ import sys
 import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_DIFF = os.path.join(HERE, "SPMI-FIX-DESIGN.diff")
+DEFAULT_DIFF = os.path.join(os.path.dirname(HERE), "headset-wip", "SPMI-FIX-DESIGN.diff")
 DEFAULT_ROOT = "/home/lizi/IOS/hakios-mtk"
 
 # The MT6895's PMIF window, from SPMI-PMIF-SPEC.md §6 and the DTS. Nothing outside it is

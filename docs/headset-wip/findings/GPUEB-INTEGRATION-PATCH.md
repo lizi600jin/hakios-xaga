@@ -4,7 +4,8 @@
 把 GPU 电源交给 GPUEB：发 `CMD_INIT_SHARED_MEM` 和 `CMD_POWER_CONTROL` 两条 IPI。
 
 本文只给补丁文本与说明，**没有改动 `/home/lizi/IOS/hakios-mtk` 的任何文件**。
-所有编译验证都在 `/tmp/gp/` 下的副本上做。
+所有编译验证都在 `/tmp/gp/` 下的副本上做。产物：本文、`GPUEB-INTEGRATION.patch`、
+`../gpueb-patch-check.py`。
 
 ---
 
@@ -14,10 +15,10 @@
 |---|---|
 | 补丁能否 `git apply` | **能**。`git apply --check` 通过，应用后与作者本地验证过的副本 md5 相同（`c5d41235ece6adc73e8bee1e07f0358e`） |
 | 总改动量 | **11 个 hunk / 843 增 61 删**（驱动 9 hunk / header 整文件 1 hunk（552 行）/ `drivers/map` 1 hunk；`git diff --stat`：3 文件、843 insertions、61 deletions） |
-| 能否编译 | **能**。`xnu-clang -fsyntax-only` 退出码 0，加 `-Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-field-initializers` 同样 0 条诊断 |
+| 能否编译 | **能**。用仓库真实编译命令的**完整 warning 集**（`makedefs/MakeInc.def:136-173` 的 `-Weverything … -Werror`）加 `-fsyntax-only`，退出码 0、零诊断 |
 | 默认是否启用 | **不会**。需要 `mali_gpueb=1`（或 2）。不传参数时行为与现在完全一致 |
 | `mali_gpueb` 是否重名 | **是，驱动里已有同名参数**（5253 版 `:5135-5141`，`PE_parse_boot_argn` 在 `:5138`）。本补丁**复用并重定义**它，详见 §C.1 |
-| 那个矛盾 | **未解释**。见 §E。有两条实测把它收窄了，但没有一条能证明「GPUEB gate 了 GPU」 |
+| 那个矛盾 | **未解释**。见 §F。实测把它收窄到「2 ms 内 shader 未 ready 而 cycle counter 在跑」，但没有一条证据能证明「GPUEB gate 了 GPU」 |
 
 改动文件：
 
@@ -55,6 +56,9 @@
 
 下面的文本是 `GPUEB-INTEGRATION.patch` 里驱动那一段的**逐字节复制**（去掉 `diff --git` 与 `index` 两行，
 `git apply` 不需要它们）。**不要手抄**：这个文件在写作期间被别的进程改过两次，手抄一定会漂。
+
+这段文本已单独抽出并验证：`git apply --check` 通过（只打驱动、不打 header 与 map 时也能落地，
+代价是 `#include "hakios.gpueb-ipi.h"` 找不到文件——所以三块要一起用）。
 
 ```diff
 --- a/mtk/mt6895/drivers/gpu/hakios.mali610.c
@@ -515,8 +519,8 @@
 
 要点：
 
-- 文件头 `#ifndef _GPUEB_IPI_H_`（`gpueb-ipi.h:29`）
-- 四个可注入宏都有 `#ifndef` 兜底（`:36-48`），补丁在 `#include` **之前**定义，所以生效
+- 头文件保护 `#ifndef _GPUEB_IPI_H_`（`gpueb-ipi.h:21-22`、`:552`）
+- 四个可注入宏都有 `#ifndef` 兜底（`gpueb-ipi.h:29-48`：`MMIO_READ32` @29、`MMIO_WRITE32` @33、`BARRIER` @37、`UDELAY` @42），补丁在 `#include` **之前**定义，所以生效
 - 全部 `static inline`，没有 `static` 变量、没有非 inline 定义 —— 这也是它可以是 header 的前提（§C.2）
 
 ### A.3 `drivers/map` 一行
@@ -552,7 +556,7 @@
 **改什么。** 在 `#include "hakios.mali610_fw.h"` 之后插入 `GPUEB_MMIO_READ32`/`WRITE32`/`BARRIER`/`UDELAY`
 四个宏、`#include "hakios.gpueb-ipi.h"`，以及四条编译期断言。
 
-**为什么。** header 的设计约束是"零内核依赖"（`gpueb-ipi.h:8-11`），MMIO 与延时由调用方注入。这四个
+**为什么。** header 的设计约束是"零内核依赖"（`gpueb-ipi.h:1-10` 的文件头），MMIO 与延时由调用方注入。这四个
 宏的顺序不能调换：`#ifndef` 兜底在 header 内部（`:36-48`），先定义才生效。
 四条断言锁的是 `INIT_SHARED_MEM` 的字段布局 —— 协议 §3.2 明确说这是"最容易写错的一处"，
 写成交错布局仍然 32 字节、仍然编译通过，只有 GPUEB 解引用半个 size 才会出错。
@@ -621,7 +625,7 @@
   按 `mali_gpueb` 的取值决定是否继续。
 - TX 一直忙（上一条没被取走）→ `GPUEB_ETXSTUCK`，**未写任何东西**，无副作用。
 - 写了 SRAM 但 1 s 内无应答 → `GPUEB_ETIMEOUT`，`gpueb_ipi_xfer()` 内部已写 `CLR` 回滚
-  （`gpueb-ipi.h:500-503`）。
+  （`gpueb-ipi.h:500-503`：超时分支里先 `gpueb_irq_clear(ctl_va)` 再 `return GPUEB_ETIMEOUT`）。
 
 ---
 
@@ -720,7 +724,7 @@ produces a boot loop is worse than no diagnostic"。也就是说：**`mali_gpueb
 
 | header 符号 | 位置 | 驱动内同名 | 处理 |
 |---|---|---|---|
-| `POWER_ON` | `gpueb-ipi.h:189`（`enum gpufreq_power_state`） | `:1677` / `:1759` / `:2555` **只在注释里**，不是 token | **无冲突**（clang 验证：编译 0 诊断） |
+| `POWER_ON` | `gpueb-ipi.h:210-213`（`enum gpufreq_power_state`） | `:1677` / `:1759` / `:2555` **只在注释里**，不是 token | **无冲突**（clang 验证：编译 0 诊断） |
 | `POWER_OFF` | `:188` | 无 | 无冲突 |
 | `CMD_NUM` / `CMD_COMMIT` 等 20 个 | `:145-167` | 无 | 无冲突 |
 | `TARGET_DEFAULT` 等 4 个 | `:171-175` | 无 | 无冲突 |
@@ -733,7 +737,7 @@ produces a boot loop is worse than no diagnostic"。也就是说：**`mali_gpueb
 
 基线 `:266` 是 `#define MALI_GPUEB_MBOX_RECV 0x22078u`，**全文件零引用**（`grep -c` = 1，就是定义行本身）。
 它的值是相对 `0x13c40000` 的偏移，绝对地址 = `0x13c62078`，与 header 的
-`GPUEB_MBOX_RECV_PHYS`（`gpueb-ipi.h:76`）指向同一个寄存器。
+`GPUEB_MBOX_RECV_PHYS`（`gpueb-ipi.h:73`，值 `0x13c62078u`）指向同一个寄存器。
 
 **本补丁的做法是删除它**，而不是保留它再 `#undef`。理由：留着它，下一个人就会在需要 recv 状态时
 按名字找到它、然后为了用它去映射 `0x13c40000` —— 这正是协议 §14.1 说的陷阱。
@@ -752,11 +756,12 @@ produces a boot loop is worse than no diagnostic"。也就是说：**`mali_gpueb
 |---|---|
 | 需要额外 `typedef`？ | **不需要**。header 不自带 `size_t`/`uint32_t`，用的是 `unsigned int` / `unsigned long` / `unsigned long long`（`:63-67`、`:225-227`），全部是 C 内置类型 |
 | `static inline` 冲突？ | **不会**。552 行里所有函数（`gpueb_tx_busy` … `gpueb_dump_status`）都是 `static inline`；没有一个 `static` 变量。已在 `xnu-clang -Wall -Wextra` 下验证：未被调用的 `static inline`（如 `gpueb_dump_status`，在 `#ifdef GPUEB_DEBUG` 内）不产生 `-Wunused-function` |
-| 头文件保护 | `_GPUEB_IPI_H_`（`:29`、`:552`），与 XNU 的 `_*_H_` 惯例同形，未见重名 |
-| `offsetof` | 来自 `<stddef.h>`；XNU 的 `kern/assert.h` 会提供 `static_assert` 宏，但 `offsetof` 由 libkern 的 `libkern.h` 间接带入。实测在 `xnu-clang` 下 `_Static_assert(offsetof(...))` 编译通过 |
+| 头文件保护 | `_GPUEB_IPI_H_`（`gpueb-ipi.h:21-22`、`:552`），与 XNU 的 `_*_H_` 惯例同形，未见重名 |
+| `offsetof` | 由 `<libkern/libkern.h>` 带入（驱动 `:37` 已经 include）。实测：只 `#include <libkern/libkern.h>` + `_Static_assert(offsetof(...))` 编译通过；不 include 任何头时 clang 报 `call to undeclared function 'offsetof'`。所以这条依赖是**必需的**，而它已经满足 |
 | `_Static_assert` 可用性 | `kern/assert.h:176-187` 定义了 `static_assert` 重载宏；直接用 C11 关键字 `_Static_assert` 亦可（实测通过）。**注意**：XNU 把 `volatile` 重定义为 `__volatile`（`-Dvolatile=__volatile`），header 里的 `*(volatile unsigned int *)` 展开后仍是合法语法 |
 | 包含顺序 | 必须晚于 `#include <kern/clock.h>`（`delay()` 与 `clock_get_uptime()` 的声明）。当前插入点 `:44` 之后、`:45` 之前，满足 |
-| `-Wdeclaration-after-statement` | `makedefs/MakeInc.def:132` 有 `WERROR := -Werror`，但未开 `-Wdeclaration-after-statement`。header 与新增函数都遵守了"声明在前"，不依赖这一点 |
+| `-Weverything -Werror` | 真实构建开的是 `-Weverything` 加 `WERROR := -Werror`（`makedefs/MakeInc.def:132`、`:136-173`），比 `-Wall -Wextra` 严格得多。**已按这一套 flags 实测**：基线 0 诊断，打补丁后 0 诊断。新增代码里 `-Wmissing-variable-declarations`（已 `-Wno-`）、`-Wswitch-enum`（已 `-Wno-`）都不构成问题 |
+| `-Wdeclaration-after-statement` | 未在 `WARNFLAGS_STD` 里，`-Weverything` 也不含它。header 与新增函数仍遵守了"声明在前"，不依赖这一点 |
 | 编译产物大小 | 基线 `.o` = 479664 B（`DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT/hakios.mali610.o`）。**打补丁后的大小未测**（该 `.o` 是旧构建，重编需要跑完整 `make kernel`，本次未做）。**未验证** |
 
 ### C.3 命名空间前缀建议
@@ -806,12 +811,27 @@ python3 tools/drivers-check.py
 python3 tools/boot-args.py --check
 ```
 
-**编译产物大小。** 基线 `hakios.mali610.o` = **479664 字节**（2026-11-14 23:33 构建）。
-打完补丁后预期增加 2-4 KiB（四个新函数 + 六条 printf 字符串 + 552 行 header 里的 inline 展开，
-其中大部分 inline 未被调用会被丢弃）。**这个数字未实测**，需要跑一次 `make kernel` 后比对：
+**编译产物大小 —— 已实测。** 用同一条真实编译命令加上 `-c` 各编一次（同目录、同 flags、同一台机器）：
+
+| | 文件字节 | `__text` 段 |
+|---|---|---|
+| 基线 `hakios.mali610.c` | 480656 | `0x7b64` = 31588 |
+| 打补丁后 | 491768 | `0x7f40` = 32576 |
+| 差 | **+11112（+2.3%）** | **+988（+3.1%）** |
+
+`.o` 的差值远大于 `__text` 的差值，因为 `.o` 里还有 DWARF 调试信息（新增 4 个函数、552 行 header 的
+行号表）。**真正占 flash 的是 `__text`：+988 字节**，相对这个驱动 31 KiB 的代码量是 +3.1%。
+
+仓库里那个已构建的 `.o`（`DEVELOPMENT_ARM64_BCM2837/…/hakios.mali610.o`，479664 字节，
+2026-11-14 23:33）与本次 `/tmp` 重编的基线（480656）差 992 字节，因为源文件在此期间被别的进程改过。
+**不要拿 479664 与 491768 直接相减。**
+
+复现：
 
 ```sh
-ls -l xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT/hakios.mali610.o
+cd xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT
+<真实编译命令，把 -fsyntax-only 换成 -c，源文件换成打过补丁的副本> -o /tmp/mod.o
+xnu-deps/host/bin/otool -l /tmp/mod.o | grep -A3 "sectname __text"
 ```
 
 ### D.2 实测（需要手机）
@@ -872,7 +892,7 @@ mali=6 mali_gpueb=1 cpus=4 ...
 这条边界必须在报告里写清楚，不要在第 2 种结果上宣称"GPUEB 不在"。
 
 **耗时。** 最坏 2 × 1 s = 2 s（`GPUEB_TMO_INIT_SHARED_MS` / `GPUEB_TMO_POWER_CTRL_MS` 各 1000，
-`gpueb-ipi.h:337-338`），比厂商的 10 s × 2 = 20 s 短。这个 2 s 落在 `mali_thread` 的
+`gpueb-ipi.h:328-329`），比厂商的 10 s × 2 = 20 s（`gpueb-ipi.h:324` 的 `IPI_TIMEOUT_MS_DEFAULT`）短。这个 2 s 落在 `mali_thread` 的
 `delay(2000*1000)` 之后，不影响别的子系统启动。
 
 #### R2 ｜ `mali_gpueb=2`
@@ -971,7 +991,7 @@ mali_gpueb=0        # 或者干脆不传（默认 0）
 | `THREAD_MAX` | `0x800` | 同上 |
 | `SHADER_PRESENT (0x100)` | `0x130013` | 同上；`0x130013` = 6 核的两段各 19 |
 | `MCU_STATUS (0x704)` | `1`（写 AUTO 后） | `work-notes-bus-protect.md:8` |
-| `GPU_IRQ_RAWSTAT` | `0x100`（RESET_COMPLETED）、`0x200`（POWER_CHANGED_SINGLE） | `work-notes-mcu-peripheral-window.md:391-394` |
+| `GPU_IRQ_RAWSTAT` | `0x100`（RESET_COMPLETED）、`0x200`（POWER_CHANGED_SINGLE） | `work-notes-mcu-peripheral-window.md:386-388` |
 
 `0x13000000` 窗口能读、能写（`MCU_CONTROL` 写 2 读回 2），且 `GPU_CYCLE_COUNT` 在**跑**：
 
@@ -981,9 +1001,24 @@ mali_gpueb=0        # 或者干脆不传（默认 0）
 `work-notes-mcu-peripheral-window.md:391`
 
 两次读差 `0x532e5` = 340709 个计数。若 core 域是 300 MHz（`work-notes-mcu-clock.md:284` 实测
-Android 侧 `mfg_sel_0_ck = 299999955 Hz`），这段间隔 ≈ **1.14 ms**，与探针代码里两次采样之间的
-延时量级一致（`work-notes-mcu-clock.md:389` 的注释说 "10 个 tick 约 10 ms"，但实际日志是 1.14 ms
-的间隔 —— 这个不自洽还没查）。
+Android 侧 `mfg_sel_0_ck = 299999955 Hz`），340709 个计数 = **1.14 ms**。
+
+但探针代码里两次采样之间是 `delay(1000)`（`:4117`，即 1000 µs = 1 ms）。**1.14 ms 与 1 ms 相符**，
+所以 cycle counter 确实在 300 MHz 上跑，这条自洽。我一开始把它算成"1.14 ms vs 10 ms 不自洽"，
+是拿 `work-notes-mcu-clock.md:389` 里另一版探针（`delay(10)`）的注释去比了，那个比较是错的。
+
+**这条实测的含义：`GPU_CYCLE_COUNT` 以 300 MHz 递增 ⇒ core 时钟域在跳。**
+
+**关键在于它和上一条只隔 2 ms。** 同一次 run、同一段代码（`start_mcu()` 的收尾），
+`[49.018030]` 读出 `shader ready 0 tiler ready 0 l2 ready 0x1`，`[49.020652]` 读出 cycle counter
+在 300 MHz 上跑。也就是说：
+
+> **在 2 毫秒的窗口里，"shader 没 ready"与"core 时钟域在跳"是同时为真的。**
+
+这是 §F 这个矛盾的**唯一一条硬数据**，也是它最尖锐的地方：如果 shader 没 ready 是因为
+core 时钟被 gate 了，那 2 ms 之后 cycle counter 不该递增。两者同时成立只有三种可能：
+(a) cycle counter 不在 core 域；(b) `SHADER_READY=0` 的原因不是时钟；(c) 两者之间的 2 ms 里
+时钟被打开了。这三种我都没有证据区分。
 
 ### F.2 三条候选解释，以及各自的证据边界
 
@@ -991,7 +1026,11 @@ Android 侧 `mfg_sel_0_ck = 299999955 Hz`），这段间隔 ≈ **1.14 ms**，�
 
 - 支持：`PWR_STATUS (0xF34)` 读到 `0x1fc`，即 bit2..bit8 = 7 个域 up（`work-notes-mcu-peripheral-window.md:394-395`
   与 `work-notes-mfg8-12-rail.md` 的逐位分析）。MFG1（MPU）在其中，所以寄存器块有电。
-  而 `SHADER_READY (0x140)` 在同一时刻读到 **0**（同文件 `:393`）。
+  而同一份 logbook 里 `SHADER_READY (0x140)` 读到 **0**（`work-notes-mcu-peripheral-window.md:388`，
+  `shader ready 0 tiler ready 0 l2 ready 0x1`）。
+  **注意这两条的时间戳不是同一时刻**：`PWR_STATUS` 在 `[38.22]`（上电阶段），`SHADER_READY` 在
+  `[49.01]`（写 AUTO 之后）。同一次 run，但相隔约 11 秒，所以只能说"这次 run 里两个量分别是这样"，
+  不能说"上电完成时 shader 还没起"。这是本节最弱的一环。
 - 能推到：**"寄存器块上电"与"shader 上电"在这块板子上确实是两件事**，实测已经把它们分开了。
 - 不能推到：这只说明"存在一个未上电的部分"，**不能说明**那个部分是 GPUEB 挡的。
   驱动自己上电 12 个域只成功 7 个（`7 of twelve domains answered`），这个失败同样能解释它，
@@ -1023,10 +1062,13 @@ Android 侧 `mfg_sel_0_ck = 299999955 Hz`），这段间隔 ≈ **1.14 ms**，�
 
 ### F.3 结论（不编理由）
 
-1. **"GPUEB gate 住了 GPU，所以 MCU 不启动"这个假设，与 `GPU_CYCLE_COUNT` 在跑的事实不相容**——
-   除非 cycle counter 与 MCU 不在同一个时钟域，而 `work-notes-mcu-clock.md:298` 的表述是它们在同一个域。
-   这两条笔记本身可能有冲突，**我没有独立证据判定哪一条对**。这是一个明确的、待查的矛盾，
-   不是可以糊过去的细节。
+1. **"GPUEB gate 住了 GPU，所以 MCU 不启动"这个假设，与 `GPU_CYCLE_COUNT` 以 300 MHz 在跑不相容** ——
+   前提是 cycle counter 与 MCU 同域。`work-notes-mcu-clock.md:298` 明确写"它是 core 时钟域的自由运行
+   计数器"，而 MCU 就在 core 域里。两次独立的 run 都看到它在跑（`0xc0eaeff6→0xc0f022db`、
+   `0xc54a5a0a→0xc54f8cb0`），且第一段的速率与 300 MHz 相符（§F.1）。
+   所以：**如果 GPUEB gate 的是 core 时钟，这个计数器不该动。它动了。**
+   剩下的可能是"cycle counter 不在 core 域"或"GPUEB gate 的是别的门（复位/隔离而非时钟）"——
+   **这两种可能我都没有证据，只能标为待查。**
 2. **"寄存器可读但执行单元未上电"有实测支持**（`PWR_STATUS=0x1fc` 而 `SHADER_READY=0`），
    但**不能归因给 GPUEB**：驱动自己上电 12 个域只成 7 个，这个失败独立存在且更直接。
 3. **`power_control` 的值从未被读过**，所以"GPUEB 是否被要求管这块 GPU"这个前提**未知**。
@@ -1034,7 +1076,7 @@ Android 侧 `mfg_sel_0_ck = 299999955 Hz`），这段间隔 ≈ **1.14 ms**，�
 4. **"MCU_STATUS=1 是否等于执行"本身可疑**（`work-notes-csf-boot-others.md:18`：上游无此案例）。
    若不等，则"19 轮能读寄存器"根本不是矛盾 —— 矛盾在别处。
 
-**因此：这个矛盾未解释，是 E6 实验的一个风险点。** 本补丁的价值不在于"证明 GPUEB 是原因"，
+**因此：这个矛盾未解释，是下一个实验（下称 E6）的一个风险点。** 本补丁的价值不在于"证明 GPUEB 是原因"，
 而在于**把三个此前未知的量变成已知**：`power_control`、`shader_present`、以及"两条命令是否有应答"。
 如果 R1 的 `power_control` 读到 0，那么"GPUEB gate 住 GPU"这条假设应当**直接被放弃**，
 19 轮的失败原因要回到 `PWR_STATUS 0x1fc vs 0x3ffc`（12 域只起 7 个）这条更硬的证据上。
@@ -1050,8 +1092,8 @@ Android 侧 `mfg_sel_0_ck = 299999955 Hz`），这段间隔 ≈ **1.14 ms**，�
 | 1 | `0x7c600000` 这块 RAM 在 XNU 下能否安全 map 与读 | R1 第 2 行 | 若读挂机，本补丁的 probe 部分要单独关掉（`mali_gpueb` 之外再加开关） |
 | 2 | GPUFREQ 的 RX slot 是否真是 47（协议 §9 D1 列为最高优先级） | R1 收到应答时 ack 是否合理 | 若 slot 错，会读到垃圾 ack，可能误判"拒绝" |
 | 3 | `0x13c62000` 页在 XNU 下读是否安全（mbox bank 时钟是否常开） | R1 第 1-2 行 | 若挂机，说明 bank 也被 gate，方案要重做 |
-| 4 | 编译产物大小变化 | `make kernel` 后 `ls -l` | 仅影响 flash 布局余量 |
-| 5 | `ml_io_map` 对 `0x13c5fd80`（非页对齐）返回的 VA 是否需要手工加 `& 0xfff` | 读 `io_map.c:94-97`：`return start + start_offset`，其中 `start_offset = phys - trunc_page(phys)`。**已核对源码，不需要** | 已解决 |
+| 4 | ~~编译产物大小变化~~ **已实测**：`__text` +988 字节（+3.1%），`.o` +11112（见 §D.1） | — | 无 |
+| 5 | `ml_io_map` 对 `0x13c5fd80`（非页对齐）返回的 VA 是否需要手工加 `& 0xfff` | 读 `osfmk/arm/io_map.c:95`（`start_offset = phys_addr - trunc_page(phys_addr)`）与 `:132`（`return start + start_offset`）。**已核对源码，不需要手工加偏移** | 已解决 |
 | 6 | `GPU_CYCLE_COUNT` 与 MCU 是否同一时钟域（§F.2 的矛盾） | 读 `work-notes-mcu-clock.md:298` 的原始出处，或 R1 时同读两者 | 决定 §F 的解释 A 是否成立 |
 | 7 | `tools/drivers-check.py` 基线红（`drivers/usb`）是否会掩盖本补丁引入的新问题 | 加 `drivers/map` 一行前后各跑一次，比对问题数 | 低 |
 
@@ -1067,8 +1109,10 @@ Android 侧 `mfg_sel_0_ck = 299999955 Hz`），这段间隔 ≈ **1.14 ms**，�
 | 应用后一致性（5253 版） | `md5sum` 对比应用结果与作者验证副本 | 相同：`c5d41235ece6adc73e8bee1e07f0358e` |
 | 补丁可应用（5255 版，收尾时） | `git apply --check -v` | 通过，9/9 hunk 成功，offset +1/+2，无 fuzz |
 | 语法（5253 版） | `xnu-clang -fsyntax-only`（真实构建命令，替换源文件） | 退出码 0 |
+| 目标文件（5253 版） | 同命令 `-c -o`，`otool -l` 读 `__text` | 基线 31588 → 32576，**+988 字节** |
 | 语法（5255 版） | 同上，对应用后的当前源文件 | 退出码 0 |
-| 警告 | 同上 + `-Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-field-initializers` | 0 条诊断 |
+| 警告（真实 warning 集） | 同上 + `makedefs/MakeInc.def:136-173` 的 `WARNFLAGS_STD`（`-Weverything … -Werror`，含 31 个 `-Wno-*`，逐条抄自该文件 `:136-173`） | 0 条诊断；基线与打补丁后都是 0，所以补丁没有引入任何新警告 |
+| 警告（宽松集，对照） | 同上 + `-Wall -Wextra` | 0 条诊断 |
 | header 独立编译 | `xnu-clang -std=c11 -Wall -Wextra -fsyntax-only`（只 include header）；`gcc` 同 | 两者退出码 0 |
 | header 逐字节一致 | `md5sum` 补丁产出的 header vs `findings/gpueb-ipi.h` | 相同：`78aa488140e71c2b5d1f95027edae8e6` |
 | header 字段布局 | `gcc -std=c11` 跑 `gpueb_build_init_shared_mem()` | `w[2]=0x7c600000 w[4]=0x7c600400 w[6]=0x400 w[7]=0xc00`；`offsetof(status_size)=24`、`sizeof=32` |

@@ -1,0 +1,5181 @@
+{
+ "meta": {
+  "table": "/home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip/findings/accdet-init-table.json",
+  "baseline": "/home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip/accdet-baseline.json",
+  "regmap": "/home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip/research/mt6368-accdet-regmap.txt",
+  "header": "/home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip/raw/mt6368.h",
+  "accdet_c": "/home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip/raw/mt6368-accdet.c",
+  "mt6368_c": "/tmp/accdet-val/mt6368.c",
+  "baseline_source_field": "stock Android dump_reg, no headset plugged, 2026-11-14",
+  "baseline_sid": 5,
+  "seed": 20261115,
+  "sample_n": 15
+ },
+ "summary": {
+  "rows": 50,
+  "ops": {
+   "write": 44,
+   "verify": 4,
+   "read": 2
+  },
+  "verdicts": {
+   "C 源码可证（dump 无覆盖）": 3,
+   "A 双证": 40,
+   "B 源码可证（瞬态/状态相关，dump 不适用）": 5,
+   "C 源码可证（采样行，dump 只做参考）": 2
+  },
+  "dump": {
+   "no_dump": 3,
+   "match": 40,
+   "conflict_pulse": 3,
+   "conflict_refill": 1,
+   "conflict_cleared_at_runtime": 1,
+   "snapshot": 2
+  },
+  "hard_errors": 0,
+  "soft_findings": 32,
+  "citation_errors": 1,
+  "total_delay_us": 69900,
+  "ref_status": {
+   "ok": 52,
+   "ok_absence": 1,
+   "ok_indirect": 14,
+   "zero_write": 3,
+   "field_conflict": 1,
+   "ok_const": 1,
+   "context": 1
+  }
+ },
+ "coverage": {
+  "distinct_regs": 41,
+  "in_dump": [
+   "0x2319",
+   "0x2529",
+   "0x252a",
+   "0x252d",
+   "0x252f",
+   "0x2530",
+   "0x2531",
+   "0x2533",
+   "0x2534",
+   "0x2688",
+   "0x268a",
+   "0x268b",
+   "0x268c",
+   "0x268d",
+   "0x268e",
+   "0x268f",
+   "0x2690",
+   "0x2691",
+   "0x2692",
+   "0x2693",
+   "0x2694",
+   "0x2697",
+   "0x2698",
+   "0x2699",
+   "0x269a",
+   "0x269d",
+   "0x269e",
+   "0x269f",
+   "0x26a0",
+   "0x26a3",
+   "0x26a4",
+   "0x26a5",
+   "0x26a9",
+   "0x26aa",
+   "0x26ab",
+   "0x26ae",
+   "0x26b6",
+   "0x26b7"
+  ],
+  "not_in_dump": [
+   "0x1cb2",
+   "0x230c",
+   "0x248c"
+  ],
+  "dump_total_regs": 130,
+  "misc_strays": [
+   "0x1108",
+   "0x11c0",
+   "0x2319",
+   "0x231d",
+   "0x2320",
+   "0x2323"
+  ],
+  "not_in_dump_detail": [
+   {
+    "reg": "0x1cb2",
+    "block": "outside"
+   },
+   {
+    "reg": "0x230c",
+    "block": "outside"
+   },
+   {
+    "reg": "0x248c",
+    "block": "outside"
+   }
+  ]
+ },
+ "pulse_pairs": {
+  "6": 7,
+  "7": 6,
+  "8": 9,
+  "9": 8,
+  "22": 23,
+  "23": 22
+ },
+ "refill_pairs": {
+  "24": 33
+ },
+ "order_rules": [
+  {
+   "rule": "SW_EN(0x268a bit0) 必须是最后一次写",
+   "seq": 48,
+   "ok": true,
+   "advisory": false
+  },
+  {
+   "rule": "VAUD18(0x1cb2) 必须早于所有 ACCDET/AUDDEC 写",
+   "seq": 2,
+   "ok": true,
+   "advisory": false
+  },
+  {
+   "rule": "init 路径行的 seq 顺序不违反厂商执行序（按调用路径比较，非行号）；非 init 路径行不参与（#[2, 6, 7, 48]）",
+   "seq": "-",
+   "ok": true,
+   "advisory": false,
+   "violations": []
+  },
+  {
+   "rule": "MICBIAS 2.8V 配置(#33) 早于 SW_EN(#48)，否则无偏置就开检测",
+   "seq": 33,
+   "ok": true,
+   "advisory": false
+  }
+ ],
+ "coverage_gaps": [
+  {
+   "reg": "0x252e",
+   "n_writers": 15,
+   "first_site": 1332,
+   "function": "adjust_eint_analog_setting",
+   "guard": {
+    "line": 1329,
+    "text": "if (HAS_CAP(accdet->data->caps,"
+   },
+   "writes_in_dead_branch": null
+  },
+  {
+   "reg": "0x2532",
+   "n_writers": 4,
+   "first_site": 2330,
+   "function": "config_moisture_detect_2_1",
+   "guard": {
+    "line": 2329,
+    "text": "} else if (HAS_CAP(accdet->data->caps, ACCDET_PMIC_EINT1)) {"
+   },
+   "writes_in_dead_branch": true
+  },
+  {
+   "reg": "0x258c",
+   "n_writers": 2,
+   "first_site": 2831,
+   "function": "config_digital_init_by_mode",
+   "guard": {
+    "line": 2821,
+    "text": "} else if (accdet_dts.moisture_detect_mode == 0x5) {"
+   },
+   "writes_in_dead_branch": true
+  },
+  {
+   "reg": "0x2689",
+   "n_writers": 5,
+   "first_site": 1386,
+   "function": "adjust_eint_digital_setting",
+   "guard": {
+    "line": 1378,
+    "text": "if ((accdet_dts.eint_detect_mode == 0x1) ||"
+   },
+   "writes_in_dead_branch": true
+  },
+  {
+   "reg": "0x269b",
+   "n_writers": 1,
+   "first_site": 1953,
+   "function": "accdet_set_debounce",
+   "guard": {
+    "line": 1936,
+    "text": "} else if (HAS_CAP(accdet->data->caps, ACCDET_AP_GPIO_EINT))"
+   },
+   "writes_in_dead_branch": true
+  },
+  {
+   "reg": "0x269c",
+   "n_writers": 1,
+   "first_site": 1954,
+   "function": "accdet_set_debounce",
+   "guard": {
+    "line": 1936,
+    "text": "} else if (HAS_CAP(accdet->data->caps, ACCDET_AP_GPIO_EINT))"
+   },
+   "writes_in_dead_branch": true
+  },
+  {
+   "reg": "0x26ac",
+   "n_writers": 6,
+   "first_site": 1417,
+   "function": "adjust_eint_digital_setting",
+   "guard": {
+    "line": 1414,
+    "text": "} else if (HAS_CAP(accdet->data->caps,"
+   },
+   "writes_in_dead_branch": true
+  },
+  {
+   "reg": "0x26ad",
+   "n_writers": 1,
+   "first_site": 3088,
+   "function": "accdet_init_once",
+   "guard": {
+    "line": 3076,
+    "text": "} else if (HAS_CAP(accdet->data->caps, ACCDET_AP_GPIO_EINT)) {"
+   },
+   "writes_in_dead_branch": null
+  },
+  {
+   "reg": "0x26b1",
+   "n_writers": 4,
+   "first_site": 1393,
+   "function": "adjust_eint_digital_setting",
+   "guard": {
+    "line": 1390,
+    "text": "if (accdet_dts.eint_detect_mode == 0x3) {"
+   },
+   "writes_in_dead_branch": true
+  },
+  {
+   "reg": "0x26b2",
+   "n_writers": 1,
+   "first_site": 2809,
+   "function": "config_digital_init_by_mode",
+   "guard": {
+    "line": 2805,
+    "text": "} else if (accdet_dts.moisture_detect_mode == 0x3) {"
+   },
+   "writes_in_dead_branch": true
+  }
+ ],
+ "prereq_audit_0x230c": {
+  "reg": "0x230c",
+  "symbol": "RG_ACCDET_CK_PDN",
+  "sites": [
+   {
+    "line": 173,
+    "mask": "0x66",
+    "sft": null,
+    "kind": "regmap_update_bits",
+    "text": "regmap_update_bits(priv->regmap, MT6368_AUD_TOP_CKPDN_CON0,"
+   },
+   {
+    "line": 3269,
+    "mask": null,
+    "sft": null,
+    "kind": null,
+    "text": "MT6368_AUD_TOP_CKPDN_CON0,"
+   },
+   {
+    "line": 3272,
+    "mask": null,
+    "sft": null,
+    "kind": null,
+    "text": "MT6368_AUD_TOP_CKPDN_CON0,"
+   },
+   {
+    "line": 3275,
+    "mask": null,
+    "sft": null,
+    "kind": null,
+    "text": "MT6368_AUD_TOP_CKPDN_CON0,"
+   },
+   {
+    "line": 3279,
+    "mask": null,
+    "sft": null,
+    "kind": null,
+    "text": "MT6368_AUD_TOP_CKPDN_CON0,"
+   },
+   {
+    "line": 5446,
+    "mask": "0x66",
+    "sft": null,
+    "kind": "regmap_update_bits",
+    "text": "regmap_update_bits(priv->regmap, MT6368_AUD_TOP_CKPDN_CON0,"
+   },
+   {
+    "line": 5882,
+    "mask": null,
+    "sft": null,
+    "kind": "regmap_read",
+    "text": "regmap_read(priv->regmap, MT6368_AUD_TOP_CKPDN_CON0, &value);"
+   },
+   {
+    "line": 5884,
+    "mask": null,
+    "sft": null,
+    "kind": "regmap_read",
+    "text": "\"[0x%x] MT6368_AUD_TOP_CKPDN_CON0 = 0x%x\\n\","
+   },
+   {
+    "line": 5885,
+    "mask": null,
+    "sft": null,
+    "kind": "regmap_read",
+    "text": "MT6368_AUD_TOP_CKPDN_CON0, value);"
+   },
+   {
+    "line": 5886,
+    "mask": null,
+    "sft": null,
+    "kind": "regmap_read",
+    "text": "regmap_read(priv->regmap, MT6368_AUD_TOP_CKPDN_CON0_SET, &value);"
+   },
+   {
+    "line": 5888,
+    "mask": null,
+    "sft": null,
+    "kind": "regmap_read",
+    "text": "\"[0x%x] MT6368_AUD_TOP_CKPDN_CON0_SET = 0x%x\\n\","
+   },
+   {
+    "line": 5889,
+    "mask": null,
+    "sft": null,
+    "kind": "regmap_read",
+    "text": "MT6368_AUD_TOP_CKPDN_CON0_SET, value);"
+   },
+   {
+    "line": 5890,
+    "mask": null,
+    "sft": null,
+    "kind": "regmap_read",
+    "text": "regmap_read(priv->regmap, MT6368_AUD_TOP_CKPDN_CON0_CLR, &value);"
+   },
+   {
+    "line": 5892,
+    "mask": null,
+    "sft": null,
+    "kind": "regmap_read",
+    "text": "\"[0x%x] MT6368_AUD_TOP_CKPDN_CON0_CLR = 0x%x\\n\","
+   },
+   {
+    "line": 5893,
+    "mask": null,
+    "sft": null,
+    "kind": "regmap_read",
+    "text": "MT6368_AUD_TOP_CKPDN_CON0_CLR, value);"
+   }
+  ],
+  "bit0_written": false,
+  "bits_touched": [
+   1,
+   2,
+   5,
+   6
+  ],
+  "verdict": "bit0 无写入者",
+  "note": "",
+  "reads": 9,
+  "writes": 6,
+  "bit0_reasons": []
+ },
+ "prereq_audit_0x1cb2": {
+  "reg": "0x1cb2",
+  "symbol": "RG_LDO_VAUD18_EN",
+  "sites": [
+   {
+    "line": 4150,
+    "kind": "regmap_update_bits",
+    "value_arg": "1 << RG_LDO_VAUD18_EN_SFT",
+    "on": 1
+   },
+   {
+    "line": 4164,
+    "kind": "regmap_update_bits",
+    "value_arg": "0 << RG_LDO_VAUD18_EN_SFT",
+    "on": 0
+   },
+   {
+    "line": 5432,
+    "kind": "regmap_update_bits",
+    "value_arg": "1 << RG_LDO_VAUD18_EN_SFT",
+    "on": 1
+   },
+   {
+    "line": 5839,
+    "kind": "regmap_read",
+    "value_arg": null,
+    "on": null
+   },
+   {
+    "line": 5841,
+    "kind": "regmap_read",
+    "value_arg": null,
+    "on": null
+   }
+  ],
+  "verdict": "accdet 初始化前最后一次写是 0（VAUD18 关）→ 表里 #2 必须自己开",
+  "last_state_before_accdet": 0,
+  "note": "",
+  "accdet_late_init_line": 4938
+ },
+ "hard_errors": [],
+ "soft_findings": [
+  [
+   1,
+   "mt6368.c:5446 ok_absence：regmap_update_bits(MT6368_AUD_TOP_CKPDN_CON0) @5446 写的是同寄存器的其它位 → 佐证本字段无人写"
+  ],
+  [
+   2,
+   "mt6368.c:4931-4938 ok_indirect：dc_trim_thread() 间接到达"
+  ],
+  [
+   3,
+   "mask 0xff 覆盖该地址未定义的位 [3, 4, 5, 6, 7]（整字节写会把保留位写成 0）"
+  ],
+  [
+   3,
+   "mt6368-accdet.c:502-511 行号偏移 +2（引用 502，实际 500）"
+  ],
+  [
+   3,
+   "全文件扫描 zero_write：accdet.c 与 mt6368.c 中没有任何写该寄存器的操作（只读校验成立）"
+  ],
+  [
+   4,
+   "只读校验用了整字节 mask 0xff，比 ACCDET_CMP_PWM_IDLE（bit0 mask 0x1）宽：会把保留位一起比"
+  ],
+  [
+   4,
+   "全文件扫描 zero_write：accdet.c 与 mt6368.c 中没有任何写该寄存器的操作（只读校验成立）"
+  ],
+  [
+   5,
+   "全文件扫描 zero_write：accdet.c 与 mt6368.c 中没有任何写该寄存器的操作（只读校验成立）"
+  ],
+  [
+   10,
+   "mt6368-accdet.c:3117 ok_indirect：accdet_init() 间接到达(accdet_set_debounce(accdet_state000))"
+  ],
+  [
+   10,
+   "mt6368-accdet.c:1941-1943 行号偏移 +2（引用 1941，实际 1945）"
+  ],
+  [
+   11,
+   "mt6368-accdet.c:3117 ok_indirect：accdet_init() 间接到达(accdet_set_debounce(accdet_state000))"
+  ],
+  [
+   11,
+   "mt6368-accdet.c:1942 行号偏移 +4（引用 1942，实际 1946）"
+  ],
+  [
+   12,
+   "mt6368-accdet.c:3118 ok_indirect：accdet_init() 间接到达(accdet_set_debounce(accdet_state001))"
+  ],
+  [
+   13,
+   "mt6368-accdet.c:3118 ok_indirect：accdet_init() 间接到达(accdet_set_debounce(accdet_state001))"
+  ],
+  [
+   13,
+   "mt6368-accdet.c:1947 行号偏移 +3（引用 1947，实际 1950）"
+  ],
+  [
+   14,
+   "mt6368-accdet.c:3119 ok_indirect：accdet_init() 间接到达(accdet_set_debounce(accdet_state011))"
+  ],
+  [
+   15,
+   "mt6368-accdet.c:3119 ok_indirect：accdet_init() 间接到达(accdet_set_debounce(accdet_state011))"
+  ],
+  [
+   16,
+   "mt6368-accdet.c:3121 ok_indirect：accdet_init() 间接到达(accdet_set_debounce(accdet_auxadc))"
+  ],
+  [
+   17,
+   "mt6368-accdet.c:3121 ok_indirect：accdet_init() 间接到达(accdet_set_debounce(accdet_auxadc))"
+  ],
+  [
+   17,
+   "mt6368-accdet.c:1962 行号偏移 +2（引用 1962，实际 1964）"
+  ],
+  [
+   18,
+   "mt6368-accdet.c:3129 ok_indirect：accdet_init() 间接到达(accdet_set_debounce(eint_state001))"
+  ],
+  [
+   18,
+   "mt6368-accdet.c:1978-1982 行号偏移 +4（引用 1978，实际 1974）"
+  ],
+  [
+   19,
+   "源码是整字节写（mask 0xff），比 regmap 的 ACCDET_EINT_INVERTER_DEBOUNCE（bit0 mask 0xf）宽，会顺带写保留位"
+  ],
+  [
+   19,
+   "mt6368-accdet.c:3132 ok_indirect：accdet_init() 间接到达(accdet_set_debounce(eint_inverter_state000))"
+  ],
+  [
+   20,
+   "mt6368-accdet.c:3100-3101 ok_indirect：accdet_init_debounce() 间接到达(accdet_set_debounce(eint_state000))"
+  ],
+  [
+   21,
+   "mt6368-accdet.c:3103-3104 ok_indirect：accdet_init_debounce() 间接到达(accdet_set_debounce(eint_state011))"
+  ],
+  [
+   34,
+   "mt6368.h:5492 ok_const：常量 0x8f 就定义在这行（值为 0x008F）"
+  ],
+  [
+   40,
+   "mt6368-accdet.c:2596-2599 context：上下文行（默认值/解析/打印），非寄存器操作"
+  ],
+  [
+   41,
+   "mask 0xff 覆盖该地址未定义的位 [3, 7]（整字节写会把保留位写成 0）"
+  ],
+  [
+   44,
+   "源码是整字节写（mask 0xff），比 regmap 的 ACCDET_EINT_HWMODE_EN（bit0 mask 0x1）宽，会顺带写保留位"
+  ],
+  [
+   46,
+   "源码是整字节写（mask 0xff），比 regmap 的 ACCDET_CMP_PWM_EN（bit0 mask 0x1）宽，会顺带写保留位"
+  ],
+  [
+   48,
+   "mt6368-accdet.c:1914 ok_indirect：eint_work_callback() 间接到达"
+  ]
+ ],
+ "citation_errors": [
+  [
+   20,
+   "行号 mt6368-accdet.c:1974-1978 指向同寄存器的另一字段：accdet_update_bits(ACCDET_EINT_DEBOUNCE1) @1974 ← 同寄存器的另一个字段，不支持本行"
+  ]
+ ],
+ "sample": [
+  2,
+  3,
+  7,
+  11,
+  12,
+  13,
+  16,
+  20,
+  23,
+  29,
+  31,
+  39,
+  43,
+  45,
+  46
+ ],
+ "items": [
+  {
+   "seq": 1,
+   "reg": "0x230c",
+   "op": "verify",
+   "block": "outside",
+   "phase": "cold-start 自加",
+   "phase_key": null,
+   "mask": "0x01",
+   "shift": 0,
+   "value": null,
+   "symbol": "RG_ACCDET_CK_PDN",
+   "delay_us": 0,
+   "byte_mask": "0x01",
+   "byte_val": null,
+   "width": "n/a",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_ACCDET_CK_PDN"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "no_dump",
+   "dump_value": null,
+   "dump_field": null,
+   "dump_region": null,
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368.c",
+     "line": 173,
+     "helper": "regmap_update_bits",
+     "macro": "MT6368_AUD_TOP_CKPDN_CON0"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 5446,
+     "helper": "regmap_update_bits",
+     "macro": "MT6368_AUD_TOP_CKPDN_CON0"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368.h:3843-3846",
+     "file": "mt6368.h",
+     "cited": [
+      3843,
+      3846
+     ],
+     "status": "ok",
+     "detail": "定义命中 [(3843, 'RG_ACCDET_CK_PDN'), (3845, 'RG_ACCDET_CK_PDN')]",
+     "excerpt": "#define RG_ACCDET_CK_PDN_ADDR                         \\",
+     "delta": null,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368.c:5446",
+     "file": "mt6368.c",
+     "cited": [
+      5446,
+      5446
+     ],
+     "status": "ok_absence",
+     "detail": "regmap_update_bits(MT6368_AUD_TOP_CKPDN_CON0) @5446 写的是同寄存器的其它位 → 佐证本字段无人写",
+     "excerpt": "regmap_update_bits(priv->regmap, MT6368_AUD_TOP_CKPDN_CON0,",
+     "delta": 0,
+     "op_line": 5446
+    }
+   ],
+   "src_proven": true,
+   "verdict": "C 源码可证（dump 无覆盖）",
+   "c_array_consistent": null
+  },
+  {
+   "seq": 2,
+   "reg": "0x1cb2",
+   "op": "write",
+   "block": "outside",
+   "phase": "cold-start 自加",
+   "phase_key": null,
+   "mask": "0x01",
+   "shift": 0,
+   "value": "0x01",
+   "symbol": "RG_LDO_VAUD18_EN",
+   "delay_us": 0,
+   "byte_mask": "0x01",
+   "byte_val": "0x01",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "unknown",
+   "mask_shift_note": "该地址在 regmap/头文件中无字段定义",
+   "fields_here": [],
+   "symbol_check": "unknown",
+   "symbol_note": "本地址无字段表可比（非 ACCDET 块或 regmap 未收录）",
+   "dump": "no_dump",
+   "dump_value": null,
+   "dump_field": null,
+   "dump_region": null,
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368.c",
+     "line": 4150,
+     "helper": "regmap_update_bits",
+     "macro": "MT6368_LDO_VAUD18_CON0"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 4164,
+     "helper": "regmap_update_bits",
+     "macro": "MT6368_LDO_VAUD18_CON0"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 5432,
+     "helper": "regmap_update_bits",
+     "macro": "MT6368_LDO_VAUD18_CON0"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368.c:4150",
+     "file": "mt6368.c",
+     "cited": [
+      4150,
+      4150
+     ],
+     "status": "ok",
+     "detail": "regmap_update_bits(MT6368_LDO_VAUD18_CON0) @4150",
+     "excerpt": "regmap_update_bits(priv->regmap, MT6368_LDO_VAUD18_CON0,",
+     "delta": 0,
+     "op_line": 4150
+    },
+    {
+     "ref": "mt6368.c:4931-4938",
+     "file": "mt6368.c",
+     "cited": [
+      4931,
+      4938
+     ],
+     "status": "ok_indirect",
+     "detail": "dc_trim_thread() 间接到达",
+     "excerpt": "static int dc_trim_thread(void *arg)",
+     "delta": null,
+     "op_line": null
+    }
+   ],
+   "src_proven": true,
+   "verdict": "C 源码可证（dump 无覆盖）",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 3,
+   "reg": "0x2688",
+   "op": "verify",
+   "block": "accdet",
+   "phase": "其它",
+   "phase_key": null,
+   "mask": "0xff",
+   "shift": 0,
+   "value": null,
+   "symbol": "ACCDET_AUXADC_SEL/SW",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": null,
+   "width": "n/a",
+   "width_note": "",
+   "mask_shift": "warn",
+   "mask_shift_note": "mask 0xff 覆盖该地址未定义的位 [3, 4, 5, 6, 7]（整字节写会把保留位写成 0）",
+   "fields_here": [
+    "ACCDET_AUXADC_SEL",
+    "ACCDET_AUXADC_SW",
+    "ACCDET_TEST_AUXADC"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:502-511",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      502,
+      511
+     ],
+     "status": "ok",
+     "detail": "accdet_read(ACCDET_AUXADC_SEL) @500",
+     "excerpt": "st_addr = ACCDET_AUXADC_SEL_ADDR;",
+     "delta": 2,
+     "op_line": 500
+    },
+    {
+     "ref": "全文件扫描",
+     "file": "-",
+     "cited": [
+      0,
+      0
+     ],
+     "status": "zero_write",
+     "detail": "accdet.c 与 mt6368.c 中没有任何写该寄存器的操作（只读校验成立）",
+     "excerpt": "",
+     "delta": null,
+     "op_line": null
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": null
+  },
+  {
+   "seq": 4,
+   "reg": "0x268d",
+   "op": "verify",
+   "block": "accdet",
+   "phase": "其它",
+   "phase_key": null,
+   "mask": "0xff",
+   "shift": 0,
+   "value": null,
+   "symbol": "ACCDET_CMP_PWM_IDLE",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": null,
+   "width": "n/a",
+   "width_note": "",
+   "mask_shift": "warn",
+   "mask_shift_note": "只读校验用了整字节 mask 0xff，比 ACCDET_CMP_PWM_IDLE（bit0 mask 0x1）宽：会把保留位一起比",
+   "fields_here": [
+    "ACCDET_CMP_PWM_IDLE",
+    "ACCDET_VTH_PWM_IDLE",
+    "ACCDET_MBIAS_PWM_IDLE",
+    "ACCDET_EINT0_CMPEN_PWM_IDLE",
+    "ACCDET_EINT1_CMPEN_PWM_IDLE",
+    "ACCDET_PWM_EN_SW",
+    "ACCDET_PWM_EN_SEL"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [],
+   "reason_refs": [
+    {
+     "ref": "mt6368.h:4348-4350",
+     "file": "mt6368.h",
+     "cited": [
+      4348,
+      4350
+     ],
+     "status": "ok",
+     "detail": "定义命中 [(4348, 'ACCDET_CMP_PWM_IDLE'), (4350, 'ACCDET_CMP_PWM_IDLE')]",
+     "excerpt": "#define ACCDET_CMP_PWM_IDLE_ADDR                      \\",
+     "delta": null,
+     "op_line": null
+    },
+    {
+     "ref": "全文件扫描",
+     "file": "-",
+     "cited": [
+      0,
+      0
+     ],
+     "status": "zero_write",
+     "detail": "accdet.c 与 mt6368.c 中没有任何写该寄存器的操作（只读校验成立）",
+     "excerpt": "",
+     "delta": null,
+     "op_line": null
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": null
+  },
+  {
+   "seq": 5,
+   "reg": "0x26a9",
+   "op": "verify",
+   "block": "accdet",
+   "phase": "其它",
+   "phase_key": null,
+   "mask": "0x01",
+   "shift": 0,
+   "value": null,
+   "symbol": "ACCDET_IRQ",
+   "delay_us": 0,
+   "byte_mask": "0x01",
+   "byte_val": null,
+   "width": "n/a",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_IRQ",
+    "ACCDET_EINT0_IRQ",
+    "ACCDET_EINT1_IRQ",
+    "ACCDET_EINT_IN_INVERSE"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:1236-1241",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1236,
+      1241
+     ],
+     "status": "ok",
+     "detail": "accdet_read(ACCDET_IRQ) @1240",
+     "excerpt": "static inline void clear_accdet_int_check(void)",
+     "delta": 0,
+     "op_line": 1240
+    },
+    {
+     "ref": "全文件扫描",
+     "file": "-",
+     "cited": [
+      0,
+      0
+     ],
+     "status": "zero_write",
+     "detail": "accdet.c 与 mt6368.c 中没有任何写该寄存器的操作（只读校验成立）",
+     "excerpt": "",
+     "delta": null,
+     "op_line": null
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": null
+  },
+  {
+   "seq": 6,
+   "reg": "0x26aa",
+   "op": "write",
+   "block": "accdet",
+   "phase": "cold-start 自加",
+   "phase_key": null,
+   "mask": "0x01",
+   "shift": 0,
+   "value": "0x01",
+   "symbol": "ACCDET_IRQ_CLR",
+   "delay_us": 400,
+   "byte_mask": "0x01",
+   "byte_val": "0x01",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_IRQ_CLR",
+    "ACCDET_EINT0_IRQ_CLR",
+    "ACCDET_EINT1_IRQ_CLR",
+    "ACCDET_EINT_M_PLUG_IN_NUM"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "conflict_pulse",
+   "dump_value": "0x10",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": {
+    "line": 1244,
+    "helper": "accdet_clear_bit",
+    "macro": "ACCDET_IRQ_CLR_ADDR"
+   },
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1233,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1244,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1252,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1256,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1270,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1279,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2770,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT_M_PLUG_IN_NUM"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:1230-1234",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1230,
+      1234
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bit(ACCDET_IRQ_CLR) @1233",
+     "excerpt": "static inline void clear_accdet_int(void)",
+     "delta": 0,
+     "op_line": 1233
+    },
+    {
+     "ref": "mt6368-accdet.c:1236-1247",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1236,
+      1247
+     ],
+     "status": "ok",
+     "detail": "accdet_clear_bit(ACCDET_IRQ_CLR) @1244",
+     "excerpt": "static inline void clear_accdet_int_check(void)",
+     "delta": 0,
+     "op_line": 1244
+    }
+   ],
+   "src_proven": true,
+   "verdict": "B 源码可证（瞬态/状态相关，dump 不适用）",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 7,
+   "reg": "0x26aa",
+   "op": "write",
+   "block": "accdet",
+   "phase": "cold-start 自加",
+   "phase_key": null,
+   "mask": "0x01",
+   "shift": 0,
+   "value": "0x00",
+   "symbol": "ACCDET_IRQ_CLR",
+   "delay_us": 0,
+   "byte_mask": "0x01",
+   "byte_val": "0x00",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_IRQ_CLR",
+    "ACCDET_EINT0_IRQ_CLR",
+    "ACCDET_EINT1_IRQ_CLR",
+    "ACCDET_EINT_M_PLUG_IN_NUM"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x10",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1233,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1244,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1252,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1256,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1270,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1279,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2770,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT_M_PLUG_IN_NUM"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:1244",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1244,
+      1244
+     ],
+     "status": "ok",
+     "detail": "accdet_clear_bit(ACCDET_IRQ_CLR) @1244",
+     "excerpt": "accdet_clear_bit(ACCDET_IRQ_CLR_ADDR, ACCDET_IRQ_CLR_SFT);",
+     "delta": 0,
+     "op_line": 1244
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 8,
+   "reg": "0x268a",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3110
+   ],
+   "mask": "0x01",
+   "shift": 1,
+   "value": "0x01",
+   "symbol": "ACCDET_SEQ_INIT",
+   "delay_us": 3000,
+   "byte_mask": "0x02",
+   "byte_val": "0x02",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_SW_EN",
+    "ACCDET_SEQ_INIT",
+    "ACCDET_EINT0_SW_EN",
+    "ACCDET_EINT0_SEQ_INIT",
+    "ACCDET_EINT1_SW_EN",
+    "ACCDET_EINT1_SEQ_INIT",
+    "ACCDET_EINT0_INVERTER_SW_EN",
+    "ACCDET_EINT0_INVERTER_SEQ_INIT"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "conflict_pulse",
+   "dump_value": "0x40",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": {
+    "line": 3113,
+    "helper": "accdet_clear_bit",
+    "macro": "ACCDET_SEQ_INIT_ADDR"
+   },
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1364,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1372,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1719,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1729,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1817,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1894,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1925,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2786,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2790,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2794,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2796,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2854,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2862,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2870,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2878,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3092,
+     "helper": "accdet_write",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3110,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_SEQ_INIT"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3113,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SEQ_INIT"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3190,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3110-3112",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3110,
+      3112
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bit(ACCDET_SEQ_INIT) @3110",
+     "excerpt": "accdet_update_bit(ACCDET_SEQ_INIT_ADDR,",
+     "delta": 0,
+     "op_line": 3110
+    }
+   ],
+   "src_proven": true,
+   "verdict": "B 源码可证（瞬态/状态相关，dump 不适用）",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 9,
+   "reg": "0x268a",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3113
+   ],
+   "mask": "0x01",
+   "shift": 1,
+   "value": "0x00",
+   "symbol": "ACCDET_SEQ_INIT",
+   "delay_us": 1500,
+   "byte_mask": "0x02",
+   "byte_val": "0x00",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_SW_EN",
+    "ACCDET_SEQ_INIT",
+    "ACCDET_EINT0_SW_EN",
+    "ACCDET_EINT0_SEQ_INIT",
+    "ACCDET_EINT1_SW_EN",
+    "ACCDET_EINT1_SEQ_INIT",
+    "ACCDET_EINT0_INVERTER_SW_EN",
+    "ACCDET_EINT0_INVERTER_SEQ_INIT"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x40",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1364,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1372,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1719,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1729,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1817,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1894,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1925,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2786,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2790,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2794,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2796,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2854,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2862,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2870,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2878,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3092,
+     "helper": "accdet_write",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3110,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_SEQ_INIT"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3113,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SEQ_INIT"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3190,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3113-3115",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3113,
+      3115
+     ],
+     "status": "ok",
+     "detail": "accdet_clear_bit(ACCDET_SEQ_INIT) @3113",
+     "excerpt": "accdet_clear_bit(ACCDET_SEQ_INIT_ADDR,",
+     "delta": 0,
+     "op_line": 3113
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 10,
+   "reg": "0x2697",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3117
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x00",
+   "symbol": "ACCDET_DEBOUNCE0_L",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x00",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_DEBOUNCE0_L"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1945,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DEBOUNCE0_L"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3117",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3117,
+      3117
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init() 间接到达(accdet_set_debounce(accdet_state000))",
+     "excerpt": "accdet_set_debounce(accdet_state000, cust_pwm_deb->debounce0);",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1941-1943",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1941,
+      1943
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_DEBOUNCE0_L) @1945",
+     "excerpt": "{",
+     "delta": 2,
+     "op_line": 1945
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 11,
+   "reg": "0x2698",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3117
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x08",
+   "symbol": "ACCDET_DEBOUNCE0_H",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x08",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_DEBOUNCE0_H"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x08",
+   "dump_field": "0x8",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1946,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DEBOUNCE0_H"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3117",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3117,
+      3117
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init() 间接到达(accdet_set_debounce(accdet_state000))",
+     "excerpt": "accdet_set_debounce(accdet_state000, cust_pwm_deb->debounce0);",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1942",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1942,
+      1942
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_DEBOUNCE0_H) @1946",
+     "excerpt": "switch (state) {",
+     "delta": 4,
+     "op_line": 1946
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 12,
+   "reg": "0x2699",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3118
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x00",
+   "symbol": "ACCDET_DEBOUNCE1_L",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x00",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_DEBOUNCE1_L"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1949,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DEBOUNCE1_L"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3118",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3118,
+      3118
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init() 间接到达(accdet_set_debounce(accdet_state001))",
+     "excerpt": "accdet_set_debounce(accdet_state001, cust_pwm_deb->debounce1);",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1946-1948",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1946,
+      1948
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_DEBOUNCE1_L) @1949",
+     "excerpt": "accdet_write(ACCDET_DEBOUNCE0_H_ADDR, debounce >> 8);",
+     "delta": 1,
+     "op_line": 1949
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 13,
+   "reg": "0x269a",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3118
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x08",
+   "symbol": "ACCDET_DEBOUNCE1_H",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x08",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_DEBOUNCE1_H"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x08",
+   "dump_field": "0x8",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1950,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DEBOUNCE1_H"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3118",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3118,
+      3118
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init() 间接到达(accdet_set_debounce(accdet_state001))",
+     "excerpt": "accdet_set_debounce(accdet_state001, cust_pwm_deb->debounce1);",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1947",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1947,
+      1947
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_DEBOUNCE1_H) @1950",
+     "excerpt": "break;",
+     "delta": 3,
+     "op_line": 1950
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 14,
+   "reg": "0x269d",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3119
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x20",
+   "symbol": "ACCDET_DEBOUNCE3_L",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x20",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_DEBOUNCE3_L"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x20",
+   "dump_field": "0x20",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1957,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DEBOUNCE3_L"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3119",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3119,
+      3119
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init() 间接到达(accdet_set_debounce(accdet_state011))",
+     "excerpt": "accdet_set_debounce(accdet_state011, cust_pwm_deb->debounce3);",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1956-1958",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1956,
+      1958
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_DEBOUNCE3_L) @1957",
+     "excerpt": "case accdet_state011:",
+     "delta": 0,
+     "op_line": 1957
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 15,
+   "reg": "0x269e",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3119
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x00",
+   "symbol": "ACCDET_DEBOUNCE3_H",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x00",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_DEBOUNCE3_H"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1958,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DEBOUNCE3_H"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3119",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3119,
+      3119
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init() 间接到达(accdet_set_debounce(accdet_state011))",
+     "excerpt": "accdet_set_debounce(accdet_state011, cust_pwm_deb->debounce3);",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1957",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1957,
+      1957
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_DEBOUNCE3_H) @1958",
+     "excerpt": "accdet_write(ACCDET_DEBOUNCE3_L_ADDR, debounce & 0xff);",
+     "delta": 1,
+     "op_line": 1958
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 16,
+   "reg": "0x269f",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3121
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x44",
+   "symbol": "ACCDET_CONNECT_AUXADC_TIME_DIG_L",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x44",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_CONNECT_AUXADC_TIME_DIG_L"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x44",
+   "dump_field": "0x44",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1962,
+     "helper": "accdet_write",
+     "macro": "ACCDET_CONNECT_AUXADC_TIME_DIG_L"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3121",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3121,
+      3121
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init() 间接到达(accdet_set_debounce(accdet_auxadc))",
+     "excerpt": "accdet_set_debounce(accdet_auxadc, cust_pwm_deb->debounce4);",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1961-1963",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1961,
+      1963
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_CONNECT_AUXADC_TIME_DIG_L) @1962",
+     "excerpt": "/* set auxadc debounce:0x42(2ms) */",
+     "delta": 0,
+     "op_line": 1962
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 17,
+   "reg": "0x26a0",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3121
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x00",
+   "symbol": "ACCDET_CONNECT_AUXADC_TIME_DIG_H",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x00",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_CONNECT_AUXADC_TIME_DIG_H"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1964,
+     "helper": "accdet_write",
+     "macro": "ACCDET_CONNECT_AUXADC_TIME_DIG_H"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3121",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3121,
+      3121
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init() 间接到达(accdet_set_debounce(accdet_auxadc))",
+     "excerpt": "accdet_set_debounce(accdet_auxadc, cust_pwm_deb->debounce4);",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1962",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1962,
+      1962
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_CONNECT_AUXADC_TIME_DIG_H) @1964",
+     "excerpt": "accdet_write(ACCDET_CONNECT_AUXADC_TIME_DIG_L_ADDR,",
+     "delta": 2,
+     "op_line": 1964
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 18,
+   "reg": "0x26a3",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3129
+   ],
+   "mask": "0x0f",
+   "shift": 4,
+   "value": "0x03",
+   "symbol": "ACCDET_EINT_DEBOUNCE1",
+   "delay_us": 0,
+   "byte_mask": "0xf0",
+   "byte_val": "0x30",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_EINT_DEBOUNCE0",
+    "ACCDET_EINT_DEBOUNCE1"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x35",
+   "dump_field": "0x3",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1968,
+     "helper": "accdet_update_bits",
+     "macro": "ACCDET_EINT_DEBOUNCE0"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1974,
+     "helper": "accdet_update_bits",
+     "macro": "ACCDET_EINT_DEBOUNCE1"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3129",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3129,
+      3129
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init() 间接到达(accdet_set_debounce(eint_state001))",
+     "excerpt": "accdet_set_debounce(eint_state001,",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1978-1982",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1978,
+      1982
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bits(ACCDET_EINT_DEBOUNCE1) @1974",
+     "excerpt": "break;",
+     "delta": 4,
+     "op_line": 1974
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 19,
+   "reg": "0x26a5",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/accdet_init",
+   "phase_key": [
+    10,
+    [],
+    3132
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x0e",
+   "symbol": "ACCDET_EINT_INVERTER_DEBOUNCE",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x0e",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "warn",
+   "mask_shift_note": "源码是整字节写（mask 0xff），比 regmap 的 ACCDET_EINT_INVERTER_DEBOUNCE（bit0 mask 0xf）宽，会顺带写保留位",
+   "fields_here": [
+    "ACCDET_EINT_INVERTER_DEBOUNCE"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x0e",
+   "dump_field": "0xe",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1992,
+     "helper": "accdet_write",
+     "macro": "ACCDET_EINT_INVERTER_DEBOUNCE"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3132",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3132,
+      3132
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init() 间接到达(accdet_set_debounce(eint_inverter_state000))",
+     "excerpt": "accdet_set_debounce(eint_inverter_state000,",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1991-1992",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1991,
+      1992
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_EINT_INVERTER_DEBOUNCE) @1992",
+     "excerpt": "case eint_inverter_state000:",
+     "delta": 0,
+     "op_line": 1992
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 20,
+   "reg": "0x26a3",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_debounce",
+   "phase_key": [
+    20,
+    [],
+    3100
+   ],
+   "mask": "0x0f",
+   "shift": 0,
+   "value": "0x05",
+   "symbol": "ACCDET_EINT_DEBOUNCE0",
+   "delay_us": 0,
+   "byte_mask": "0x0f",
+   "byte_val": "0x05",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_EINT_DEBOUNCE0",
+    "ACCDET_EINT_DEBOUNCE1"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x35",
+   "dump_field": "0x5",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1968,
+     "helper": "accdet_update_bits",
+     "macro": "ACCDET_EINT_DEBOUNCE0"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1974,
+     "helper": "accdet_update_bits",
+     "macro": "ACCDET_EINT_DEBOUNCE1"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3100-3101",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3100,
+      3101
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init_debounce() 间接到达(accdet_set_debounce(eint_state000))",
+     "excerpt": "accdet_set_debounce(eint_state000,",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1974-1978",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1974,
+      1978
+     ],
+     "status": "field_conflict",
+     "detail": "accdet_update_bits(ACCDET_EINT_DEBOUNCE1) @1974 ← 同寄存器的另一个字段，不支持本行",
+     "excerpt": "accdet_update_bits(ACCDET_EINT_DEBOUNCE1_ADDR,",
+     "delta": 0,
+     "op_line": 1974
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 21,
+   "reg": "0x26a4",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_debounce",
+   "phase_key": [
+    20,
+    [],
+    3103
+   ],
+   "mask": "0x0f",
+   "shift": 4,
+   "value": "0x05",
+   "symbol": "ACCDET_EINT_DEBOUNCE3",
+   "delay_us": 0,
+   "byte_mask": "0xf0",
+   "byte_val": "0x50",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_EINT_DEBOUNCE2",
+    "ACCDET_EINT_DEBOUNCE3"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x5e",
+   "dump_field": "0x5",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1980,
+     "helper": "accdet_update_bits",
+     "macro": "ACCDET_EINT_DEBOUNCE2"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1986,
+     "helper": "accdet_update_bits",
+     "macro": "ACCDET_EINT_DEBOUNCE3"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3103-3104",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3103,
+      3104
+     ],
+     "status": "ok_indirect",
+     "detail": "accdet_init_debounce() 间接到达(accdet_set_debounce(eint_state011))",
+     "excerpt": "accdet_set_debounce(eint_state011,",
+     "delta": 0,
+     "op_line": null
+    },
+    {
+     "ref": "mt6368-accdet.c:1986-1990",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1986,
+      1990
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bits(ACCDET_EINT_DEBOUNCE3) @1986",
+     "excerpt": "accdet_update_bits(ACCDET_EINT_DEBOUNCE3_ADDR,",
+     "delta": 0,
+     "op_line": 1986
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 22,
+   "reg": "0x2319",
+   "op": "write",
+   "block": "outside",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    2989
+   ],
+   "mask": "0x01",
+   "shift": 1,
+   "value": "0x01",
+   "symbol": "RG_ACCDET_RST",
+   "delay_us": 0,
+   "byte_mask": "0x02",
+   "byte_val": "0x02",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_ACCDET_RST"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "conflict_pulse",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "misc",
+   "cleared_at": {
+    "line": 2991,
+    "helper": "accdet_clear_bit",
+    "macro": "RG_ACCDET_RST_ADDR"
+   },
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2989,
+     "helper": "accdet_update_bit",
+     "macro": "RG_ACCDET_RST"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2991,
+     "helper": "accdet_clear_bit",
+     "macro": "RG_ACCDET_RST"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2989-2990",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2989,
+      2990
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bit(RG_ACCDET_RST) @2989",
+     "excerpt": "accdet_update_bit(RG_ACCDET_RST_ADDR,",
+     "delta": 0,
+     "op_line": 2989
+    },
+    {
+     "ref": "mt6368.h:3849-3853",
+     "file": "mt6368.h",
+     "cited": [
+      3849,
+      3853
+     ],
+     "status": "ok",
+     "detail": "定义命中 [(3849, 'RG_ACCDET_RST'), (3851, 'RG_ACCDET_RST')]",
+     "excerpt": "#define RG_ACCDET_RST_ADDR                            \\",
+     "delta": null,
+     "op_line": null
+    }
+   ],
+   "src_proven": true,
+   "verdict": "B 源码可证（瞬态/状态相关，dump 不适用）",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 23,
+   "reg": "0x2319",
+   "op": "write",
+   "block": "outside",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    2991
+   ],
+   "mask": "0x01",
+   "shift": 1,
+   "value": "0x00",
+   "symbol": "RG_ACCDET_RST",
+   "delay_us": 0,
+   "byte_mask": "0x02",
+   "byte_val": "0x00",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_ACCDET_RST"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "misc",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2989,
+     "helper": "accdet_update_bit",
+     "macro": "RG_ACCDET_RST"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2991,
+     "helper": "accdet_clear_bit",
+     "macro": "RG_ACCDET_RST"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2991-2992",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2991,
+      2992
+     ],
+     "status": "ok",
+     "detail": "accdet_clear_bit(RG_ACCDET_RST) @2991",
+     "excerpt": "accdet_clear_bit(RG_ACCDET_RST_ADDR,",
+     "delta": 0,
+     "op_line": 2991
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 24,
+   "reg": "0x252a",
+   "op": "write",
+   "block": "auddec_ana",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    2995
+   ],
+   "mask": "0x03",
+   "shift": 4,
+   "value": "0x00",
+   "symbol": "RG_AUDMICBIAS1HVEN+HVVREF",
+   "delay_us": 0,
+   "byte_mask": "0x30",
+   "byte_val": "0x00",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_AUDMICBIAS1HVEN",
+    "RG_AUDMICBIAS1HVVREF",
+    "RG_AUDMICBIAS1DCSW1PEN"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "conflict_refill",
+   "dump_value": "0x30",
+   "dump_field": "0x3",
+   "dump_region": "auddec",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2995,
+     "helper": "accdet_clear_bits",
+     "macro": "RG_AUDMICBIAS1HVEN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3029,
+     "helper": "accdet_write",
+     "macro": "RG_AUDMICBIAS1HVEN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3036,
+     "helper": "accdet_write",
+     "macro": "RG_AUDMICBIAS1HVEN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3062,
+     "helper": "accdet_update_bit",
+     "macro": "RG_AUDMICBIAS1DCSW1PEN"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 1864,
+     "helper": "regmap_write",
+     "macro": "MT6368_AUDENC_ANA_CON34"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 1869,
+     "helper": "regmap_write",
+     "macro": "MT6368_AUDENC_ANA_CON34"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2995-2996",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2995,
+      2996
+     ],
+     "status": "ok",
+     "detail": "accdet_clear_bits(RG_AUDMICBIAS1HVEN) @2995",
+     "excerpt": "accdet_clear_bits(RG_AUDMICBIAS1HVEN_ADDR,",
+     "delta": 0,
+     "op_line": 2995
+    }
+   ],
+   "src_proven": true,
+   "verdict": "B 源码可证（瞬态/状态相关，dump 不适用）",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 25,
+   "reg": "0x2529",
+   "op": "write",
+   "block": "auddec_ana",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    2998
+   ],
+   "mask": "0x07",
+   "shift": 4,
+   "value": "0x00",
+   "symbol": "RG_AUDMICBIAS1VREF",
+   "delay_us": 0,
+   "byte_mask": "0x70",
+   "byte_val": "0x00",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_AUDMICBIAS1LOWPEN",
+    "RG_AUDMICBIAS1VREF",
+    "RG_AUDPWDBMICBIAS1"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x04",
+   "dump_field": "0x0",
+   "dump_region": "auddec",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2998,
+     "helper": "accdet_clear_bits",
+     "macro": "RG_AUDMICBIAS1VREF"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3021,
+     "helper": "accdet_write",
+     "macro": "RG_AUDMICBIAS1VREF"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3025,
+     "helper": "accdet_update_bit",
+     "macro": "RG_AUDMICBIAS1LOWPEN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3032,
+     "helper": "accdet_update_bit",
+     "macro": "RG_AUDMICBIAS1LOWPEN"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 1862,
+     "helper": "regmap_write",
+     "macro": "MT6368_AUDENC_ANA_CON33"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 1867,
+     "helper": "regmap_write",
+     "macro": "MT6368_AUDENC_ANA_CON33"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 1873,
+     "helper": "regmap_update_bits",
+     "macro": "MT6368_AUDENC_ANA_CON33"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2998-2999",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2998,
+      2999
+     ],
+     "status": "ok",
+     "detail": "accdet_clear_bits(RG_AUDMICBIAS1VREF) @2998",
+     "excerpt": "accdet_clear_bits(RG_AUDMICBIAS1VREF_ADDR,",
+     "delta": 0,
+     "op_line": 2998
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 26,
+   "reg": "0x268e",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    3002
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0xff",
+   "symbol": "ACCDET_PWM_WIDTH_L",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0xff",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_PWM_WIDTH_L"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0xff",
+   "dump_field": "0xff",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3002,
+     "helper": "accdet_write",
+     "macro": "ACCDET_PWM_WIDTH_L"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3002-3003",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3002,
+      3003
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_PWM_WIDTH_L) @3002",
+     "excerpt": "accdet_write(ACCDET_PWM_WIDTH_L_ADDR,",
+     "delta": 0,
+     "op_line": 3002
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 27,
+   "reg": "0x268f",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    3004
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x04",
+   "symbol": "ACCDET_PWM_WIDTH_H",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x04",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_PWM_WIDTH_H"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x04",
+   "dump_field": "0x4",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3004,
+     "helper": "accdet_write",
+     "macro": "ACCDET_PWM_WIDTH_H"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3004-3005",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3004,
+      3005
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_PWM_WIDTH_H) @3004",
+     "excerpt": "accdet_write(ACCDET_PWM_WIDTH_H_ADDR,",
+     "delta": 0,
+     "op_line": 3004
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 28,
+   "reg": "0x2690",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    3006
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0xff",
+   "symbol": "ACCDET_PWM_THRESH_L",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0xff",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_PWM_THRESH_L"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0xff",
+   "dump_field": "0xff",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3006,
+     "helper": "accdet_write",
+     "macro": "ACCDET_PWM_THRESH_L"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3006-3007",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3006,
+      3007
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_PWM_THRESH_L) @3006",
+     "excerpt": "accdet_write(ACCDET_PWM_THRESH_L_ADDR,",
+     "delta": 0,
+     "op_line": 3006
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 29,
+   "reg": "0x2691",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    3008
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x04",
+   "symbol": "ACCDET_PWM_THRESH_H",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x04",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_PWM_THRESH_H"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x04",
+   "dump_field": "0x4",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3008,
+     "helper": "accdet_write",
+     "macro": "ACCDET_PWM_THRESH_H"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3008-3009",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3008,
+      3009
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_PWM_THRESH_H) @3008",
+     "excerpt": "accdet_write(ACCDET_PWM_THRESH_H_ADDR,",
+     "delta": 0,
+     "op_line": 3008
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 30,
+   "reg": "0x2692",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    3010
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0xf0",
+   "symbol": "ACCDET_RISE_DELAY_L",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0xf0",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_RISE_DELAY_L"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0xf0",
+   "dump_field": "0xf0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3010,
+     "helper": "accdet_write",
+     "macro": "ACCDET_RISE_DELAY_L"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3010",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3010,
+      3010
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_RISE_DELAY_L) @3010",
+     "excerpt": "accdet_write(ACCDET_RISE_DELAY_L_ADDR, cust_pwm_deb->rise_delay);",
+     "delta": 0,
+     "op_line": 3010
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 31,
+   "reg": "0x2693",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    3011
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x81",
+   "symbol": "ACCDET_FALL_DELAY+RISE_DELAY_H",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x81",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_RISE_DELAY_H",
+    "ACCDET_FALL_DELAY"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x81",
+   "dump_field": "0x81",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3011,
+     "helper": "accdet_write",
+     "macro": "ACCDET_FALL_DELAY"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3011-3013",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3011,
+      3013
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_FALL_DELAY) @3011",
+     "excerpt": "accdet_write(ACCDET_FALL_DELAY_ADDR,",
+     "delta": 0,
+     "op_line": 3011
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 32,
+   "reg": "0x2529",
+   "op": "write",
+   "block": "auddec_ana",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    3025
+   ],
+   "mask": "0x01",
+   "shift": 2,
+   "value": "0x01",
+   "symbol": "RG_AUDMICBIAS1LOWPEN",
+   "delay_us": 0,
+   "byte_mask": "0x04",
+   "byte_val": "0x04",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_AUDMICBIAS1LOWPEN",
+    "RG_AUDMICBIAS1VREF",
+    "RG_AUDPWDBMICBIAS1"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x04",
+   "dump_field": "0x1",
+   "dump_region": "auddec",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2998,
+     "helper": "accdet_clear_bits",
+     "macro": "RG_AUDMICBIAS1VREF"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3021,
+     "helper": "accdet_write",
+     "macro": "RG_AUDMICBIAS1VREF"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3025,
+     "helper": "accdet_update_bit",
+     "macro": "RG_AUDMICBIAS1LOWPEN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3032,
+     "helper": "accdet_update_bit",
+     "macro": "RG_AUDMICBIAS1LOWPEN"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 1862,
+     "helper": "regmap_write",
+     "macro": "MT6368_AUDENC_ANA_CON33"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 1867,
+     "helper": "regmap_write",
+     "macro": "MT6368_AUDENC_ANA_CON33"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 1873,
+     "helper": "regmap_update_bits",
+     "macro": "MT6368_AUDENC_ANA_CON33"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3024-3026",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3024,
+      3026
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bit(RG_AUDMICBIAS1LOWPEN) @3025",
+     "excerpt": "} else if (accdet_dts.mic_vol == 8) {",
+     "delta": 0,
+     "op_line": 3025
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 33,
+   "reg": "0x252a",
+   "op": "write",
+   "block": "auddec_ana",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    3027
+   ],
+   "mask": "0x03",
+   "shift": 4,
+   "value": "0x03",
+   "symbol": "RG_AUDMICBIAS1HVEN+HVVREF",
+   "delay_us": 0,
+   "byte_mask": "0x30",
+   "byte_val": "0x30",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_AUDMICBIAS1HVEN",
+    "RG_AUDMICBIAS1HVVREF",
+    "RG_AUDMICBIAS1DCSW1PEN"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x30",
+   "dump_field": "0x3",
+   "dump_region": "auddec",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2995,
+     "helper": "accdet_clear_bits",
+     "macro": "RG_AUDMICBIAS1HVEN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3029,
+     "helper": "accdet_write",
+     "macro": "RG_AUDMICBIAS1HVEN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3036,
+     "helper": "accdet_write",
+     "macro": "RG_AUDMICBIAS1HVEN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3062,
+     "helper": "accdet_update_bit",
+     "macro": "RG_AUDMICBIAS1DCSW1PEN"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 1864,
+     "helper": "regmap_write",
+     "macro": "MT6368_AUDENC_ANA_CON34"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 1869,
+     "helper": "regmap_write",
+     "macro": "MT6368_AUDENC_ANA_CON34"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3027-3030",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3027,
+      3030
+     ],
+     "status": "ok",
+     "detail": "accdet_read(RG_AUDMICBIAS1HVEN) @3027",
+     "excerpt": "reg = accdet_read(RG_AUDMICBIAS1HVEN_ADDR);",
+     "delta": 0,
+     "op_line": 3027
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 34,
+   "reg": "0x252d",
+   "op": "write",
+   "block": "auddec_ana",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    3051
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x8f",
+   "symbol": "RG_AUDACCDETMICBIAS0PULLLOW",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x8f",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_AUDACCDETMICBIAS0PULLLOW",
+    "RG_AUDACCDETMICBIAS1PULLLOW",
+    "RG_AUDACCDETMICBIAS2PULLLOW",
+    "RG_AUDACCDETVIN1PULLLOW",
+    "RG_AUDACCDETVTHACAL",
+    "RG_AUDACCDETVTHBCAL",
+    "RG_AUDACCDETTVDET",
+    "RG_ACCDETSEL"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x8f",
+   "dump_field": "0x8f",
+   "dump_region": "auddec",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3043,
+     "helper": "accdet_write",
+     "macro": "RG_AUDACCDETMICBIAS0PULLLOW"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3051,
+     "helper": "accdet_write",
+     "macro": "RG_AUDACCDETMICBIAS0PULLLOW"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3060,
+     "helper": "accdet_write",
+     "macro": "RG_AUDACCDETMICBIAS0PULLLOW"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3078,
+     "helper": "accdet_write",
+     "macro": "RG_AUDACCDETMICBIAS0PULLLOW"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3049-3052",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3049,
+      3052
+     ],
+     "status": "ok",
+     "detail": "accdet_write(RG_AUDACCDETMICBIAS0PULLLOW) @3051",
+     "excerpt": "} else if (accdet_dts.mic_mode == HEADSET_MODE_2) {",
+     "delta": 0,
+     "op_line": 3051
+    },
+    {
+     "ref": "mt6368.h:5492",
+     "file": "mt6368.h",
+     "cited": [
+      5492,
+      5492
+     ],
+     "status": "ok_const",
+     "detail": "常量 0x8f 就定义在这行（值为 0x008F）",
+     "excerpt": "#define RG_ACCDET_MODE_ANA11_MODE2      (0x008F)",
+     "delta": null,
+     "op_line": null
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 35,
+   "reg": "0x2530",
+   "op": "write",
+   "block": "auddec_ana",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [],
+    3054
+   ],
+   "mask": "0x03",
+   "shift": 4,
+   "value": "0x03",
+   "symbol": "RG_ANALOGFDEN",
+   "delay_us": 0,
+   "byte_mask": "0x30",
+   "byte_val": "0x30",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_MTEST_EN",
+    "RG_MTEST_SEL",
+    "RG_MTEST_CURRENT",
+    "RG_ANALOGFDEN",
+    "RG_FDVIN1PPULLLOW",
+    "RG_FDEINT0TYPE",
+    "RG_FDEINT1TYPE"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x30",
+   "dump_field": "0x3",
+   "dump_region": "auddec",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1384,
+     "helper": "accdet_clear_bit",
+     "macro": "RG_MTEST_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1475,
+     "helper": "accdet_update_bit",
+     "macro": "RG_MTEST_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1479,
+     "helper": "accdet_clear_bit",
+     "macro": "RG_MTEST_SEL"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2284,
+     "helper": "accdet_update_bit",
+     "macro": "RG_MTEST_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2287,
+     "helper": "accdet_clear_bit",
+     "macro": "RG_MTEST_SEL"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3046,
+     "helper": "accdet_update_bit",
+     "macro": "RG_ANALOGFDEN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3054,
+     "helper": "accdet_update_bits",
+     "macro": "RG_ANALOGFDEN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3065,
+     "helper": "accdet_update_bits",
+     "macro": "RG_ANALOGFDEN"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:3054-3055",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      3054,
+      3055
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bits(RG_ANALOGFDEN) @3054",
+     "excerpt": "accdet_update_bits(RG_ANALOGFDEN_ADDR,",
+     "delta": 0,
+     "op_line": 3054
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 36,
+   "reg": "0x2531",
+   "op": "write",
+   "block": "auddec_ana",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3070
+    ],
+    2904
+   ],
+   "mask": "0x01",
+   "shift": 2,
+   "value": "0x01",
+   "symbol": "RG_EINT0EN",
+   "delay_us": 0,
+   "byte_mask": "0x04",
+   "byte_val": "0x04",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_EINT0CMPEN",
+    "RG_EINT0CMPMEN",
+    "RG_EINT0EN",
+    "RG_EINT0CEN",
+    "RG_EINT0INVEN",
+    "RG_EINT0CTURBO"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x04",
+   "dump_field": "0x1",
+   "dump_region": "auddec",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2327,
+     "helper": "accdet_update_bit",
+     "macro": "RG_EINT0CTURBO"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2333,
+     "helper": "accdet_update_bit",
+     "macro": "RG_EINT0CTURBO"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2904,
+     "helper": "accdet_update_bit",
+     "macro": "RG_EINT0EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2910,
+     "helper": "accdet_update_bit",
+     "macro": "RG_EINT0EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3084,
+     "helper": "accdet_write",
+     "macro": "RG_EINT0CMPEN"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2903-2905",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2903,
+      2905
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bit(RG_EINT0EN) @2904",
+     "excerpt": "if (HAS_CAP(accdet->data->caps, ACCDET_PMIC_EINT0)) {",
+     "delta": 0,
+     "op_line": 2904
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 37,
+   "reg": "0x2534",
+   "op": "write",
+   "block": "auddec_ana",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3070
+    ],
+    2916
+   ],
+   "mask": "0x01",
+   "shift": 0,
+   "value": "0x01",
+   "symbol": "RG_ACCDETSPARE_H",
+   "delay_us": 0,
+   "byte_mask": "0x01",
+   "byte_val": "0x01",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_ACCDETSPARE_H"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x01",
+   "dump_field": "0x1",
+   "dump_region": "auddec",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1326,
+     "helper": "accdet_clear_bit",
+     "macro": "RG_ACCDETSPARE_H"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1503,
+     "helper": "accdet_update_bit",
+     "macro": "RG_ACCDETSPARE_H"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1506,
+     "helper": "accdet_update_bits",
+     "macro": "RG_ACCDETSPARE_H"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1648,
+     "helper": "accdet_update_bit",
+     "macro": "RG_ACCDETSPARE_H"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2371,
+     "helper": "accdet_write",
+     "macro": "RG_ACCDETSPARE_H"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2373,
+     "helper": "accdet_update_bits",
+     "macro": "RG_ACCDETSPARE_H"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2375,
+     "helper": "accdet_update_bits",
+     "macro": "RG_ACCDETSPARE_H"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2916,
+     "helper": "accdet_update_bit",
+     "macro": "RG_ACCDETSPARE_H"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3048,
+     "helper": "accdet_update_bits",
+     "macro": "RG_ACCDETSPARE_H"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2916",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2916,
+      2916
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bit(RG_ACCDETSPARE_H) @2916",
+     "excerpt": "accdet_update_bit(RG_ACCDETSPARE_H_ADDR, 0);",
+     "delta": 0,
+     "op_line": 2916
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 38,
+   "reg": "0x248c",
+   "op": "write",
+   "block": "outside",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3070
+    ],
+    2918
+   ],
+   "mask": "0x01",
+   "shift": 0,
+   "value": "0x01",
+   "symbol": "RG_NCP_PDDIS_EN",
+   "delay_us": 0,
+   "byte_mask": "0x01",
+   "byte_val": "0x01",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_NCP_PDDIS_EN"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "no_dump",
+   "dump_value": null,
+   "dump_field": null,
+   "dump_region": null,
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2918,
+     "helper": "accdet_update_bit",
+     "macro": "RG_NCP_PDDIS_EN"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2918-2919",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2918,
+      2919
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bit(RG_NCP_PDDIS_EN) @2918",
+     "excerpt": "accdet_update_bit(RG_NCP_PDDIS_EN_ADDR,",
+     "delta": 0,
+     "op_line": 2918
+    }
+   ],
+   "src_proven": true,
+   "verdict": "C 源码可证（dump 无覆盖）",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 39,
+   "reg": "0x2533",
+   "op": "write",
+   "block": "auddec_ana",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3070
+    ],
+    2974
+   ],
+   "mask": "0x03",
+   "shift": 0,
+   "value": "0x03",
+   "symbol": "RG_ACCDETSPARE_L",
+   "delay_us": 0,
+   "byte_mask": "0x03",
+   "byte_val": "0x03",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_ACCDETSPARE_L"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x03",
+   "dump_field": "0x3",
+   "dump_region": "auddec",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2350,
+     "helper": "accdet_update_bits",
+     "macro": "RG_ACCDETSPARE_L"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2974,
+     "helper": "accdet_update_bits",
+     "macro": "RG_ACCDETSPARE_L"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2972-2976",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2972,
+      2976
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bits(RG_ACCDETSPARE_L) @2974",
+     "excerpt": "if (accdet_dts.eint_detect_mode != 0x1) {",
+     "delta": 0,
+     "op_line": 2974
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 40,
+   "reg": "0x252f",
+   "op": "write",
+   "block": "auddec_ana",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3070
+    ],
+    2979
+   ],
+   "mask": "0x0f",
+   "shift": 4,
+   "value": "0x02",
+   "symbol": "RG_EINTCOMPVTH",
+   "delay_us": 0,
+   "byte_mask": "0xf0",
+   "byte_val": "0x20",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "RG_EINT1CONFIGACCDET",
+    "RG_EINT1HIRENB",
+    "RG_EINT1NOHYS",
+    "RG_EINTCOMPVTH"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x20",
+   "dump_field": "0x2",
+   "dump_region": "auddec",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1337,
+     "helper": "accdet_update_bit",
+     "macro": "RG_EINT1CONFIGACCDET"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1345,
+     "helper": "accdet_update_bit",
+     "macro": "RG_EINT1CONFIGACCDET"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1462,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1469,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1504,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1659,
+     "helper": "accdet_clear_bit",
+     "macro": "RG_EINT1CONFIGACCDET"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1667,
+     "helper": "accdet_clear_bit",
+     "macro": "RG_EINT1CONFIGACCDET"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1742,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1756,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2290,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2307,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2317,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2358,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2374,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2934,
+     "helper": "accdet_clear_bit",
+     "macro": "RG_EINT1CONFIGACCDET"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2942,
+     "helper": "accdet_clear_bit",
+     "macro": "RG_EINT1CONFIGACCDET"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2954,
+     "helper": "accdet_update_bit",
+     "macro": "RG_EINT1CONFIGACCDET"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2962,
+     "helper": "accdet_update_bit",
+     "macro": "RG_EINT1CONFIGACCDET"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2979,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3081,
+     "helper": "accdet_write",
+     "macro": "RG_EINT1CONFIGACCDET"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3201,
+     "helper": "accdet_update_bits",
+     "macro": "RG_EINTCOMPVTH"
+    },
+    {
+     "file": "mt6368.c",
+     "line": 5652,
+     "helper": "regmap_update_bits",
+     "macro": "MT6368_AUDENC_ANA_CON39"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2979-2981",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2979,
+      2981
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bits(RG_EINTCOMPVTH) @2979",
+     "excerpt": "accdet_update_bits(RG_EINTCOMPVTH_ADDR,",
+     "delta": 0,
+     "op_line": 2979
+    },
+    {
+     "ref": "mt6368-accdet.c:2596-2599",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2596,
+      2599
+     ],
+     "status": "context",
+     "detail": "上下文行（默认值/解析/打印），非寄存器操作",
+     "excerpt": "if (ret)",
+     "delta": null,
+     "op_line": null
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 41,
+   "reg": "0x2694",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3075
+    ],
+    2729
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x41",
+   "symbol": "ACCDET_EINT_CMPMEN_PWM_WIDTH/THRESH",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x41",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "warn",
+   "mask_shift_note": "mask 0xff 覆盖该地址未定义的位 [3, 7]（整字节写会把保留位写成 0）",
+   "fields_here": [
+    "ACCDET_EINT_CMPMEN_PWM_THRESH",
+    "ACCDET_EINT_CMPMEN_PWM_WIDTH"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x41",
+   "dump_field": "0x41",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2729,
+     "helper": "accdet_write",
+     "macro": "ACCDET_EINT_CMPMEN_PWM_THRESH"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2729-2731",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2729,
+      2731
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_EINT_CMPMEN_PWM_THRESH) @2729",
+     "excerpt": "accdet_write(ACCDET_EINT_CMPMEN_PWM_THRESH_ADDR,",
+     "delta": 0,
+     "op_line": 2729
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 42,
+   "reg": "0x26ab",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3075
+    ],
+    2735
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x27",
+   "symbol": "ACCDET_DA_STABLE/EINT0_*_STABLE",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x27",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_DA_STABLE",
+    "ACCDET_EINT0_EN_STABLE",
+    "ACCDET_EINT0_CMPEN_STABLE",
+    "ACCDET_EINT0_CMPMEN_STABLE",
+    "ACCDET_EINT0_CTURBO_STABLE",
+    "ACCDET_EINT0_CEN_STABLE",
+    "ACCDET_EINT1_EN_STABLE",
+    "ACCDET_EINT1_CMPEN_STABLE"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x27",
+   "dump_field": "0x27",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1380,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_CEN_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1391,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_CEN_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1412,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_CEN_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1422,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_CEN_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1697,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_CEN_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1707,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_CEN_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2735,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DA_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2739,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DA_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2743,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DA_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2745,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DA_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2752,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_CEN_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2762,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_CEN_STABLE"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3090,
+     "helper": "accdet_write",
+     "macro": "ACCDET_DA_STABLE"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2735-2736",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2735,
+      2736
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_DA_STABLE) @2735",
+     "excerpt": "accdet_write(ACCDET_DA_STABLE_ADDR,",
+     "delta": 0,
+     "op_line": 2735
+    },
+    {
+     "ref": "mt6368.h:5528-5531",
+     "file": "mt6368.h",
+     "cited": [
+      5528,
+      5531
+     ],
+     "status": "ok",
+     "detail": "定义命中 [(5522, 'ACCDET_DA_STABLE'), (5527, 'ACCDET_DA_STABLE')]",
+     "excerpt": "(ACCDET_EINT1_EN_STABLE_MASK_SFT) | \\",
+     "delta": null,
+     "op_line": null
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 43,
+   "reg": "0x26aa",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3075
+    ],
+    2770
+   ],
+   "mask": "0x07",
+   "shift": 4,
+   "value": "0x01",
+   "symbol": "ACCDET_EINT_M_PLUG_IN_NUM",
+   "delay_us": 0,
+   "byte_mask": "0x70",
+   "byte_val": "0x10",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_IRQ_CLR",
+    "ACCDET_EINT0_IRQ_CLR",
+    "ACCDET_EINT1_IRQ_CLR",
+    "ACCDET_EINT_M_PLUG_IN_NUM"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x10",
+   "dump_field": "0x1",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1233,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1244,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1252,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1256,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1270,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1279,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_IRQ_CLR"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2770,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT_M_PLUG_IN_NUM"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2770-2771",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2770,
+      2771
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bit(ACCDET_EINT_M_PLUG_IN_NUM) @2770",
+     "excerpt": "accdet_update_bit(ACCDET_EINT_M_PLUG_IN_NUM_ADDR,",
+     "delta": 0,
+     "op_line": 2770
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 44,
+   "reg": "0x26ae",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3075
+    ],
+    2837
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x01",
+   "symbol": "ACCDET_EINT_HWMODE_EN",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x01",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "warn",
+   "mask_shift_note": "源码是整字节写（mask 0xff），比 regmap 的 ACCDET_EINT_HWMODE_EN（bit0 mask 0x1）宽，会顺带写保留位",
+   "fields_here": [
+    "ACCDET_EINT_HWMODE_EN",
+    "ACCDET_EINT_PLUG_OUT_BYPASS_DEB",
+    "ACCDET_EINT_M_PLUG_IN_EN",
+    "ACCDET_EINT_M_HWMODE_EN"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x01",
+   "dump_field": "0x1",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2782,
+     "helper": "accdet_write",
+     "macro": "ACCDET_EINT_HWMODE_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2804,
+     "helper": "accdet_write",
+     "macro": "ACCDET_EINT_HWMODE_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2814,
+     "helper": "accdet_write",
+     "macro": "ACCDET_EINT_HWMODE_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2820,
+     "helper": "accdet_write",
+     "macro": "ACCDET_EINT_HWMODE_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2830,
+     "helper": "accdet_write",
+     "macro": "ACCDET_EINT_HWMODE_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2837,
+     "helper": "accdet_write",
+     "macro": "ACCDET_EINT_HWMODE_EN"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2837-2838",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2837,
+      2838
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_EINT_HWMODE_EN) @2837",
+     "excerpt": "accdet_write(ACCDET_EINT_HWMODE_EN_ADDR, 0x1);",
+     "delta": 0,
+     "op_line": 2837
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 45,
+   "reg": "0x268b",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3075
+    ],
+    2843
+   ],
+   "mask": "0x01",
+   "shift": 4,
+   "value": "0x00",
+   "symbol": "ACCDET_EINT_M_DETECT_EN",
+   "delay_us": 0,
+   "byte_mask": "0x10",
+   "byte_val": "0x00",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_EINT1_INVERTER_SW_EN",
+    "ACCDET_EINT1_INVERTER_SEQ_INIT",
+    "ACCDET_EINT0_M_SW_EN",
+    "ACCDET_EINT1_M_SW_EN",
+    "ACCDET_EINT_M_DETECT_EN"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1368,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1375,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1439,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1443,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1447,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1449,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1548,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1553,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1558,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1560,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1592,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1596,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1601,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1603,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1679,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1683,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1687,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1689,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_M_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1724,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1732,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2779,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT_M_DETECT_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2801,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT_M_DETECT_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2807,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT_M_DETECT_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2817,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT_M_DETECT_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2826,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT_M_DETECT_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2843,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT_M_DETECT_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2858,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2864,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT1_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2874,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2880,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_INVERTER_SW_EN"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2841-2844",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2841,
+      2844
+     ],
+     "status": "ok",
+     "detail": "accdet_clear_bit(ACCDET_EINT_M_DETECT_EN) @2843",
+     "excerpt": "pr_info(\"%s() disable digital moisture.\\n\", __func__);",
+     "delta": 0,
+     "op_line": 2843
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 46,
+   "reg": "0x268c",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3075
+    ],
+    2848
+   ],
+   "mask": "0xff",
+   "shift": 0,
+   "value": "0x67",
+   "symbol": "ACCDET_CMP_PWM_EN",
+   "delay_us": 0,
+   "byte_mask": "0xff",
+   "byte_val": "0x67",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "warn",
+   "mask_shift_note": "源码是整字节写（mask 0xff），比 regmap 的 ACCDET_CMP_PWM_EN（bit0 mask 0x1）宽，会顺带写保留位",
+   "fields_here": [
+    "ACCDET_CMP_PWM_EN",
+    "ACCDET_VTH_PWM_EN",
+    "ACCDET_MBIAS_PWM_EN",
+    "ACCDET_EINT_EN_PWM_EN",
+    "ACCDET_EINT_CMPEN_PWM_EN",
+    "ACCDET_EINT_CMPMEN_PWM_EN",
+    "ACCDET_EINT_CTURBO_PWM_EN"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x67",
+   "dump_field": "0x67",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2848,
+     "helper": "accdet_write",
+     "macro": "ACCDET_CMP_PWM_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3086,
+     "helper": "accdet_write",
+     "macro": "ACCDET_CMP_PWM_EN"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2848",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2848,
+      2848
+     ],
+     "status": "ok",
+     "detail": "accdet_write(ACCDET_CMP_PWM_EN) @2848",
+     "excerpt": "accdet_write(ACCDET_CMP_PWM_EN_ADDR, 0x67);",
+     "delta": 0,
+     "op_line": 2848
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 47,
+   "reg": "0x268a",
+   "op": "write",
+   "block": "accdet",
+   "phase": "late_init/init_once",
+   "phase_key": [
+    30,
+    [
+     3075
+    ],
+    2878
+   ],
+   "mask": "0x01",
+   "shift": 6,
+   "value": "0x01",
+   "symbol": "ACCDET_EINT0_INVERTER_SW_EN",
+   "delay_us": 0,
+   "byte_mask": "0x40",
+   "byte_val": "0x40",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_SW_EN",
+    "ACCDET_SEQ_INIT",
+    "ACCDET_EINT0_SW_EN",
+    "ACCDET_EINT0_SEQ_INIT",
+    "ACCDET_EINT1_SW_EN",
+    "ACCDET_EINT1_SEQ_INIT",
+    "ACCDET_EINT0_INVERTER_SW_EN",
+    "ACCDET_EINT0_INVERTER_SEQ_INIT"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "match",
+   "dump_value": "0x40",
+   "dump_field": "0x1",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1364,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1372,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1719,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1729,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1817,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1894,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1925,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2786,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2790,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2794,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2796,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2854,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2862,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2870,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2878,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3092,
+     "helper": "accdet_write",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3110,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_SEQ_INIT"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3113,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SEQ_INIT"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3190,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2878-2879",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2878,
+      2879
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bit(ACCDET_EINT0_INVERTER_SW_EN) @2878",
+     "excerpt": "accdet_update_bit(ACCDET_EINT0_INVERTER_SW_EN_ADDR,",
+     "delta": 0,
+     "op_line": 2878
+    }
+   ],
+   "src_proven": true,
+   "verdict": "A 双证",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 48,
+   "reg": "0x268a",
+   "op": "write",
+   "block": "accdet",
+   "phase": "plug-in (eint_work_callback)",
+   "phase_key": [
+    90,
+    [],
+    1914
+   ],
+   "mask": "0x01",
+   "shift": 0,
+   "value": "0x01",
+   "symbol": "ACCDET_SW_EN",
+   "delay_us": 65000,
+   "byte_mask": "0x01",
+   "byte_val": "0x01",
+   "width": "ok",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_SW_EN",
+    "ACCDET_SEQ_INIT",
+    "ACCDET_EINT0_SW_EN",
+    "ACCDET_EINT0_SEQ_INIT",
+    "ACCDET_EINT1_SW_EN",
+    "ACCDET_EINT1_SEQ_INIT",
+    "ACCDET_EINT0_INVERTER_SW_EN",
+    "ACCDET_EINT0_INVERTER_SEQ_INIT"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "conflict_cleared_at_runtime",
+   "dump_value": "0x40",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": {
+    "line": 1894,
+    "helper": "accdet_clear_bit",
+    "macro": "ACCDET_SW_EN_ADDR"
+   },
+   "other_write_sites": [
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1364,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1372,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1719,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1729,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1817,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1894,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 1925,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2786,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2790,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2794,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2796,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT1_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2854,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2862,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2870,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 2878,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_EINT0_INVERTER_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3092,
+     "helper": "accdet_write",
+     "macro": "ACCDET_SW_EN"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3110,
+     "helper": "accdet_update_bit",
+     "macro": "ACCDET_SEQ_INIT"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3113,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SEQ_INIT"
+    },
+    {
+     "file": "mt6368-accdet.c",
+     "line": 3190,
+     "helper": "accdet_clear_bit",
+     "macro": "ACCDET_SW_EN"
+    }
+   ],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:1814-1817",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1814,
+      1817
+     ],
+     "status": "ok",
+     "detail": "accdet_update_bit(ACCDET_SW_EN) @1817",
+     "excerpt": "static inline void enable_accdet(u32 state_swctrl)",
+     "delta": 0,
+     "op_line": 1817
+    },
+    {
+     "ref": "mt6368-accdet.c:1914",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      1914,
+      1914
+     ],
+     "status": "ok_indirect",
+     "detail": "eint_work_callback() 间接到达",
+     "excerpt": "enable_accdet(0);",
+     "delta": null,
+     "op_line": null
+    }
+   ],
+   "src_proven": true,
+   "verdict": "B 源码可证（瞬态/状态相关，dump 不适用）",
+   "c_array_consistent": true
+  },
+  {
+   "seq": 49,
+   "reg": "0x26b6",
+   "op": "read",
+   "block": "accdet",
+   "phase": "其它",
+   "phase_key": null,
+   "mask": "0x03",
+   "shift": 6,
+   "value": null,
+   "symbol": "ACCDET_MEM_IN",
+   "delay_us": 0,
+   "byte_mask": "0xc0",
+   "byte_val": null,
+   "width": "n/a",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "AD_AUDACCDETCMPOB",
+    "AD_AUDACCDETCMPOA",
+    "ACCDET_CUR_IN",
+    "ACCDET_SAM_IN",
+    "ACCDET_MEM_IN"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "snapshot",
+   "dump_value": "0xff",
+   "dump_field": "0x3",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [],
+   "reason_refs": [
+    {
+     "ref": "mt6368-accdet.c:2005-2006",
+     "file": "mt6368-accdet.c",
+     "cited": [
+      2005,
+      2006
+     ],
+     "status": "ok",
+     "detail": "accdet_read(ACCDET_MEM_IN) @2005",
+     "excerpt": "cur_AB = accdet_read(ACCDET_MEM_IN_ADDR) >> ACCDET_STATE_MEM_IN_OFFSET;",
+     "delta": 0,
+     "op_line": 2005
+    }
+   ],
+   "src_proven": true,
+   "verdict": "C 源码可证（采样行，dump 只做参考）",
+   "c_array_consistent": null
+  },
+  {
+   "seq": 50,
+   "reg": "0x26b7",
+   "op": "read",
+   "block": "accdet",
+   "phase": "其它",
+   "phase_key": null,
+   "mask": "0x07",
+   "shift": 0,
+   "value": null,
+   "symbol": "ACCDET_STATE",
+   "delay_us": 0,
+   "byte_mask": "0x07",
+   "byte_val": null,
+   "width": "n/a",
+   "width_note": "",
+   "mask_shift": "ok",
+   "mask_shift_note": "",
+   "fields_here": [
+    "ACCDET_STATE",
+    "DA_AUDACCDETMBIASCLK",
+    "DA_AUDACCDETVTHCLK",
+    "DA_AUDACCDETCMPCLK",
+    "DA_AUDACCDETAUXADCSWCTRL"
+   ],
+   "symbol_check": "ok",
+   "symbol_note": "",
+   "dump": "snapshot",
+   "dump_value": "0x00",
+   "dump_field": "0x0",
+   "dump_region": "accdet",
+   "cleared_at": null,
+   "other_write_sites": [],
+   "reason_refs": [
+    {
+     "ref": "mt6368.h:4998",
+     "file": "mt6368.h",
+     "cited": [
+      4998,
+      4998
+     ],
+     "status": "ok",
+     "detail": "定义命中 [(4998, 'ACCDET_STATE'), (5000, 'ACCDET_STATE')]",
+     "excerpt": "#define ACCDET_STATE_ADDR                             \\",
+     "delta": null,
+     "op_line": null
+    }
+   ],
+   "src_proven": true,
+   "verdict": "C 源码可证（采样行，dump 只做参考）",
+   "c_array_consistent": null
+  }
+ ]
+}

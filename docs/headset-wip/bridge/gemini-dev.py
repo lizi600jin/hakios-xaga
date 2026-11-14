@@ -35,6 +35,18 @@ import urllib.request
 ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 DEFAULT_MODEL = "gemini-4-hydrogen"
+
+# Free-tier quotas are per model, so when one bucket is empty another may still
+# answer. Tried in order; each failure that looks like quota or an outage moves
+# to the next. gemini-4-* have the best reasoning but the smallest free bucket
+# (20 requests/day on this key), so the flash models carry the load.
+FALLBACK_MODELS = [
+    "gemini-4-hydrogen",
+    "gemini-3.8-flash",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-flash-latest",
+]
 STATE_DIR = os.path.expanduser("~/.local/share/gemini-dev")
 ROOT = "/home/lizi/IOS/repo/hakios-mt6895"
 WIP = os.path.join(ROOT, "docs/headset-wip")
@@ -228,7 +240,12 @@ DECLS = [{
 
 # ---------------------------------------------------------------- transport
 
-def call_model(api_key, model, contents, system_text, retries=4):
+def call_model(api_key, model, contents, system_text, retries=2):
+    """Call one model. Raises QuotaDone when this model's bucket is empty.
+
+    Retrying a 429 is pointless: the free tier reports a reset up to 15 hours
+    away. Retrying a 503 is worth one more try, since that is demand, not quota.
+    """
     payload = {
         "contents": contents,
         "tools": [{"functionDeclarations": DECLS}],
@@ -241,23 +258,29 @@ def call_model(api_key, model, contents, system_text, retries=4):
     last = ""
     for attempt in range(retries):
         req = urllib.request.Request(url, data=body, method="POST", headers={
-            "Content-Type": "application/json", "X-goog-api-key": api_key})
+            "Content-Type": "application/json", "X-Goog-Api-Key": api_key})
         try:
             with urllib.request.urlopen(req, timeout=180) as resp:
                 return json.loads(resp.read().decode())
         except urllib.error.HTTPError as exc:
-            detail = exc.read().decode(errors="replace")[:800]
+            detail = exc.read().decode(errors="replace")[:600]
             last = "HTTP %s: %s" % (exc.code, detail)
-            if exc.code in (429, 500, 502, 503, 504):
+            if exc.code == 429:
+                raise QuotaDone(last)
+            if exc.code in (500, 502, 503, 504):
                 time.sleep(delay)
-                delay = min(delay * 2, 45)
+                delay = min(delay * 2, 30)
                 continue
             raise SystemExit("model call failed: " + last)
         except (urllib.error.URLError, TimeoutError) as exc:
             last = "network: %s" % exc
             time.sleep(delay)
-            delay = min(delay * 2, 45)
-    raise SystemExit("model call failed after %d attempts: %s" % (retries, last))
+            delay = min(delay * 2, 30)
+    raise QuotaDone("after %d attempts: %s" % (retries, last))
+
+
+class QuotaDone(Exception):
+    """This model's free bucket is spent; the caller should try the next one."""
 
 
 def parts_of(resp):
@@ -275,8 +298,29 @@ def text_of(parts):
 # ---------------------------------------------------------------- agent loop
 
 def run(api_key, model, contents, system_text, rounds, quiet=False):
+    """Run the tool loop, moving to the next model when one's quota is spent.
+
+    The conversation so far is preserved, so a model switch mid-task keeps the
+    work done rather than starting over.
+    """
+    chain = [model] + [m for m in FALLBACK_MODELS if m != model]
     transcript = []
-    for rnd in range(rounds + 1):
+    for attempt_model in chain:
+        if not quiet:
+            print("  [model %s]" % attempt_model, file=sys.stderr, flush=True)
+        try:
+            return _run_one(api_key, attempt_model, contents, system_text, rounds,
+                            quiet, transcript)
+        except QuotaDone as exc:
+            if not quiet:
+                print("  [%s out of quota: %s]" % (attempt_model, str(exc)[:120]),
+                      file=sys.stderr, flush=True)
+            continue
+    raise SystemExit("every model in the chain is out of quota today")
+
+
+def _run_one(api_key, model, contents, system_text, rounds, quiet, transcript):
+    for _ in range(rounds + 1):
         resp = call_model(api_key, model, contents, system_text)
         parts = parts_of(resp)
         calls = [p["functionCall"] for p in parts if "functionCall" in p]

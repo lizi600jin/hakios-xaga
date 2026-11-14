@@ -81,15 +81,16 @@ NARRATIVE_EXEMPT = {
 # Code lines that encode the disputed semantics rather than merely moving values. Not required
 # to be audited, but named so a reader can find them.
 CODE_CLAIMS = {
-    3182: "JOB_INT_MASK = 0xffffffff before start: enable-set semantics, so this unmasks",
-    3184: "MMU_INT_MASK = 0x0000ffff: enables fault bits only, REQ_COMPLETE not routed",
-    3502: "per-space latch read after each parked UPDATE: this is what produced 0x40000..0x800000",
-    3768: "latch cleared then read immediately before AUTO",
-    4026: "JOB_INT_MASK = 0 after boot: enable-set semantics, so this unmasks",
-    4030: "MMU_INT_MASK = 0 after boot",
-    4817: "control run clear + print (mali_as0=1); never executed in any log on record",
-    4823: "control run readback of the parked AS0",
-    4849: "the only decode in the file that agrees with panthor: faults & 0xff, completions >>16",
+    "as_ready(unsigned as)": "AS_STATUS.bit0 poll: the one independent proof that a command retired",
+    "AS_STEP(\"update\"": "the single UPDATE whose retirement sets bit(16+as)",
+    "mali: AS%u parked": "per-space latch read after each parked UPDATE: this produced 0x40000..0x800000",
+    "just after the clear, AS0 parked as a control": "control run (mali_as0=1); never executed on record",
+    "AS0 parked: transtab": "control run readback of the parked AS0",
+    "mali: round7 AS%u after UPDATE": "reads fault status, fault address and the latch in one line",
+    "mfg_bus_idle(\"before the table walk\")": "MFG AXI channel sampled independently of the latch",
+    "mfg_bus_idle(\"after the table walk\")": "same channel after the walk: 0x4 both times",
+    "mali: address space 0 is live": "the claim the next step rests on: AS0 configured, not walked",
+    "request completions": "decodes bit[31:16] as completions and bit[15:0] as faults: the correct split",
 }
 
 VERDICTS = {"void", "rewrite", "holds", "unverified"}
@@ -128,6 +129,15 @@ def paragraph(lines, line):
     while usable(end + 1) and not lines[end].strip().endswith("*/"):
         end += 1
     return start, end
+
+
+def code_claim(text: str):
+    """The reason a code line is worth naming, or None. Keyed by text for the same reason as
+    the exemptions: a concurrent edit shifts line numbers, not sentences."""
+    for frag, reason in CODE_CLAIMS.items():
+        if frag in text:
+            return reason
+    return None
 
 
 def exempt_reason(text: str):
@@ -229,9 +239,22 @@ def audit(src, json_path):
 
     moved, gone = check_drift(findings, lines)
 
+    # Relocate the audited entries onto the file as it is now, so a concurrent edit that only
+    # shifted line numbers does not turn every verdict into a false gap.
+    reloc = {id(ent): nl for ent, nl in moved}
+    current = []
+    for ent in findings:
+        ent2 = dict(ent)
+        if id(ent) in reloc:
+            delta = reloc[id(ent)] - ent["line"]
+            ent2["line"] = reloc[id(ent)]
+            if "end_line" in ent2:
+                ent2["end_line"] = ent2["end_line"] + delta
+        current.append(ent2)
+
     unjudged, exempt, code = [], [], []
     for ln, name, text in hits:
-        if entry_for(ln, findings, lines) is not None:
+        if entry_for(ln, current, lines) is not None:
             continue
         if is_comment(text):
             if exempt_reason(text):
@@ -254,6 +277,7 @@ def audit(src, json_path):
         "unjudged": unjudged, "exempt": exempt, "code": code,
         "unused_exempt": sorted(frag for frag in NARRATIVE_EXEMPT
                                 if not any(frag in norm(t) for _, _, t in hits)),
+        "current": current,
         "moved": moved, "gone": gone,
     }
 
@@ -277,8 +301,9 @@ def render(rep, verbose=False):
     out.append("")
     out.append("comment hits: %d audited / %d exempt-with-reason / %d UNJUDGED"
                % (rep["audited"], len(rep["exempt"]), len(rep["unjudged"])))
-    out.append("code hits   : %d (values and stores; %d named in CODE_CLAIMS)"
-               % (len(rep["code"]), len(CODE_CLAIMS)))
+    named = sum(1 for _, _, t in rep["code"] if code_claim(t))
+    out.append("code hits   : %d (values and stores; %d of them named in CODE_CLAIMS)"
+               % (len(rep["code"]), named))
     out.append("")
     if rep["unjudged"]:
         out.append("UNJUDGED comment hits (%d) -- asserts something, not in the JSON,"
@@ -338,7 +363,7 @@ FIXTURE_SRC = """\
 /*
  * parked, mmu irq 0x100000
  */
-	mwr(kJobIntMask, 0u);
+	mwr(asReg(as, kAsCommand), cmd);
 printf("mali: mmu irq %#x (page faults %#x, request completions %#x)\\n", 0, 0, 0);
 /*
  * some other claim about a walk nobody has judged yet
@@ -388,7 +413,7 @@ def selftest():
 
         # 4. Comments are claims and get audited; stores and printf are code and are counted.
         claim = next(l for l in lines if "AS0 is handed" in l)
-        store = next(l for l in lines if "kJobIntMask" in l and "mwr" in l)
+        store = next(l for l in lines if "kAsCommand" in l and "mwr" in l)
         ok("classify: comment is a claim, mwr() is code",
            is_comment(claim) and not is_comment(store))
 
@@ -448,6 +473,18 @@ def selftest():
         ok("gap: code hits stay out of the unjudged list",
            all(not is_comment(t) for _, _, t in rep["code"]) and
            not any(ln == 14 for ln, _, _ in rep["unjudged"]))
+
+        # 9b. CODE_CLAIMS keys are text fragments that must still match a code hit; a fragment
+        #     matching nothing means the list has rotted and the report overstates its coverage.
+        saved3 = dict(CODE_CLAIMS)
+        CODE_CLAIMS.clear()
+        CODE_CLAIMS["mwr(asReg(as, kAsCommand), cmd)"] = "selftest: live"
+        try:
+            named = [ln for ln, _, t in audit(src, jsp)["code"] if code_claim(t)]
+            ok("code claims: fragment matches a code hit", named == [14], repr(named))
+        finally:
+            CODE_CLAIMS.clear()
+            CODE_CLAIMS.update(saved3)
 
         # 10. Verdict vocabulary is enforced; an invented verdict must raise, not be counted.
         bad = os.path.join(td, "bad.json")
