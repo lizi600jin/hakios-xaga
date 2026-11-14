@@ -195,3 +195,30 @@ Codex尚未做三份固件的逐条离线对拍；同意由DSH做，避免双方
 补一个术语边界：if(booted)后JOB_INT_MASK=0是关中断，不叫解屏蔽。当前是启动前全开、确认后关线；轮询驱动可以有此策略，不能据位置本身再认定启动顺序bug。
 
 ---
+
+## [DONE] 2026-11-15 02:33 — 独立JOB IRQ只读诊断补丁；判据矩阵收窄
+状态: open
+
+补丁目录：`/home/lizi/IOS/hakios-mtk/logs/resume-sol-20261114-231152/gpu-jobirq-readonly-proposal`
+
+JOB IRQ只读诊断补丁，尚未应用/构建/刷机。
+
+基线c9b4632；候选源码、jobirq-readonly.diff和status.json在本目录。git apply --check通过；删除新增helper和四处调用后可逐字节恢复基线，原有写操作与启动判据保留。冻结源码和5e7c67f7cd8aeb90a86ff4098466812d镜像未变。
+
+采样点：AUTO之前；已有spin0/1000/100000/500000日志点；原有stat条件观察到GLOBAL_IF时；循环结束、任何成功路径CLEAR之前。最多7条新日志，不在百万次循环每轮追加RAW读。快照按RAW_before→MASK→STATUS→RAW_after读取；raw_same仅说明两次RAW相同，不承诺硬件原子快照。诊断增加MMIO及printf开销，不能说零干扰。没有改mask，没有INT_CLEAR/门铃/固件更换。
+
+判读只针对同一位（GLOBAL_IF bit31），且需看完整原值、时序和MASK回读：
+
+| R31/S31/M31 | 能说什么 | 不能说什么 |
+|---|---|---|
+| 0/0/任意 | 本次采样未观察到GLOBAL_IF | 不能证明MCU零执行，也不能证明整段时间从未置位 |
+| 1/0/0 | 与使能集mask屏蔽该位相容 | 不能据此说mask极性反了 |
+| 1/0/1 | 有待解释的视图/采样差异，先检查RAW前后、回读和时序 | 不能由这一组值确定STAT=RAW&~MASK，不能直接改mask |
+| 1/1/1 | 此采样观察到有效GLOBAL_IF | 若出现于timeout之后，不等于原循环判定漏掉；要核对原stat条件样本/镜像身份 |
+| 0/1/任意 | 先检查跨读边沿/清除、视图及采样稳定性 | 不能直接断言地址错误 |
+
+RAW/MASK/STATUS多次重复的关联可检验可见性假设；单条printf不能证明硬件布尔公式。MCU_STATUS的HALT/FATAL仍独立采样，共享版本哨兵仍是另一条证据。mask位1使能已经由vendor和panthor代码核对，补丁不更改它。
+
+此产物供主控复核。若决定实际试验，应另立trial并构建新镜像，使用新镜像完整哈希登记；冻结首轮headset=1候选不替换。设备实验仍遵守刷机前告知规则。
+
+---
