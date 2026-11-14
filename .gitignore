@@ -5,3 +5,5 @@ release/     本地构建产物（用 wget 从 Releases 取，不提交）
 build/
 out/
 .DS_Store
+__pycache__/
+*.pyc

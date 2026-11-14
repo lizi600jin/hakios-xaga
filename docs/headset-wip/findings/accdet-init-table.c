@@ -1,0 +1,94 @@
+/* 由 accdet-init-gen.py 从 accdet-init-table.json 生成，勿手改。 */
+/* MT6368 ACCDET 冷启动初始化序列（xaga / MT6895，SPMI SID 5）。 */
+/* 每一项展开后都是『单字节 read-modify-write』：*/
+/* 表中 mask/val 均已是『字节内就位』的形式（JSON 里的 mask<<shift 与 value<<shift）。 */
+/*   v = pmif_read8(reg); v = (v & ~mask) | val; pmif_write8(reg, v); */
+/* mask=0xff 表示整字节写（此时无需读回）。 */
+
+#ifndef _ACCDET_INIT_TABLE_H_
+#define _ACCDET_INIT_TABLE_H_
+
+#include <stdint.h>
+
+struct accdet_wr {
+	uint16_t reg;
+	uint8_t  mask;
+	uint8_t  val;
+	uint16_t delay_us;
+};
+
+/* 阶段 A：只读校验。读回值必须与 val 在 mask 内一致，否则停机。 */
+struct accdet_chk {
+	uint16_t reg;
+	uint8_t  mask;
+	uint8_t  val;
+};
+
+static const struct accdet_wr accdet_init_seq[] = {
+	{ 0x1cb2, 0x01, 0x01,     0 }, /*  2 */
+	{ 0x26aa, 0x01, 0x01,   400 }, /*  6 */
+	{ 0x26aa, 0x01, 0x00,     0 }, /*  7 */
+	{ 0x268a, 0x02, 0x02,  3000 }, /*  8 */
+	{ 0x268a, 0x02, 0x00,  1500 }, /*  9 */
+	{ 0x2697, 0xff, 0x00,     0 }, /* 10 */
+	{ 0x2698, 0xff, 0x08,     0 }, /* 11 */
+	{ 0x2699, 0xff, 0x00,     0 }, /* 12 */
+	{ 0x269a, 0xff, 0x08,     0 }, /* 13 */
+	{ 0x269d, 0xff, 0x20,     0 }, /* 14 */
+	{ 0x269e, 0xff, 0x00,     0 }, /* 15 */
+	{ 0x269f, 0xff, 0x44,     0 }, /* 16 */
+	{ 0x26a0, 0xff, 0x00,     0 }, /* 17 */
+	{ 0x26a3, 0xf0, 0x30,     0 }, /* 18 */
+	{ 0x26a5, 0xff, 0x0e,     0 }, /* 19 */
+	{ 0x26a3, 0x0f, 0x05,     0 }, /* 20 */
+	{ 0x26a4, 0xf0, 0x50,     0 }, /* 21 */
+	{ 0x2319, 0x02, 0x02,     0 }, /* 22 */
+	{ 0x2319, 0x02, 0x00,     0 }, /* 23 */
+	{ 0x252a, 0x30, 0x00,     0 }, /* 24 */
+	{ 0x2529, 0x70, 0x00,     0 }, /* 25 */
+	{ 0x268e, 0xff, 0xff,     0 }, /* 26 */
+	{ 0x268f, 0xff, 0x04,     0 }, /* 27 */
+	{ 0x2690, 0xff, 0xff,     0 }, /* 28 */
+	{ 0x2691, 0xff, 0x04,     0 }, /* 29 */
+	{ 0x2692, 0xff, 0xf0,     0 }, /* 30 */
+	{ 0x2693, 0xff, 0x81,     0 }, /* 31 */
+	{ 0x2529, 0x04, 0x04,     0 }, /* 32 */
+	{ 0x252a, 0x30, 0x30,     0 }, /* 33 */
+	{ 0x252d, 0xff, 0x8f,     0 }, /* 34 */
+	{ 0x2530, 0x30, 0x30,     0 }, /* 35 */
+	{ 0x2531, 0x04, 0x04,     0 }, /* 36 */
+	{ 0x2534, 0x01, 0x01,     0 }, /* 37 */
+	{ 0x248c, 0x01, 0x01,     0 }, /* 38 */
+	{ 0x2533, 0x03, 0x03,     0 }, /* 39 */
+	{ 0x252f, 0xf0, 0x20,     0 }, /* 40 */
+	{ 0x2694, 0xff, 0x41,     0 }, /* 41 */
+	{ 0x26ab, 0xff, 0x27,     0 }, /* 42 */
+	{ 0x26aa, 0x70, 0x10,     0 }, /* 43 */
+	{ 0x26ae, 0xff, 0x01,     0 }, /* 44 */
+	{ 0x268b, 0x10, 0x00,     0 }, /* 45 */
+	{ 0x268c, 0xff, 0x67,     0 }, /* 46 */
+	{ 0x268a, 0x40, 0x40,     0 }, /* 47 */
+	{ 0x268a, 0x01, 0x01, 65000 }, /* 48 */
+};
+
+#define ACCDET_INIT_SEQ_LEN 44
+
+/* 只读校验项：不写，只确认这些位已是期望值。 */
+static const struct accdet_chk accdet_init_check[] = {
+	{ 0x230c, 0x01, 0x00 }, /*  1 */
+	{ 0x2688, 0xff, 0x00 }, /*  3 */
+	{ 0x268d, 0xff, 0x00 }, /*  4 */
+	{ 0x26a9, 0x01, 0x00 }, /*  5 */
+};
+
+#define ACCDET_INIT_CHECK_LEN 4
+
+/* 采样项：cur_AB = (read8(0x26b6) >> 6) & 3；STATE = read8(0x26b7) & 7。 */
+static const struct accdet_chk accdet_sample[] = {
+	{ 0x26b6, 0xc0, 0x00 }, /* 49 */
+	{ 0x26b7, 0x07, 0x00 }, /* 50 */
+};
+
+#define ACCDET_SAMPLE_LEN 2
+
+#endif /* _ACCDET_INIT_TABLE_H_ */

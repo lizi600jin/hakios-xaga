@@ -1,0 +1,516 @@
+[
+ {
+  "seq": 1,
+  "reg": "0x230c",
+  "mask": "0x01",
+  "shift": 0,
+  "value": null,
+  "delay_us": 0,
+  "reason": "RG_ACCDET_CK_PDN 定义在 mt6368.h:3843-3846（AUD_TOP_CKPDN_CON0 bit0）；mt6368-accdet.c 全文无写入者，mt6368.c:5446 只写 mask=0x66（不含 bit0）",
+  "symbol": "RG_ACCDET_CK_PDN",
+  "op": "verify",
+  "note": "冷启动须先读回确认 bit0=0（时钟未关）。真机 dump 未含 0x230c，属未验证项"
+ },
+ {
+  "seq": 2,
+  "reg": "0x1cb2",
+  "mask": "0x01",
+  "shift": 0,
+  "value": "0x01",
+  "delay_us": 0,
+  "reason": "mt6368.c:4150 enable_trim_circuit(true) 置 RG_LDO_VAUD18_EN=1；mt6368.c:4931-4938 dc_trim_thread 先 trim 再调 mt6368_accdet_late_init",
+  "symbol": "RG_LDO_VAUD18_EN",
+  "note": "VAUD18 是 MICBIAS/VREF 模拟供电。vendor 在 trim 结束会写回 0（mt6368.c:4168-4171），裸机须自己保证 accdet 期间为 1"
+ },
+ {
+  "seq": 3,
+  "reg": "0x2688",
+  "mask": "0xff",
+  "shift": 0,
+  "value": null,
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:502-511 dump_register() 扫 0x2688..0x26cf 全段，但全文无任何写 0x2688 的 accdet_write/update_bits；真机 dump 值 0x00（accdet-baseline-dump.txt）",
+  "symbol": "ACCDET_AUXADC_SEL/SW",
+  "op": "verify",
+  "note": "AUXADC_SEL/AUXADC_SW 只服务 moisture 与按键 ADC 采样，本路径不用"
+ },
+ {
+  "seq": 4,
+  "reg": "0x268d",
+  "mask": "0xff",
+  "shift": 0,
+  "value": null,
+  "delay_us": 0,
+  "reason": "ACCDET_CMP_PWM_IDLE 只在 mt6368.h:4348-4350 定义（CON5 0x268d bit0），mt6368-accdet.c 全文无任何引用（grep CMP_PWM_IDLE/PWM_IDLE 零命中）；真机 dump 值 0x00",
+  "symbol": "ACCDET_CMP_PWM_IDLE",
+  "op": "verify",
+  "note": "**不得猜值**。若冷启动读回非 0，需真机 dump 才能确定该写什么"
+ },
+ {
+  "seq": 5,
+  "reg": "0x26a9",
+  "mask": "0x01",
+  "shift": 0,
+  "value": null,
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:1236-1241 clear_accdet_int_check() 先读 0x26a9 bit0，再决定是否清理",
+  "symbol": "ACCDET_IRQ",
+  "op": "verify"
+ },
+ {
+  "seq": 6,
+  "reg": "0x26aa",
+  "mask": "0x01",
+  "shift": 0,
+  "value": "0x01",
+  "delay_us": 400,
+  "reason": "mt6368-accdet.c:1230-1234 clear_accdet_int() 置 IRQ_CLR；mt6368-accdet.c:1236-1247 轮询等 IRQ 掉，超时 ACCDET_TIME_OUT=0x61A80ns(400us)",
+  "symbol": "ACCDET_IRQ_CLR"
+ },
+ {
+  "seq": 7,
+  "reg": "0x26aa",
+  "mask": "0x01",
+  "shift": 0,
+  "value": "0x00",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:1244 accdet_clear_bit(ACCDET_IRQ_CLR)；IRQ_CLR 是电平保持，IRQ 掉后必须释放",
+  "symbol": "ACCDET_IRQ_CLR"
+ },
+ {
+  "seq": 8,
+  "reg": "0x268a",
+  "mask": "0x01",
+  "shift": 1,
+  "value": "0x01",
+  "delay_us": 3000,
+  "reason": "mt6368-accdet.c:3110-3112 SEQ_INIT=1；usleep_range(2000,3000)",
+  "symbol": "ACCDET_SEQ_INIT"
+ },
+ {
+  "seq": 9,
+  "reg": "0x268a",
+  "mask": "0x01",
+  "shift": 1,
+  "value": "0x00",
+  "delay_us": 1500,
+  "reason": "mt6368-accdet.c:3113-3115 SEQ_INIT=0；usleep_range(1000,1500)",
+  "symbol": "ACCDET_SEQ_INIT"
+ },
+ {
+  "seq": 10,
+  "reg": "0x2697",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x00",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3117 debounce0=0x800（dts headset-mode-setting[4]）；mt6368-accdet.c:1941-1943 低字节",
+  "symbol": "ACCDET_DEBOUNCE0_L"
+ },
+ {
+  "seq": 11,
+  "reg": "0x2698",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x08",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3117 -> mt6368-accdet.c:1942 高字节",
+  "symbol": "ACCDET_DEBOUNCE0_H"
+ },
+ {
+  "seq": 12,
+  "reg": "0x2699",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x00",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3118 debounce1=0x800；mt6368-accdet.c:1946-1948 低字节",
+  "symbol": "ACCDET_DEBOUNCE1_L"
+ },
+ {
+  "seq": 13,
+  "reg": "0x269a",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x08",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3118 -> mt6368-accdet.c:1947 高字节",
+  "symbol": "ACCDET_DEBOUNCE1_H"
+ },
+ {
+  "seq": 14,
+  "reg": "0x269d",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x20",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3119 debounce3=0x20；mt6368-accdet.c:1956-1958 低字节",
+  "symbol": "ACCDET_DEBOUNCE3_L"
+ },
+ {
+  "seq": 15,
+  "reg": "0x269e",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x00",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3119 -> mt6368-accdet.c:1957 高字节",
+  "symbol": "ACCDET_DEBOUNCE3_H"
+ },
+ {
+  "seq": 16,
+  "reg": "0x269f",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x44",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3121 debounce4(auxadc)=0x44；mt6368-accdet.c:1961-1963 低字节",
+  "symbol": "ACCDET_CONNECT_AUXADC_TIME_DIG_L"
+ },
+ {
+  "seq": 17,
+  "reg": "0x26a0",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x00",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3121 -> mt6368-accdet.c:1962 高字节",
+  "symbol": "ACCDET_CONNECT_AUXADC_TIME_DIG_H"
+ },
+ {
+  "seq": 18,
+  "reg": "0x26a3",
+  "mask": "0x0f",
+  "shift": 4,
+  "value": "0x03",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3129 eint_state001=eint_debounce1=0x03，写 bit[7:4]（mt6368-accdet.c:1978-1982）",
+  "symbol": "ACCDET_EINT_DEBOUNCE1"
+ },
+ {
+  "seq": 19,
+  "reg": "0x26a5",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x0e",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3132 eint_inverter_debounce=0x0e；mt6368-accdet.c:1991-1992 整字节写",
+  "symbol": "ACCDET_EINT_INVERTER_DEBOUNCE"
+ },
+ {
+  "seq": 20,
+  "reg": "0x26a3",
+  "mask": "0x0f",
+  "shift": 0,
+  "value": "0x05",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3100-3101 eint_state000=eint_debounce0=0x05，写 bit[3:0]（mt6368-accdet.c:1974-1978）",
+  "symbol": "ACCDET_EINT_DEBOUNCE0"
+ },
+ {
+  "seq": 21,
+  "reg": "0x26a4",
+  "mask": "0x0f",
+  "shift": 4,
+  "value": "0x05",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3103-3104 eint_state011=eint_debounce3=0x05，写 bit[7:4]（mt6368-accdet.c:1986-1990）",
+  "symbol": "ACCDET_EINT_DEBOUNCE3"
+ },
+ {
+  "seq": 22,
+  "reg": "0x2319",
+  "mask": "0x01",
+  "shift": 1,
+  "value": "0x01",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2989-2990 RG_ACCDET_RST=1（AUD_TOP_RST_CON0 bit1，mt6368.h:3849-3853）",
+  "symbol": "RG_ACCDET_RST"
+ },
+ {
+  "seq": 23,
+  "reg": "0x2319",
+  "mask": "0x01",
+  "shift": 1,
+  "value": "0x00",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2991-2992 RG_ACCDET_RST=0；源码此处无 usleep",
+  "symbol": "RG_ACCDET_RST"
+ },
+ {
+  "seq": 24,
+  "reg": "0x252a",
+  "mask": "0x03",
+  "shift": 4,
+  "value": "0x00",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2995-2996 clear RG_AUDMICBIAS1HVEN|HVVREF（2 位，bit[5:4]）",
+  "symbol": "RG_AUDMICBIAS1HVEN+HVVREF"
+ },
+ {
+  "seq": 25,
+  "reg": "0x2529",
+  "mask": "0x07",
+  "shift": 4,
+  "value": "0x00",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2998-2999 clear RG_AUDMICBIAS1VREF（3 位，bit[6:4]）",
+  "symbol": "RG_AUDMICBIAS1VREF"
+ },
+ {
+  "seq": 26,
+  "reg": "0x268e",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0xff",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3002-3003 PWM_WIDTH=REGISTER_VAL(0x500)=0x4ff，低字节",
+  "symbol": "ACCDET_PWM_WIDTH_L",
+  "note": "REGISTER_VAL(0x500)=0x4ff，低字节 0xff；真机 dump 0x268e=0xff、0x2690=0xff 印证"
+ },
+ {
+  "seq": 27,
+  "reg": "0x268f",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x04",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3004-3005 PWM_WIDTH 高字节",
+  "symbol": "ACCDET_PWM_WIDTH_H"
+ },
+ {
+  "seq": 28,
+  "reg": "0x2690",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0xff",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3006-3007 PWM_THRESH=0x4ff，低字节",
+  "symbol": "ACCDET_PWM_THRESH_L",
+  "note": "REGISTER_VAL(0x500)=0x4ff，低字节 0xff；真机 dump 0x268e=0xff、0x2690=0xff 印证"
+ },
+ {
+  "seq": 29,
+  "reg": "0x2691",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x04",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3008-3009 PWM_THRESH 高字节",
+  "symbol": "ACCDET_PWM_THRESH_H"
+ },
+ {
+  "seq": 30,
+  "reg": "0x2692",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0xf0",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3010 RISE_DELAY_L = rise_delay(0x1f0)&0xff",
+  "symbol": "ACCDET_RISE_DELAY_L"
+ },
+ {
+  "seq": 31,
+  "reg": "0x2693",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x81",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3011-3013 FALL_DELAY = fall(1)<<7 | rise(0x1f0)>>8",
+  "symbol": "ACCDET_FALL_DELAY+RISE_DELAY_H"
+ },
+ {
+  "seq": 32,
+  "reg": "0x2529",
+  "mask": "0x01",
+  "shift": 2,
+  "value": "0x01",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3024-3026 mic_vol==8 分支：置 RG_AUDMICBIAS1LOWPEN",
+  "symbol": "RG_AUDMICBIAS1LOWPEN"
+ },
+ {
+  "seq": 33,
+  "reg": "0x252a",
+  "mask": "0x03",
+  "shift": 4,
+  "value": "0x03",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3027-3030 mic_vol==8：reg|(3<<HVEN_SFT)，HVEN=1 且 HVVREF=1 -> 2.8V",
+  "symbol": "RG_AUDMICBIAS1HVEN+HVVREF"
+ },
+ {
+  "seq": 34,
+  "reg": "0x252d",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x8f",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3049-3052 mic_mode==2（xaga dts）：reg|RG_ACCDET_MODE_ANA11_MODE2(0x8f)，mt6368.h:5492",
+  "symbol": "RG_AUDACCDETMICBIAS0PULLLOW"
+ },
+ {
+  "seq": 35,
+  "reg": "0x2530",
+  "mask": "0x03",
+  "shift": 4,
+  "value": "0x03",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:3054-3055 mic_mode==2 分支 RG_ANALOGFDEN 置 0x3（bit[5:4]）",
+  "symbol": "RG_ANALOGFDEN"
+ },
+ {
+  "seq": 36,
+  "reg": "0x2531",
+  "mask": "0x01",
+  "shift": 2,
+  "value": "0x01",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2903-2905 caps 含 ACCDET_PMIC_EINT0（headset-eint-num=0）-> RG_EINT0EN=1",
+  "symbol": "RG_EINT0EN"
+ },
+ {
+  "seq": 37,
+  "reg": "0x2534",
+  "mask": "0x01",
+  "shift": 0,
+  "value": "0x01",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2916 RG_ACCDETSPARE_H bit0=1（ESD switches on）",
+  "symbol": "RG_ACCDETSPARE_H"
+ },
+ {
+  "seq": 38,
+  "reg": "0x248c",
+  "mask": "0x01",
+  "shift": 0,
+  "value": "0x01",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2918-2919 RG_NCP_PDDIS_EN=1",
+  "symbol": "RG_NCP_PDDIS_EN"
+ },
+ {
+  "seq": 39,
+  "reg": "0x2533",
+  "mask": "0x03",
+  "shift": 0,
+  "value": "0x03",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2972-2976 eint_detect_mode!=1 -> RG_ACCDETSPARE_L 置 0x3（电流检测 0.25uA）",
+  "symbol": "RG_ACCDETSPARE_L"
+ },
+ {
+  "seq": 40,
+  "reg": "0x252f",
+  "mask": "0x0f",
+  "shift": 4,
+  "value": "0x02",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2979-2981 RG_EINTCOMPVTH=eint_comp_vth；xaga 无 accdet-eint-comp-vth -> 缺省 2（mt6368-accdet.c:2596-2599），写 bit[7:4]",
+  "symbol": "RG_EINTCOMPVTH"
+ },
+ {
+  "seq": 41,
+  "reg": "0x2694",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x41",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2729-2731 (eint_pwm_width<<4)|eint_pwm_thresh = 4<<4|1",
+  "symbol": "ACCDET_EINT_CMPMEN_PWM_WIDTH/THRESH"
+ },
+ {
+  "seq": 42,
+  "reg": "0x26ab",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x27",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2735-2736 ACCDET_EINT0_STABLE_VAL = DA_STABLE|EINT0_EN|EINT0_CMPEN|EINT0_CEN = 0x27（mt6368.h:5528-5531）",
+  "symbol": "ACCDET_DA_STABLE/EINT0_*_STABLE"
+ },
+ {
+  "seq": 43,
+  "reg": "0x26aa",
+  "mask": "0x07",
+  "shift": 4,
+  "value": "0x01",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2770-2771 ACCDET_EINT_M_PLUG_IN_NUM 置 1（3 位，bit[6:4]；收到 n+1 次才发中断）",
+  "symbol": "ACCDET_EINT_M_PLUG_IN_NUM"
+ },
+ {
+  "seq": 44,
+  "reg": "0x26ae",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x01",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2837-2838 moisture_detect_mode 缺省 4 -> else 分支写 ACCDET_EINT_HWMODE_EN=0x1",
+  "symbol": "ACCDET_EINT_HWMODE_EN"
+ },
+ {
+  "seq": 45,
+  "reg": "0x268b",
+  "mask": "0x01",
+  "shift": 4,
+  "value": "0x00",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2841-2844 moisture_detect_enable==0 -> 清 ACCDET_EINT_M_DETECT_EN（bit4）",
+  "symbol": "ACCDET_EINT_M_DETECT_EN"
+ },
+ {
+  "seq": 46,
+  "reg": "0x268c",
+  "mask": "0xff",
+  "shift": 0,
+  "value": "0x67",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2848 ACCDET_CMP_PWM_EN 整字节 0x67 = CMP|VTH|MBIAS|EINT_EN|CMPMEN|CTURBO",
+  "symbol": "ACCDET_CMP_PWM_EN"
+ },
+ {
+  "seq": 47,
+  "reg": "0x268a",
+  "mask": "0x01",
+  "shift": 6,
+  "value": "0x01",
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2878-2879 eint_detect_mode!=1 -> 置 ACCDET_EINT0_INVERTER_SW_EN（bit6）",
+  "symbol": "ACCDET_EINT0_INVERTER_SW_EN"
+ },
+ {
+  "seq": 48,
+  "reg": "0x268a",
+  "mask": "0x01",
+  "shift": 0,
+  "value": "0x01",
+  "delay_us": 65000,
+  "reason": "mt6368-accdet.c:1814-1817 enable_accdet()；调用点 mt6368-accdet.c:1914（eint_work_callback 插入分支）。延时取 debounce0=62.5ms + 余量",
+  "symbol": "ACCDET_SW_EN"
+ },
+ {
+  "seq": 49,
+  "reg": "0x26b6",
+  "mask": "0x03",
+  "shift": 6,
+  "value": null,
+  "delay_us": 0,
+  "reason": "mt6368-accdet.c:2005-2006 cur_AB = (read(0x26b6)>>6)&0x3",
+  "symbol": "ACCDET_MEM_IN",
+  "op": "read",
+  "note": "0=三段耳机 1=四段耳麦 3=拔出 2=本平台不用"
+ },
+ {
+  "seq": 50,
+  "reg": "0x26b7",
+  "mask": "0x07",
+  "shift": 0,
+  "value": null,
+  "delay_us": 0,
+  "reason": "ACCDET_STATE 仅用于诊断：mt6368-accdet.c 全文不读该字段（grep ACCDET_STATE_ADDR 只命中 mt6368.h:4998）",
+  "symbol": "ACCDET_STATE",
+  "op": "read",
+  "note": "**不得用它判断插入状态**"
+ }
+]

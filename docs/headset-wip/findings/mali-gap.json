@@ -1,0 +1,279 @@
+{
+  "schema": 1,
+  "subject": "Mali-G610 CSF MCU start: writes panthor performs vs writes present in hakios.mali610.c",
+  "generated": "2026-11-14",
+  "sources": {
+    "ours": {
+      "path": "/home/lizi/IOS/hakios-mtk/mtk/mt6895/drivers/gpu/hakios.mali610.c",
+      "lines": 5219,
+      "note": "read-only reference; not modified"
+    },
+    "panthor": {
+      "repo": "MT6895-Mainline/linux",
+      "branch": "7.2-mt6895-xiaomi-xaga",
+      "files": [
+        "drivers/gpu/drm/panthor/panthor_fw.c",
+        "drivers/gpu/drm/panthor/panthor_device.c",
+        "drivers/gpu/drm/panthor/panthor_gpu.c",
+        "drivers/gpu/drm/panthor/panthor_mmu.c",
+        "drivers/gpu/drm/panthor/panthor_fw_regs.h",
+        "drivers/gpu/drm/panthor/panthor_gpu_regs.h",
+        "drivers/gpu/drm/panthor/panthor_mmu_regs.h"
+      ],
+      "sha256_prefix": {
+        "panthor_fw.c": "c4161c9e9694d758",
+        "panthor_device.c": "fe6e69d5429a20b0"
+      }
+    },
+    "crosscheck_copy": "/tmp/csf/linux-source-7.0.0/drivers/gpu/drm/panthor/panthor_mmu.c:614 (identical REQ_COMPLETE comment)"
+  },
+  "registers": [
+    {
+      "name": "MCU_CONTROL",
+      "addr": "0x700",
+      "panthor_write": "MCU_CONTROL_AUTO (2) at panthor_fw.c:1143; MCU_CONTROL_DISABLE (0) at panthor_fw.c:1175",
+      "panthor_evidence": "panthor_fw.c:1143, panthor_fw.c:1175, panthor_fw_regs.h:10-16",
+      "ours_write": "0x700 <- 2 at hakios.mali610.c:3859; 0x700 <- 0 at :4897, :4911; 0x700 <- 1 (opt-in mali_mcuseq) at :3853",
+      "status": "PRESENT",
+      "note": "Value and address agree. Nothing in the write itself differs."
+    },
+    {
+      "name": "GPUEB CMD_POWER_CONTROL IPI",
+      "addr": "n/a (IPI mailbox + shared RAM 0x7c600000)",
+      "panthor_write": "mt6895_gpueb_power_on() called immediately before MCU_CONTROL=AUTO",
+      "panthor_evidence": "panthor_fw.c:1129-1143 (call site), panthor_device.c:256-268 (earlier call, before any GPU register touch)",
+      "ours_write": "none",
+      "status": "ABSENT",
+      "note": "Driver never sends an IPI. Log line 'gpueb: not mapped' is a consequence of mali_gpueb=0 default (hakios.mali610.c:4290-4292), not evidence about GPUEB state."
+    },
+    {
+      "name": "MCU_STATUS",
+      "addr": "0x704",
+      "panthor_write": "read only; read at panthor_fw.c:1156 for the failure message",
+      "panthor_evidence": "panthor_fw.c:1150-1161",
+      "ours_write": "read only; read at hakios.mali610.c:3691, 3948, 3973, 4028",
+      "status": "PRESENT",
+      "note": "Agrees. Our reading 1 == MCU_STATUS_ENABLED, which panthor treats as boot failure, not success."
+    },
+    {
+      "name": "JOB_INT_MASK",
+      "addr": "0x1008",
+      "panthor_write": "pirq->mask, i.e. an enable mask; ~0 (all bits) written by panthor_job_irq_enable_events before AUTO",
+      "panthor_evidence": "panthor_fw.c:1128, panthor_device.h:582-583 (resume writes INT_CLEAR then INT_MASK=mask), panthor_device.h:605-618",
+      "ours_write": "0x1008 <- 0xffffffff at :3148; 0x1008 <- 0 at :3992 (only after a successful boot)",
+      "status": "PRESENT_BUT_INVERTED_READING",
+      "note": "Semantics: bit set in INT_MASK means the event is DELIVERED (mask register holds the enable set), not blocked. Our :3148 write of 0xffffffff therefore ENABLES everything and matches panthor; the comment at :3989-3990 that calls it 'masking' is wrong. Consequence: JOB_INT_STATUS was readable throughout, so the all-zero 0x100c reading is a real hardware result, not a self-inflicted mask."
+    },
+    {
+      "name": "GPU_IRQ_MASK",
+      "addr": "0x028",
+      "panthor_write": "GPU_INTERRUPTS_MASK via panthor_gpu_irq_enable_events (panthor_gpu.c:177)",
+      "panthor_evidence": "panthor_gpu.c:172-179",
+      "ours_write": "0x028 <- 0x00080503 at :3146; 0x028 <- 0 at :3994",
+      "status": "PRESENT",
+      "note": "Same polarity conclusion as JOB_INT_MASK. 0x00080503 includes bit 10 (POWER_CHANGED_ALL)."
+    },
+    {
+      "name": "MMU_INT_MASK",
+      "addr": "0x2008",
+      "panthor_write": "panthor_mmu_fault_mask(~0) == 0x0000ffff at panthor_mmu.c:3287; per-AS BIT(as) added at :599",
+      "panthor_evidence": "panthor_mmu.c:599, :3287; panthor_mmu.c:646-649",
+      "ours_write": "0x2008 <- 0x0000ffff at :3150; 0x2008 <- 0 at :3996",
+      "status": "PRESENT",
+      "note": "Matches. Low 16 bits are AS fault enables; bits 16-31 are REQ_COMPLETE and are not maskable."
+    },
+    {
+      "name": "MMU_INT_RAWSTAT interpretation",
+      "addr": "0x2000",
+      "panthor_write": "read; bits 0..15 fault per AS, bits 16..31 REQ_COMPLETE per AS",
+      "panthor_evidence": "panthor_mmu.c:646-649 (comment 'Bits 16 to 31 mean REQ_COMPLETE'), panthor_mmu.c:1792-1795",
+      "ours_write": "read at many sites; interpreted as MMU_BUS_ERROR(0) in comments :3795-3800, :4330-4340",
+      "status": "INTERPRETATION_WRONG",
+      "note": "Our runs log 'mmu irq 0x10000' immediately after AS0 UPDATE and call it MMU_BUS_ERROR on AS0. Bit 16 is AS0's REQ_COMPLETE, i.e. the walk finished. Fault latches are bits 0..15 and every run reads as 0 there. This invalidates the 'the walker was refused by the bus' premise used in several comments."
+    },
+    {
+      "name": "AS_TRANSCFG (AS0..AS7)",
+      "addr": "0x2400 + as*0x40 + 0x30",
+      "panthor_write": "0x420001c6 for va_bits=48: PTW_MEMATTR_WB | PTW_RA | ADRMODE_AARCH64_4K | INA_BITS(55-48)",
+      "panthor_evidence": "panthor_mmu.c:779-784, panthor_mmu_regs.h:49-66",
+      "ours_write": "0x42000006 at :2925-2927 (INA_BITS deliberately omitted; comment :2895-2902)",
+      "status": "PRESENT_VALUE_DIFFERS",
+      "note": "Logged readback 'AS0 readback: ... transcfg 0x42000006' (log 244). INA_BITS encodes the input address size to the walker; panthor always programs it. For va_bits=48 the difference is bits 11:6 = 0b011000 vs 0. Untested: whether the MCU's fetch depends on it. Cost to test: one expression, build-flag gated."
+    },
+    {
+      "name": "AS_MEMATTR",
+      "addr": "0x2400 + as*0x40 + 0x08",
+      "panthor_write": "derived from the CPU's MAIR by mair_to_memattr()",
+      "panthor_evidence": "panthor_mmu.c:2098-2137, :2811",
+      "ours_write": "constant 0x00084c8d888d8f88 at :877",
+      "status": "PRESENT_CONSTANT",
+      "note": "Logged readback matches (log 244). Not a gap; noted because it is the one AS register whose value we cannot independently derive without knowing the CPU MAIR."
+    },
+    {
+      "name": "AS_COMMAND",
+      "addr": "0x2400 + as*0x40 + 0x18",
+      "panthor_write": "AS_COMMAND_UPDATE (1) via as_send_cmd_and_wait()",
+      "panthor_evidence": "panthor_mmu.c:605-607, panthor_mmu_regs.h:32-37",
+      "ours_write": "1 at :2950 (as_enable), :2724 (as_command), :4790 (AS0 park control)",
+      "status": "PRESENT",
+      "note": "Agrees."
+    },
+    {
+      "name": "L2_PWRON",
+      "addr": "0x1a0",
+      "panthor_write": "l2_present, through panthor_gpu_power_on(..., L2, 1, 20000)",
+      "panthor_evidence": "panthor_gpu.c:296-320, panthor_gpu_regs.h:93",
+      "ours_write": "0x1a0 <- kL2PresentFirst at :3253 and again at :3272 (retry)",
+      "status": "PRESENT",
+      "note": "Agrees. READY reads 0x1 in log 187; PWRTRANS 0."
+    },
+    {
+      "name": "GPU_COHERENCY_PROTOCOL",
+      "addr": "0x304",
+      "panthor_write": "selected_coherency == GPU_COHERENCY_NONE (31) when the device is not DMA-coherent",
+      "panthor_evidence": "panthor_gpu.c:456-483 (coherency_init), panthor_gpu.c:63 (write), panthor_gpu_regs.h:114-117",
+      "ours_write": "only when !mali_cold or mali_cohnone at :3186-3194; on the cold path it is left alone",
+      "status": "PRESENT_CONDITIONAL",
+      "note": "Log 184: 'protocol trial 692: features 0x1 before 0 after 0 wrote 0'. On the 692 run mali_cohnone=0 and mali_cold=1, so no write happened. panthor would have written 31 here. Untested variable."
+    },
+    {
+      "name": "GPU_L2_CONFIG",
+      "addr": "0x0f00",
+      "panthor_write": "read-modify-write with ASN_HASH_ENABLE only when soc_data->asn_hash_enable",
+      "panthor_evidence": "panthor_gpu.c:~330 (l2_config_set), guard GPU_ARCH_MAJOR < 11",
+      "ours_write": "no write on the cold path (explicit, comment :3210-3218)",
+      "status": "MATCHING_ABSENCE",
+      "note": "G610 is architecture 10; the fork's soc_data for mt6895 does not set asn_hash_enable. Log 185-186 confirms bit 24 stays clear. Not a gap."
+    },
+    {
+      "name": "GPU_PWR_KEY",
+      "addr": "0x050",
+      "panthor_write": "not written on the probe path (only panfrost does this)",
+      "panthor_evidence": "panthor_gpu.c:63-64 defines it; no write site in the probe path",
+      "ours_write": "only when !mali_cold at :3172",
+      "status": "MATCHING_ABSENCE",
+      "note": "Agrees on the cold path."
+    },
+    {
+      "name": "SHADER_PWRON",
+      "addr": "0x180",
+      "panthor_write": "written only through panthor_gpu_power_on for the shader domain, which is not on the MCU-start path",
+      "panthor_evidence": "panthor_gpu_regs.h:91; panthor_gpu.c power_on helper",
+      "ours_write": "not written (comment :3345-3360)",
+      "status": "MATCHING_ABSENCE",
+      "note": "Per the task brief, shader_ready is not a power indicator; excluded from the failure-surface list as an action."
+    },
+    {
+      "name": "GPU soft reset",
+      "addr": "0x030 (GPU_CMD)",
+      "panthor_write": "only from panthor_device_reset_work (panthor_device.c:144) and panthor_gpu_suspend path; not from panthor_device_init/probe",
+      "panthor_evidence": "panthor_device.c:143-145, panthor_gpu.c:377",
+      "ours_write": "only when !mali_cold or mali_resetonly at :4600-4611",
+      "status": "MATCHING_ABSENCE",
+      "note": "Agrees: panthor does not soft-reset before the first MCU start."
+    },
+    {
+      "name": "CSF shared region base",
+      "addr": "MCU VA 0x04000000",
+      "panthor_write": "panthor_vm_create(..., CSF_MCU_SHARED_REGION_START=0x04000000, CSF_MCU_SHARED_REGION_SIZE=0x04000000)",
+      "panthor_evidence": "panthor_fw.c:205-206, panthor_fw.c:1527-1531",
+      "ours_write": "gSect[9] va 0x4000000-0x4094000, mapped uncached (IDX_NC) at :1192-1197",
+      "status": "PRESENT",
+      "note": "Same VA. Size derives from the image, which is smaller than panthor's 64 MiB reservation; not shown to matter."
+    },
+    {
+      "name": "Doorbell CSF_DOORBELL(0)",
+      "addr": "0x80000",
+      "panthor_write": "ring after boot, in panthor_fw_init_global_iface (panthor_fw.c:1085)",
+      "panthor_evidence": "panthor_fw.c:1085, :1203, :1464, :1479",
+      "ours_write": "0x80000 <- 1 at :4224, and opt-in at :3871",
+      "status": "PRESENT",
+      "note": "Agrees in ordering (only after a boot). Never reached because boot fails."
+    },
+    {
+      "name": "Firmware image source",
+      "addr": "n/a",
+      "panthor_write": "request_firmware(\"arm/mali/arch10.x/mali_csffw.bin\")",
+      "panthor_evidence": "panthor_fw.c:804-830",
+      "ours_write": "embedded blob kMaliFirmware[258048], sha256 de22d2fc...f7229a, include at :43, parsed at :1009-1330",
+      "status": "PRESENT",
+      "note": "Image exists and is parsed; 10 sections, shared at 0x4000000, reset vector sp 0x2040000 pc 0x10018ed (log 234). No sha256 check at run time; only a magic + major + size check (:1014-1022)."
+    },
+    {
+      "name": "Firmware image load into MCU-visible memory",
+      "addr": "n/a",
+      "panthor_write": "kernel BO mapped into the FW VM at the section VA, dma_sync_for_device",
+      "panthor_evidence": "panthor_fw.c:660-690",
+      "ours_write": "mem_alloc_low() bump allocator from 0x50000000, ml_io_map_unmappable(WCOMB), memcpy + mem_flush at :1070-1092",
+      "status": "PRESENT_DIFFERENT_MECHANISM",
+      "note": "Ours places sections at fixed low physical addresses with a hand-built AArch64 4K table; panthor uses the IOMMU with CPU pages. Log 226-233 shows every leaf valid and coverage complete."
+    },
+    {
+      "name": "Number of firmware sections mapped",
+      "addr": "n/a",
+      "panthor_write": "skips CSF_FW_BINARY_IFACE_ENTRY_PROT sections entirely (returns 0)",
+      "panthor_evidence": "panthor_fw.c:590-594",
+      "ours_write": "maps protected sections with ordinary memory (:1057-1060, :1192)",
+      "status": "PRESENT_DIFFERS",
+      "note": "We allocate 0x3000000-0x3040000 (256 KiB) as ordinary rw memory; panthor refuses PROTM sections without the protected allocator. Not shown to matter for a non-protected boot, but it is a real divergence."
+    },
+    {
+      "name": "Interrupt registration (GIC)",
+      "addr": "n/a",
+      "panthor_write": "devm_request_threaded_irq for job/mmu/gpu/pwr",
+      "panthor_evidence": "panthor_device.h:587-600 and the four panthor_request_*_irq calls",
+      "ours_write": "none; everything is polled",
+      "status": "ABSENT",
+      "note": "Deliberate (0 interrupt registrations). Cannot by itself prevent the MCU from executing, since the firmware start is a write plus a poll; it only removes the fast path."
+    }
+  ],
+  "absent_from_ours": [
+    {
+      "item": "mt6895_gpueb_power_on()",
+      "panthor_evidence": "panthor_fw.c:1131-1143",
+      "why": "The EB is the owner of MFG power on this SoC (DTS gpueb-support=<1>; vendor gpufreq skips its own power_control path). Panthor's own comment at panthor_device.c:256 says that without it 'panthor reads all-zero ID/features'."
+    },
+    {
+      "item": "Ordering: GPUEB handshake before the first GPU register read",
+      "panthor_evidence": "panthor_device.c:250-268",
+      "why": "We map and read GPU_ID with no EB handshake at all; our read succeeds (0xa8670004), which proves the block answers but not that its power state is settled."
+    },
+    {
+      "item": "AS_TRANSCFG INA_BITS",
+      "panthor_evidence": "panthor_mmu.c:782",
+      "why": "Removed deliberately at :2895-2902 on the strength of a claim about kbase; the claim is not verified in this audit."
+    },
+    {
+      "item": "Runtime sha256 verification of the firmware blob",
+      "panthor_evidence": "panthor relies on the filesystem/firmware loader contract; we embed the blob",
+      "why": "Header carries MALI_FW_SHA256 but nothing checks it. A wrong blob would be silently accepted."
+    }
+  ],
+  "present_in_ours_absent_in_panthor": [
+    {
+      "item": "Hand-written AArch64 page tables for the MCU",
+      "ours": ":894-966 (pt_new/pt_map), :1009-1330 (load_firmware)",
+      "why": "Panthor delegates this to the IOMMU driver. Our table is correct per the walk dump (log 226-233) but is unverified against a working MCU."
+    },
+    {
+      "item": "Direct MTCMOS domain writes via SPM 0x1c001000",
+      "ours": ":1738-1854 (power_on), :1501-1687 (domain_on)",
+      "why": "Panthor uses genpd. On this SoC the vendor's own hand-written path is compiled out when GPUFREQ_PDCv2_ENABLE is set, so our sequence has no upstream equivalent to compare against."
+    },
+    {
+      "item": "PDC enable writes into mfgcfg 0x400..",
+      "ours": ":1855-1879 (pdc_enable)",
+      "why": "Vendor does this (gpufreq_mt6895.c __gpufreq_pdc_control); panthor does not, because it never powers the block itself."
+    },
+    {
+      "item": "I2M protector programming",
+      "ours": ":2601-2629 (mfg_gpm_arm)",
+      "why": "Vendor does this; no panthor equivalent. Log 170 shows the values landing."
+    },
+    {
+      "item": "PMIF/SPMI write to enable VSTACK (MT6368 BUCK2)",
+      "ours": ":3039-3140 (mali_spmi, mali_vstack_rail)",
+      "why": "A regulator write panthor would do through the regulator framework. Log 155-157 shows status 0x6a -> 0x6e (enabled)."
+    }
+  ]
+}

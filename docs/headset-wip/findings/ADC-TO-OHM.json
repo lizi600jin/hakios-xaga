@@ -1,0 +1,1035 @@
+{
+  "meta": {
+    "project": "HakiOS / MT6895 xaga / MT6368 ACCDET",
+    "kernel_repo": "/home/lizi/IOS/work-xaga/k-xaga",
+    "kernel_head": "0a8d13c1a180fed82803f56337a0b065ff704fb4",
+    "sources": [
+      "sound/soc/codecs/mt6368-accdet.c",
+      "sound/soc/codecs/mt6368.c",
+      "drivers/iio/adc/mtk-spmi-pmic-adc.c",
+      "include/linux/mfd/mt6368/registers.h"
+    ],
+    "generator": "docs/headset-wip/adc-ohm.py --emit",
+    "units": {
+      "adc_sum": "sum of 8 samples (int)",
+      "adc_per_sample": "adc_sum / 8",
+      "ohm": "ohm"
+    }
+  },
+  "accdet_jack_adc": {
+    "channel": 5,
+    "bits": 12,
+    "vref_mv": 1840,
+    "code_to_mv": "mv = code * 1840 / 4096",
+    "mv_per_lsb": 0.44921875,
+    "registers": {
+      "request": "MT6368_AUXADC_RQST0 0x1108 bit5 (SRC_ADC:177)",
+      "data": "MT6368_AUXADC_ADC5_L 0x1092, 15-bit word, valid bit15, payload bits[11:0] (SRC_REGS:28, SRC_ADC:245,270)",
+      "mux_sel": "ACCDET_CON0 0x2688 bit0 ACCDET_AUXADC_SEL",
+      "mux_sw": "ACCDET_CON0 0x2688 bit1 ACCDET_AUXADC_SW"
+    },
+    "efuse_offset": {
+      "nvmem_byte": "91*2 (SRC_ACCDET:927)",
+      "extract": "val&0xFF; if(>128) -=256; >>1  (SRC_ACCDET:928-931)",
+      "unit": "mV, subtracted in accdet_get_auxadc() (SRC_ACCDET:904-911)",
+      "range_mv": [
+        -64,
+        63
+      ]
+    },
+    "ohm_formula": null,
+    "ohm_note": "source contains no code path from this channel to ohm"
+  },
+  "hp_impedance_adc": {
+    "channel": 12,
+    "bits": 15,
+    "channel_src": "SRC_ADC:99 (AUXADC_CHANNEL(HPOFS_CAL, 15)); data register SRC_ADC:178 -> MT6368_AUXADC_ADC9_L",
+    "code_to_ohm": "R = (3600000/dc) * delta_sum / 7832 / 8",
+    "phases": [
+      {
+        "phase": "0",
+        "dc": 288,
+        "k": 12500,
+        "ohm_per_lsb_per_sample": 1.596016,
+        "max_ohm_15bit": 52296,
+        "src": "mt6368.c:5043-5047"
+      },
+      {
+        "phase": "1",
+        "dc": 1440,
+        "k": 2500,
+        "ohm_per_lsb_per_sample": 0.319203,
+        "max_ohm_15bit": 10459,
+        "src": "mt6368.c:5043-5047"
+      },
+      {
+        "phase": "2",
+        "dc": 6048,
+        "k": 595,
+        "ohm_per_lsb_per_sample": 0.07597,
+        "max_ohm_15bit": 2489,
+        "src": "mt6368.c:5043-5047"
+      }
+    ],
+    "saturation_limit_ohm": 52079,
+    "saturation_src": "mt6368.c:5039,5140-5142",
+    "efuse_cal": {
+      "byte": "0xCA (202) = bit 1616..1623 (mt6368.c:5249-5254)",
+      "fields": "HPDET_COMP[6:0] + sign bit7 (mt6368.c:5260-5262)",
+      "applied": "r = (r*128 + cal)/128 -> additive cal/128 ohm (mt6368.c:5016-5018)",
+      "range_ohm": [
+        -0.99,
+        0.99
+      ]
+    },
+    "parallel_ohm": 0,
+    "parallel_src": "mt6368.h:5959 -> block at mt6368.c:5180-5187 is dead code"
+  },
+  "key_thresholds": {
+    "source": "mt6895.dtsi:2167-2169, parsed at mt6368-accdet.c:2670-2696",
+    "three_key_mv": {
+      "mid": 80,
+      "up": 220,
+      "down": 400
+    },
+    "four_key_mv": {
+      "mid": 58,
+      "voice": 121,
+      "up": 192,
+      "down": 400
+    },
+    "three_key_cdd_mv": {
+      "mid": 121,
+      "up": 192,
+      "down": 600
+    },
+    "efuse_4key_src": "mt6368-accdet.c:998-1027 (only when DTS omits the property)",
+    "ohm_values_in_source": false,
+    "ohm_note": "vendor source has no ohm table for hook/volume keys; DTS thresholds are millivolts. The usual 0/70/135/235/470 ohm numbers do not appear anywhere in these files."
+  },
+  "table": [
+    {
+      "ohm": 0,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 0,
+      "adc_per_sample": 0.0,
+      "adc_per_sample_min": 0.0,
+      "adc_per_sample_max": 5.75,
+      "reported_ohm": 5000,
+      "verdict": 0,
+      "note": "ideal delta 0, but SRC_CODEC:5110-5121 maps delta==0 at dc_phase0 to auxcable_impedance=5000 -> driver can never report 0 ohm"
+    },
+    {
+      "ohm": 1,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 101,
+      "adc_per_sample": 12.625,
+      "adc_per_sample_min": 5.875,
+      "adc_per_sample_max": 18.875,
+      "reported_ohm": 1,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 2,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 207,
+      "adc_per_sample": 25.875,
+      "adc_per_sample_min": 19.0,
+      "adc_per_sample_max": 32.0,
+      "reported_ohm": 2,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 5,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 523,
+      "adc_per_sample": 65.375,
+      "adc_per_sample_min": 58.5,
+      "adc_per_sample_max": 71.5,
+      "reported_ohm": 5,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 10,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 1049,
+      "adc_per_sample": 131.125,
+      "adc_per_sample_min": 124.25,
+      "adc_per_sample_max": 137.375,
+      "reported_ohm": 10,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 15,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 1576,
+      "adc_per_sample": 197.0,
+      "adc_per_sample_min": 190.125,
+      "adc_per_sample_max": 203.125,
+      "reported_ohm": 15,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 20,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 2102,
+      "adc_per_sample": 262.75,
+      "adc_per_sample_min": 255.875,
+      "adc_per_sample_max": 269.0,
+      "reported_ohm": 20,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 32,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 3366,
+      "adc_per_sample": 420.75,
+      "adc_per_sample_min": 413.875,
+      "adc_per_sample_max": 426.875,
+      "reported_ohm": 32,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 50,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 5261,
+      "adc_per_sample": 657.625,
+      "adc_per_sample_min": 650.75,
+      "adc_per_sample_max": 663.875,
+      "reported_ohm": 50,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 70,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 7367,
+      "adc_per_sample": 920.875,
+      "adc_per_sample_min": 914.125,
+      "adc_per_sample_max": 927.125,
+      "reported_ohm": 70,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 100,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 10526,
+      "adc_per_sample": 1315.75,
+      "adc_per_sample_min": 1309.0,
+      "adc_per_sample_max": 1322.0,
+      "reported_ohm": 100,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 135,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 14212,
+      "adc_per_sample": 1776.5,
+      "adc_per_sample_min": 1769.625,
+      "adc_per_sample_max": 1782.75,
+      "reported_ohm": 135,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 150,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 15792,
+      "adc_per_sample": 1974.0,
+      "adc_per_sample_min": 1967.125,
+      "adc_per_sample_max": 1980.125,
+      "reported_ohm": 150,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 200,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 21057,
+      "adc_per_sample": 2632.125,
+      "adc_per_sample_min": 2625.25,
+      "adc_per_sample_max": 2638.25,
+      "reported_ohm": 200,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 235,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 24742,
+      "adc_per_sample": 3092.75,
+      "adc_per_sample_min": 3086.0,
+      "adc_per_sample_max": 3099.0,
+      "reported_ohm": 235,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 249,
+      "phase": "2",
+      "dc": 6048,
+      "phase_range_ohm": [
+        0,
+        2489
+      ],
+      "ohm_per_lsb": 0.07597,
+      "adc_sum": 26217,
+      "adc_per_sample": 3277.125,
+      "adc_per_sample_min": 3270.25,
+      "adc_per_sample_max": 3283.25,
+      "reported_ohm": 249,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 250,
+      "phase": "1",
+      "dc": 1440,
+      "phase_range_ohm": [
+        0,
+        10459
+      ],
+      "ohm_per_lsb": 0.319203,
+      "adc_sum": 6262,
+      "adc_per_sample": 782.75,
+      "adc_per_sample_min": 781.5,
+      "adc_per_sample_max": 784.5,
+      "reported_ohm": 250,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 300,
+      "phase": "1",
+      "dc": 1440,
+      "phase_range_ohm": [
+        0,
+        10459
+      ],
+      "ohm_per_lsb": 0.319203,
+      "adc_sum": 7515,
+      "adc_per_sample": 939.375,
+      "adc_per_sample_min": 938.125,
+      "adc_per_sample_max": 941.125,
+      "reported_ohm": 300,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 470,
+      "phase": "1",
+      "dc": 1440,
+      "phase_range_ohm": [
+        0,
+        10459
+      ],
+      "ohm_per_lsb": 0.319203,
+      "adc_sum": 11775,
+      "adc_per_sample": 1471.875,
+      "adc_per_sample_min": 1470.75,
+      "adc_per_sample_max": 1473.75,
+      "reported_ohm": 470,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 500,
+      "phase": "1",
+      "dc": 1440,
+      "phase_range_ohm": [
+        0,
+        10459
+      ],
+      "ohm_per_lsb": 0.319203,
+      "adc_sum": 12527,
+      "adc_per_sample": 1565.875,
+      "adc_per_sample_min": 1564.75,
+      "adc_per_sample_max": 1567.75,
+      "reported_ohm": 500,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 680,
+      "phase": "1",
+      "dc": 1440,
+      "phase_range_ohm": [
+        0,
+        10459
+      ],
+      "ohm_per_lsb": 0.319203,
+      "adc_sum": 17038,
+      "adc_per_sample": 2129.75,
+      "adc_per_sample_min": 2128.625,
+      "adc_per_sample_max": 2131.625,
+      "reported_ohm": 680,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 700,
+      "phase": "1",
+      "dc": 1440,
+      "phase_range_ohm": [
+        0,
+        10459
+      ],
+      "ohm_per_lsb": 0.319203,
+      "adc_sum": 17540,
+      "adc_per_sample": 2192.5,
+      "adc_per_sample_min": 2191.25,
+      "adc_per_sample_max": 2194.25,
+      "reported_ohm": 700,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 900,
+      "phase": "1",
+      "dc": 1440,
+      "phase_range_ohm": [
+        0,
+        10459
+      ],
+      "ohm_per_lsb": 0.319203,
+      "adc_sum": 22552,
+      "adc_per_sample": 2819.0,
+      "adc_per_sample_min": 2817.875,
+      "adc_per_sample_max": 2820.875,
+      "reported_ohm": 900,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 999,
+      "phase": "1",
+      "dc": 1440,
+      "phase_range_ohm": [
+        0,
+        10459
+      ],
+      "ohm_per_lsb": 0.319203,
+      "adc_sum": 25033,
+      "adc_per_sample": 3129.125,
+      "adc_per_sample_min": 3128.0,
+      "adc_per_sample_max": 3131.0,
+      "reported_ohm": 999,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 1000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 5010,
+      "adc_per_sample": 626.25,
+      "adc_per_sample_min": 626.25,
+      "adc_per_sample_max": 626.75,
+      "reported_ohm": 1000,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 1500,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 7516,
+      "adc_per_sample": 939.5,
+      "adc_per_sample_min": 939.5,
+      "adc_per_sample_max": 940.0,
+      "reported_ohm": 1500,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 2000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 10023,
+      "adc_per_sample": 1252.875,
+      "adc_per_sample_min": 1252.875,
+      "adc_per_sample_max": 1253.375,
+      "reported_ohm": 2000,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 2200,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 11025,
+      "adc_per_sample": 1378.125,
+      "adc_per_sample_min": 1378.125,
+      "adc_per_sample_max": 1378.625,
+      "reported_ohm": 2200,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 3000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 15035,
+      "adc_per_sample": 1879.375,
+      "adc_per_sample_min": 1879.375,
+      "adc_per_sample_max": 1879.875,
+      "reported_ohm": 3000,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 4000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 20048,
+      "adc_per_sample": 2506.0,
+      "adc_per_sample_min": 2506.0,
+      "adc_per_sample_max": 2506.5,
+      "reported_ohm": 4000,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 4700,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 23556,
+      "adc_per_sample": 2944.5,
+      "adc_per_sample_min": 2944.5,
+      "adc_per_sample_max": 2945.0,
+      "reported_ohm": 4700,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 4999,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 25055,
+      "adc_per_sample": 3131.875,
+      "adc_per_sample_min": 3131.875,
+      "adc_per_sample_max": 3132.375,
+      "reported_ohm": 4999,
+      "verdict": -1,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 5000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 25060,
+      "adc_per_sample": 3132.5,
+      "adc_per_sample_min": 3132.5,
+      "adc_per_sample_max": 3133.0,
+      "reported_ohm": 5000,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 5100,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 25561,
+      "adc_per_sample": 3195.125,
+      "adc_per_sample_min": 3195.125,
+      "adc_per_sample_max": 3195.625,
+      "reported_ohm": 5100,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 6000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 30073,
+      "adc_per_sample": 3759.125,
+      "adc_per_sample_min": 3759.125,
+      "adc_per_sample_max": 3759.625,
+      "reported_ohm": 6000,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 8000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 40098,
+      "adc_per_sample": 5012.25,
+      "adc_per_sample_min": 5012.25,
+      "adc_per_sample_max": 5012.75,
+      "reported_ohm": 8000,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 10000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 50122,
+      "adc_per_sample": 6265.25,
+      "adc_per_sample_min": 6265.25,
+      "adc_per_sample_max": 6265.75,
+      "reported_ohm": 10000,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 15000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 75185,
+      "adc_per_sample": 9398.125,
+      "adc_per_sample_min": 9398.125,
+      "adc_per_sample_max": 9398.625,
+      "reported_ohm": 15000,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 20000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 100247,
+      "adc_per_sample": 12530.875,
+      "adc_per_sample_min": 12530.875,
+      "adc_per_sample_max": 12531.375,
+      "reported_ohm": 20000,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 30000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 150372,
+      "adc_per_sample": 18796.5,
+      "adc_per_sample_min": 18796.5,
+      "adc_per_sample_max": 18797.0,
+      "reported_ohm": 30000,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 40000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 200497,
+      "adc_per_sample": 25062.125,
+      "adc_per_sample_min": 25062.125,
+      "adc_per_sample_max": 25062.625,
+      "reported_ohm": 40000,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 50000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 250622,
+      "adc_per_sample": 31327.75,
+      "adc_per_sample_min": 31327.75,
+      "adc_per_sample_max": 31328.25,
+      "reported_ohm": 50000,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 52078,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 261038,
+      "adc_per_sample": 32629.75,
+      "adc_per_sample_min": 32629.75,
+      "adc_per_sample_max": 32630.25,
+      "reported_ohm": 52078,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 52079,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": 261043,
+      "adc_per_sample": 32630.375,
+      "adc_per_sample_min": 32630.375,
+      "adc_per_sample_max": 32630.875,
+      "reported_ohm": 52079,
+      "verdict": 0,
+      "note": "round-trip exact"
+    },
+    {
+      "ohm": 52080,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": null,
+      "adc_per_sample": null,
+      "adc_per_sample_min": null,
+      "adc_per_sample_max": null,
+      "reported_ohm": 5000,
+      "verdict": 0,
+      "note": "ADC saturates (>32630 per sample): SRC_CODEC:5140-5142 assigns auxcable_impedance=5000 (SRC_CODEC:5037)"
+    },
+    {
+      "ohm": 65535,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": null,
+      "adc_per_sample": null,
+      "adc_per_sample_min": null,
+      "adc_per_sample_max": null,
+      "reported_ohm": 5000,
+      "verdict": 0,
+      "note": "ADC saturates (>32630 per sample): SRC_CODEC:5140-5142 assigns auxcable_impedance=5000 (SRC_CODEC:5037)"
+    },
+    {
+      "ohm": 100000,
+      "phase": "0",
+      "dc": 288,
+      "phase_range_ohm": [
+        0,
+        52296
+      ],
+      "ohm_per_lsb": 1.596016,
+      "adc_sum": null,
+      "adc_per_sample": null,
+      "adc_per_sample_min": null,
+      "adc_per_sample_max": null,
+      "reported_ohm": 5000,
+      "verdict": 0,
+      "note": "ADC saturates (>32630 per sample): SRC_CODEC:5140-5142 assigns auxcable_impedance=5000 (SRC_CODEC:5037)"
+    }
+  ],
+  "boundary_5000": [
+    {
+      "ohm": 4997,
+      "phase": "0",
+      "adc_sum": 25045,
+      "adc_per_sample": 3130.625,
+      "adc_per_sample_min": 3130.625,
+      "adc_per_sample_max": 3131.125,
+      "read_audio_res": -1,
+      "verdict": "normal device"
+    },
+    {
+      "ohm": 4998,
+      "phase": "0",
+      "adc_sum": 25050,
+      "adc_per_sample": 3131.25,
+      "adc_per_sample_min": 3131.25,
+      "adc_per_sample_max": 3131.75,
+      "read_audio_res": -1,
+      "verdict": "normal device"
+    },
+    {
+      "ohm": 4999,
+      "phase": "0",
+      "adc_sum": 25055,
+      "adc_per_sample": 3131.875,
+      "adc_per_sample_min": 3131.875,
+      "adc_per_sample_max": 3132.375,
+      "read_audio_res": -1,
+      "verdict": "normal device"
+    },
+    {
+      "ohm": 5000,
+      "phase": "0",
+      "adc_sum": 25060,
+      "adc_per_sample": 3132.5,
+      "adc_per_sample_min": 3132.5,
+      "adc_per_sample_max": 3133.0,
+      "read_audio_res": 0,
+      "verdict": "LINE_OUT"
+    },
+    {
+      "ohm": 5001,
+      "phase": "0",
+      "adc_sum": 25065,
+      "adc_per_sample": 3133.125,
+      "adc_per_sample_min": 3133.125,
+      "adc_per_sample_max": 3133.625,
+      "read_audio_res": 0,
+      "verdict": "LINE_OUT"
+    },
+    {
+      "ohm": 5002,
+      "phase": "0",
+      "adc_sum": 25070,
+      "adc_per_sample": 3133.75,
+      "adc_per_sample_min": 3133.75,
+      "adc_per_sample_max": 3134.25,
+      "read_audio_res": 0,
+      "verdict": "LINE_OUT"
+    }
+  ],
+  "accdet_mv_table": [
+    {
+      "adc_code": 0,
+      "mv": 0.0,
+      "key_3key": "MD_KEY",
+      "key_4key": "MD_KEY"
+    },
+    {
+      "adc_code": 100,
+      "mv": 44.922,
+      "key_3key": "MD_KEY",
+      "key_4key": "MD_KEY"
+    },
+    {
+      "adc_code": 178,
+      "mv": 79.961,
+      "key_3key": "MD_KEY",
+      "key_4key": "AS_KEY"
+    },
+    {
+      "adc_code": 300,
+      "mv": 134.766,
+      "key_3key": "UP_KEY",
+      "key_4key": "UP_KEY"
+    },
+    {
+      "adc_code": 490,
+      "mv": 220.117,
+      "key_3key": "DW_KEY",
+      "key_4key": "DW_KEY"
+    },
+    {
+      "adc_code": 890,
+      "mv": 399.805,
+      "key_3key": "DW_KEY",
+      "key_4key": "DW_KEY"
+    },
+    {
+      "adc_code": 1000,
+      "mv": 449.219,
+      "key_3key": "NO_KEY",
+      "key_4key": "NO_KEY"
+    },
+    {
+      "adc_code": 2048,
+      "mv": 920.0,
+      "key_3key": "NO_KEY",
+      "key_4key": "NO_KEY"
+    },
+    {
+      "adc_code": 4095,
+      "mv": 1839.551,
+      "key_3key": "NO_KEY",
+      "key_4key": "NO_KEY"
+    }
+  ],
+  "not_in_source": [
+    "any ADC-code -> ohm function for AUXADC channel 5 (ACCDET)",
+    "hook/volume key resistance values in ohm",
+    "mic-bias series resistor value / schematic divider",
+    "an in-tree caller of mt6368_accdet_read_audio_res() (sparse clone could not fetch the rest: promisor remote TLS failure)"
+  ]
+}
