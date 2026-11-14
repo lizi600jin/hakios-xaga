@@ -283,8 +283,8 @@ shader/tiler/L2 的配置与 ASN hash，不是 MCU 的取指。
 | 门铃 | `gpuWrite(kDoorbell0, 1)`，`kDoorbell0 = 0x80000` | `:591`、`:495` |
 | 超时 | 1 s（`waitUs(1000000, ...)`） | `:592` |
 
-本项目 `hakios.mali610.c:4155-4227` 逐字对应，**唯一实质差异**是我们多了一步
-`mem_flush(&gShared->mem)`（`:4207`）—— 注释解释因为我们的共享段映射为 cacheable 而
+本项目 `hakios.mali610.c:4156-4227` 逐字对应，**唯一实质差异**是我们多了一步
+`mem_flush(&gShared->mem)`（`:4206`）—— 注释解释因为我们的共享段映射为 cacheable 而
 panthor 是不 cache。这一处**我们比它更保守，是对的**。
 
 ### 2.5 `MaliMetal` 的 `docs/notes.zh-CN.md`：没有内核启动阶段的坑
@@ -436,7 +436,7 @@ instr_features = 0x71
 | 固件段循环步长 | `0x1000`（`:473`） | `PT_LEAF_GRANULE 0x1000`（`:863`） | 同（我们修过 `PAGE_SIZE=16K` 的坑） |
 | PROT 段 | **跳过**，`:461-462` | **映射**，`:1069` | **不一致，需核对**（§3.3） |
 | 叶子 PTE 基础位 | `AF\|NG\|UNPRIV`（`:470`） | `PTE_PAGE\|PTE_AF\|PTE_UNPRIV` + 可选 `NG` | 我们有 `PAGE_VALID` 位（修过的 bug） |
-| 共享段 flush | 无（映射 NC） | 有 `mem_flush`（`:4207`） | 我们更保守，正确 |
+| 共享段 flush | 无（映射 NC） | 有 `mem_flush`（`:4206`） | 我们更保守，正确 |
 | 哨兵法 | 无 | 有（`:3955-3961`） | 我们更好 |
 | GPUEB/IPI | 无概念 | 有（本项目重点） | 平台差异 |
 
@@ -458,7 +458,7 @@ instr_features = 0x71
 288  }
 ```
 
-`PWRTRANS` 只被**打印**（`:287`），从不作为判据。本项目 `hakios.mali610.c:3222-3237`
+`PWRTRANS` 只被**打印**（`:287`），从不作为判据。本项目 `hakios.mali610.c:3221-3238`
 检查 `PWRTRANS` 归零后再等 `READY`，更严格。
 
 **结论：L2 上电顺序上没有可借鉴的差异。** 我们比它更严。
