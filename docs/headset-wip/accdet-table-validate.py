@@ -810,8 +810,10 @@ def prereq_audit(mt6368c, fields):
                     bit0_reasons.append((i + 1, sym + "_SFT=0"))
         if site["kind"] == "regmap_read":
             res["reads"] += 1
-        else:
+        elif site["kind"] in ("regmap_update_bits", "regmap_write"):
             res["writes"] += 1
+        else:
+            res["dapm"] = res.get("dapm", 0) + 1   # dapm supply: not an unconditional write
         res["sites"].append(site)
     res["bit0_written"] = bool(bit0_reasons)
     res["bits_touched"] = sorted(touched)
@@ -1186,9 +1188,9 @@ def human(rep, verbose=False):
     A("")
     A("-- 0x230c 前置审计 " + "-" * 58)
     a = rep["prereq_audit_0x230c"]
-    A("   %s；bit0 被写=%s；被触碰位=%s；写点 %d / 读点 %d"
+    A("   %s；bit0 被写=%s；被触碰位=%s；显式写点 %d / 读点 %d / DAPM supply 引用 %d"
       % (a["verdict"], a["bit0_written"], a["bits_touched"], a.get("writes", -1),
-         a.get("reads", -1)))
+         a.get("reads", -1), a.get("dapm", 0)))
     for st in a["sites"]:
         A("     :%-5d %-20s mask=%-6s sft=%s  %s"
           % (st["line"], st["kind"], st["mask"], st["sft"], st["text"]))

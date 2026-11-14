@@ -6,7 +6,7 @@
 > **日期**：2026-11-15
 > **配套文件**：
 > - `findings/headsetless-checks.json` — 38 条检查项的机器可读定义
-> - `headsetless-check.py` — 可执行判定器（`--selftest` 34 条断言，已跑）
+> - `headsetless-check.py` — 可执行判定器（`--selftest` 37 条断言，已跑）
 > - `accdet-baseline.json` — stock Android 基线（130 项）
 >
 > 本文所有数字都能在不碰设备的前提下复算。凡标【未验证】的，是没有一手证据的推断。
@@ -504,6 +504,9 @@ accdet_dts:deb0=0x800,deb1=0x800,deb3=0x20,deb4=0x44
 | JSON 有、dump 文本没有的 6 个 | `0x1108` `0x11c0` `0x2319` `0x231d` `0x2320` `0x2323` —— 这 6 个在 dump 文本里是 `[0x231d]=0x6` 这种格式，提取脚本单独处理过 |
 | dump 文本有、JSON 没有的 | 无 |
 
+**最后一句**：`accdet-after-round20.txt` 与基线 md5 相同这件事，意味着**「两次独立采集得到相同结果」这个结论在本轮并不成立** ——
+它是同一份文本的两份拷贝。所以 A8（两次 dump 一致）**必须在真机上重新做一次**，不能引用这条 md5。
+
 ### 4.5 一处会改变判据的文献歧义：VAUD18 死掉时 `0x26b6` 读什么
 
 `findings/ACCDET-INIT-SEQUENCE.md:590` 写着：
@@ -535,17 +538,13 @@ accdet_dts:deb0=0x800,deb1=0x800,deb3=0x20,deb4=0x44
 4. 这一条的最终判定要等 `0x1cb2` 真机读数。在此之前，**`0x26b6 == 0xFF` 与「VAUD18 正常」之间没有推断关系**。
 
 ---
-**最后一句**：`accdet-after-round20.txt` 与基线 md5 相同这件事，意味着**「两次独立采集得到相同结果」这个结论在本轮并不成立** ——
-它是同一份文本的两份拷贝。所以 A8（两次 dump 一致）**必须在真机上重新做一次**，不能引用这条 md5。
-
----
 
 ## 5. 脚本与自检
 
 `headsetless-check.py` 是本文的可执行版本。
 
 ```bash
-# 自检（34 条断言，不碰设备）
+# 自检（37 条断言，不碰设备）
 python3 docs/headset-wip/headsetless-check.py --selftest
 
 # 判定一份 dump
@@ -605,7 +604,7 @@ VERDICT: 124 个块寄存器全部读回 0x00。
 
 ---
 
-### 5.3 `--selftest` 的真实输出（34 条断言）
+### 5.3 `--selftest` 的真实输出（37 条断言）
 
 ```
     ok   1 干净 dump 的 124 个块寄存器全被解析
@@ -631,6 +630,9 @@ VERDICT: 124 个块寄存器全部读回 0x00。
     ok   7 单点差异仍判 B7 PASS
     ok   8 超时行 → A7 FAIL 且报出地址
     ok   9 AB=0 → B1 FAIL 且提到 MICBIAS
+    ok   9b 无 0x1cb2 时 B1 的 PASS 附带「无法排除 VAUD18 未开」
+    ok   9b 0x1cb2 bit0=0 时 B1 明说「不构成空插座证据」
+    ok   9b 0x1cb2 bit0=1 时 B1 不再附带保留
     ok   10 两侧 AB 不一致 → B10 FAIL
     ok   11 10 次 AB=3 → E1/E2 PASS
     ok   11 混入一次 AB=0 → E1 FAIL
@@ -643,17 +645,25 @@ VERDICT: 124 个块寄存器全部读回 0x00。
     ok   14 只有提示行 → exit 2，且不计坏行只记 note
     ok   14 横幅行不计坏行、坏值行计坏行
     
-    全部 34 条断言通过
+    全部 37 条断言通过
 ```
 
-### 5.4 一份「理想阶段 0 dump」的真实输出
+### 5.4 一份「理想 dump」的真实输出（阶段 0 + 阶段 2 判据同时满足）
 
-构造方式：把 stock 基线的 130 项 + 新增的 `0x0008/0x0009/0x1cb2/0x230c` + 12 条 sample 行，
-按驱动格式写成 `headset: 0xXXXX = 0xYY`，然后跑脚本。这份输出就是阶段 0 全通过时长什么样。
+构造方式：stock 基线的 130 项 + 新增的 `0x0008/0x0009`（`0x30/0x68`）+ `0x1cb2 = 0x01`（VAUD18 已开）
++ `0x230c = 0x00`（时钟未关）+ 12 条 `sample` 行 + 一行横幅，按驱动格式写成 `headset: 0xXXXX = 0xYY`。
+调用时同时给 `--second`（同一份文件）与 `--post-init`。
+
+**注意两件事**：
+
+1. `A8` 这里是「自己跟自己比」，只演示输出形态，**不构成「读通道可重复」的证据** ——
+   真机上必须是两次独立的调用。
+2. 输出里的文件路径 `/tmp/dump-ideal.txt` 是构造出来的临时文件，**不是真机 dump**。
+   它只证明「判据在理想输入下能全部判 PASS」，不证明芯片真的长这样。
 
 ```
     == dump ==
-    文件     /tmp/dump-full.txt
+    文件     /tmp/dump-ideal.txt
     行数     147（带 headset: marker 147 行）
     寄存器   134 个（块内 124，distinct 值 27）
     提示行   1 行（无寄存器值，不算坏行）：
@@ -670,7 +680,7 @@ VERDICT: 124 个块寄存器全部读回 0x00。
     PASS  0   A5   0x0008=0x30 且 0x0009=0x68                    ok
     PASS  0   A6   7 对镜像寄存器相等（地址对齐）                             7 对中 0 对不等
     PASS  0   A7   124 个块寄存器全部读到                                124/124
-    SKIP  0   A8   两次 dump 逐字节相同                                需要 --second 指向第二次 dump
+    PASS  0   A8   两次 dump 逐字节相同                                0 差异
     PASS  0   B1   0x26b6 bit[7:6] == 3 (空插座 cur_AB=拔出)         0x26b6=0xff → cur_AB=3
     PASS  0   B2   0x26b6 整字节 == 0xFF                           got 0xff
     PASS  0   B3   0x2688 == 0x00 (AUXADC 开关关)                  got 0x00
@@ -681,10 +691,10 @@ VERDICT: 124 个块寄存器全部读回 0x00。
     PASS  0   B8   6 个块外寄存器逐个匹配                                 6/6 匹配
     PASS  0   B9   AUDDEC 四项非零锚点                                ok
     PASS  0   B10  0x26b6 与 0x26b8 的 bit[7:6] 一致                0x26b6→3, 0x26b8→3
-    SKIP  2   B11  跑完初始化后 124 个块寄存器与基线 0 差异                     需要 --post-init（dump 取自初始化之后）
+    PASS  2   B11  跑完初始化后 124 个块寄存器与基线 0 差异                     0 差异（与不写 SW_EN 的实现一致）
     PASS  0   D1   0x230c bit0 == 0 (ACCDET 时钟未关)               0x230c=0x00 → bit0=0
     INFO  0   D2   0x230c 整字节记录                                 0x00
-    INFO  0   D3   0x1cb2 bit0 记录 (VAUD18)                      0x1cb2=0x00 → bit0=0（裸机必须自己开；开着也不能由 0x26b6=0xff 反推）
+    INFO  0   D3   0x1cb2 bit0 记录 (VAUD18)                      0x1cb2=0x01 → bit0=1
     SKIP  2   D4   若 0x1cb2 bit0==0，初始化必须先写 1                   需要阶段 2 的写日志（当前 headset=1 只读，无写路径）
     PASS  0   D5   0x2319 == 0x00 (ACCDET 不在复位)                 got 0x00
     PASS  0   D6   AUDDEC 块 48 个寄存器全部读到                         48/48
@@ -705,13 +715,16 @@ VERDICT: 124 个块寄存器全部读回 0x00。
     == 与 stock 基线 diff（source: stock Android dump_reg, no headset plugged, 2026-11-14）==
     基线 130 项：一致 130，不一致 0，未读到 0
     
+    == 两次 dump 对比（A8）==
+    两次 dump 逐字节相同
+    
     == 汇总 ==
-    PASS 21   FAIL 0   SKIP 12   VOID 0   INFO 5
+    PASS 23   FAIL 0   SKIP 10   VOID 0   INFO 5
     
     按阶段（可判定 = PASS+FAIL；SKIP/INFO 不计入分母）：
-      阶段 0 只读零风险          可判定 21 项：PASS 21  FAIL  0  其余  6
+      阶段 0 只读零风险          可判定 22 项：PASS 22  FAIL  0  其余  5
       阶段 1 最小写验证          可判定  0 项：PASS  0  FAIL  0  其余  9
-      阶段 2 初始化表后回读        可判定  0 项：PASS  0  FAIL  0  其余  2
+      阶段 2 初始化表后回读        可判定  1 项：PASS  1  FAIL  0  其余  1
     
     结论：无失败项。空插座基线成立，可以进入下一阶段。
 ```

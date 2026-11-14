@@ -387,7 +387,8 @@
   "verdict": "bit0 无写入者",
   "note": "",
   "reads": 9,
-  "writes": 6,
+  "writes": 2,
+  "dapm": 4,
   "bit0_reasons": []
  },
  "prereq_audit_0x1cb2": {

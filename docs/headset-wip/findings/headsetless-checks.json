@@ -227,7 +227,9 @@
    "means_pass": "空插座基线正确：cur_AB=3=ACCDET_STATE_AB_11（拔出）。同时说明 ACCDET 数字部分读到的是真实状态而不是恒 0。",
    "means_fail": "==0（0x00..0x3f）：读到三段耳机形状 —— 可能是 MICBIAS 没供电、插孔上拉异常，或基线本来就不是空插座；==1（0x40..0x7f）：四段；==2（0x80..0xbf）：本平台驱动无此分支，出现即判错（先查位序）；==3 但整字节低 6 位与 stock 不同：见 B2。",
    "source": "mt6368.h:5514-5519 ACCDET_STATE_AB_11=0x3；MT6368_ACCDET_CON46=0x26b6",
-   "checked": "checked_by_script"
+   "checked": "checked_by_script",
+   "precondition": "B1 的 PASS 只在 D3 读到 0x1cb2 bit0==1 时才构成「空插座基线正确」的证据。若 D3==0，则 0x26b6==0xFF 与「VAUD18 正常」之间没有推断关系（见 PLAN §4.5）。",
+   "caveat": "「VAUD18 死掉时 0x26b6 读 0x3」有歧义：整字节 0x03 → AB=0（B1 FAIL）；bit[7:6]=3 → AB=3（B1 PASS 但 PASS 是假的）。本轮无 VAUD18=0 的真机观测，无法定案。"
   },
   {
    "id": "B2",
@@ -618,7 +620,7 @@
    "mask": "0x01",
    "expect": null,
    "needs_phone": false,
-   "means_pass": "记录到值即可。0 或 1 都合法：0 表示裸机必须自己开。",
+   "means_pass": "记录到值即可。0 或 1 都合法：0 表示裸机必须自己开。**这是 B1 结论的前提**：D3=1 时 B1 的 PASS 才可信。",
    "means_fail": "永不 FAIL。注意：**0x26b6=0xff 不能证明 VAUD18 开着** —— VAUD18 死掉时读到的是 AB=3（0x03/0xC0 形状），与真空插座同形，两者用 0x26b6 无法区分。",
    "source": "mt6368.h:511-514 RG_LDO_VAUD18_EN；ACCDET-INIT-SEQUENCE.md §8 注",
    "checked": "checked_by_script"

@@ -257,6 +257,13 @@ def judge(regs, samples, stats, base, blocks_base, misc_base, post_init,
             detail += "  (四段耳麦形状)"
         elif ab == 2:
             detail += "  (本平台驱动无此分支，出现即判错，先查位序)"
+        # B1 的 PASS 有前提：若 VAUD18 没开，0x26b6==0xFF 与「真空插座」不可区分
+        # （VAUD18 死掉时读 0x3 有两种读法，见 PLAN §4.5）。D3 没读到就明说没前提。
+        if ab == 3:
+            if 0x1cb2 not in regs:
+                detail += "；未读到 0x1cb2，无法排除「VAUD18 未开」这一同形解释"
+            elif not (regs[0x1cb2] & 1):
+                detail += "；但 0x1cb2 bit0=0（VAUD18 未开），此 PASS 不构成空插座证据"
         rep.add("B1", PASS if ab == 3 else FAIL,
                 "0x26b6 bit[7:6] == 3 (空插座 cur_AB=拔出)", detail)
     else:
@@ -719,6 +726,23 @@ def selftest():
     regs, samples, stats, rep, diff, code, notes, _ = run(ab0)
     b1 = [r for r in rep.rows if r[0] == "B1"][0]
     ok("9 AB=0 → B1 FAIL 且提到 MICBIAS", b1[1] == FAIL and "MICBIAS" in b1[3], b1[3])
+
+    # 9b. B1 的 PASS 有前提：0x1cb2 必须在场且 bit0=1。
+    #     这是本轮最容易误判的一处（VAUD18 死掉时 0x26b6 可能与真空插座同形）。
+    regs, samples, stats, rep, diff, code, notes, _ = run(clean_lines())
+    b1 = [r for r in rep.rows if r[0] == "B1"][0]
+    ok("9b 无 0x1cb2 时 B1 的 PASS 附带「无法排除 VAUD18 未开」",
+       b1[1] == PASS and "无法排除" in b1[3], b1[3])
+    regs, samples, stats, rep, diff, code, notes, _ = run(
+        clean_lines() + ["headset: 0x1cb2 = 0x00"])
+    b1 = [r for r in rep.rows if r[0] == "B1"][0]
+    ok("9b 0x1cb2 bit0=0 时 B1 明说「不构成空插座证据」",
+       b1[1] == PASS and "不构成空插座证据" in b1[3], b1[3])
+    regs, samples, stats, rep, diff, code, notes, _ = run(
+        clean_lines() + ["headset: 0x1cb2 = 0x01"])
+    b1 = [r for r in rep.rows if r[0] == "B1"][0]
+    ok("9b 0x1cb2 bit0=1 时 B1 不再附带保留",
+       b1[1] == PASS and "无法排除" not in b1[3] and "不构成" not in b1[3], b1[3])
 
     # 10. 0x26b6 与 0x26b8 不一致：B10 FAIL。
     mis = clean_lines(**{"0x26b8": 0x40})

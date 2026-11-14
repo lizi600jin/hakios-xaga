@@ -18,7 +18,7 @@
 | 4 | `CONFIG_HAKIOS_MT6895_HEADSET=y` **确实开着**，驱动真编进了内核 | `.config:39`；`hakios.drivers.h:2` 列出 `mt6895_headset`；`hakios-kernel` 里有 26 处 headset 字符串（`headset: unsupported mode %u` 等） |
 | 5 | `usb=2` **配了驱动但没人传参数**，`hakios_mt6895_usb_init()` 第一行就 return | `hakios.mt6895_usb.c:1866`；`.config:71` 无 `usb=`；`mt6895.config:83` 却写「xaga.config turns it on with usb=2」 |
 | 6 | `BOARD_NO_PLOG / BOARD_NO_UART / BOARD_NO_OVL / MENU_DEFAULT_XNU` 是**无条件 `#define`**，`-D…=0` 改不动 | `board.h:401, 896, 897, 908`；实测 `-DBOARD_NO_PLOG=0` 触发 `-Wmacro-redefined` 后仍为 1 |
-| 7 | `XNU_RETURN_AFTER` 的真值是 **600**（`make phone` 时，按 `Makefile:53 SECS ?= 600`），不是 `board.h:793` 的 150，也不是 45 | `board.h:793` 的 150 被 `xaga-cycle.sh:78` 的 `-DXNU_RETURN_AFTER` 覆盖；600 来自 `Makefile` |
+| 7 | `XNU_RETURN_AFTER` 的真值是 **600**（`make phone` 时，按 `Makefile:61 SECS ?= 600`），不是 `board.h:793` 的 150，也不是 45 | `board.h:793` 的 150 被 `xaga-cycle.sh:78` 的 `-DXNU_RETURN_AFTER` 覆盖；600 来自 `Makefile` |
 | 8 | `configs/symbols.tsv` 陈旧 → 它**放过** `headset=`（不加也查不出来），却**拒绝**一个新参数名 | 实测：`CONFIG_HEADSET` 报 `no symbol`；`mali_colds=0` 报 `nothing reads` |
 | 9 | `devices/` 整个被 `.gitignore:120` 忽略，`xaga.config` **本来就不进 git**；必须 `git add` 的是 `mtk/mt6895/configs/mt6895.config` | `git check-ignore -v` 命中 `.gitignore:120:/devices/*`；`mtk/mt6895/configs/` 是 `??` 且**没被 ignore** |
 | 10 | 22 个 `A` **全部是 intent-to-add（index blob 为空）**，`git add <path>` 前任何提交都会把它们写成空文件 | `git ls-files -s` 显示 `e69de29…`（空 blob），工作区 48016/239745 字节 |
@@ -211,7 +211,7 @@ PLOG 1 / UART 1 / MENU 1
   static inline void plog_reset(void) { }
   static inline void plog_putc(char c) { (void)c; }
   ```
-- `mtk/loader/mtkdbg.h:412-418`：`dbg_putc()` 变成 `dbg_tee_putc(); (void)c;`（连 `fbcon_putc` 都不调用，前提是 `BOARD_NO_FB_TEXT` 也在）。
+- `mtk/loader/mtkdbg.h:415-419`：`BOARD_NO_FB_TEXT` 也在时，`dbg_putc()` 变成 `dbg_tee_putc(); (void)c;`（连 `fbcon_putc` 都不调用）。
 - 所以 loader 的日志只剩：屏幕（`fbcon_putc`）+ 自己的 logbook（`save_log_to_flash()`，写 `xnusys` 尾部）。**`/sys/fs/pstore/console-ramoops-0` 里不会有 loader 的文字**——`xaga-cycle.sh:119` 抓的就是这个文件。
 - 这条是**故意**的（`board.h:899-908` 解释了：那块 DRAM 是 Android ramoops 认领的，第一字符写进去就停）。但要知道「loader 日志不在 pstore」这个后果。
 
@@ -221,7 +221,7 @@ PLOG 1 / UART 1 / MENU 1
 |---|---|---|
 | `mtk/loader/mtkloader.c:156` | `"0"` | 没有 board.h、也没有 `-D` 时的兜底（等于「永不返回」） |
 | `mtk/mt6895/loader/board.h:793` | `"150"` | 手敲 `build.sh`（有 `DEVICE`、无 `-D`） |
-| `mtk/tools/xaga-cycle.sh:30` → `Makefile:53` | `SECS=${XNU_SECS:-45}`，`make phone` 传 `XNU_SECS=$(SECS)`，`SECS ?= 600` | **`make phone DEVICE=xaga` 的实际值：600** |
+| `mtk/tools/xaga-cycle.sh:30` → `Makefile:61` | `SECS=${XNU_SECS:-45}`；`make phone` 传 `XNU_SECS=$(SECS)`；`Makefile:61` `SECS ?= 600` | **`make phone DEVICE=xaga` 的实际值：600** |
 | `mtk/tools/xaga-cycle.sh` 直接运行 | 45 | 不经 make 时 |
 
 预处理已验证 `-DXNU_RETURN_AFTER="600"` 会覆盖 `board.h:793`（输出 `XNU_RETURN_AFTER 600`）。
@@ -247,7 +247,7 @@ PLOG 1 / UART 1 / MENU 1
   if (!PE_parse_boot_argn("usb", &which, sizeof(which)) || which != 2) { return; }
   ```
 - `.config:71` / `xaga.config:40` 的 `CONFIG_BOOTARGS` 里**没有 `usb=`**。`board.h:874` 里也没有（`board.h:847` 明确说 "usb=2 is left out on purpose"）。
-- 所以：**驱动占着 74 KB 的代码和内核空间，一行都不执行**。`mtk/mt6895/configs/mt6895.config:83` 的注释「xaga.config turns it on with usb=2」是**错的**。
+- 所以：**驱动（源文件 74103 字节）编在内核里，`hakios_mt6895_usb_init()` 一行实质代码都不执行**。`mtk/mt6895/configs/mt6895.config:83` 的注释「xaga.config turns it on with usb=2」是**错的**。
 
 ### T8 `mali` 参数：40 个读 `mali_*` 的驱动 vs 42 个 lst 行，`.config` 只传了 3 个
 
@@ -282,10 +282,10 @@ PLOG 1 / UART 1 / MENU 1
 - 不带 board.h 时的关键默认值（`4b` 段）：`XNU_PHYS_BASE 0xc0000000`、`UART_BASE 0x11002000`、`TOPRGU_BASE 0x10007000`、`RAMOOPS_CONSOLE 0x4d09f000`、`LK_FB_BASE 0x787b0000`、`OVL0_BASE 0x1400b000`、`XNU_EXTRA_ARGS "cpus=1"`、`MENU_DEFAULT_XNU 0`。
 - 关于 **41240 字节**那个数字：本次审计**没有**在树里找到 41240 字节的 loader 产物（`find . -type f -size 41240c` 为空）。现在 `mtk/loader/mtkloader.bin` 是 **59720** 字节（2026-11-14 02:48:53）。「不带 DEVICE 会得到 41240 字节镜像」这一具体数值**未验证**（无该构件可对比）；但「不带 DEVICE 会用 MT6768 的地址」**已证实**。
 
-### T11 `.config` 是生成物，手改会被下次 defconfig 抹掉；而它现在**恰好**是最新的
+### T11 `.config` 是生成物：改了 fragment 不重生成，就静默用旧配置（**现在正在发生**）
 
 - `.config:3` 自己写着 "Do not edit it"。
-- 实测 `tools/hakios-config.py defconfig xaga_defconfig -o /tmp/regen-xaga.config` 与现有 `.config` **逐字节相同**（`diff` 无输出）。也就是说当前 `.config` 与三个 fragment 一致，不是陈旧的。
+- 审计开始时（00:30）实测 `tools/hakios-config.py defconfig xaga_defconfig -o /tmp/regen-xaga.config` 与当时 `.config` **逐字节相同**（`diff` 无输出）。**到 00:46 就不成立了**——见下面第四条。
 - `mtk/mt6895/configs/mt6895.config` 的 mtime（23:28:16）晚于 `.config`（02:48:43），但两者内容一致——那次改动只动了注释。
 - **但这个坑现在正在发生**：`devices/xaga/configs/xaga.config` 在 00:46:15 被改（加了 `headset=1`），`.config` 没跟着变。实测 `diff -u .config <(defconfig 重生)` 只有一行差异，就是 `CONFIG_BOOTARGS`。
 - 关键点：**没有任何构建步骤会自动重生成 `.config`**。`tools/make-kernel.sh:47` 只跑 `hakios-config.py kernel`（把 `.config` 的驱动选择写进内核树），不跑 `defconfig`；`make kernel` 也不跑。所以「改了 fragment 忘了 defconfig」会静默地一直用旧配置。
@@ -311,7 +311,7 @@ PLOG 1 / UART 1 / MENU 1
 | `BOARD_NO_PLOG` | 908 | 1 | **否** | **否** | board.h |
 | `BOARD_NO_UART` | 896 | 1 | **否** | **否** | board.h |
 | `BOARD_NO_OVL` | 897 | 1 | **否** | **否** | board.h |
-| `BOARD_NO_FB_TEXT` | — | **未定义** | — | 是（`-D` 可加） | 未定义（`mtkdbg.h:409` 走 `#else` 分支） |
+| `BOARD_NO_FB_TEXT` | — | **未定义** | — | 是（`-D` 可加） | 未定义（`mtkdbg.h:408` 的 `#ifdef` 不成立，走 `:420` 的 `#else`） |
 | `MENU_DEFAULT_XNU` | 401 | 1 | **否** | **否** | board.h |
 | `BOARD_TOUCH` | 498 | 0 | 是 | 是 | board.h |
 | `XNU_SYSTEM_IMAGE` | 385 | 1 | 是 | 是 | board.h（注释 351 行说「0 for now」，**代码是 1**） |
@@ -350,7 +350,7 @@ PLOG 1 / UART 1 / MENU 1
 | `CONFIG_SOC` | 6 | `"mt6895"` | （只进 version string） | `mt6895.config:25` |
 | `CONFIG_FIRMWARE` | 7 | `"device"` | — | `configs/defconfig` |
 | `CONFIG_CPUS` | 44 | 4 | `cpus=4` | `mt6895.config:26` |
-| `CONFIG_BOOTARGS` | 71 | `"buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0 mali_preas0=1"` | 原样追加 11 个词 | **`xaga.config:40`** |
+| `CONFIG_BOOTARGS` | 71 | `"buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0 mali_preas0=1"` | 原样追加 **10 个词** | **`xaga.config:40`** |
 | `CONFIG_FB_INUSE` | 161 | `y` | `fb_inuse=1` | `xaga.config:39` |
 | `CONFIG_FB_QUEUE` | 164 | `1` | `fb_queue=1` | `xaga.config:38` |
 | `CONFIG_FBFIT` | 166 | `0` | `fbfit=0` | `xaga.config:37` |
@@ -403,7 +403,7 @@ cpus=4 … mali_preas0=1 headset=1 fb_inuse=1 fb_queue=1 fbfit=0 fbscale=2
 | `BOARD_NO_UART` | 1 | `mtkloader.c:527` 的 UART 输出（`out()` 不再写 0x11001000） | `mtkloader.c:527` | 否（无条件宏 + 需重编） |
 | `BOARD_NO_OVL` | 1 | `mtkloader.c:638, 671` 的 OVL 读/写（`display_find()` 不读 OVL，直接信 `LK_FB_BASE`） | `mtkloader.c:638,671` | 否 |
 | `BOARD_NO_PLOG` | 1 | `mtkdbg.h:274-276` 的 `plog_putc()`/`plog_reset()` 变空 | `mtkdbg.h:274` | 否（**且 pstore 里不会有 loader 日志**） |
-| `BOARD_NO_FB_TEXT` | **未定义** | 若定义，连屏幕文字也没了（`mtkdbg.h:409`） | `mtkdbg.h:409` | 可 `-D` 加 |
+| `BOARD_NO_FB_TEXT` | **未定义** | 若定义，连屏幕文字也没了（`mtkdbg.h:415-419`） | `mtkdbg.h:408` | 可 `-D` 加 |
 | `BOARD_SKIP_MENU` | 由 `-D` 加 | 跳过菜单（`mtkloader.c:7478`） | `mtkloader.c:7478` | 可 `-D` |
 | `BOARD_NO_CONNSYS` | 由 `-D` 加 | 跳过 CONNSYS（`mtkloader.c:7513`） | `mtkloader.c:7513` | 可 `-D` |
 
@@ -511,18 +511,96 @@ cpus=4 … mali_preas0=1 headset=1 fb_inuse=1 fb_queue=1 fbfit=0 fbscale=2
 | **loader 本体** | `mtk/loader/mtkloader.c`（M，+4359）<br>`mtk/loader/mtkdbg.h`（M，+197）<br>`mtk/loader/mtkmali.h`（M）<br>`mtk/loader/msdc.h`（M）<br>`mtk/loader/fbdiag_start.S`（M）<br>`mtk/loader/ufs.h`（**A，空 blob**，141239 B） | `mtkloader.c` 是最大的一块（UFS、Mali 供电、PMIF、headset 日志） |
 | **用户态** | `userland/build.sh`（M）<br>`userland/rc.launchd`（M）<br>`userland/src/init.c`（M）<br>`userland/src/inject.c`（M） | 与内核镜像分开构建，不进 `hakios-kernel` |
 
-### 5.3 文档 / 工具类 —— 7 个
+### 5.3 文档 / 工具类 —— 17 个
 
-| 文件 | 状态 | 说明 |
-|---|---|---|
-| `docs/boot-args.md` | M | `boot-args.py --markdown` 的产物；**仍陈旧**（342→351 参数那次只改了一部分） |
-| `mtk/README.md` | M | +157 行 |
-| `mtk/tools/chainboot.py` | M | 引导镜像打包 |
-| `mtk/tools/gpt-carve.py` | M | GPT 分区 |
-| `mtk/tools/xaga-*.sh`（auto / carve / cycle / pull-log） | 4 × **A（空 blob）** | 运行脚本；`xaga-cycle.sh` 是本次审计的关键一环 |
-| `mtk/tools/mk{font8x16,malifw,nvtfw}.py`、`nvt-slots.py` | 4 × **A（空 blob）** | 生成器 |
-| `mtk/tools/xaga-{first-boot,input}.md` | 2 × **A（空 blob）** | 文档 |
-| `mtk/tools/test-{headset,logbook,pmif-transactions}.py`、`xaga-logbook.py` | 4 × **??** | 未跟踪的测试/工具 |
+| 文件 | 状态 | 字节 | 说明 |
+|---|---|---|---|
+| `docs/boot-args.md` | M | — | `boot-args.py --markdown` 的产物；**仍陈旧**（`--check` 报 out of date） |
+| `mtk/README.md` | M | — | +157 行 |
+| `mtk/tools/chainboot.py` | M | — | 引导镜像打包 |
+| `mtk/tools/gpt-carve.py` | M | — | GPT 分区 |
+| `mtk/tools/xaga-cycle.sh` | **A（空 blob）** | 6491 | **一次运行的入口**；本审计的关键一环（`:35` 读 `.config`，`:78` 覆盖 `XNU_EXTRA_ARGS`） |
+| `mtk/tools/xaga-auto.sh` | **A（空 blob）** | 4147 | 无人值守：等 fastboot → 刷 → 等 Android → 拉 logbook → 打印关键行 |
+| `mtk/tools/xaga-carve.sh` | **A（空 blob）** | 8878 | GPT 划 `xnusys` |
+| `mtk/tools/xaga-pull-log.sh` | **A（空 blob）** | 1107 | 从手机拉 logbook |
+| `mtk/tools/mkfont8x16.py` | **A（空 blob）** | 7493 | 生成 `font8x16.h`（替代 swift 版） |
+| `mtk/tools/mkmalifw.py` | **A（空 blob）** | 1926 | 生成 `drivers/gpu/hakios.mali610_fw.h`（1323077 B） |
+| `mtk/tools/mknvtfw.py` | **A（空 blob）** | 9211 | 生成 `drivers/input/hakios.nvt_fw.h`（847130 B） |
+| `mtk/tools/nvt-slots.py` | **A（空 blob）** | 2068 | Novatek 槽位 |
+| `mtk/tools/xaga-first-boot.md` | **A（空 blob）** | 7780 | 文档 |
+| `mtk/tools/xaga-input.md` | **A（空 blob）** | 10396 | 文档 |
+| `mtk/tools/test-headset.py` | **??** | 8351 | 未跟踪测试 |
+| `mtk/tools/test-logbook.py` | **??** | 7370 | 未跟踪测试 |
+| `mtk/tools/test-pmif-transactions.py` | **??** | 6313 | 未跟踪测试 |
+| `mtk/tools/xaga-logbook.py` | **??** | 2300 | 未跟踪工具 |
+
+（`xaga-cycle.sh` 归在「工具」是因为它是运行脚本；但它决定 `-D` 的值，**实际影响构建结果**，所以 5.1 的结论也适用于它。）
+
+### 5.3b 逐项对照（57 个全列）
+
+`git status --porcelain` 的 57 条，按类别归位。表格里的「类」：**配**=配置（影响构建结果）/ **码**=代码 / **文**=文档工具。
+
+| # | 状态 | 文件 | 类 |
+|---|---|---|---|
+| 1 | M | `Makefile` | 配 |
+| 2 | M | `configs/boot-args.lst` | 配 |
+| 3 | M | `configs/symbols.tsv` | 配 |
+| 4 | M | `devices/manifest.conf` | 配 |
+| 5 | M | `docs/boot-args.md` | 文 |
+| 6 | M | `drivers/core/hakios.stubs.c` | 码 |
+| 7 | A | `drivers/gpu/hakios.mali610_fw.h` | 码（生成物） |
+| 8 | M | `drivers/input/hakios.input.c` | 码 |
+| 9 | A | `drivers/input/hakios.nvt_fw.h` | 码（生成物） |
+| 10 | M | `drivers/map` | 配 |
+| 11 | M | `mtk/README.md` | 文 |
+| 12 | M | `mtk/loader/build.sh` | 配 |
+| 13 | M | `mtk/loader/fbdiag_start.S` | 码 |
+| 14 | M | `mtk/loader/link.ld` | 配 |
+| 15 | M | `mtk/loader/msdc.h` | 码 |
+| 16 | M | `mtk/loader/mtkdbg.h` | 码 |
+| 17 | M | `mtk/loader/mtkloader.c` | 码 |
+| 18 | M | `mtk/loader/mtkmali.h` | 码 |
+| 19 | M | `mtk/loader/start.S` | 配 |
+| 20 | A | `mtk/loader/ufs.h` | 码 |
+| 21 | M | `mtk/mt6895/drivers/audio/conf` | 配 |
+| 22 | M | `mtk/mt6895/drivers/audio/hakios.mt6895_headset.c` | 码 |
+| 23 | A | `mtk/mt6895/drivers/gpu/conf` | 配 |
+| 24 | A | `mtk/mt6895/drivers/gpu/hakios.mali610.c` | 码 |
+| 25 | A | `mtk/mt6895/drivers/input/conf` | 配 |
+| 26 | A | `mtk/mt6895/drivers/input/hakios.mt6895_keys.c` | 码 |
+| 27 | A | `mtk/mt6895/drivers/input/hakios.nvt.c` | 码 |
+| 28 | A | `mtk/mt6895/drivers/usb/conf` | 配 |
+| 29 | A | `mtk/mt6895/drivers/usb/hakios.mt6895_usb.c` | 码 |
+| 30 | A | `mtk/mt6895/loader/board.h` | 配（**最关键**） |
+| 31 | A | `mtk/mt6895/soc.conf` | 配 |
+| 32 | M | `mtk/tools/chainboot.py` | 文 |
+| 33 | M | `mtk/tools/gpt-carve.py` | 文 |
+| 34 | A | `mtk/tools/mkfont8x16.py` | 文 |
+| 35 | A | `mtk/tools/mkmalifw.py` | 文 |
+| 36 | A | `mtk/tools/mknvtfw.py` | 文 |
+| 37 | A | `mtk/tools/nvt-slots.py` | 文 |
+| 38 | A | `mtk/tools/xaga-auto.sh` | 文 |
+| 39 | A | `mtk/tools/xaga-carve.sh` | 文 |
+| 40 | A | `mtk/tools/xaga-cycle.sh` | 文（但决定 `-D`，按 配 对待） |
+| 41 | A | `mtk/tools/xaga-first-boot.md` | 文 |
+| 42 | A | `mtk/tools/xaga-input.md` | 文 |
+| 43 | A | `mtk/tools/xaga-pull-log.sh` | 文 |
+| 44 | M | `userland/build.sh` | 码 |
+| 45 | M | `userland/rc.launchd` | 码 |
+| 46 | M | `userland/src/init.c` | 码 |
+| 47 | M | `userland/src/inject.c` | 码 |
+| 48 | M | `xnu/files/bsd/sys/hakios.audio.h` | 码 |
+| 49 | M | `xnu/files/bsd/sys/hakios.input.h` | 码 |
+| 50 | M | `xnu/files/iokit/Kernel/MiniIOMobileFramebuffer.cpp` | 码 |
+| 51 | M | `xnu/files/osfmk/arm64/loader_return.c` | 码 |
+| 52 | ?? | `mtk/mt6895/configs/`（`mt6895.config`） | 配（**必须 `git add`**） |
+| 53 | ?? | `mtk/tools/test-headset.py` | 文 |
+| 54 | ?? | `mtk/tools/test-logbook.py` | 文 |
+| 55 | ?? | `mtk/tools/test-pmif-transactions.py` | 文 |
+| 56 | ?? | `mtk/tools/xaga-logbook.py` | 文 |
+| 57 | ?? | `xnu/files/bsd/sys/hakios.pmif.h` | 配（**必须 `git add`**） |
+
+计数：**配 16 / 码 23 / 文 18 = 57**（`xaga-cycle.sh` 记在「文」，但它决定 `-D`，实际影响构建结果）。
 
 ### 5.4 关键 diff（只读核过）
 
@@ -557,15 +635,28 @@ cpus=4 … mali_preas0=1 headset=1 fb_inuse=1 fb_queue=1 fbfit=0 fbscale=2
 
 ### 6.2 让 `headset=1` 真正生效（本次的核心结论）
 
+第 1 步（**已经做了**，2026-11-15 00:46:15）：`devices/xaga/configs/xaga.config:40` 的行尾已加上 ` headset=1`。
+
+第 2 步（**还没做，就差这一步**）：
 ```
-唯一改动：devices/xaga/configs/xaga.config:40
-   CONFIG_BOOTARGS="buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0 mali_preas0=1 headset=1"
-然后：make xaga_defconfig
-验证：tools/hakios-config.py args | grep -o 'headset=1'
+cd /home/lizi/IOS/hakios-mtk && make xaga_defconfig
 ```
-（影子树实测：170 字符、0 problem。长度 170+260 < 607，安全。）
-`board.h:874` 的 `headset=1` **可以留着**（手敲 `build.sh` 时有用），但它不是生效路径。
-前置条件已满足：`CONFIG_HAKIOS_MT6895_HEADSET=y`（`.config:39`）、`buttons=2`（`.config:71`）、驱动调用链 `hakios.mt6895_keys.c:506 → hakios.mt6895_headset.c:519`。
+第 3 步验证：
+```
+tools/hakios-config.py args | grep -o 'headset=1'         # 必须打印 headset=1
+tools/hakios-config.py check                              # 必须 0 problem
+grep -o 'headset=1' .config                               # .config:71 里出现
+```
+第 4 步（可选，确认 loader 侧）：`sh docs/headset-wip/build-config-dump.sh | sed -n '/7.1/,/7.2/p'`，应显示
+`the .config's arguments … have headset= : yes`。
+
+不需要重编内核：`headset=1` 是运行期 boot-arg，驱动早已编入（`.config:39`、`hakios.drivers.h:2`、`hakios-kernel` 26 处 headset 字符串）。
+不需要重编 loader：`xaga-cycle.sh:81` 每次运行都会重编，`-DXNU_EXTRA_ARGS` 从 `.config` 取。
+
+（影子树实测：`headset=1` 后 170 字符、0 problem；170 + 260（`RUN_OVERHEAD`）< 607，长度安全。）
+
+`board.h:874` 的 `headset=1` **可以留着**（手敲 `mtk/loader/build.sh` 不带 `-D` 时有用），但它不是一次运行的生效路径。
+前置条件已满足：`CONFIG_HAKIOS_MT6895_HEADSET=y`（`.config:39`）、`buttons=2`（`.config:71`）、调用链 `hakios.mt6895_keys.c:506 → hakios.mt6895_headset.c:519`。
 
 ### 6.3 改 loader 的硬件地址 / 行为
 
