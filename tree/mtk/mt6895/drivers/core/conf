@@ -1,0 +1,6 @@
+# One PMIF transaction path shared by MT6895 consumers.
+driver MT6895_PMIF
+	file    bsd/dev/hakios.mt6895_pmif.c
+	default n
+	help    SWINF_2 transactions for MT6363 keys, MT6368 accdet and the GPU stack rail;
+	help    serialised by hakios_spmi_lock(), with one bounded budget and late-read ACK recovery

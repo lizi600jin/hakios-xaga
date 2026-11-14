@@ -1,0 +1,50 @@
+{
+  "mtk/mt6895/drivers/input/hakios.mt6895_keys.c": {
+    "sha256": "a99c3f4203f12e9ca3a9979c9eca5f688dbe287789b79abb078d2c2058a59d50",
+    "md5": "cb0a64f59a6e7f46e2b6c470449217d8"
+  },
+  "mtk/mt6895/drivers/audio/hakios.mt6895_headset.c": {
+    "sha256": "719787ff474127019f389fbe9b58e835c0e0e3b5bee05c2e1a5d23b3edbf7685",
+    "md5": "7bd9751d7bb311b26b75a0b0b1c78582"
+  },
+  "mtk/mt6895/drivers/gpu/hakios.mali610.c": {
+    "sha256": "798642d5fe6adcff54b3d30d571fff0e39071ee194f3af62f90545451f65844a",
+    "md5": "255a08d4369670d326380ffbe99f9db9"
+  },
+  "xnu/files/bsd/sys/hakios.pmif.h": {
+    "sha256": "dab67519f49b2356583002fa4771d61ae33fa0a1d046eda017440ae2f6b731d5",
+    "md5": "af5a16edf7889f63da31774b414ffb4c"
+  },
+  "tools/drivers-check.py": {
+    "sha256": "f0ce87051e471748f0cc909343ce5f32aa37b13438539a16e2b65872fd268262",
+    "md5": "b9bd9cf6a22a210f45eee052fd216e1b"
+  },
+  ".config": {
+    "sha256": "ce303d5f63f3d84e5250726959de5f4cbc203e4839a4431a0192383cae1d6442",
+    "md5": "a7e943d84372396ff046da4b0c8fc161"
+  },
+  "mtk/mt6895/configs/mt6895.config": {
+    "sha256": "6bcfb343168111ba7b3c1bb51fda868f366a7628c0bc584b510bc1bde6b5cc8e",
+    "md5": "0baa560b564f69332eb33433fcd00875"
+  },
+  "mtk/mt6895/drivers/input/conf": {
+    "sha256": "6ce7b06028cfa3f069310b34318340fee80e189009542bee5d2295f3127742e0",
+    "md5": "4b3e949075a47faccaf4147885b5c589"
+  },
+  "mtk/mt6895/drivers/audio/conf": {
+    "sha256": "29ed0ceb5d30bfc4f0306378b377910489dae2c280b3747494080193029bb4ea",
+    "md5": "5bdfc1b79b017760f8a6db616b7d764f"
+  },
+  "mtk/mt6895/drivers/gpu/conf": {
+    "sha256": "19e932e26a05b0f48d4bbf8ad9e15aeb39dddebed8b08736bd2ec76263d164c6",
+    "md5": "a18a15cb03cc9e8b5f6d68c6a329364d"
+  },
+  "mtk/tools/test-headset.py": {
+    "sha256": "200699e85ce30bc44981206830a83cf00cccd147a27cb530a2761dc6e7090685",
+    "md5": "77263a40638e1d6bf03961ad25bf43c1"
+  },
+  "mtk/tools/test-pmif-transactions.py": {
+    "sha256": "c220b2f984e175f4532d156b6cc894cf66513b707b3a1ed052158eed268d9355",
+    "md5": "8bfba7f0e465901fad9f846c0470ed04"
+  }
+}

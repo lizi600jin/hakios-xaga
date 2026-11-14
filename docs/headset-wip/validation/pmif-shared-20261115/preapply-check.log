@@ -1,0 +1,8 @@
+pmif-fix-check: diff /home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip/SPMI-FIX-DESIGN.diff
+pmif-fix-check: tree /home/lizi/IOS/hakios-mtk
+pmif-fix-check: 3 file(s), 20 hunk(s), 4 ACC store(s) removed, 0 kept
+  - hakios.mt6895_keys.c:271  pmif_wr(acc, cmd);
+  - hakios.mt6895_headset.c:144  pmif_wr(PMIF_SWINF_ACC, (PMIF_CMD_EXT_REG_LONG << 30) | (MT6368_SID << 24) | addr);
+  - hakios.mt6895_headset.c:173  pmif_wr(PMIF_SWINF_ACC,
+  - hakios.mali610.c:3090  pmif_wr(MALI_PMIF_ACC, cmd);
+pmif-fix-check: the draft applies, the results parse, every ACC store is accounted for

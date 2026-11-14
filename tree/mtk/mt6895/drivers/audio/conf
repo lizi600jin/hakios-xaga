@@ -1,8 +1,10 @@
 # mtk/mt6895/drivers/audio/conf: the MT6368 headset detector on xaga.
-# CONFIG_HAKIOS_MT6895_HEADSET=y builds the driver; headset=1 enables the dump.
+# CONFIG_HAKIOS_MT6895_HEADSET=y builds the driver; buttons=2 owns its PMIF worker.
 
 driver MT6895_HEADSET
 	file    bsd/dev/hakios.mt6895_headset.c
+	requires MTK6895_KEYS MT6895_PMIF
 	default n
-	help    read-only dumps of MT6368 accdet (0x2688-0x26d3) and AUDDEC_ANA (0x2508-0x2537)
-	help    over SPMI slave 5 with headset=1. headset=2 initialisation and insertion polling remain TODO
+	help    MT6368 accdet over SPMI slave 5: headset=1 dumps 129 registers without PMIC writes;
+	help    headset=2 initialises and polls EINT0 and the accdet state machine. Both run in the buttons=2
+	help    keys worker. ADC key decoding, impedance measurement and PCM playback are not implemented

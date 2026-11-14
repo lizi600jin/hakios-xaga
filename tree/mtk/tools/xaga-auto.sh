@@ -17,7 +17,7 @@ set -e
 
 IMAGE=${1:?usage: xaga-auto.sh IMAGE [LABEL]}
 LABEL=${2:-run}
-SERIAL=${HAKIOS_SERIAL:-GAJZ4HIN99AQ69Y9}
+SERIAL=${HAKIOS_SERIAL:?set HAKIOS_SERIAL to the serial of your phone}
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 
 cd "$ROOT"

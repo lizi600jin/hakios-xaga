@@ -4,6 +4,7 @@
 
 driver MTK6895_KEYS
 	file    bsd/dev/hakios.mt6895_keys.c
+	requires MT6895_PMIF
 	default n
 	help    the volume keys through the keypad at 0x1c00e000 (mediatek,kp, hw-init-map 0x72) and the power key through
 	help    the MT6363's TOPSTATUS over SPMI at 0x1c804000 (buttons=2). The MT6895 keeps its keys in those two places;

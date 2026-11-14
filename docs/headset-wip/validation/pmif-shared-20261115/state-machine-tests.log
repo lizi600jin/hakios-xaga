@@ -1,0 +1,18 @@
+1 admit: rejected SID/address/value/null/forbidden writes perform no MMIO
+2 read: correct command, RDATA before ACK, post-ACK IDLE
+3 failed read: output is unchanged
+4 B3: stale FSM=6 ACK then successful transfer
+5 B4: bit29 set; write completes at IDLE, without read/ACK
+6 NAK: error observed promptly
+7 ignored ACK: finite retry, failed status and unchanged output
+8 whitelist: 0x240 readable only; exact directional SWINF_2 offset guard
+9 last_sta: locked transaction snapshot
+10 lock: every success/failure path releases the shared lock
+11 budget: IDLE+RX+cleanup share 100ms; failed polls use 10us cadence
+12 late initial-IDLE FSM=6: read and write failure both ACK, no new budget
+13 dropped first ACK: cleanup retires it; failed read still does not publish
+14 frozen clock and poll ceiling: both pause and transaction terminate
+15 concurrent SID4 keys/SID5 headset/GPU: 1600 transfers, no interleaved transaction
+16 first-map race: no allocation/unmap under spin lock; loser mapping freed
+all 10 baseline PMIF state-machine checks and 6 integration checks passed
+production accdet: mode1 no writes, 19 stock config bytes, EINT gating, mic button, unplug, 3-pole timer, W1C, worker rollback, zero-access post-stop and bounded failures passed

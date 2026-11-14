@@ -2,6 +2,8 @@
 
 把 Apple 开源的 XNU 内核和 iOS 16.5 用户态跑在联发科天玑 8100 上。目标机 Redmi Note 11T Pro（`xaga`，MT6895），已点亮桌面。
 
+> 2026-11-15 源码快照：共享 PMIF 串行化、日志持久化修复和 `headset=1` 的129项纯读已通过宿主模型与内核构建，**该版本尚未刷机**。`headset=2` 的 VAUD18/时钟前置仍待补，GPU 也尚无固件发布版本或 GLOBAL_IF 的证据。验证范围与镜像哈希见 [本轮审阅记录](docs/headset-wip/validation/pmif-shared-20261115/REVIEW.md)；下文各轮实验保留为历史记录。
+
 <p align="center">
   <img src="docs/hero.png" alt="HakiOS on MT6895：iOS 16.5 桌面真的跑在 Redmi Note 11T Pro 上" width="100%">
 </p>
@@ -110,7 +112,7 @@ docs/
 screenshots/     真机照片
 ```
 
-`tree/` 按原路径拷进上游工作树，`patches/0001-upstream-changes.patch` 用 `git apply` 打。patch 覆盖 46 个文件。
+`tree/` 按原路径拷进上游工作树，`patches/0001-upstream-changes.patch` 用 `git apply` 打。当前 patch 覆盖 28 个上游已有文件；新增源码与 xaga 配置放在 `tree/`。
 
 两个厂商固件头都不入库，用脚本从厂商 bin 生成：`drivers/input/hakios.nvt_fw.h`（847 KB，`mtk/tools/mknvtfw.py`）和`drivers/gpu/hakios.mali610_fw.h`（1.3 MB，`mtk/tools/mkmalifw.py`）。
 
@@ -127,7 +129,8 @@ Linux x86-64、`clang`/`lld`、`ld64`（真正的 cctools，不是 `ld64.lld`）
 ```bash
 cd hakios-mtk                      # 上游 mtk 分支工作树
 git apply /path/to/patches/0001-upstream-changes.patch
-cp -r /path/to/tree/mtk .
+cp -a /path/to/tree/. .
+make xaga_defconfig
 ```
 
 ### 编译
@@ -136,7 +139,9 @@ cp -r /path/to/tree/mtk .
 cd hakios-mtk && source xnu-env.sh
 
 ./xnu/sync-drivers.sh
-cp -p xnu/files/bsd/sys/hakios.input.h xnu-src/xnu-8796.121.2/bsd/sys/hakios.input.h
+# xnu/apply.sh creates a fresh tree with xnu/files; update these in an existing build tree:
+cp -p xnu/files/bsd/sys/hakios.input.h xnu/files/bsd/sys/hakios.audio.h xnu/files/bsd/sys/hakios.pmif.h xnu-src/xnu-8796.121.2/bsd/sys/
+cp -p xnu/files/osfmk/arm64/loader_return.c xnu-src/xnu-8796.121.2/osfmk/arm64/loader_return.c
 
 LC_ALL=C make kernel DEVICE=xaga
 make payload DEVICE=xaga
@@ -159,7 +164,7 @@ mtk/tools/mknvtfw.py <厂商触控 bin>        # → drivers/input/hakios.nvt_fw
 mtk/tools/mkmalifw.py /path/to/mali_csffw.bin  # → drivers/gpu/hakios.mali610_fw.h
 ```
 
-`mali_csffw.bin` 从手机的 `/vendor/firmware/` 取（`adb pull`，`su`）。它必须是**这颗 SoC 自己的那份**：不同 SoC 的 CSF 构建不可互换，RK3588 的是 274432 字节、sha256 `8e7c821a…`，MT6895 的是 258048 字节、sha256 `de22d2fc…`。
+`mali_csffw.bin` 从手机的 `/vendor/firmware/` 取（`adb pull`，`su`）。它必须是**这颗 SoC 自己的那份**：不同 SoC 的 CSF 构建不可互换，RK3588 的是 274432 字节、sha256 `8e7c821a…`，当前本地内嵌的是 258048 字节、sha256 `de22d2fc…`，其提取来源尚待重新核实；xaga-r54 参考项目还提供 282624 字节的另一版本。文件大小本身不能证明某份固件正确。
 
 GPU 的上电由 loader 做、内核只负责固件与页表，这是有意的分工：
 
@@ -174,7 +179,7 @@ GPU 的上电由 loader 做、内核只负责固件与页表，这是有意的�
 ### 刷入
 
 ```bash
-export S=GAJZ4HIN99AQ69Y9     # 换成自己的
+export S=${HAKIOS_SERIAL:?set HAKIOS_SERIAL}     # 换成自己的
 adb -s $S reboot bootloader
 fastboot -s $S flash boot_a xnu-flashed-slot_a.img
 fastboot -s $S reboot

@@ -1,0 +1,7 @@
+# HakiOS defconfig for the Redmi Note 11T Pro (xaga, MediaTek MT6895): the common kernel's configuration, the MT6895's
+# facts (mtk/mt6895/configs/mt6895.config, which leaves every Qualcomm driver out) and this phone's own.
+#
+# make xaga_defconfig && make kernel, then the kernel into boot_a through mtkloader (make boot-image DEVICE=xaga).
+#include common_defconfig
+#include mt6895.config
+#include xaga.config

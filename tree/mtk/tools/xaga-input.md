@@ -207,8 +207,8 @@ make payload DEVICE=xaga
 python3 mtk/loader/build_flashed.py
 
 # 刷
-fastboot -s GAJZ4HIN99AQ69Y9 flash boot_a xnu-flashed-slot_a.img
-fastboot -s GAJZ4HIN99AQ69Y9 reboot
+fastboot -s "$HAKIOS_SERIAL" flash boot_a xnu-flashed-slot_a.img
+fastboot -s "$HAKIOS_SERIAL" reboot
 ```
 
 boot-arg 在 `mtk/mt6895/loader/board.h` 的 `XNU_EXTRA_ARGS`，当前是

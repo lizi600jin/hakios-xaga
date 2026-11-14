@@ -1,0 +1,4 @@
+PROBLEM: CONFIG_HAKIOS_MT6895_HEADSET requires CONFIG_HAKIOS_MT6895_PMIF (mtk/mt6895/drivers/audio/conf:4)
+PROBLEM: CONFIG_HAKIOS_MALI610 requires CONFIG_HAKIOS_MT6895_PMIF (mtk/mt6895/drivers/gpu/conf:8)
+PROBLEM: CONFIG_HAKIOS_MTK6895_KEYS requires CONFIG_HAKIOS_MT6895_PMIF (mtk/mt6895/drivers/input/conf:5)
+logs/resume-sol-20261114-231152/pmif-shared-integration/no-pmif.config: 46 symbols set, 170 characters of boot-arguments (the kernel holds 607; a run adds about 260), 3 problem(s)

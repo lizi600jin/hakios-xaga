@@ -7,6 +7,7 @@
 
 driver MALI610
 	file    bsd/dev/hakios.mali610.c
+	requires MT6895_PMIF
 	default n
 	help    the Mali-G610 MC6 of this SoC brought up from the kernel (mali=1): the twelve MFG power
 	help    domains in the SPM, the two clock muxes and MFGPLL, and what the block says it is;

@@ -781,7 +781,16 @@
 #define XNU_CORES               4
 #endif
 #ifndef XNU_RETURN_AFTER
-#define XNU_RETURN_AFTER        "70"
+/*
+ * 150, matching trial 692, not the board's 70.
+ *
+ * Trial 693 ran with 70 and produced no XNU output at all: the logbook slot held only the
+ * loader's own lines and the boot args, ending at "clock: this core measures 1999 MHz".
+ * The kernel needs longer than 70 seconds before it reaches the GPU probe, and when the
+ * loader takes the slot back early it overwrites whatever the kernel had written.
+ * 692 used 150 and its log has the full tail.
+ */
+#define XNU_RETURN_AFTER        "150"
 #endif
 #ifndef XNU_WATCH_SECONDS
 #define XNU_WATCH_SECONDS       120
@@ -855,7 +864,14 @@
  * handover rather than for the firmware. Either way the cold path is now a separate question from
  * the one being chased, and it stays off until there is a reason to open it again.
  */
-#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0 mali_preas0=1"
+/*
+ * Round 20: the headset, not the GPU. mali= is left out entirely so that nothing of the Mali
+ * bring-up (which has not got past the MCU running nothing, in nineteen rounds) can take the
+ * seconds or the log space this run needs: the accdet dump is 124 register reads over SPMI and
+ * has to finish before the keys thread takes the channel. mali=5 with its 26 mali_* knobs was
+ * trial 694's line; it is kept here, commented, for the round that goes back to the GPU.
+ */
+#define XNU_EXTRA_ARGS          "cpus=4 buttons=2 touchscreen=3 keylog=1 fbwidth=1080 fbheight=2460 fb_disp=1 headset=1"
 #endif
 
 /*

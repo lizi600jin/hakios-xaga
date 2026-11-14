@@ -41,6 +41,12 @@
 #include <vm/vm_kern.h>
 
 #include "hakios.mali610_fw.h"
+/*
+ * The one PMIF transaction path, shared with the keys and the headset. The deadline it used
+ * to take from <sys/hakios.pmif.h> is inside pmif_wait() now, where it can also see the STA
+ * error bit; the lock is taken once around the whole transaction.
+ */
+#include <sys/hakios.pmif.h>
 
 extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
 extern uint64_t kvtophys(vm_offset_t va);
@@ -549,6 +555,7 @@ static unsigned gMaliOstd;                      /* mali_ostd=1 samples the outst
  */
 static unsigned gMaliSema;                      /* mali_sema=1 writes the semaphore request */
 static unsigned gMaliPdcAuto;                    /* mali_pdcauto=1 powers only mfg1 and lets PDCv2 take the rest */
+static unsigned gMaliNoPdc;                      /* mali_nopdc=1 skips the default-path PDC configuration stores */
 /* Round comparisons keep these independent and opt in. */
 static unsigned gMaliFreeRun;                   /* mali_freerun=1 sets four GLOBAL_CON free-run bits */
 static unsigned gMaliParkAttrs;                 /* mali_parkattrs=1 matches cold AS2/AS3 MEMATTR */
@@ -3002,73 +3009,52 @@ as_enable(unsigned as, uint64_t transtab)
  * selector 0x6e, 687500 uV, which is the tenth operating point, and reading the selector back
  * before writing anything is the cheap way to notice if that is not true here.
  */
-#define MALI_PMIF_BASE          0x1c804000ull
-#define MALI_PMIF_SIZE          0x1000u
-#define MALI_PMIF_ACC           0x0880u         /* SWINF_2, the only channel inside the 0x8ff window */
-#define MALI_PMIF_WDATA         0x0884u
-#define MALI_PMIF_RDATA         0x0894u
-#define MALI_PMIF_VLDCLR        0x08a4u
-#define MALI_PMIF_STA           0x08a8u
-#define MALI_PMIF_INIT_DONE     0x0000u
-#define MALI_PMIF_CMD_EXT_LONG  3u              /* SPMI 0x20..0x2f / 0x38..0x3f, 16-bit registers */
-#define MALI_PMIF_WRITE_BIT     (1u << 29)      /* set on a write, clear on a read */
-#define MALI_PMIF_IDLE          0x00u
-#define MALI_PMIF_WFVLDCLR      0x06u
-#define MALI_PMIF_SPINS         200000u
-
-#define MALI_MT6368_SID         5u              /* pmic@4 in the spmi node is MT6363 at 4 */
+/* The layout, the command word and the deadline are <sys/hakios.pmif.h>'s; what is here is
+ * the MT6368's VBUCK2, the only PMIC register the GPU touches. */
+#define MALI_MT6368_SID         PMIF_SID_MT6368
 #define MALI_VBUCK2_EN          0x0240u
 #define MALI_VBUCK2_EN_SET      (MALI_VBUCK2_EN + 1u)
 #define MALI_VBUCK2_EN_MASK     (1u << 2)
 #define MALI_VBUCK2_VSEL        0x024eu
 #define MALI_VBUCK2_VSEL_MASK   0xffu
 
-static vm_offset_t gPmif;
-
-#define pmif_rd(at)             reg_rd(gPmif, (at))
-#define pmif_wr(at, v)          reg_wr(gPmif, (at), (v))
-
 /*
- * One SPMI transaction. The command word is the arbiter's, not the PMIC's: bits 31..30 are the
- * PMIF's own opcode translation, bit 29 marks a write, 28..24 the bus id, 23..16 the length minus
- * one, 15..0 the register. Leaving bit 29 out is the failure mode that costs an afternoon -- the
- * transfer runs, the state machine reaches the same place, and the value never arrives.
+ * The GPU's one PMIC read and write, on the shared path. Nothing of the transaction is left
+ * here: the IDLE wait, the write path that must not wait for WFVLDCLR (a write produces no
+ * valid word), the RDATA read before the ACK, the ACK, the second IDLE wait, the deadline
+ * and the lock are pmif_read8/pmif_write8's.
+ *
+ * This is the file that had the worst of the defects: its write path waited for WFVLDCLR,
+ * which a write never reaches, so mali_vstack_rail()'s write of 0x241 always reported a
+ * failure after a full timeout while the write itself had landed -- a log that said the
+ * opposite of what the hardware did.
  */
+static pmif_status_t mali_pmif_status;
+
 static bool
 mali_spmi(uint32_t addr, uint32_t *value, bool write)
 {
-	uint32_t cmd = (MALI_PMIF_CMD_EXT_LONG << 30) |
-	    (write ? MALI_PMIF_WRITE_BIT : 0u) |
-	    (MALI_MT6368_SID << 24) | addr;
-	unsigned spins;
+	pmif_status_t status;
 
-	for (spins = 0; spins < MALI_PMIF_SPINS; spins++) {
-		if (((pmif_rd(MALI_PMIF_STA) >> 1) & 0x7u) == MALI_PMIF_IDLE) {
-			break;
-		}
-	}
-	if (spins == MALI_PMIF_SPINS) {
+	if (value == NULL || addr > 0xffffu || (write && *value > 0xffu)) {
 		return false;
 	}
 	if (write) {
-		pmif_wr(MALI_PMIF_WDATA, *value);
-	}
-	pmif_wr(MALI_PMIF_ACC, cmd);
-	for (spins = 0; spins < MALI_PMIF_SPINS; spins++) {
-		if (((pmif_rd(MALI_PMIF_STA) >> 1) & 0x7u) == MALI_PMIF_WFVLDCLR) {
-			break;
+		status = pmif_write8((uint8_t)MALI_MT6368_SID, (uint16_t)addr, (uint8_t)*value);
+	} else {
+		uint8_t byte = 0;
+
+		status = pmif_read8((uint8_t)MALI_MT6368_SID, (uint16_t)addr, &byte);
+		if (status == PMIF_OK) {
+			*value = byte;
 		}
 	}
-	if (spins == MALI_PMIF_SPINS) {
-		printf("mali: spmi %s %#x stalled at state %u\n", write ? "write" : "read", addr,
-		    (unsigned)((pmif_rd(MALI_PMIF_STA) >> 1) & 0x7u));
-		return false;
+	if (status != PMIF_OK && status != mali_pmif_status) {
+		printf("mali: spmi %s %#x: %s\n", write ? "write" : "read", addr,
+		    pmif_status_name(status));
 	}
-	if (!write) {
-		*value = pmif_rd(MALI_PMIF_RDATA) & 0xffu;
-	}
-	pmif_wr(MALI_PMIF_VLDCLR, 1u);
-	return true;
+	mali_pmif_status = status;
+	return status == PMIF_OK;
 }
 
 /*
@@ -3084,15 +3070,14 @@ mali_vstack_rail(void)
 {
 	uint32_t status = 0, vsel = 0, four = MALI_VBUCK2_EN_MASK;
 
-	gPmif = ml_io_map(MALI_PMIF_BASE, MALI_PMIF_SIZE);
-	if (gPmif == 0) {
-		printf("mali: the arbiter at %#llx will not map; the stack rail stays as it is\n",
-		    (unsigned long long)MALI_PMIF_BASE);
-		return;
-	}
-	if (pmif_rd(MALI_PMIF_INIT_DONE) == 0u) {
-		printf("mali: the arbiter has not finished initialising; not touching the rail\n");
-		return;
+	{
+		pmif_status_t mapped = pmif_init();
+
+		if (mapped != PMIF_OK) {
+			printf("mali: the arbiter at %#x will not map (%s); the stack rail stays as it is\n",
+			    (unsigned)PMIF_BASE, pmif_status_name(mapped));
+			return;
+		}
 	}
 	if (!mali_spmi(MALI_VBUCK2_EN, &status, false)) {
 		return;
@@ -4469,7 +4454,11 @@ mali_bring_up(void)
 		 * says the same thing from the other side: clock_control is step four of nine and
 		 * pdc_control is step seven (gpufreq_mt6895.c:802).
 		 */
-		printf("mali: pdc enabled on %u registers\n", pdc_enable());
+		if (!gMaliNoPdc) {
+			printf("mali: pdc enabled on %u registers\n", pdc_enable());
+		} else {
+			printf("mali: pdc setup skipped (mali_nopdc=1); inherited values unchanged\n");
+		}
 		pdc_report();
 		printf("mali: after pdc: mfg5 %#x mfg6 %#x mfg10 %#x mfg12 %#x\n",
 		    reg_rd(gSpm, MALI_MFG5), reg_rd(gSpm, MALI_MFG6),
@@ -4972,6 +4961,44 @@ mali_bring_up(void)
 			    csg->stream_num, csg->stream_stride,
 			    csg_in >= lo && csg_in < hi ? 1u : 0u,
 			    csg_out >= lo && csg_out < hi ? 1u : 0u);
+			/*
+			 * Three words the firmware writes to, each of which starts at zero in the image
+			 * and receives a value that cannot be zero. Reading all three costs three loads
+			 * out of memory this file already owns and already mapped.
+			 *
+			 * 0x4001040 is stream0.control.features: the group control block lives at
+			 * CSF_GROUP_CONTROL_OFFSET (0x1000, panthor_fw.c:215) and the stream control block
+			 * at CSF_STREAM_CONTROL_OFFSET (0x40, panthor_fw.c:216) inside it, so
+			 * csg_idx 0 / cs_idx 0 lands on shared+0x1040. The firmware fills it from
+			 * 0x1002ff8 with a value that always has 0x70000 set.
+			 *
+			 * The other two are glb_control.version (0x01010000 from 0x1003012) and
+			 * glb_control.perfcnt_size (3 + a bit length, so at least 3, from 0x1002fd6).
+			 *
+			 * None of these proves the MCU ran if it stays zero: a store that reaches the bus
+			 * can still fail translation, and nothing here reads SCB->CFSR. What a non-zero
+			 * value would establish is that the firmware executed the corresponding store.
+			 */
+			{
+				uint32_t stream0_features = 0;
+				uint32_t perfcnt_size = raw->perfcnt_size;
+				uint32_t read_ok = 0;
+
+				/*
+				 * The guard cannot fail for this image (the section is 0x94000 bytes), but print
+				 * whether it ran: a stream0_features of zero has to be distinguishable from a
+				 * zero that was never read.
+				 */
+				if (gShared->va_end - gShared->va_start >= 0x1044u &&
+				    gShared->mem.size >= 0x1044u) {
+					stream0_features =
+					    *(volatile uint32_t *)(gShared->mem.kva + 0x1040u);
+					read_ok = 1;
+				}
+				printf("mali: discriminate trial %u: version %#x perfcnt %#x"
+				    " stream0_features %#x read_ok %u\n",
+				    gMaliTrial, version, perfcnt_size, stream0_features, read_ok);
+			}
 		} else {
 			printf("mali: shared probe: fixed GLB/CSG ranges unavailable; no reads performed\n");
 		}
@@ -5163,6 +5190,11 @@ hakios_mali610_init(void)
 	PE_parse_boot_argn("mali_pdcsettle", &gMaliPdcSettle, sizeof(gMaliPdcSettle));
 	PE_parse_boot_argn("mali_statussem", &gMaliStatusSem, sizeof(gMaliStatusSem));
 	PE_parse_boot_argn("mali_assorder", &gMaliAssOrder, sizeof(gMaliAssOrder));
+	PE_parse_boot_argn("mali_nopdc", &gMaliNoPdc, sizeof(gMaliNoPdc));
+	if (gMaliNoPdc && gMaliPdcAuto) {
+		printf("mali: mali_nopdc and mali_pdcauto conflict; GPU test not started\n");
+		return;
+	}
 	if (kernel_thread_start(mali_thread, NULL, &thread) == KERN_SUCCESS) {
 		thread_deallocate(thread);
 	} else {

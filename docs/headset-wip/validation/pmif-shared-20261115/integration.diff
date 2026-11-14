@@ -1,0 +1,1769 @@
+--- /dev/null
++++ b/mtk/mt6895/drivers/core/conf
+@@ -0,0 +1,6 @@
++# One PMIF transaction path shared by MT6895 consumers.
++driver MT6895_PMIF
++	file    bsd/dev/hakios.mt6895_pmif.c
++	default n
++	help    SWINF_2 transactions for MT6363 keys, MT6368 accdet and the GPU stack rail;
++	help    serialised by hakios_spmi_lock(), with one bounded budget and late-read ACK recovery
+--- /dev/null
++++ b/mtk/mt6895/drivers/core/hakios.mt6895_pmif.c
+@@ -0,0 +1,338 @@
++/*
++ * MT6895 PMIF/SWINF_2. All consumers use the existing platform SPMI lock.
++ * One-byte transfers to SID 4/5 and the five SWINF_2 offsets only.
++ * No allocation, logging or sleeping while holding the transaction spin lock.
++ */
++#include <sys/hakios.pmif.h>
++#include <sys/types.h>
++#include <sys/hakios.input.h>
++#include <kern/clock.h>
++#include <mach/mach_types.h>
++#include <mach/vm_param.h>
++
++extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
++extern void ml_io_unmap(vm_offset_t address, vm_size_t size);
++
++#if defined(__aarch64__) || defined(__arm64__)
++#define PMIF_BARRIER() __asm__ volatile ("dsb sy" ::: "memory")
++#define PMIF_RELAX() __asm__ volatile ("yield" ::: "memory")
++#else
++#define PMIF_BARRIER() __atomic_thread_fence(__ATOMIC_SEQ_CST)
++#define PMIF_RELAX() __atomic_signal_fence(__ATOMIC_SEQ_CST)
++#endif
++
++static vm_offset_t pmif_base;
++static uint32_t pmif_sta_before, pmif_sta_after;
++
++pmif_status_t
++pmif_init(void)
++{
++	vm_offset_t candidate;
++	bool ready;
++
++	hakios_spmi_lock();
++	ready = pmif_base != 0;
++	hakios_spmi_unlock();
++	if (ready) {
++		return PMIF_OK;
++	}
++	/* Mapping can allocate/sleep. A concurrent first mapper is handled below. */
++	candidate = ml_io_map(PMIF_BASE, PMIF_SIZE_DECLARED);
++	hakios_spmi_lock();
++	if (pmif_base == 0) {
++		pmif_base = candidate;
++		candidate = 0;
++	}
++	ready = pmif_base != 0;
++	hakios_spmi_unlock();
++	if (candidate != 0) {
++		/* Free a losing mapping outside the lock, with the rounded VM size. */
++		ml_io_unmap(candidate, round_page((vm_size_t)PMIF_SIZE_DECLARED));
++	}
++	return ready ? PMIF_OK : PMIF_E_DEAD;
++}
++
++/* The model replaces raw loads/stores; admission, locks and the FSM are real. */
++#if defined(PMIF_MMIO_TEST) && PMIF_MMIO_TEST
++extern uint32_t pmif_test_rd(uint32_t at);
++extern void pmif_test_wr(uint32_t at, uint32_t value);
++#endif
++
++static uint32_t
++pmif_rd(uint32_t at)
++{
++	uint32_t value;
++
++	if (at != PMIF_SWINF_2_STA && at != PMIF_SWINF_2_RDATA) {
++		return 0xffffffffu;
++	}
++	PMIF_BARRIER();
++#if defined(PMIF_MMIO_TEST) && PMIF_MMIO_TEST
++	value = pmif_test_rd(at);
++#else
++	value = *(volatile uint32_t *)(pmif_base + at);
++#endif
++	PMIF_BARRIER();
++	return value;
++}
++
++static void
++pmif_wr(uint32_t at, uint32_t value)
++{
++	if (at != PMIF_SWINF_2_ACC && at != PMIF_SWINF_2_WDATA &&
++	    at != PMIF_SWINF_2_VLD_CLR) {
++		return;
++	}
++	PMIF_BARRIER();
++#if defined(PMIF_MMIO_TEST) && PMIF_MMIO_TEST
++	pmif_test_wr(at, value);
++#else
++	*(volatile uint32_t *)(pmif_base + at) = value;
++#endif
++	PMIF_BARRIER();
++}
++
++struct pmif_budget {
++	uint64_t deadline, interval;
++	unsigned polls;
++};
++
++static struct pmif_budget
++pmif_budget_begin(void)
++{
++	struct pmif_budget budget;
++
++	clock_interval_to_deadline(PMIF_POLL_BUDGET_US, NSEC_PER_USEC, &budget.deadline);
++	nanoseconds_to_absolutetime(PMIF_POLL_INTERVAL_US * NSEC_PER_USEC, &budget.interval);
++	budget.polls = 0;
++	return budget;
++}
++
++/*
++ * Busy cadence, never delay()/sleep under this spin lock. The clock-only pause
++ * is also finite: a frozen counter cannot defeat the outer bound. The 100ms
++ * budget covers polling; a finite STA/ACK cleanup can follow its expiration.
++ * No software deadline can bound an MMIO access that itself never returns.
++ */
++static bool
++pmif_poll_pause(const struct pmif_budget *budget)
++{
++	uint64_t next = mach_absolute_time() + budget->interval;
++
++	for (unsigned n = 0; n < PMIF_SPIN_HARD_CAP; n++) {
++		uint64_t now = mach_absolute_time();
++
++		if (now >= budget->deadline) {
++			return false;
++		}
++		if (now >= next) {
++			return true;
++		}
++		PMIF_RELAX();
++	}
++	return false;
++}
++
++static bool
++pmif_sample(struct pmif_budget *budget)
++{
++	if (budget->polls >= PMIF_SPIN_HARD_CAP || mach_absolute_time() >= budget->deadline) {
++		return false;
++	}
++	budget->polls++;
++	pmif_sta_after = pmif_rd(PMIF_SWINF_2_STA);
++	return true;
++}
++
++static bool
++pmif_wait(struct pmif_budget *budget, uint32_t state)
++{
++	while (pmif_sample(budget)) {
++		if (pmif_sta_after & PMIF_STA_ERR) {
++			return false;
++		}
++		if (PMIF_STA_FSM(pmif_sta_after) == state) {
++			return true;
++		}
++		if (budget->polls >= PMIF_SPIN_HARD_CAP || !pmif_poll_pause(budget)) {
++			return false;
++		}
++	}
++	return false;
++}
++
++static pmif_status_t
++pmif_wait_failure(void)
++{
++	if (pmif_sta_after & PMIF_STA_ERR) {
++		return PMIF_E_NAK;
++	}
++	return PMIF_STA_FSM(pmif_sta_after) == PMIF_FSM_WFVLDCLR ?
++	       PMIF_E_STUCK : PMIF_E_TIMEOUT;
++}
++
++static pmif_status_t
++pmif_ack_locked(struct pmif_budget *budget)
++{
++	/* One final sample is allowed even when the poll budget is exhausted. */
++	pmif_sta_after = pmif_rd(PMIF_SWINF_2_STA);
++	if (PMIF_STA_FSM(pmif_sta_after) == PMIF_FSM_IDLE) {
++		return (pmif_sta_after & PMIF_STA_ERR) ? PMIF_E_NAK : PMIF_OK;
++	}
++	if (PMIF_STA_FSM(pmif_sta_after) != PMIF_FSM_WFVLDCLR) {
++		return PMIF_E_BUSY;
++	}
++	pmif_wr(PMIF_SWINF_2_VLD_CLR, PMIF_VLDCLR_ACK);
++	return pmif_wait(budget, PMIF_FSM_IDLE) ? PMIF_OK : PMIF_E_STUCK;
++}
++
++static pmif_status_t
++pmif_wait_idle_locked(struct pmif_budget *budget)
++{
++	if (!pmif_sample(budget)) {
++		return PMIF_E_TIMEOUT;
++	}
++	pmif_sta_before = pmif_sta_after;
++	if (pmif_sta_after & PMIF_STA_ERR) {
++		return PMIF_E_NAK;
++	}
++	if (PMIF_STA_FSM(pmif_sta_after) == PMIF_FSM_IDLE) {
++		return PMIF_OK;
++	}
++	if (PMIF_STA_FSM(pmif_sta_after) == PMIF_FSM_WFVLDCLR) {
++		pmif_wr(PMIF_SWINF_2_VLD_CLR, PMIF_VLDCLR_ACK);
++	}
++	return pmif_wait(budget, PMIF_FSM_IDLE) ? PMIF_OK : pmif_wait_failure();
++}
++
++pmif_status_t
++pmif_read8(uint32_t sid, uint32_t addr, uint8_t *out)
++{
++	pmif_status_t status;
++	struct pmif_budget budget;
++	uint8_t byte;
++
++	if (out == 0) {
++		return PMIF_E_ARG;
++	}
++	status = pmif_hdr_admit(sid, addr, false);
++	if (status != PMIF_OK) {
++		return status;
++	}
++	hakios_spmi_lock();
++	if (pmif_base == 0) {
++		hakios_spmi_unlock();
++		return PMIF_E_DEAD;
++	}
++	budget = pmif_budget_begin();
++	status = pmif_wait_idle_locked(&budget);
++	if (status != PMIF_OK) {
++		goto failed;
++	}
++	pmif_wr(PMIF_SWINF_2_ACC, PMIF_CMD_READ8(sid, addr));
++	if (!pmif_wait(&budget, PMIF_FSM_WFVLDCLR)) {
++		status = pmif_wait_failure();
++		goto failed;
++	}
++	byte = (uint8_t)(pmif_rd(PMIF_SWINF_2_RDATA) & 0xffu);
++	pmif_wr(PMIF_SWINF_2_VLD_CLR, PMIF_VLDCLR_ACK);
++	if (!pmif_wait(&budget, PMIF_FSM_IDLE)) {
++		status = PMIF_STA_FSM(pmif_sta_after) == PMIF_FSM_WFVLDCLR ?
++		         PMIF_E_STUCK : PMIF_E_ACK;
++		goto failed;
++	}
++	hakios_spmi_unlock();
++	*out = byte;
++	return PMIF_OK;
++failed:
++	/* Includes FSM=6 reached while the initial IDLE wait was expiring. */
++	(void)pmif_ack_locked(&budget);
++	hakios_spmi_unlock();
++	return status;
++}
++
++pmif_status_t
++pmif_write8(uint32_t sid, uint32_t addr, uint32_t value)
++{
++	pmif_status_t status = pmif_hdr_admit(sid, addr, true);
++	struct pmif_budget budget;
++
++	if (status != PMIF_OK) {
++		return status;
++	}
++	if (value > 0xffu) {
++		return PMIF_E_ARG;
++	}
++	hakios_spmi_lock();
++	if (pmif_base == 0) {
++		hakios_spmi_unlock();
++		return PMIF_E_DEAD;
++	}
++	budget = pmif_budget_begin();
++	status = pmif_wait_idle_locked(&budget);
++	if (status != PMIF_OK) {
++		goto failed;
++	}
++	pmif_wr(PMIF_SWINF_2_WDATA, value);
++	/* Bit 29 is essential: without it this is a read and WDATA is ignored. */
++	pmif_wr(PMIF_SWINF_2_ACC, PMIF_CMD_WRITE8(sid, addr));
++	/* Writes finish at IDLE, producing neither RDATA nor a WFVLDCLR ACK. */
++	if (!pmif_wait(&budget, PMIF_FSM_IDLE)) {
++		status = pmif_wait_failure();
++		goto failed;
++	}
++	hakios_spmi_unlock();
++	return PMIF_OK;
++failed:
++	(void)pmif_ack_locked(&budget);
++	hakios_spmi_unlock();
++	return status;
++}
++
++pmif_status_t
++pmif_recover(void)
++{
++	pmif_status_t status = PMIF_E_DEAD;
++
++	hakios_spmi_lock();
++	if (pmif_base != 0) {
++		struct pmif_budget budget = pmif_budget_begin();
++
++		status = pmif_ack_locked(&budget);
++	}
++	hakios_spmi_unlock();
++	return status;
++}
++
++void
++pmif_last_sta(uint32_t *before, uint32_t *after)
++{
++	hakios_spmi_lock();
++	if (before != 0) {
++		*before = pmif_sta_before;
++	}
++	if (after != 0) {
++		*after = pmif_sta_after;
++	}
++	hakios_spmi_unlock();
++}
++
++const char *
++pmif_status_name(pmif_status_t status)
++{
++	switch (status) {
++	case PMIF_OK: return "ok";
++	case PMIF_E_SID: return "SID not allowed";
++	case PMIF_E_OFFSET: return "PMIF offset not allowed";
++	case PMIF_E_REG: return "PMIC write forbidden";
++	case PMIF_E_CMD: return "invalid command";
++	case PMIF_E_ARG: return "invalid argument";
++	case PMIF_E_BUSY: return "channel busy";
++	case PMIF_E_NAK: return "PMIF error/NAK";
++	case PMIF_E_TIMEOUT: return "PMIF poll timeout";
++	case PMIF_E_STUCK: return "valid word ACK did not retire";
++	case PMIF_E_ACK: return "channel not idle after ACK";
++	case PMIF_E_DEAD: return "PMIF not mapped";
++	}
++	return "unknown PMIF status";
++}
+--- a/xnu/files/bsd/sys/hakios.pmif.h
++++ b/xnu/files/bsd/sys/hakios.pmif.h
+@@ -1,36 +1,86 @@
+-/* One deadline and poll budget for an entire SWINF transaction, including recovery. */
++/*
++ * MT6895 SWINF_2, shared by keys, accdet and VBUCK2. Each call takes the existing
++ * hakios_spmi_lock() around one transaction. Normal thread context only, without
++ * a spin lock held; never call after psci_smp_stop_others(). Consumer RMW helpers
++ * are not atomic across calls: their PMIC register sets must remain disjoint.
++ */
+ #ifndef _SYS_HAKIOS_PMIF_H_
+ #define _SYS_HAKIOS_PMIF_H_
+ 
+ #include <stdbool.h>
+ #include <stdint.h>
+-#include <kern/clock.h>
+ 
+-#define HAKIOS_PMIF_TIMEOUT_NS  2000000ull
+-#define HAKIOS_PMIF_POLL_LIMIT  20000u /* also terminates if the counter stops */
++#define PMIF_BASE                0x1c804000u
++#define PMIF_SIZE_DECLARED       0x08ffu
++#define PMIF_SWINF_2_ACC         0x880u
++#define PMIF_SWINF_2_WDATA       0x884u
++#define PMIF_SWINF_2_RDATA       0x894u
++#define PMIF_SWINF_2_VLD_CLR     0x8a4u
++#define PMIF_SWINF_2_STA         0x8a8u
++#define PMIF_CMD_WRITE           (1u << 29)
++#define PMIF_CMD_ADDR_MASK       0xffffu
++#define PMIF_CMD_READ8(sid, addr) (0xc0000000u | ((uint32_t)(sid) << 24) | (uint32_t)(addr))
++#define PMIF_CMD_WRITE8(sid, addr) (PMIF_CMD_READ8((sid), (addr)) | PMIF_CMD_WRITE)
++#define PMIF_STA_FSM(sta)        (((uint32_t)(sta) >> 1) & 7u)
++#define PMIF_STA_FSM_MASK        0x0eu
++#define PMIF_STA_FSM_SHIFT       1u
++#define PMIF_STA_ERR             (1u << 18)
++#define PMIF_FSM_IDLE            0u
++#define PMIF_FSM_REQ             2u
++#define PMIF_FSM_WFDLE           4u
++#define PMIF_FSM_WFVLDCLR        6u
++#define PMIF_VLDCLR_ACK          1u
++#define PMIF_SID_MT6363          4u
++#define PMIF_SID_MT6368          5u
+ 
+-struct hakios_pmif_budget {
+-	uint64_t deadline;
+-	uint32_t polls_left;
+-};
++/* Vendor cadence; one budget shared by every phase and recovery. */
++#define PMIF_POLL_INTERVAL_US    10u
++#define PMIF_POLL_BUDGET_US      100000u
++#define PMIF_SPIN_HARD_CAP       10000u
+ 
+-static inline struct hakios_pmif_budget
+-hakios_pmif_budget_begin(void)
++typedef enum {
++	PMIF_OK = 0,
++	PMIF_E_SID = -1,
++	PMIF_E_OFFSET = -2,
++	PMIF_E_REG = -3,
++	PMIF_E_CMD = -4,
++	PMIF_E_ARG = -5,
++	PMIF_E_BUSY = -6,
++	PMIF_E_NAK = -7,
++	PMIF_E_TIMEOUT = -8,
++	PMIF_E_STUCK = -9,
++	PMIF_E_ACK = -10,
++	PMIF_E_DEAD = -11,
++} pmif_status_t;
++
++static inline bool
++pmif_pmic_reg_writable(uint32_t addr)
+ {
+-	uint64_t ticks;
+-
+-	nanoseconds_to_absolutetime(HAKIOS_PMIF_TIMEOUT_NS, &ticks);
+-	return (struct hakios_pmif_budget){ mach_absolute_time() + ticks, HAKIOS_PMIF_POLL_LIMIT };
++	return addr <= 0xffffu && addr != 0x014bu && addr != 0x0240u;
+ }
+ 
+-static inline bool
+-hakios_pmif_budget_poll(struct hakios_pmif_budget *budget)
++/* Validate full-width arguments before encoding, never silently truncate. */
++static inline pmif_status_t
++pmif_hdr_admit(uint32_t sid, uint32_t addr, bool write)
+ {
+-	if (budget->polls_left == 0 || mach_absolute_time() >= budget->deadline) {
+-		return false;
++	if (sid != PMIF_SID_MT6363 && sid != PMIF_SID_MT6368) {
++		return PMIF_E_SID;
+ 	}
+-	budget->polls_left--;
+-	return true;
++	if (addr > 0xffffu) {
++		return PMIF_E_ARG;
++	}
++	return write && !pmif_pmic_reg_writable(addr) ? PMIF_E_REG : PMIF_OK;
+ }
+ 
+-#endif
++/* Mapping/allocation happens outside the spin lock. Repeated calls are safe. */
++pmif_status_t pmif_init(void);
++/* On failure *out stays unchanged. Values wider than one byte are rejected. */
++pmif_status_t pmif_read8(uint32_t sid, uint32_t addr, uint8_t *out);
++pmif_status_t pmif_write8(uint32_t sid, uint32_t addr, uint32_t value);
++/* Only ACK FSM=6; no reset/gate/global-controller writes. Thread context only. */
++pmif_status_t pmif_recover(void);
++/* Last transaction snapshot, not a fresh hardware observation. */
++void pmif_last_sta(uint32_t *before, uint32_t *after);
++const char *pmif_status_name(pmif_status_t status);
++
++#endif /* _SYS_HAKIOS_PMIF_H_ */
+--- a/mtk/mt6895/drivers/input/hakios.mt6895_keys.c
++++ b/mtk/mt6895/drivers/input/hakios.mt6895_keys.c
+@@ -42,9 +42,11 @@
+ #include <mach/mach_types.h>
+ #include <pexpert/pexpert.h>
+ #include <sys/hakios.input.h>
+-#include <sys/hakios.pmif.h>
+ #include <sys/hakios.audio.h>
+ #include <sys/systm.h>
++
++/* Shared transaction locking, deadlines and ACK recovery. */
++#include <sys/hakios.pmif.h>
+ 
+ extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
+ 
+@@ -65,7 +67,12 @@
+ #define LINE_VOLUMEUP   17
+ 
+ static vm_offset_t kpd;
+-static vm_offset_t pmif;
++/*
++ * No PMIF base of its own: the window is mapped once by pmif_init(), so a second driver
++ * cannot leave a second mapping of it behind. What stays is whether that worked, which
++ * decides whether the PMIC half of the poll runs at all.
++ */
++static bool pmif_ready;
+ 
+ /*
+  * The PMIC's own key registers, reached over SPMI rather than through the keypad block.
+@@ -90,8 +97,6 @@
+  *   the state     bits 3:1 hold the FSM, 0 idle and 6 "valid, clear it"; the data is in RDATA and
+  *                 the read is acknowledged by writing 1 to VLD_CLR.
+  */
+-#define PMIF_BASE           0x1c804000
+-#define PMIF_SIZE           0x08ff /* mapping may round to a page; accessors still enforce SWINF_2 */
+ /*
+  * Which software-interface channel is ours, and where its registers are.
+  *
+@@ -128,14 +133,6 @@
+  * -- every transfer this driver attempted landed past the end of the region and the state machine
+  * stayed at IDLE forever.
+  */
+-#define PMIF_LAYOUT_8195    1
+-
+-#define PMIF_SWINF_ACC      0x0880
+-#define PMIF_SWINF_WDATA    0x0884
+-#define PMIF_SWINF_RDATA    0x0894
+-#define PMIF_SWINF_VLDCLR   0x08a4
+-#define PMIF_SWINF_STA      0x08a8
+-
+ /*
+  * The four software channels, as offsets from the first one's ACC. Linux picks SWINF_2 from the
+  * There is exactly one channel to talk to, and walking the others is what crashed a build. The
+@@ -146,11 +143,6 @@
+  * rebooted into the same image three times running. So this driver addresses SWINF_2 and nothing
+  * else, and PMIF_CHAN_COUNT is one so no loop can ever step outside the window again.
+  */
+-#define PMIF_CHAN_STRIDE    0x40
+-#define PMIF_CHAN_COUNT     1               /* SWINF_2 only: everything above it is unmapped */
+-
+-static unsigned pmif_chan;              /* index into the four, once one is known to work */
+-
+ /*
+  * The opcode that goes into bits 31..30 of the command word is not the SPMI opcode: the PMIF
+  * translates. Vendor code maps SPMI 0x60..0x7f to PMIF_CMD_REG (1) and SPMI 0x20..0x2f /
+@@ -159,11 +151,6 @@
+  * PMIF_CMD_REG left the state machine at 4 instead of WFVLDCLR and made the data register read
+  * back zero, which then looked like both keys being held at once.
+  */
+-#define PMIF_CMD_REG            1u      /* SPMI 0x60..0x7f, eight-bit register space */
+-#define PMIF_CMD_EXT_REG_LONG   3u      /* SPMI 0x20..0x2f / 0x38..0x3f, what MT6363 uses */
+-#define SWINF_IDLE          0x00u
+-#define SWINF_WFVLDCLR      0x06u
+-
+ #define PMIC_SID            4               /* mt6363 is "pmic@4" on the bus */
+ #define MT6363_KEYS_STATE   0x001e          /* bit 1 power, bit 3 home; clear means pressed */
+ #define MT6363_KEYS_ALT     0x002a          /* TOPSTATUS on mt6359, same two bits: the vendor's pick */
+@@ -188,120 +175,37 @@
+ 	return *(volatile uint32_t *)(kpd + at);
+ }
+ 
+-static inline uint32_t
+-pmif_rd(uint32_t at)
+-{
+-	if (at != PMIF_SWINF_RDATA && at != PMIF_SWINF_STA) {
+-		return 0xffffffffu;
+-	}
+-	uint32_t value = *(volatile uint32_t *)(pmif + at);
+-
+-	__asm__ volatile ("dsb sy" ::: "memory");
+-	return value;
+-}
+-
+-static inline void
+-pmif_wr(uint32_t at, uint32_t value)
+-{
+-	if (at != PMIF_SWINF_ACC && at != PMIF_SWINF_VLDCLR) {
+-		return;
+-	}
+-	__asm__ volatile ("dsb sy" ::: "memory");
+-	*(volatile uint32_t *)(pmif + at) = value;
+-	__asm__ volatile ("dsb sy" ::: "memory");
+-}
+-
+-/*
+- * One register of the PMIC, over the arbiter. Returns false and leaves `value` alone if the
+- * transfer did not complete; nothing here retries, because a caller that is polling a key every
+- * twenty milliseconds has all the retries it needs.
+- */
+-static unsigned pmif_chan_known;   /* zero until a channel has carried a transfer */
+-
+-/* On a failed read, acknowledge a late/stale valid word once; never reset the arbiter. */
+-static bool
+-pmic_wait_on(unsigned chan, uint32_t state, struct hakios_pmif_budget *budget)
+-{
+-	if (chan >= PMIF_CHAN_COUNT) {
+-		return false;
+-	}
+-	uint32_t sta = PMIF_SWINF_STA + chan * PMIF_CHAN_STRIDE;
+-	while (hakios_pmif_budget_poll(budget)) {
+-		if (((pmif_rd(sta) >> 1) & 7u) == state) {
+-			return true;
+-		}
+-	}
+-	return false;
+-}
+-
+-static void
+-pmic_recover_on(unsigned chan, struct hakios_pmif_budget *budget)
+-{
+-	if (chan >= PMIF_CHAN_COUNT) {
+-		return;
+-	}
+-	uint32_t sta = PMIF_SWINF_STA + chan * PMIF_CHAN_STRIDE;
+-	if (((pmif_rd(sta) >> 1) & 7u) == SWINF_WFVLDCLR) {
+-		pmif_wr(PMIF_SWINF_VLDCLR + chan * PMIF_CHAN_STRIDE, 1u);
+-		(void)pmic_wait_on(chan, SWINF_IDLE, budget);
+-	}
+-}
+-
+-/*
+- * One read on one channel. Split out so that the channel search can try each in turn without
+- * duplicating the sequence, and so that a failure says which channel it was on.
+- */
+-static bool
+-pmic_read_on(unsigned chan, uint8_t addr, uint8_t *value)
+-{
+-	if (chan >= PMIF_CHAN_COUNT || value == NULL) {
+-		return false;
+-	}
+-	uint32_t acc = PMIF_SWINF_ACC + chan * PMIF_CHAN_STRIDE;
+-	uint32_t rdata = PMIF_SWINF_RDATA + chan * PMIF_CHAN_STRIDE;
+-	uint32_t vldclr = PMIF_SWINF_VLDCLR + chan * PMIF_CHAN_STRIDE;
+-	uint32_t cmd;
+-	struct hakios_pmif_budget budget = hakios_pmif_budget_begin();
+-
+-	if (!pmic_wait_on(chan, SWINF_IDLE, &budget)) {
+-		pmic_recover_on(chan, &budget);
+-		return false;
+-	}
+-	cmd = (PMIF_CMD_EXT_REG_LONG << 30) | ((uint32_t)PMIC_SID << 24) | (0u << 16) | addr;
+-	pmif_wr(acc, cmd);
+-	if (!pmic_wait_on(chan, SWINF_WFVLDCLR, &budget)) {
+-		pmic_recover_on(chan, &budget);
+-		return false;
+-	}
+-	uint8_t result = (uint8_t)(pmif_rd(rdata) & 0xffu);
+-	pmif_wr(vldclr, 1u);
+-	if (!pmic_wait_on(chan, SWINF_IDLE, &budget)) {
+-		pmic_recover_on(chan, &budget);
+-		return false;
+-	}
+-	*value = result;
+-	return true;
+-}
++/*
++ * The keys' one read, on the shared path. There is nothing of the transaction left here: the
++ * channel search, the IDLE wait, the WFVLDCLR wait, the ACK after a timeout, the STA error
++ * bits, the deadline and the lock all belong to pmif_read8. What is this driver's is the
++ * policy -- read 0x1e, and say why when it fails.
++ *
++ * The first failure of each distinct status is logged once and the count is kept: a channel
++ * that has gone deaf would otherwise print fifty lines a second, and the log the loader
++ * carries back is four megabytes shared with the kernel's own.
++ */
++static pmif_status_t pmif_last_keys_status;
++static unsigned pmif_keys_failures;
+ 
+ static bool
+ pmic_read(uint8_t addr, uint8_t *value)
+ {
+-	/*
+-	 * Once a channel has carried a transfer, stay on it: a completed transfer is proof of both
+-	 * reachability and correct wiring, and re-searching on every poll would cost four failed
+-	 * timeouts per key check.
+-	 */
+-	if (pmif_chan_known) {
+-		return pmic_read_on(pmif_chan, addr, value);
+-	}
+-	for (unsigned chan = 0; chan < PMIF_CHAN_COUNT; chan++) {
+-		if (pmic_read_on(chan, addr, value)) {
+-			pmif_chan = chan;
+-			pmif_chan_known = true;
+-			printf("mt6895-keys: the PMIC answered on channel %u (ACC %#x)\n",
+-			    chan, PMIF_SWINF_ACC + chan * PMIF_CHAN_STRIDE);
+-			return true;
+-		}
++	pmif_status_t status;
++
++	if (!pmif_ready) {
++		return false;
++	}
++	status = pmif_read8(PMIC_SID, addr, value);
++	if (status == PMIF_OK) {
++		pmif_last_keys_status = PMIF_OK;
++		return true;
++	}
++	pmif_keys_failures++;
++	if (status != pmif_last_keys_status) {
++		printf("mt6895-keys: SID %u register %#04x: %s (failure %u)\n", PMIC_SID, addr,
++		    pmif_status_name(status), pmif_keys_failures);
++		pmif_last_keys_status = status;
+ 	}
+ 	return false;
+ }
+@@ -450,11 +354,19 @@
+ 		poll_ms = 20;
+ 	}
+ 	kpd = ml_io_map(KPD_PHYS, KPD_SIZE);
+-	pmif = ml_io_map(PMIF_BASE, PMIF_SIZE);
+-	if (pmif == 0) {
+-		printf("mt6895-keys: the arbiter at %#x will not map; no key can be read\n",
+-		    (unsigned)PMIF_BASE);
+-		return;
++	/*
++	 * The arbiter's window is mapped once, by the shared path; the headset and the GPU find
++	 * it already up. A failure here is this driver's too: nothing of the PMIC side runs.
++	 */
++	{
++		pmif_status_t mapped = pmif_init();
++
++		pmif_ready = (mapped == PMIF_OK);
++		if (!pmif_ready) {
++			printf("mt6895-keys: the arbiter at %#x will not map (%s); "
++			    "no PMIC key can be read\n", (unsigned)PMIF_BASE,
++			    pmif_status_name(mapped));
++		}
+ 	}
+ 	/* Inherit LK's arbiter setup. Use only SWINF_2, without the old timer/gate write probes. */
+ 	pmic_scan("boot");
+@@ -494,11 +406,13 @@
+ 			 * enabled, and a state machine parked outside IDLE means someone else is
+ 			 * using the channel.
+ 			 */
++			uint32_t before = 0, after = 0;
++
+ 			printf("mt6895-keys: the arbiter did not answer for the PMIC's key register; "
+ 			    "only the keypad's own line will work\n");
+-			printf("mt6895-keys: SWINF_2 sta %#x (fsm %u)\n",
+-			    pmif_rd(PMIF_SWINF_STA),
+-			    (unsigned)((pmif_rd(PMIF_SWINF_STA) >> 1) & 0x7u));
++			pmif_last_sta(&before, &after);
++			printf("mt6895-keys: SWINF_2 sta %#x (fsm %u), last transaction %#x -> %#x\n",
++			    after, (unsigned)PMIF_STA_FSM(after), before, after);
+ 		}
+ 	}
+ 
+--- a/mtk/mt6895/drivers/audio/hakios.mt6895_headset.c
++++ b/mtk/mt6895/drivers/audio/hakios.mt6895_headset.c
+@@ -2,7 +2,7 @@
+ /*
+  * MT6368 accdet on xaga (MT6895), SPMI slave 5.
+  *
+- * headset=1: dump 124 registers, with no PMIC writes.
++ * headset=1: dump 129 registers, with no PMIC writes.
+  * headset=2: initialise and poll the physical jack. No PCM output or ADC key decoding yet.
+  *
+  * Register definitions and the EINT0 / mode 4 / no-moisture sequence are from
+@@ -20,23 +20,14 @@
+ #include <mach/mach_types.h>
+ #include <pexpert/pexpert.h>
+ #include <sys/hakios.audio.h>
++#include <sys/systm.h>
++
++/* The one PMIF transaction path, shared with the keys and the GPU (<sys/hakios.pmif.h>). */
+ #include <sys/hakios.pmif.h>
+-#include <sys/systm.h>
+-
+-extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
+-
+-#define PMIF_BASE           0x1c804000
+-#define PMIF_SIZE           0x08ff /* accessors enforce the narrower SWINF_2 register allowlist */
+-#define PMIF_SWINF_ACC      0x0880
+-#define PMIF_SWINF_WDATA    0x0884
+-#define PMIF_SWINF_RDATA    0x0894
+-#define PMIF_SWINF_VLDCLR   0x08a4
+-#define PMIF_SWINF_STA      0x08a8
+-#define PMIF_CMD_EXT_REG_LONG   3u
+-#define SWINF_IDLE          0x00u
+-#define SWINF_WFVLDCLR      0x06u
+-
+-#define MT6368_SID          5u
++
++/* The layout, the command word and the poll budget are <sys/hakios.pmif.h>'s; this file keeps
++ * only which SID and which registers the accdet is. */
++#define MT6368_SID          PMIF_SID_MT6368
+ #define ACCDET_RG_LO        0x2688
+ #define ACCDET_RG_HI        0x26d3
+ #define AUDDEC_ANA_LO       0x2508
+@@ -72,7 +63,6 @@
+ enum cable_type { CABLE_NONE, CABLE_MIC, CABLE_NO_MIC };
+ enum detector_state { PLUG_OUT, MIC_BIAS, HOOK_SWITCH };
+ 
+-static vm_offset_t pmif;
+ static uint32_t mode, poll_elapsed;
+ static enum cable_type cable;
+ static enum detector_state detector;
+@@ -86,97 +76,54 @@
+ 	uint8_t original, mask;
+ } saved[48];
+ static unsigned saved_count;
+-
+-static inline uint32_t
+-pmif_rd(uint32_t at)
+-{
+-	if (at != PMIF_SWINF_RDATA && at != PMIF_SWINF_STA) {
+-		return 0xffffffffu;
+-	}
+-	uint32_t value = *(volatile uint32_t *)(pmif + at);
+-
+-	__asm__ volatile ("dsb sy" ::: "memory");
+-	return value;
+-}
+-
+-static inline void
+-pmif_wr(uint32_t at, uint32_t value)
+-{
+-	if (at != PMIF_SWINF_ACC && at != PMIF_SWINF_WDATA && at != PMIF_SWINF_VLDCLR) {
+-		return;
+-	}
+-	__asm__ volatile ("dsb sy" ::: "memory");
+-	*(volatile uint32_t *)(pmif + at) = value;
+-	__asm__ volatile ("dsb sy" ::: "memory");
+-}
+-
+-static bool
+-pmif_wait(uint32_t state, struct hakios_pmif_budget *budget)
+-{
+-	while (hakios_pmif_budget_poll(budget)) {
+-		if (((pmif_rd(PMIF_SWINF_STA) >> 1) & 0x7u) == state) {
+-			return true;
+-		}
+-	}
+-	return false;
+-}
+-
+-/* Recover only a valid read awaiting its W1C ACK, and still report the failed transaction. */
+-static void
+-pmif_recover(struct hakios_pmif_budget *budget)
+-{
+-	if (((pmif_rd(PMIF_SWINF_STA) >> 1) & 7u) == SWINF_WFVLDCLR) {
+-		pmif_wr(PMIF_SWINF_VLDCLR, 1u);
+-		(void)pmif_wait(SWINF_IDLE, budget);
+-	}
+-}
+-
+-/* Same extended-register transaction as the vendor PMIF driver, with SID 5. */
++static bool quiesced;
++
++/*
++ * The accdet's two accessors, on the shared path. The transaction is pmif_read8/pmif_write8's:
++ * the IDLE wait, the WFVLDCLR wait, the RDATA read before the ACK, the ACK, the second IDLE
++ * wait, the NAK/ERR/timeout distinction, the deadline and the lock. What is this file's is
++ * `mode` -- nothing is written until headset=2 has asked for initialisation -- and the log.
++ *
++ * The status is kept rather than flattened to a bool: the four ways a write can fail (BUSY,
++ * NAK, TIMEOUT, ACK) need different things done about them, and the first of each is worth a
++ * line in the log.
++ */
++static pmif_status_t mt6368_last_status;
++
+ static bool
+ mt6368_read(uint16_t addr, uint8_t *value)
+ {
+-	struct hakios_pmif_budget budget = hakios_pmif_budget_begin();
+-
+-	if (!pmif_wait(SWINF_IDLE, &budget)) {
+-		pmif_recover(&budget);
+-		return false;
+-	}
+-	pmif_wr(PMIF_SWINF_ACC, (PMIF_CMD_EXT_REG_LONG << 30) | (MT6368_SID << 24) | addr);
+-	if (!pmif_wait(SWINF_WFVLDCLR, &budget)) {
+-		pmif_recover(&budget);
+-		return false;
+-	}
+-	uint8_t result = (uint8_t)pmif_rd(PMIF_SWINF_RDATA);
+-	/* VLDCLR is a W1C transaction ACK. Validate IDLE, not a read-back of the ACK value. */
+-	pmif_wr(PMIF_SWINF_VLDCLR, 1u);
+-	if (!pmif_wait(SWINF_IDLE, &budget)) {
+-		pmif_recover(&budget);
+-		return false;
+-	}
+-	*value = result;
+-	return true;
++	if (__atomic_load_n(&quiesced, __ATOMIC_ACQUIRE)) {
++		return false;
++	}
++
++	pmif_status_t status = pmif_read8(MT6368_SID, addr, value);
++
++	if (status != PMIF_OK && status != mt6368_last_status) {
++		printf("headset: read %#04x: %s\n", addr, pmif_status_name(status));
++	}
++	mt6368_last_status = status;
++	return status == PMIF_OK;
+ }
+ 
+ static bool
+ mt6368_write(uint16_t addr, uint8_t value)
+ {
+-	if (mode != 2 || addr == 0x014b || addr == 0x0240) {
+-		return false;
+-	}
+-	struct hakios_pmif_budget budget = hakios_pmif_budget_begin();
+-
+-	if (!pmif_wait(SWINF_IDLE, &budget)) {
+-		pmif_recover(&budget);
+-		return false;
+-	}
+-	pmif_wr(PMIF_SWINF_WDATA, value);
+-	pmif_wr(PMIF_SWINF_ACC,
+-	    (PMIF_CMD_EXT_REG_LONG << 30) | (1u << 29) | (MT6368_SID << 24) | addr);
+-	if (!pmif_wait(SWINF_IDLE, &budget)) {
+-		pmif_recover(&budget);
+-		return false;
+-	}
+-	return true;
++	if (__atomic_load_n(&quiesced, __ATOMIC_ACQUIRE)) {
++		return false;
++	}
++
++	pmif_status_t status;
++
++	if (mode != 2) {
++		return false;
++	}
++	status = pmif_write8(MT6368_SID, addr, value);
++	if (status != PMIF_OK && status != mt6368_last_status) {
++		printf("headset: write %#04x = %#02x: %s\n", addr, value, pmif_status_name(status));
++	}
++	mt6368_last_status = status;
++	return status == PMIF_OK;
+ }
+ 
+ static bool
+@@ -309,18 +256,16 @@
+ 	return mt6368_write(AUD_IRQ_STATUS, mask == IRQ_ACCDET ? 0x02 : 0x04);
+ }
+ 
++/* Worker-only rollback. Never called by the post-stop loader return path. */
+ static void
+ restore_configuration(void)
+ {
+ 	bool ok = true;
+-	struct hakios_pmif_budget budget = hakios_pmif_budget_begin();
+-
+-	/* A stopped keys core may have left a read waiting for its W1C ACK. */
+-	if (((pmif_rd(PMIF_SWINF_STA) >> 1) & 7u) == SWINF_WFVLDCLR) {
+-		pmif_wr(PMIF_SWINF_VLDCLR, 1);
+-	}
+-	if (!pmif_wait(SWINF_IDLE, &budget)) {
+-		printf("headset: PMIF not idle; configuration restore could not start\n");
++	pmif_status_t status = pmif_recover();
++
++	if (status != PMIF_OK) {
++		printf("headset: PMIF not idle (%s); configuration restore could not start\n",
++		    pmif_status_name(status));
+ 		active = false;
+ 		return;
+ 	}
+@@ -525,12 +470,25 @@
+ 		printf("headset: unsupported mode %u\n", mode);
+ 		return;
+ 	}
+-	pmif = ml_io_map(PMIF_BASE, PMIF_SIZE);
+-	if (pmif == 0) {
+-		printf("headset: cannot map PMIF\n");
+-		return;
++	{
++		pmif_status_t mapped = pmif_init();
++
++		if (mapped != PMIF_OK) {
++			printf("headset: cannot map PMIF (%s)\n", pmif_status_name(mapped));
++			return;
++		}
+ 	}
+ 	printf("headset: mode %u on SID 5, serialised in keys worker\n", mode);
++	/* IDs, two supply/clock preconditions and the nonzero bus anchor. Read only. */
++	static const uint16_t baseline_extra[] = { 0x0008, 0x0009, 0x1cb2, 0x230c, 0x231d };
++	for (unsigned i = 0; i < sizeof(baseline_extra) / sizeof(baseline_extra[0]); i++) {
++		if (!dump_block(baseline_extra[i], baseline_extra[i])) {
++			return;
++		}
++	}
++	if (mode == 1) {
++		printf("headset: mode 1 is read-only; AB is not detection evidence unless VAUD18 is enabled\n");
++	}
+ 	if (!dump_block(ACCDET_RG_LO, ACCDET_RG_HI)) {
+ 		return;
+ 	}
+@@ -550,7 +508,7 @@
+ void
+ hakios_mt6895_headset_poll(uint32_t elapsed_ms)
+ {
+-	if (!active) {
++	if (__atomic_load_n(&quiesced, __ATOMIC_ACQUIRE) || !active) {
+ 		return;
+ 	}
+ 	poll_elapsed += elapsed_ms;
+@@ -567,11 +525,13 @@
+ 	}
+ }
+ 
+-/* Called after psci_smp_stop_others(): it is then safe to own the worker's PMIF channel. */
++/*
++ * Post-stop path: no lock, PMIF, ACK, restore or printf. A CPU may still be
++ * running after a stop timeout; an unlocked ACK could consume its valid word.
++ * saved_count is deliberately retained: configuration was NOT restored here.
++ */
+ void
+ hakios_mt6895_headset_quiesce(void)
+ {
+-	if (mode == 2 && saved_count) {
+-		restore_configuration();
+-	}
+-}
++	__atomic_store_n(&quiesced, true, __ATOMIC_RELEASE);
++}
+--- a/mtk/mt6895/drivers/gpu/hakios.mali610.c
++++ b/mtk/mt6895/drivers/gpu/hakios.mali610.c
+@@ -38,10 +38,15 @@
+ #include <mach/mach_types.h>
+ #include <pexpert/pexpert.h>
+ #include <sys/systm.h>
++#include <vm/vm_kern.h>
++
++#include "hakios.mali610_fw.h"
++/*
++ * The one PMIF transaction path, shared with the keys and the headset. The deadline it used
++ * to take from <sys/hakios.pmif.h> is inside pmif_wait() now, where it can also see the STA
++ * error bit; the lock is taken once around the whole transaction.
++ */
+ #include <sys/hakios.pmif.h>
+-#include <vm/vm_kern.h>
+-
+-#include "hakios.mali610_fw.h"
+ 
+ extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
+ extern uint64_t kvtophys(vm_offset_t va);
+@@ -3004,112 +3009,52 @@
+  * selector 0x6e, 687500 uV, which is the tenth operating point, and reading the selector back
+  * before writing anything is the cheap way to notice if that is not true here.
+  */
+-#define MALI_PMIF_BASE          0x1c804000ull
+-#define MALI_PMIF_SIZE          0x08ffu /* mapping granularity does not grant access beyond SWINF_2 */
+-#define MALI_PMIF_ACC           0x0880u         /* SWINF_2, the only channel inside the 0x8ff window */
+-#define MALI_PMIF_WDATA         0x0884u
+-#define MALI_PMIF_RDATA         0x0894u
+-#define MALI_PMIF_VLDCLR        0x08a4u
+-#define MALI_PMIF_STA           0x08a8u
+-#define MALI_PMIF_CMD_EXT_LONG  3u              /* SPMI 0x20..0x2f / 0x38..0x3f, 16-bit registers */
+-#define MALI_PMIF_WRITE_BIT     (1u << 29)      /* set on a write, clear on a read */
+-#define MALI_PMIF_IDLE          0x00u
+-#define MALI_PMIF_WFVLDCLR      0x06u
+-
+-#define MALI_MT6368_SID         5u              /* pmic@4 in the spmi node is MT6363 at 4 */
++/* The layout, the command word and the deadline are <sys/hakios.pmif.h>'s; what is here is
++ * the MT6368's VBUCK2, the only PMIC register the GPU touches. */
++#define MALI_MT6368_SID         PMIF_SID_MT6368
+ #define MALI_VBUCK2_EN          0x0240u
+ #define MALI_VBUCK2_EN_SET      (MALI_VBUCK2_EN + 1u)
+ #define MALI_VBUCK2_EN_MASK     (1u << 2)
+ #define MALI_VBUCK2_VSEL        0x024eu
+ #define MALI_VBUCK2_VSEL_MASK   0xffu
+ 
+-static vm_offset_t gPmif;
+-
+-static uint32_t
+-pmif_rd(uint32_t at)
+-{
+-	if (at != MALI_PMIF_RDATA && at != MALI_PMIF_STA) {
+-		return 0xffffffffu;
+-	}
+-	return reg_rd(gPmif, at);
+-}
+-
+-static void
+-pmif_wr(uint32_t at, uint32_t value)
+-{
+-	if (at == MALI_PMIF_ACC || at == MALI_PMIF_WDATA || at == MALI_PMIF_VLDCLR) {
+-		reg_wr(gPmif, at, value);
+-	}
+-}
+-
+-static bool
+-mali_pmif_wait(uint32_t state, struct hakios_pmif_budget *budget)
+-{
+-	while (hakios_pmif_budget_poll(budget)) {
+-		if (((pmif_rd(MALI_PMIF_STA) >> 1) & 7u) == state) {
+-			return true;
+-		}
+-	}
+-	return false;
+-}
+-
+-static void
+-mali_pmif_recover(struct hakios_pmif_budget *budget)
+-{
+-	if (((pmif_rd(MALI_PMIF_STA) >> 1) & 7u) == MALI_PMIF_WFVLDCLR) {
+-		pmif_wr(MALI_PMIF_VLDCLR, 1u);
+-		(void)mali_pmif_wait(MALI_PMIF_IDLE, budget);
+-	}
+-}
+-
+-/*
+- * One SPMI transaction. The command word is the arbiter's, not the PMIC's: bits 31..30 are the
+- * PMIF's own opcode translation, bit 29 marks a write, 28..24 the bus id, 23..16 the length minus
+- * one, 15..0 the register. Leaving bit 29 out is the failure mode that costs an afternoon -- the
+- * transfer runs, the state machine reaches the same place, and the value never arrives.
+- */
++/*
++ * The GPU's one PMIC read and write, on the shared path. Nothing of the transaction is left
++ * here: the IDLE wait, the write path that must not wait for WFVLDCLR (a write produces no
++ * valid word), the RDATA read before the ACK, the ACK, the second IDLE wait, the deadline
++ * and the lock are pmif_read8/pmif_write8's.
++ *
++ * This is the file that had the worst of the defects: its write path waited for WFVLDCLR,
++ * which a write never reaches, so mali_vstack_rail()'s write of 0x241 always reported a
++ * failure after a full timeout while the write itself had landed -- a log that said the
++ * opposite of what the hardware did.
++ */
++static pmif_status_t mali_pmif_status;
++
+ static bool
+ mali_spmi(uint32_t addr, uint32_t *value, bool write)
+ {
+-	if (value == NULL || addr > 0xffffu ||
+-	    (write && (addr == 0x014bu || addr == 0x0240u || *value > 0xffu))) {
++	pmif_status_t status;
++
++	if (value == NULL || addr > 0xffffu || (write && *value > 0xffu)) {
+ 		return false;
+ 	}
+-	uint32_t cmd = (MALI_PMIF_CMD_EXT_LONG << 30) |
+-	    (write ? MALI_PMIF_WRITE_BIT : 0u) |
+-	    (MALI_MT6368_SID << 24) | addr;
+-	struct hakios_pmif_budget budget = hakios_pmif_budget_begin();
+-
+-	if (!mali_pmif_wait(MALI_PMIF_IDLE, &budget)) {
+-		mali_pmif_recover(&budget);
+-		return false;
+-	}
+ 	if (write) {
+-		pmif_wr(MALI_PMIF_WDATA, *value);
+-	}
+-	pmif_wr(MALI_PMIF_ACC, cmd);
+-	/* Writes complete at IDLE and produce no valid read data or VLDCLR handshake. */
+-	if (write) {
+-		if (!mali_pmif_wait(MALI_PMIF_IDLE, &budget)) {
+-			mali_pmif_recover(&budget);
+-			return false;
+-		}
+-		return true;
+-	}
+-	if (!mali_pmif_wait(MALI_PMIF_WFVLDCLR, &budget)) {
+-		printf("mali: spmi %s %#x stalled at state %u\n", write ? "write" : "read", addr,
+-		    (unsigned)((pmif_rd(MALI_PMIF_STA) >> 1) & 0x7u));
+-		mali_pmif_recover(&budget);
+-		return false;
+-	}
+-	uint32_t result = pmif_rd(MALI_PMIF_RDATA) & 0xffu;
+-	pmif_wr(MALI_PMIF_VLDCLR, 1u);
+-	if (!mali_pmif_wait(MALI_PMIF_IDLE, &budget)) {
+-		mali_pmif_recover(&budget);
+-		return false;
+-	}
+-	*value = result;
+-	return true;
++		status = pmif_write8((uint8_t)MALI_MT6368_SID, (uint16_t)addr, (uint8_t)*value);
++	} else {
++		uint8_t byte = 0;
++
++		status = pmif_read8((uint8_t)MALI_MT6368_SID, (uint16_t)addr, &byte);
++		if (status == PMIF_OK) {
++			*value = byte;
++		}
++	}
++	if (status != PMIF_OK && status != mali_pmif_status) {
++		printf("mali: spmi %s %#x: %s\n", write ? "write" : "read", addr,
++		    pmif_status_name(status));
++	}
++	mali_pmif_status = status;
++	return status == PMIF_OK;
+ }
+ 
+ /*
+@@ -3125,11 +3070,14 @@
+ {
+ 	uint32_t status = 0, vsel = 0, four = MALI_VBUCK2_EN_MASK;
+ 
+-	gPmif = ml_io_map(MALI_PMIF_BASE, MALI_PMIF_SIZE);
+-	if (gPmif == 0) {
+-		printf("mali: the arbiter at %#llx will not map; the stack rail stays as it is\n",
+-		    (unsigned long long)MALI_PMIF_BASE);
+-		return;
++	{
++		pmif_status_t mapped = pmif_init();
++
++		if (mapped != PMIF_OK) {
++			printf("mali: the arbiter at %#x will not map (%s); the stack rail stays as it is\n",
++			    (unsigned)PMIF_BASE, pmif_status_name(mapped));
++			return;
++		}
+ 	}
+ 	if (!mali_spmi(MALI_VBUCK2_EN, &status, false)) {
+ 		return;
+--- a/mtk/mt6895/drivers/input/conf
++++ b/mtk/mt6895/drivers/input/conf
+@@ -4,6 +4,7 @@
+ 
+ driver MTK6895_KEYS
+ 	file    bsd/dev/hakios.mt6895_keys.c
++	requires MT6895_PMIF
+ 	default n
+ 	help    the volume keys through the keypad at 0x1c00e000 (mediatek,kp, hw-init-map 0x72) and the power key through
+ 	help    the MT6363's TOPSTATUS over SPMI at 0x1c804000 (buttons=2). The MT6895 keeps its keys in those two places;
+--- a/mtk/mt6895/drivers/audio/conf
++++ b/mtk/mt6895/drivers/audio/conf
+@@ -3,8 +3,8 @@
+ 
+ driver MT6895_HEADSET
+ 	file    bsd/dev/hakios.mt6895_headset.c
+-	requires MTK6895_KEYS
++	requires MTK6895_KEYS MT6895_PMIF
+ 	default n
+-	help    MT6368 accdet over SPMI slave 5: headset=1 dumps 124 registers without PMIC writes;
++	help    MT6368 accdet over SPMI slave 5: headset=1 dumps 129 registers without PMIC writes;
+ 	help    headset=2 initialises and polls EINT0 and the accdet state machine. Both run in the buttons=2
+ 	help    keys worker. ADC key decoding, impedance measurement and PCM playback are not implemented
+--- a/mtk/mt6895/drivers/gpu/conf
++++ b/mtk/mt6895/drivers/gpu/conf
+@@ -7,6 +7,7 @@
+ 
+ driver MALI610
+ 	file    bsd/dev/hakios.mali610.c
++	requires MT6895_PMIF
+ 	default n
+ 	help    the Mali-G610 MC6 of this SoC brought up from the kernel (mali=1): the twelve MFG power
+ 	help    domains in the SPM, the two clock muxes and MFGPLL, and what the block says it is;
+--- a/mtk/mt6895/configs/mt6895.config
++++ b/mtk/mt6895/configs/mt6895.config
+@@ -69,6 +69,7 @@
+ # CONFIG_HAKIOS_MTK_CONNSYS is not set
+ 
+ # The MT6895's own (mtk/mt6895/drivers/): what this SoC has, written for it.
++CONFIG_HAKIOS_MT6895_PMIF=y
+ # The touch screen: a Novatek NT36672E on SPI2, the four pins driven by hand because this SoC's SPI2_A pin
+ # function number is not in any header here (xaga.config turns it on with touchscreen=3).
+ CONFIG_HAKIOS_NVT=y
+--- a/tools/drivers-check.py
++++ b/tools/drivers-check.py
+@@ -17,7 +17,7 @@
+ import os
+ import sys
+ 
+-SUBSYSTEMS = {"input", "storage", "gpu", "camera", "haptic", "audio", "power", "wifi", "bluetooth", "modem", "net", "core"}
++SUBSYSTEMS = {"input", "storage", "gpu", "camera", "haptic", "audio", "power", "wifi", "bluetooth", "modem", "net", "core", "usb"}
+ TREE_DIRS = ("bsd/dev/", "iokit/Kernel/")
+ 
+ 
+--- a/mtk/tools/test-pmif-transactions.py
++++ b/mtk/tools/test-pmif-transactions.py
+@@ -1,155 +1,246 @@
+ #!/usr/bin/env python3
+-"""Test the three production PMIF implementations with a stateful bus model."""
+-
++"""Exercise the production shared PMIF C code, including concurrency and failures."""
+ from pathlib import Path
+ import re
+ import subprocess
+ import tempfile
+ 
+ ROOT = Path(__file__).resolve().parents[2]
+-
+-
+-def function(source, name):
+-    match = re.search(r'static (?:inline )?(?:uint32_t|void|bool)\n' + name + r'\(', source)
+-    assert match, name
+-    end = source.index('\n}', match.start()) + 2
+-    return source[match.start():end] + '\n'
+-
+-
+-def host_mmio(source):
+-    source = source.replace('*(volatile uint32_t *)(pmif + at) = value;', 'model_write(at, value);')
+-    source = source.replace('*(volatile uint32_t *)(pmif + at)', 'model_read(at)')
+-    return re.sub(r'__asm__ volatile\s*\("dsb sy" ::: "memory"\);', '', source)
+-
++HEADER = ROOT / 'xnu/files/bsd/sys/hakios.pmif.h'
++DRIVER = ROOT / 'mtk/mt6895/drivers/core/hakios.mt6895_pmif.c'
+ 
+ PREFIX = r'''
++#define _POSIX_C_SOURCE 200809L
+ #include <assert.h>
+ #include <stdbool.h>
+ #include <stdint.h>
+ #include <stddef.h>
+ #include <stdio.h>
++#include <string.h>
++#include <pthread.h>
++#include <sched.h>
+ typedef uintptr_t vm_offset_t;
+-static uint32_t state, expected_sid, data;
+-static unsigned calls, commands, acks;
+-static bool drop_ack;
+-static uint64_t model_now, clock_step = 1000, idle_until;
+-static bool hang_rx;
+-static uint64_t mach_absolute_time(void) { uint64_t now = model_now; model_now += clock_step; return now; }
+-static void nanoseconds_to_absolutetime(uint64_t ns, uint64_t *ticks) { *ticks = ns; }
+-static uint32_t model_read(uint32_t at) {
+-    calls++;
+-    assert(at == 0x894 || at == 0x8a8);
+-    if (at == 0x8a8) return (model_now < idle_until ? 4u : state) << 1;
+-    assert(state == 6); return data;
+-}
+-static void model_write(uint32_t at, uint32_t value) {
+-    calls++;
+-    assert(at == 0x880 || at == 0x884 || at == 0x8a4);
++typedef size_t vm_size_t;
++#define NSEC_PER_USEC 1000u
++#define round_page(n) (((n) + 16383u) & ~(vm_size_t)16383u)
++#define PMIF_MMIO_TEST 1
++static pthread_mutex_t bus_lock = PTHREAD_MUTEX_INITIALIZER;
++static _Thread_local unsigned lock_depth;
++static unsigned lock_calls, unlock_calls;
++static unsigned mmio_calls, gReads, gWrites, gAcks, sta_reads;
++static unsigned map_calls, unmap_calls;
++static bool map_fail, map_race;
++static pthread_barrier_t map_barrier;
++static uint32_t gSta, gRdata, gWdata, gAcc;
++static uint8_t gMem[65536];
++static bool gFailNextAcc, gIgnoreAck, gNeverComplete, late_idle;
++static unsigned drop_acks;
++static uint64_t model_now, clock_step = 1000, clock_calls, idle_until;
++static uint64_t sta_times[10016];
++static uint64_t late_at;
++static uint64_t mach_absolute_time(void) {
++    clock_calls++;
++    uint64_t now = model_now; model_now += clock_step; return now;
++}
++static void nanoseconds_to_absolutetime(uint64_t ns, uint64_t *out) { *out = ns; }
++static void clock_interval_to_deadline(uint32_t n, uint32_t scale, uint64_t *out) {
++    *out = mach_absolute_time() + (uint64_t)n * scale;
++}
++void hakios_spmi_lock(void) {
++    assert(lock_depth == 0); assert(pthread_mutex_lock(&bus_lock) == 0);
++    lock_depth = 1; lock_calls++;
++}
++void hakios_spmi_unlock(void) {
++    assert(lock_depth == 1); lock_depth = 0; unlock_calls++;
++    assert(pthread_mutex_unlock(&bus_lock) == 0);
++}
++vm_offset_t ml_io_map(vm_offset_t address, vm_size_t size) {
++    assert(lock_depth == 0 && address == 0x1c804000 && size == 0x8ff);
++    unsigned n = __atomic_add_fetch(&map_calls, 1u, __ATOMIC_RELAXED);
++    if (map_race) {
++        int rc = pthread_barrier_wait(&map_barrier);
++        assert(rc == 0 || rc == PTHREAD_BARRIER_SERIAL_THREAD);
++    }
++    return map_fail ? 0 : (vm_offset_t)(n * 0x4000u);
++}
++void ml_io_unmap(vm_offset_t address, vm_size_t size) {
++    assert(lock_depth == 0 && address && size == 0x4000);
++    __atomic_add_fetch(&unmap_calls, 1u, __ATOMIC_RELAXED);
++}
++static void set_fsm(uint32_t fsm) { gSta = (gSta & ~14u) | (fsm << 1); }
++uint32_t pmif_test_rd(uint32_t at) {
++    assert(lock_depth == 1); mmio_calls++;
++    if (at == 0x8a8) {
++        if (sta_reads < sizeof(sta_times)/sizeof(sta_times[0])) sta_times[sta_reads] = model_now;
++        sta_reads++;
++        if (late_idle && model_now >= late_at) set_fsm(6);
++        return model_now < idle_until ? 4u : gSta;
++    }
++    assert(at == 0x894 && ((gSta >> 1) & 7) == 6); return gRdata;
++}
++void pmif_test_wr(uint32_t at, uint32_t value) {
++    assert(lock_depth == 1); mmio_calls++;
+     if (at == 0x8a4) {
+-        assert(value == 1 && state == 6); acks++;
+-        if (drop_ack) drop_ack = false; else state = 0;
+-        return;
+-    }
+-    assert(state == 0);
+-    if (at == 0x884) { data = value; return; }
+-    commands++;
+-    assert((value >> 30) == 3 && ((value >> 24) & 15) == expected_sid);
+-    assert(((value >> 16) & 255) == 0);
++        assert(value == 1 && ((gSta >> 1) & 7) == 6); gAcks++;
++        if (gIgnoreAck) return;
++        if (drop_acks) { drop_acks--; return; }
++        late_idle = false; set_fsm(0); return;
++    }
++    assert(((gSta >> 1) & 7) == 0);
++    if (at == 0x884) { gWdata = value; return; }
++    assert(at == 0x880 && (value >> 30) == 3 && ((value >> 16) & 255) == 0);
++    assert(((value >> 24) & 15) == 4 || ((value >> 24) & 15) == 5);
++    gAcc = value;
+     if (value & (1u << 29)) {
++        gWrites++;
++        if (gFailNextAcc) { gSta |= 1u << 18; set_fsm(4); gFailNextAcc = false; return; }
+         assert((value & 0xffff) != 0x014b && (value & 0xffff) != 0x0240);
++        gMem[value & 0xffff] = (uint8_t)gWdata;
+     } else {
+-        state = hang_rx ? 4 : 6; data = 0x5a;
+-    }
+-}
+-static uint32_t reg_rd(vm_offset_t base, uint32_t at) { (void)base; return model_read(at); }
+-static void reg_wr(vm_offset_t base, uint32_t at, uint32_t v) { (void)base; model_write(at, v); }
++        gReads++; gRdata = gMem[value & 0xffff]; set_fsm(gNeverComplete ? 2 : 6);
++    }
++    sched_yield(); /* Encourage interleaving while a transfer is live. */
++}
+ '''
+ 
+ TEST = r'''
++static void reset_device(void) {
++    assert(lock_depth == 0 && lock_calls == unlock_calls);
++    gSta = gAcc = gRdata = gWdata = 0;
++    gFailNextAcc = gIgnoreAck = gNeverComplete = late_idle = false;
++    gReads = gWrites = gAcks = mmio_calls = sta_reads = drop_acks = 0;
++    model_now = clock_calls = idle_until = late_at = 0; clock_step = 1000;
++    memset(gMem, 0x5a, sizeof(gMem)); gMem[0x26b6] = 0xa7; gMem[0x240] = 4;
++}
++static void *init_worker(void *unused) {
++    (void)unused; assert(pmif_init() == PMIF_OK); return NULL;
++}
++static void *transfer_worker(void *arg) {
++    uintptr_t id = (uintptr_t)arg;
++    uint32_t sid = id == 0 ? 4 : 5;
++    uint32_t addr = id == 0 ? 0x1e : id == 1 ? 0x26b6 : 0x24e;
++    for (unsigned n = 0; n < 400; n++) {
++        uint8_t value = 0;
++        if (id == 2) assert(pmif_write8(sid, addr, n & 0xff) == PMIF_OK);
++        assert(pmif_read8(sid, addr, &value) == PMIF_OK);
++        assert(value == (id == 0 ? 0x5a : id == 1 ? 0xa7 : (n & 0xff)));
++    }
++    assert(lock_depth == 0); return NULL;
++}
+ int main(void) {
+-    setup();
+-    unsigned before = calls;
+-    assert(pmif_rd(0x900) == 0xffffffffu);
+-    pmif_wr(0x940, 1);
+-    assert(calls == before);
+-    assert(test_read() && result == 0x5a && state == 0 && acks == 1);
+-    result = 0xa5; state = 6; commands = acks = 0;
+-    assert(!test_read() && result == 0xa5 && state == 0 && acks == 1 && commands == 0);
+-    assert(test_read() && result == 0x5a && state == 0);
+-    result = 0xa5; drop_ack = true; acks = 0;
+-    assert(!test_read() && result == 0xa5 && state == 0 && acks == 2);
+-    assert(test_read() && result == 0x5a);
+-    /* Delayed IDLE and a stuck RX must share one 2ms deadline, not one per phase. */
+-    state = 0; hang_rx = true; idle_until = model_now + 1200000;
+-    uint64_t began = model_now;
+-    result = 0xa5; commands = 0;
+-    assert(!test_read() && result == 0xa5 && commands == 1);
+-    assert(model_now - began <= HAKIOS_PMIF_TIMEOUT_NS + 5000);
+-    idle_until = 0; hang_rx = false; state = 4; clock_step = 0;
+-    before = calls;
+-    assert(!test_read() && calls - before <= HAKIOS_PMIF_POLL_LIMIT + 2);
+-    clock_step = 1000; state = 0;
+-    assert(test_read() && result == 0x5a);
+-    extra();
+-    puts("PASS: allowed offsets, ACK recovery, valid output, shared 2ms deadline, frozen-clock bound");
++    uint8_t v = 0;
++    pmif_status_t status;
++    reset_device();
++    assert(pmif_read8(5, 0x26b6, &v) == PMIF_E_DEAD);
++    map_fail = true; assert(pmif_init() == PMIF_E_DEAD); map_fail = false;
++    assert(pmif_init() == PMIF_OK);
++    unsigned before = mmio_calls;
++    assert(pmif_read8(3, 0x1e, &v) == PMIF_E_SID);
++    assert(pmif_read8(261, 0x1e, &v) == PMIF_E_SID);
++    assert(pmif_read8(5, 0x10000, &v) == PMIF_E_ARG);
++    assert(pmif_read8(5, 0x26b6, NULL) == PMIF_E_ARG);
++    assert(pmif_write8(5, 0x014b, 1) == PMIF_E_REG);
++    assert(pmif_write8(5, 0x0240, 1) == PMIF_E_REG);
++    assert(pmif_write8(5, 0x241, 256) == PMIF_E_ARG);
++    assert(mmio_calls == before);
++    puts("1 admit: rejected SID/address/value/null/forbidden writes perform no MMIO");
++    assert(pmif_read8(5, 0x26b6, &v) == PMIF_OK && v == 0xa7);
++    assert(gAcc == 0xc50026b6u && gAcks == 1 && PMIF_STA_FSM(gSta) == 0);
++    puts("2 read: correct command, RDATA before ACK, post-ACK IDLE");
++    reset_device(); v = 0x11; gNeverComplete = true;
++    assert(pmif_read8(5, 0x26b6, &v) == PMIF_E_TIMEOUT && v == 0x11);
++    puts("3 failed read: output is unchanged");
++    reset_device(); set_fsm(6);
++    assert(pmif_read8(5, 0x26b6, &v) == PMIF_OK && gAcks == 2 && PMIF_STA_FSM(gSta) == 0);
++    puts("4 B3: stale FSM=6 ACK then successful transfer");
++    reset_device();
++    assert(pmif_write8(5, 0x241, 4) == PMIF_OK);
++    assert(gAcc == 0xe5000241u && gWrites == 1 && gAcks == 0 && gMem[0x241] == 4);
++    puts("5 B4: bit29 set; write completes at IDLE, without read/ACK");
++    reset_device(); gFailNextAcc = true;
++    assert(pmif_write8(5, 0x241, 4) == PMIF_E_NAK && model_now < 100000);
++    puts("6 NAK: error observed promptly");
++    reset_device(); v = 0x5c; gIgnoreAck = true;
++    status = pmif_read8(5, 0x26b6, &v);
++    assert((status == PMIF_E_ACK || status == PMIF_E_STUCK) && v == 0x5c && gAcks == 2);
++    puts("7 ignored ACK: finite retry, failed status and unchanged output");
++    reset_device();
++    assert(!pmif_pmic_reg_writable(0x240));
++    assert(pmif_read8(5, 0x240, &v) == PMIF_OK && v == 4);
++    before = mmio_calls;
++    assert(pmif_rd(0x900) == 0xffffffffu && pmif_rd(0x8a4) == 0xffffffffu);
++    pmif_wr(0x940, 1); pmif_wr(0x894, 1); assert(mmio_calls == before);
++    puts("8 whitelist: 0x240 readable only; exact directional SWINF_2 offset guard");
++    uint32_t sta_before, sta_after;
++    pmif_last_sta(&sta_before, &sta_after);
++    assert(PMIF_STA_FSM(sta_before) == 0 && PMIF_STA_FSM(sta_after) == 0);
++    puts("9 last_sta: locked transaction snapshot");
++    assert(lock_depth == 0 && lock_calls == unlock_calls);
++    puts("10 lock: every success/failure path releases the shared lock");
++
++    /* IDLE consumes 60ms, RX is stuck: no second 100ms allowance. */
++    reset_device(); idle_until = 60000000; gNeverComplete = true; v = 0x6d;
++    assert(pmif_read8(5, 0x26b6, &v) == PMIF_E_TIMEOUT && v == 0x6d && gReads == 1);
++    assert(model_now >= 100000000 && model_now <= 100010000);
++    /* Failed samples after the first preflight use at least the 10us cadence. */
++    for (unsigned n = 2; n < 100 && n < sta_reads; n++) assert(sta_times[n]-sta_times[n-1] >= 10000);
++    puts("11 budget: IDLE+RX+cleanup share 100ms; failed polls use 10us cadence");
++
++    /* Initial IDLE timeout can become FSM=6 only at cleanup, on either path. */
++    for (unsigned write = 0; write < 2; write++) {
++        reset_device(); set_fsm(2); late_idle = true; late_at = 100000000; v = 0xa5;
++        status = write ? pmif_write8(5, 0x241, 4) : pmif_read8(5, 0x26b6, &v);
++        assert(status != PMIF_OK && gAcks == 1 && PMIF_STA_FSM(gSta) == 0);
++        assert(gReads == 0 && gWrites == 0 && v == 0xa5 && model_now <= 100010000);
++    }
++    puts("12 late initial-IDLE FSM=6: read and write failure both ACK, no new budget");
++    reset_device(); drop_acks = 1; v = 0x7a;
++    assert(pmif_read8(5, 0x26b6, &v) != PMIF_OK && v == 0x7a && gAcks == 2 && PMIF_STA_FSM(gSta) == 0);
++    assert(model_now <= 100010000);
++    puts("13 dropped first ACK: cleanup retires it; failed read still does not publish");
++    reset_device(); clock_step = 0; set_fsm(2); v = 0x19;
++    assert(pmif_read8(5, 0x26b6, &v) == PMIF_E_TIMEOUT && v == 0x19);
++    assert(clock_calls <= PMIF_SPIN_HARD_CAP + 20 && sta_reads <= 4);
++    /* Also check the shared sample ceiling independent of the clock deadline. */
++    reset_device(); clock_step = 0; set_fsm(2);
++    hakios_spmi_lock();
++    struct pmif_budget budget = pmif_budget_begin(); budget.polls = PMIF_SPIN_HARD_CAP - 1;
++    assert(!pmif_wait(&budget, 0) && budget.polls == PMIF_SPIN_HARD_CAP);
++    assert(sta_reads == 1); hakios_spmi_unlock();
++    puts("14 frozen clock and poll ceiling: both pause and transaction terminate");
++
++    reset_device(); pthread_t workers[3];
++    for (uintptr_t n = 0; n < 3; n++) assert(pthread_create(&workers[n], NULL, transfer_worker, (void *)n) == 0);
++    for (unsigned n = 0; n < 3; n++) assert(pthread_join(workers[n], NULL) == 0);
++    assert(gReads == 1200 && gWrites == 400 && gAcks == 1200 && PMIF_STA_FSM(gSta) == 0);
++    assert(lock_calls == unlock_calls && lock_depth == 0);
++    puts("15 concurrent SID4 keys/SID5 headset/GPU: 1600 transfers, no interleaved transaction");
++
++    /* Both callers map outside the lock; one winner and one discarded mapping. */
++    reset_device(); pmif_base = 0; before = unmap_calls; map_race = true;
++    assert(pthread_barrier_init(&map_barrier, NULL, 2) == 0);
++    for (unsigned n = 0; n < 2; n++) assert(pthread_create(&workers[n], NULL, init_worker, NULL) == 0);
++    for (unsigned n = 0; n < 2; n++) assert(pthread_join(workers[n], NULL) == 0);
++    map_race = false; assert(pthread_barrier_destroy(&map_barrier) == 0);
++    assert(pmif_base != 0 && unmap_calls == before + 1 && lock_calls == unlock_calls);
++    puts("16 first-map race: no allocation/unmap under spin lock; loser mapping freed");
++    puts("all 10 baseline PMIF state-machine checks and 6 integration checks passed");
+     return 0;
+ }
+ '''
+ 
+ 
+ def main():
+-    keys = (ROOT / 'mtk/mt6895/drivers/input/hakios.mt6895_keys.c').read_text()
+-    gpu = (ROOT / 'mtk/mt6895/drivers/gpu/hakios.mali610.c').read_text()
+-    key_defines = '\n'.join(line for line in keys.splitlines()
+-                            if re.match(r'#define (PMIF_|SWINF_|PMIC_SID)', line))
+-    key_code = 'static vm_offset_t pmif = 1;\n' + key_defines + '\n' + ''.join(
+-        function(keys, name) for name in ('pmif_rd', 'pmif_wr', 'pmic_wait_on', 'pmic_recover_on', 'pmic_read_on'))
+-    key_adapter = r'''
+-static uint8_t result;
+-static bool test_read(void) { return pmic_read_on(0, 0x1e, &result); }
+-static void setup(void) { expected_sid = 4; }
+-static void extra(void) {
+-    unsigned before = calls;
+-    assert(!pmic_read_on(3, 0x1e, &result));
+-    assert(!pmic_read_on(0, 0x1e, NULL));
+-    assert(calls == before);
+-}
+-'''
+-    start = gpu.index('#define MALI_PMIF_BASE')
+-    end = gpu.index('/*\n * Turn the stack rail', start)
+-    gpu_code = gpu[start:end]
+-    gpu_adapter = r'''
+-static uint32_t result;
+-static bool test_read(void) { return mali_spmi(0x240, &result, false); }
+-static void setup(void) { expected_sid = 5; gPmif = 1; }
+-static void extra(void) {
+-    uint32_t four = 4;
+-    unsigned before = acks;
+-    assert(mali_spmi(0x241, &four, true));
+-    assert(state == 0 && acks == before); /* writes neither wait for RX nor ACK */
+-    before = calls;
+-    assert(!mali_spmi(0x014b, &four, true));
+-    assert(!mali_spmi(0x0240, &four, true));
+-    assert(!mali_spmi(0x10000, &four, false));
+-    assert(!mali_spmi(0x240, NULL, false));
+-    four = 256; assert(!mali_spmi(0x241, &four, true));
+-    assert(calls == before);
+-}
+-'''
+-    with tempfile.TemporaryDirectory(prefix='hakios-pmif-test-') as name:
++    source = re.sub(r'^#include .*\n', '', DRIVER.read_text(), flags=re.M)
++    with tempfile.TemporaryDirectory(prefix='hakios-shared-pmif-test-') as name:
+         temp = Path(name)
+-        for kind, code, adapter in [('keys', key_code, key_adapter), ('mali', gpu_code, gpu_adapter)]:
+-            c = temp / f'{kind}.c'
+-            binary = temp / kind
+-            budget = (ROOT / 'xnu/files/bsd/sys/hakios.pmif.h').read_text()
+-            budget = re.sub(r'^#include .*\n', '', budget, flags=re.M)
+-            c.write_text(PREFIX + budget + host_mmio(code) + adapter + TEST)
+-            subprocess.run(['clang', '-std=c11', '-O1', '-g', '-fsanitize=address,undefined',
+-                            '-fno-omit-frame-pointer', str(c), '-o', str(binary)], check=True)
+-            result = subprocess.run([str(binary)], text=True, capture_output=True, timeout=10)
+-            assert result.returncode == 0, result.stdout + result.stderr
+-            print(kind + ': ' + result.stdout.strip())
+-        subprocess.run(['python3', str(ROOT / 'mtk/tools/test-headset.py')], check=True)
++        (temp / 'test.c').write_text(PREFIX + '\n' + HEADER.read_text() + '\n' + source + TEST)
++        subprocess.run(['clang', '-std=c11', '-O1', '-g', '-Wall', '-Wextra', '-Wpedantic',
++                        '-Wshadow', '-Wconversion', '-Werror', '-pthread',
++                        '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
++                        str(temp / 'test.c'), '-o', str(temp / 'test')], check=True)
++        subprocess.run([str(temp / 'test')], check=True, timeout=20)
++    subprocess.run(['python3', str(ROOT / 'mtk/tools/test-headset.py')], check=True, timeout=30)
+ 
+ 
+ if __name__ == '__main__':
+--- a/mtk/tools/test-headset.py
++++ b/mtk/tools/test-headset.py
+@@ -9,11 +9,6 @@
+ ROOT = Path(__file__).resolve().parents[2]
+ source = (ROOT / 'mtk/mt6895/drivers/audio/hakios.mt6895_headset.c').read_text()
+ source = re.sub(r'^#include .*\n', '', source, flags=re.M)
+-for name, replacement in [('pmif_rd', 'model_read(at)'), ('pmif_wr', 'model_write(at, value)')]:
+-    pattern = r'(static inline (?:uint32_t|void)\n' + name + r'\([^)]*\)\n)\{.*?\n\}'
+-    body = '{\n\t' + ('return ' if name == 'pmif_rd' else '') + replacement + ';\n}'
+-    source, count = re.subn(pattern, lambda match: match[1] + body, source, flags=re.S)
+-    assert count == 1
+ 
+ PREFIX = r'''
+ #include <assert.h>
+@@ -23,6 +18,13 @@
+ #include <string.h>
+ typedef uintptr_t vm_offset_t;
+ typedef size_t vm_size_t;
++#define NSEC_PER_USEC 1000u
++#define round_page(n) (((n) + 16383u) & ~(vm_size_t)16383u)
++#define PMIF_MMIO_TEST 1
++static unsigned lock_depth;
++void hakios_spmi_lock(void) { assert(!lock_depth); lock_depth = 1; }
++void hakios_spmi_unlock(void) { assert(lock_depth == 1); lock_depth = 0; }
++
+ static uint8_t regs[65536], original[65536], rdata, wdata;
+ static uint32_t bus_state, boot_mode;
+ static unsigned reads, writes, status_reads;
+@@ -31,14 +33,17 @@
+ static uint64_t model_now;
+ static uint64_t mach_absolute_time(void) { return model_now += 1000; }
+ static void nanoseconds_to_absolutetime(uint64_t ns, uint64_t *ticks) { *ticks = ns; }
++static void clock_interval_to_deadline(uint32_t n, uint32_t scale, uint64_t *out) {
++    *out = mach_absolute_time() + (uint64_t)n * scale;
++}
+ static uint32_t model_read(uint32_t at) {
+-    assert(at >= 0x880 && at <= 0x8a8);
++    assert(lock_depth == 1 && at >= 0x880 && at <= 0x8a8);
+     if (at == 0x8a8) { status_reads++; return (stuck_bus ? 1u : bus_state) << 1; }
+     assert(at == 0x894 && bus_state == 6);
+     return rdata;
+ }
+ static void model_write(uint32_t at, uint32_t value) {
+-    assert(at >= 0x880 && at <= 0x8a8);
++    assert(lock_depth == 1 && at >= 0x880 && at <= 0x8a8);
+     if (at == 0x8a4) { assert(value == 1 && bus_state == 6); bus_state = 0; return; }
+     assert(bus_state == 0);
+     if (at == 0x884) { wdata = value; return; }
+@@ -63,13 +68,16 @@
+     }
+ }
+ vm_offset_t ml_io_map(vm_offset_t address, vm_size_t size) {
+-    assert(address == 0x1c804000 && size == 0x8ff); return 1;
++    assert(!lock_depth && address == 0x1c804000 && size == 0x8ff); return 1;
+ }
++void ml_io_unmap(vm_offset_t address, vm_size_t size) { (void)address; (void)size; assert(!lock_depth); }
++uint32_t pmif_test_rd(uint32_t at) { return model_read(at); }
++void pmif_test_wr(uint32_t at, uint32_t value) { model_write(at, value); }
+ static bool PE_parse_boot_argn(const char *name, void *out, size_t size) {
+     assert(strcmp(name, "headset") == 0 && size == 4);
+     *(uint32_t *)out = boot_mode; return true;
+ }
+-static void delay(unsigned us) { assert(us <= 2000); }
++static void delay(unsigned us) { assert(!lock_depth && us <= 2000); }
+ '''
+ 
+ SUFFIX = r'''
+@@ -82,7 +90,7 @@
+     regs[ACCDET_AB] = regs[ACCDET_EINT0_AB] = 0xff;
+     regs[AUD_IRQ_STATUS] = 0x0e;
+     memcpy(original, regs, sizeof(regs));
+-    boot_mode = requested; mode = 0; saved_count = 0; poll_elapsed = 0;
++    quiesced = false; boot_mode = requested; mode = 0; saved_count = 0; poll_elapsed = 0;
+     active = eint_sync = button_down = first_sample = micbias_disabled = false;
+     cable = CABLE_NONE; detector = PLUG_OUT; inserted_ms = 0;
+     reads = writes = status_reads = 0; bus_state = 0; hold_irq = stuck_bus = false; fail_once = 0;
+@@ -103,14 +111,13 @@
+     reset(0); hakios_mt6895_headset_init();
+     assert(reads == 0 && writes == 0);
+     reset(1); hakios_mt6895_headset_init();
+-    assert(reads == 124 && writes == 0 && !active);
++    assert(reads == 129 && writes == 0 && !active);
+     hakios_mt6895_headset_poll(1000); hakios_mt6895_headset_quiesce();
+-    assert(reads == 124 && writes == 0);
+-    /* A stale read is acknowledged once, reported as failed, and the next read works. */
++    assert(reads == 129 && writes == 0);
++    /* Stale ACK recovery belongs to the shared transport; mode1 stays write-free at PMIC. */
+     uint8_t unchanged = 0xa5;
+-    bus_state = 6;
+-    assert(!mt6368_read(ACCDET_AB, &unchanged) && unchanged == 0xa5 && bus_state == 0);
+-    assert(mt6368_read(ACCDET_AB, &unchanged) && unchanged == 0xff && writes == 0);
++    quiesced = false; bus_state = 6;
++    assert(mt6368_read(ACCDET_AB, &unchanged) && unchanged == 0xff && bus_state == 0);
+     reset(2); hakios_mt6895_headset_init();
+     assert(active && !eint_sync && cable == CABLE_NONE);
+     const struct { uint16_t reg; uint8_t value; } stock[] = {
+@@ -140,17 +147,24 @@
+     assert(micbias_disabled && !(regs[ACCDET_CTRL] & 1));
+     event(3, 3, IRQ_EINT0); assert(!eint_sync && cable == CABLE_NONE);
+     bus_state = 6; /* A keys read parked after RDATA, before VLDCLR. */
+-    hakios_mt6895_headset_quiesce(); restored();
++    unsigned before_quiesce = reads + writes + status_reads;
++    unsigned saved_before_quiesce = saved_count;
++    hakios_mt6895_headset_quiesce();
++    assert(quiesced && saved_count == saved_before_quiesce);
++    assert(before_quiesce == reads + writes + status_reads && bus_state == 6);
++    hakios_mt6895_headset_poll(50);
++    assert(before_quiesce == reads + writes + status_reads);
++    quiesced = false; restore_configuration(); restored();
+     reset(2); fail_once = 0x2690; hakios_mt6895_headset_init(); restored();
+     reset(2); hakios_mt6895_headset_init(); hold_irq = true;
+     event(0, 1, IRQ_EINT0); restored();
+     assert((regs[ACCDET_IRQ_CLEAR] & 5) == 0);
+     reset(2); hakios_mt6895_headset_init(); stuck_bus = true; before = status_reads;
+     hakios_mt6895_headset_poll(50); assert(!active && saved_count > 0);
+-    assert(status_reads - before <= 2 * HAKIOS_PMIF_POLL_LIMIT + 2);
+-    stuck_bus = false; hakios_mt6895_headset_quiesce(); restored();
++    assert(status_reads - before <= 2 * PMIF_SPIN_HARD_CAP + 4);
++    stuck_bus = false; restore_configuration(); restored();
+     puts("production accdet: mode1 no writes, 19 stock config bytes, EINT gating, mic button,"
+-         " unplug, 3-pole timer, W1C, rollback and bounded failures passed");
++         " unplug, 3-pole timer, W1C, worker rollback, zero-access post-stop and bounded failures passed");
+     return 0;
+ }
+ '''
+@@ -159,9 +173,10 @@
+ def main():
+     with tempfile.TemporaryDirectory(prefix='hakios-headset-test-') as name:
+         temp = Path(name)
+-        budget = (ROOT / 'xnu/files/bsd/sys/hakios.pmif.h').read_text()
+-        budget = re.sub(r'^#include .*\n', '', budget, flags=re.M)
+-        (temp / 'test.c').write_text(PREFIX + budget + source + SUFFIX)
++        header = (ROOT / 'xnu/files/bsd/sys/hakios.pmif.h').read_text()
++        shared = (ROOT / 'mtk/mt6895/drivers/core/hakios.mt6895_pmif.c').read_text()
++        shared = re.sub(r'^#include .*\n', '', shared, flags=re.M)
++        (temp / 'test.c').write_text(PREFIX + header + shared + source + SUFFIX)
+         subprocess.run(['clang', '-std=c11', '-O1', '-g', '-Wall', '-Wextra',
+                         '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
+                         str(temp / 'test.c'), '-o', str(temp / 'test')], check=True)
+--- a/.config
++++ b/.config
+@@ -37,6 +37,7 @@
+ # CONFIG_HAKIOS_MTK_EMMC is not set
+ # CONFIG_HAKIOS_MTK_CONNSYS is not set
+ CONFIG_HAKIOS_MT6895_HEADSET=y
++CONFIG_HAKIOS_MT6895_PMIF=y
+ CONFIG_HAKIOS_MALI610=y
+ CONFIG_HAKIOS_MTK6895_KEYS=y
+ CONFIG_HAKIOS_NVT=y
+@@ -68,7 +69,7 @@
+ # CONFIG_BATTERY_STOP is not set
+ # CONFIG_BATTERY_STOP_POLL is not set
+ # CONFIG_PMIC is not set
+-CONFIG_BOOTARGS="buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0 mali_preas0=1"
++CONFIG_BOOTARGS="buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0 mali_preas0=1 headset=1"
+ # CONFIG_ADRENO is not set
+ # CONFIG_ADRENO_BLIND is not set
+ # CONFIG_ADRENO_DIRTY is not set
