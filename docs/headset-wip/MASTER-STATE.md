@@ -231,7 +231,14 @@ opc[31:30] | WR[29] | SID[27:24] | (len-1)[23:16] | ADDR[15:0]
 | **「按键阻抗是 0/70/135/235/470 Ω」** | **是 80/220/400 mV** |
 | **「`fastboot oem lkmsg/expdb` 能取证」** | **全部 OKAY + 零字节，且会搞死会话** |
 | **「USB 复位能恢复半死的 fastboot」** | **三种主机侧手段全无效，只能等设备自重启 ~25 min** |
-| **「`JOB_INT_MASK=0xffffffff` 是全屏蔽」** | **是使能集，全开** |
+| **「`JOB_INT_MASK=0xffffffff` 是全屏蔽」** | **是使能集，全开**（2026-11-15 02:14 再次确证，见下） |
+| **「`JOB_INT_MASK` 提前写全 1 导致看不到 GLOBAL_IF」**（我 02:20 当头条发给 Codex） | **错。** vendor `mali_kbase_pm_driver.c:2134` 注释原文 "Clear all interrupts, **and unmask them all**"，`:2145` 写 `0xFFFFFFFF`。panthor `panthor_device.h:608` `|=` / `:623` `&=~` / `:582` 原样写，`panthor_fw.c:1128` `enable_events(~0)`。**极性 1=使能，我们写对了** |
+| **「`if(booted)` 里 `mask=0` 是解屏蔽」** | **错。是关中断**，进入轮询模式。Codex 2026-11-15 02:45 指出 |
+| **「固件大小 274432/282624 说明我们的不对」** | **错。** `work-notes-csf-boot-others.md:332`：我们 258048 与 `Ken-u` 的 `mali_csffw.inc` **字节完全一致**。三份实际差异只在 header 版本（我们 0.1、0.3 两份） |
+| **「PROT 段 3 条被跳过」** | **错。** `hakios.mali610.c:1069-1072` 只打印警告、`:1073` 继续映射 |
+| **「timestamp 使能没实现」** | **错。** `mfg_set_timestamp()` 在 `:2665` 定义、`:4497` 调用 |
+| **「`10 段全映射` vs `Ken-u` 的 7 段」** | **错。** 都是 10 条 `type=0` 里 3 条 PROT、实加载 7 段 |
+| **「`0556818` 提交里的『JOB_INT_MASK 全屏蔽』是缺陷」** | **该提交信息已过期**，勿引用。真相见本表第二行 |
 
 ---
 
