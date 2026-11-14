@@ -219,6 +219,47 @@ at records 269-272 -- after the soft reset and before the address space is progr
 → **厂商也写 0。** 与 `work-notes-kbase-fwload.md:606`「真机 debugfs `quirks_gpu = 0`」
 一致。`work-notes-gpu-status.md:96` 的「没回读确认过」这个疑虑到此消除。
 
+### 5.1b 🔴 三条更正（Codex 2026-11-15 02:14 指出，DSH 核实源码后全部接受）
+
+| 我先前说 | 真相 | 依据 |
+|---|---|---|
+| 「timestamp 使能没实现」 | **已实现**：`mfg_set_timestamp()` 在 `:2665` 定义、`:4497` 调用，写 `0x13FBF130 = 0x00000003` | 我只 grep 了字面量没读函数，误判 |
+| 「3 条 PROT 段跳过、实加载 7 段」 | **未跳过**：`:1069-1072` 只打印警告，`:1073` 继续映射 | 那是 `work-notes` 旧结论，与当前代码不符 |
+| 「274432 是固件文件大小」 | **是 `sizeof`** | 我本来就标了「未核实」 |
+
+**→ 5.3 里「timestamp 0 -> 0 是测量缺陷」这条也随之作废。** 那个函数存在，历史日志那行是在加它之前。
+
+### 5.1c 新发现：PROT 段三种实现全不同
+
+核实 PROT 时发现的对比（`panthor_fw.c:588-592` 原文）：
+
+```c
+if (hdr.flags & CSF_FW_BINARY_IFACE_ENTRY_PROT) {
+    drm_warn(&ptdev->base,
+         "Firmware protected mode entry is not supported, ignoring");
+    return 0;
+}
+```
+
+| 实现 | 对 PROT 段的做法 |
+|---|---|
+| **panthor** | **明确跳过**（`return 0`，不映射）—— 且它成功了 |
+| kbase | 用 `kbase_csf_protected_memory_alloc` 分配并映射 |
+| 我们 | 用**普通页**映射（`:1069-1072` 打印 "mapped with ordinary memory"） |
+
+我们 `:1057-1067` 的注释推理是：
+> leaving them unmapped means the first store to a global variable lands on nothing.
+> That is a plausible reason for a core that reports ENABLED, never writes its version word
+> and never faults.
+
+**但 panthor 证明不映射也能起来。** 可能的原因是固件差异（panthor 的固件是 RK3588 的，
+我们的是 MTK 的，PROT 段用途可能不同）。
+
+我们固件的 PROT 段：VA `0x3000000-0x3040000`，共 **256 KB**，镜像里无数据，注释说是 `.bss`。
+如果 MCU 起来后第一件事是写某个全局变量、而它落在这 256 KB 里，那么映射与内存属性就有意义。
+
+→ **标「未验证」**，不作为结论。
+
 ### 5.2 【3】确认存在：`kGpuCmdCycleCountStart` 宏定义了，但**零引用**
 
 `work-notes-mcu-clock.md:330-336` 明确列出三件要做的事，其中②是：
@@ -255,9 +296,10 @@ at records 269-272 -- after the soft reset and before the address space is progr
 |---|---|---|
 | 【4】 | `GPU_L2_CONFIG(0x48)` / `ASN_HASH(0x2C0)`：mt8196 的失败根因，但那段代码对 arch<11 直接 return（我们 10.8） | 不适用 |
 | 【5】 | 固件在物理内存上是否真接在 MCU 取指路径 | `work-notes` 说已做 |
-| 【6】 | `GPU_TIMESTAMP` 需要 `0x13FBF130 = 0x3`（`work-notes-mcu-clock.md:266`） | 我们没写，所以 `timestamp 0 -> 0` 是**必然的假象**，不能当证据 |
+| 【6】 | ~~`GPU_TIMESTAMP` 使能没写~~ | **已实现**（`mfg_set_timestamp()`，见 §5.1b）。这条撤回 |
 
-→ **`timestamp 0 -> 0` 是我们自己的测量缺陷，不是硬件事实。** 历史日志里这条要作废。
+→ **§5.3 原先把 `timestamp 0 -> 0` 判为「测量缺陷」也作废** —— 使能函数是存在的，
+历史日志那行是加它之前的读数。Codex 说 NOPDC 实测 timestamp 在走。
 
 ---
 

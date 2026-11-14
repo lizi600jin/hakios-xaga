@@ -114,3 +114,22 @@ headset1/boot.img SHA256：8859138ecad4a56bdbe71a5c3ba5f472044556023b04ef9e27eed
 审阅从 review-tree/ 与 review-source-sha256.json 开始；integration.diff是相对于本轮冻结快照的改动，不是对git HEAD的全树WIP归因。原有三个本地耳机提交 ef54fa0/7df8a9d/4ebad21 全保留，没有改历史或push。22个intent-to-add项仍保留原状，没有进行全树add；以后如要commit必须逐路径暂存并核对内容。
 
 ---
+
+## [OBJ] 2026-11-15 02:12 — 当前源码与旧GPU笔记混用，暂不新增实验
+状态: open
+
+针对 GPU-REFIMPL-VERIFIED.md / 051cbac 的补充核查；以下锚定当前构建树 c9b4632，不修改源码、不新增设备实验。
+
+1. timestamp 使能已实现：hakios.mali610.c:2665 的 mfg_set_timestamp() 写 gMfgcfg+0x130=3，:4497 调用。NOPDC kernel-lines.txt:167 回读0x3，:577 记录 timestamp 0x221e88b4 -> 0x221ec24b；不能再把“当前没有写13FBF130”列为待做。
+2. 四个hw-issues寄存器不能凭厂商某段轨迹写零就排除：冻结镜像cold=1、hwissues=0，没有执行四写，当前值仍需实际观测。:3518 gpu_hw_issues() 已改为只读保留；:4594 后 gMaliHwIssues 分支才是显式四写零。
+3. 当前文件没有 kGpuCmdCycleCountStart / kGpuStatusCcActive 两个宏，:335 是PDC定义；此前引用了其它快照。0x103可作为后续受控计数器实验，但它是写操作，不能标成只读或零风险；已有计数递增不会因缺本轮enable自动变假，也不能直接等同PLL已锁。
+4. 当前PROT段没有跳过：:1069 明写 mapped with ordinary memory。NOPDC :213-222实际映射section6/7/8的三个flags=0x2b段，日志记录10 sections。旧笔记“只加载7段”不适用于此版，不代表这个差异已被证明是故障原因。
+5. Ken-u/Mali.cpp:444 total=sizeof kFirmware，:447打印total。因此M1日志274432是固件数组字节数。“不是文件大小”需撤回。当前/tmp/kmali/mali_csffw.inc与/tmp/kenmali/mali_csffw.inc均不存在，历史同字节笔记不能替代当前对拍。本机NOPDC :192是258048/header0.1，而Ken-u M1记录header0.3，需区分版本/快照。
+
+证据路径：/home/lizi/IOS/hakios-mtk/mtk/mt6895/drivers/gpu/hakios.mali610.c；/home/lizi/IOS/hakios-mtk/logs/headset-resume-20261114-220244/nopdc/kernel-lines.txt；/tmp/kenmali/Mali.cpp。
+
+结论：先不往冻结的129项首轮镜像加入GPU实验，暂不能归结为“唯一剩下0x103”。本轮仅核查，源码、镜像及设备未改动。
+
+---
+
+通信记录 2026-11-15 02:13：旧句柄term_65478f6a-0846-40d4-b817-55c9be904afd已不在terminal list中；屏幕内容核验后，已补发到当前主控term_53a1b430-618f-470d-963f-0644cb6b0929，CLI返回accepted=true（不等于已读）。
