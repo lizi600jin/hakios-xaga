@@ -201,7 +201,14 @@ Codex **每个回合开始时**读一次 `bridge/to-codex.md` 的末尾，检查
   3. **失败或超时即停止**，等用户手动恢复
   4. **不等待 watcher** —— `XNU_WATCH_HEARTBEAT=1`（board.h 未覆盖）导致 watcher 120 s 后画绿屏 + `wfe` 死停，不复位也不快照，这是待修的 bug #1
   5. **`devices` 能列出设备不代表 fastboot 命令可用** —— 必须用 `getvar product` 判断协议层
-- 🔴 **`fastboot oem expdb` 的风险与恢复（n=2 实测）**：它会让 LK 进入 dump 流程，**返回 `OKAY` 但零字节输出**，随后 **fastboot 协议层死亡**（`devices` 仍列出，但 `getvar`/`reboot`/`oem` 全 `usb_read failed: Value too large`）。**主机侧任何 USB 复位都无效**（unbind/rebind、`authorized` 0/1、`USBDEVFS_RESET` 三种实测均失败）。**正确做法：什么都不做，等设备屏闪数下后自行重启回 fastboot，实测约 25 分钟。** 恢复判据：`getvar product` 返回 `product: xaga`。
+- 🔴 **`fastboot oem expdb` 的风险与恢复（n=3 实测，机制已确定）**：
+  - **表现**：返回 `OKAY [6.774s]` 但**零字节输出**，随后 fastboot 协议层死亡
+  - **根因**：`/usr/bin/fastboot` 34.0.5 报出 `Write to device failed (Cannot send after transport endpoint shutdown)` —— **内核已把 USB endpoint shutdown**
+  - **为什么主机侧复位全都无效**：unbind/rebind、`authorized` 0/1、`USBDEVFS_RESET` 三种都试过全失败。ioctl 级 reset 无法复活一个已 shutdown 的 endpoint
+  - ✅ **唯一有效恢复：请用户物理插拔一次 USB 线**（会触发重新枚举，重建 endpoint）。实测 devnum 041→042，`getvar product` 立刻返回 `product: xaga`
+  - **第一次（n=1）设备曾自愈重启**（屏闪数下，~25 min，devnum 037→041）；**第二次等 40+ 分钟没动，只有插拔才救回**。不要依赖自愈
+  - **`fastboot devices` 会一直能列出设备** —— 它只做 sysfs 枚举扫描不碰 endpoint。**在这个故障下 `devices` 与 `getvar` 信号矛盾，是最容易误判的点**。判据永远是 `getvar product`
+  - 操作前先确认用户在旁边能插拔线
 - 🔴 **本机 `fastboot oem` 通道只有 `fbreason` 有输出**：`lkmsg` / `expdb` / `lpmsg` / `dump_pllk_log` / `uefilog` / `get_socid` / `lks` **全部返回 OKAY 但零字节**。这条取证路已走完，无产出，**不要再试**。
 - 🔴 **不加 `mali_gpueb=1`，不读 `0x13c40000`**（门控未确认）
 - 🔴 **不自动刷机** —— 每次刷机前明确告知用户

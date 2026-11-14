@@ -83,3 +83,32 @@
 | `ramoops @ 0x48090000` | ⚠️ `BOARD_NO_PLOG=1` |
 | Android 侧 ftrace/kprobe 抓 accdet | ⏳ **未试，这是新的首要候选** |
 | 修日志 3 个 bug 后重跑 | ⏳ 进行中（Codex） |
+
+---
+
+## 追加 2026-11-15 00:10 — 恢复机制终于确定：**用户插拔 USB 有效，主机侧复位无效**
+
+### 完整时间线（n=3）
+| 时刻 | 事件 |
+|---|---|
+| 23:22 | `oem expdb` → OKAY 6.774s + 零字节，会话死亡 |
+| ~23:49 | 设备屏闪数次自行重启回 fastboot，devnum 037→041（用户未干预） |
+| 00:00 | 再跑 `oem expdb` → OKAY 6.774s + 零字节，会话再次死亡 |
+| 00:00–00:07 | 主机侧尝试 **全部失败**：unbind/rebind、`authorized` 0/1、`USBDEVFS_RESET` |
+| 00:07 | `/usr/bin/fastboot` 34.0.5 报出根因：**`Write to device failed (Cannot send after transport endpoint shutdown)`** |
+| ~00:08 | **用户手动插拔 USB 一次** |
+| 00:09:18 | `getvar product` → `product: xaga`，devnum 041→**042**。**恢复** |
+
+### 结论（推翻我之前的两个判断）
+1. ❌ 「等设备自愈 ~25 min」—— 不完全对。第一次确实是自愈，但第二次等了 40+ 分钟没动，**是插拔救回来的**。
+2. ❌ 「主机侧 USB 复位无效所以没救了」—— 无效的原因搞清楚了：**内核已经把 endpoint shutdown**（`transport endpoint shutdown`），任何 ioctl 级的 reset 都没法复活一个已 shutdown 的 endpoint。**只有物理重新枚举才能重建 endpoint。**
+3. ✅ **正确恢复动作：让用户物理插拔一次 USB 线。** 这会让设备侧重新初始化 USB 端点。
+
+### 操作规范（最终版）
+- 跑 `fastboot oem expdb` 前先确认用户在旁边能插拔线。
+- 会话死后**不要浪费时间去试 USB 复位**（三种实测全废）。
+- **直接请用户插拔 USB。**
+- 判据始终是 `getvar product`，不是 `fastboot devices`。
+
+### 为什么 `devices` 一直能列出
+`fastboot devices` 只做 USB 枚举扫描（读 sysfs），不碰 endpoint。而 endpoint 已 shutdown，所以任何实际命令都失败。**这两个信号在 endpoint shutdown 状态下会矛盾**，是排查时最容易误判的点。

@@ -427,6 +427,17 @@ INFO  整字节写 20 项，位域读改写 24 项
 RESULT: PASS
 ```
 
+### 反向自检（校验器不是摆设）
+
+故意把 JSON 改坏三处，确认 `--selftest` 真的会拦（不是只打印 PASS）：
+
+```
+空值 write   -> FAIL  seq=10: write 项不允许 value=null（不许猜值）
+越界地址     -> FAIL  seq=10: reg=0x9999 超出 MT6368 可写窗口 0x0100..0x2fff
+跨字节 mask  -> FAIL  seq=10: mask<<shift = 0xff0 跨字节；PMIF EXT_REG_LONG 一次只写 1 字节，必须拆成两项
+[三个临时文件各 exit 1]
+```
+
 ### 生成 C 数组
 
 ```
@@ -555,7 +566,11 @@ static const struct accdet_chk accdet_sample[] = {
 ## 8. 与现有裸机实现的差异（供后续对齐，不在本任务改动范围）
 
 现有 `hakios-mt6895/mtk/mt6895/drivers/audio/hakios.mt6895_headset.c`
-（`/home/lizi/IOS/hakios-mtk`，**本任务未改动该仓库**）的 `accdet_init_once()`：
+（`/home/lizi/IOS/hakios-mtk`，**本任务未改动该仓库**）的 `accdet_init_once()`。
+
+> ⚠️ **该文件在本任务期间被其他人改过**：`git status` 显示 `M`，
+> `git diff --stat` = +445/−45，mtime `2026-11-14 23:44`，当前 545 行。
+> 下表核对的是**改动后**的当前版本（不是仓库 HEAD 版本）。
 
 | 项 | 现有实现 | 本表 | 差异性质 |
 |---|---|---|---|
@@ -566,7 +581,10 @@ static const struct accdet_chk accdet_sample[] = {
 | `0x252a` | `configure(MICBIAS1_HIGH, 0x30, 0x30)` | 同 | 一致 |
 | VAUD18 `0x1cb2` | **没有** | `0x01` | **缺**：现有实现没开 VAUD18 |
 | `0x248c`（NCP） | 有 | 有 | 一致 |
-| 最后开 `SW_EN` | **没有单独的开 SW_EN 步骤**（只在 `configure(ACCDET_CTRL, 0x01, 0x01)` 出现在插拔分支 `:334`/`:344`） | 明确列为 #48 并给 65 ms | 现有实现靠插拔分支补，表里是显式一步 |
+| `0x26aa` bit4（`M_PLUG_IN_NUM`） | `configure(ACCDET_IRQ_CLEAR, 0x10, 0x10)`（`:242`） | #43 `mask=0x07,shift=4,value=0x01` | **等价**（都是写 bit4=1；现有实现用整位掩码，本表用 3 位字段） |
+| `0x26ae`（EINT_HWMODE_EN） | `configure(ACCDET_HW_MODE, 0xff, 0x01)` | #44 `0xff = 0x01` | 一致 |
+| `0x268b` bit4（M_DETECT_EN） | `configure(ACCDET_EINT_CTRL, 0x10, 0x10)` 后 `0x10, 0` | #45 `mask=0x01,shift=4,value=0` | 一致（先置后清，最终清 0） |
+| 最后开 `SW_EN` | 只出现在 EINT 插入分支 `handle_eint()` 里（`configure(ACCDET_CTRL, 0x01, 0x01)`，`:334`），**`accdet_init_once()` 本身不开** | 明确列为 #48 并给 65 ms | 现有实现把「开 SW_EN」绑在 EINT 事件上；本表把它做成初始化的最后一步，**不依赖任何中断** |
 
 > `0x1cb2` 这条建议后续单独验证：若 VAUD18 在冷启动时已由别处打开，写 1 无害；
 > 若没打开，MICBIAS 就是死的，`0x26b6` 会一直读到 `0x3`（拔出）。
