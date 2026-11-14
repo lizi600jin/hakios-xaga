@@ -4,11 +4,19 @@
 审计方式：纯静态。未跑 `build.sh`，未跑 `make`，未 `stash`/`reset`/`checkout`。预处理临时文件全部在 `/tmp`。
 所有结论都给了 `文件:行号`；凡是推不出的，标「未验证」。
 
-配套工具：`docs/headset-wip/build-config-dump.sh`（只读，`sh -n` 通过，输出见附录 A）。
+配套工具：`docs/headset-wip/build-config-dump.sh`（只读；`sh -n` 与 `dash -n` 均通过，bash 与 dash 下输出一致，完整输出见附录 A）。
 
 ---
 
 ## 0. 结论摘要（先看这十条）
+
+> **并发提示（重要）**：审计期间（00:30–00:55）该树正在被另一个 agent 编辑。已观察到两次变化：
+> ① 00:46:15 `devices/xaga/configs/xaga.config` 被加了 `headset=1`；
+> ② 00:54:01 `mtk/mt6895/drivers/audio/hakios.mt6895_headset.c` 被重写（18232 字节、548 行，函数行号整体漂移）。
+> 报告里凡引用这两个文件的行号，以「符号 + 当时的行号」给出；**结论（哪些参数生效、哪些不生效）不受影响**，因为它们依据的是文件内容与 `.config`，不是行号。
+> `.config` 在审计结束时仍是 2026-11-14 02:48:43 那份（第 71 行无 `headset=`）——这一条是全文最关键的可执行结论。
+
+
 
 | # | 结论 | 证据 |
 |---|---|---|
@@ -379,7 +387,7 @@ mali=6 mali_cold=0 mali_preas0=1 fb_inuse=1 fb_queue=1 fbfit=0 fbscale=2
 | `.config:71` | **没有** | 生成物；`make xaga_defconfig` 后自动出现 |
 | `configs/boot-args.lst:158` | 名字在（`headset\tk`） | 校验用，不是值 |
 | `configs/symbols.tsv` | **没有 `HEADSET`** | 所以不能 `CONFIG_HEADSET=1`（实测 `no symbol`） |
-| 驱动消费者 | `hakios.mt6895_headset.c:521` | `PE_parse_boot_argn("headset", &mode, …)`，`mode==0` 或解析失败即 return |
+| 驱动消费者 | `hakios.mt6895_headset.c` 的 `hakios_mt6895_headset_init()` 内（2026-11-15 00:54 版本为 `:488`；该文件正被编辑，行号会漂） | `PE_parse_boot_argn("headset", &mode, …)`，`mode==0` 或解析失败即 return |
 | 调用点 | `hakios.mt6895_keys.c:506` | 在 keys worker 里调 `hakios_mt6895_headset_init()` |
 | 前提 | `hakios.mt6895_keys.c:665` | **`buttons=2` 才进这个 worker**——`.config` 有 `buttons=2` ✔ |
 
@@ -483,13 +491,13 @@ cpus=4 … mali_preas0=1 headset=1 fb_inuse=1 fb_queue=1 fbfit=0 fbscale=2
 `git status --porcelain` 实数：**29 M / 22 A / 6 ?? = 57**（背景里说的「49+」偏少；实际 57）。
 **22 个 `A` 全是 intent-to-add**：`git ls-files -s` 显示 index blob 是 `e69de29…`（空文件），工作区有真实内容。这意味着 `git diff` 会把它们显示成「全新增」，`git diff --cached` 显示为空——**任何只 `git commit`（不加 `-a`）的操作都会提交空文件**。
 
-### 5.1 配置类（影响构建结果）—— 12 个
+### 5.1 配置类（影响构建结果）—— 16 个（逐项见 5.3b）
 
 | 文件 | 状态 | 索引 blob | 影响什么 | 当前值 / 与 HEAD 差异 |
 |---|---|---|---|---|
 | `Makefile` | M | 有 | `CYCLE` 选择、`make phone` 的调用 | +4 行 `CYCLE ?=`；`mtk/tools/xnu-cycle.sh` → `$(CYCLE)`（`git diff` 见 5.4） |
-| `configs/boot-args.lst` | M | 有 | `CONFIG_BOOTARGS` 的合法参数名集合 | +48 行（`fb_disp`、`fb_move`、`headset`、`key_poll_ms`、`key_scan`、36 个 `mali_*`），390 行 |
-| `configs/symbols.tsv` | M | 有 | 参数名 ↔ `CONFIG_*` 符号 | +17 行；**仍陈旧**（`boot-args.py --check` 报） |
+| `configs/boot-args.lst` | M | 有 | `CONFIG_BOOTARGS` 的合法参数名集合（`known_args()`，`tools/hakios-config.py:413`） | `git diff`：+48 行内容（含 `fb_disp`、`fb_move`、`headset`、`key_poll_ms`、`key_scan` 与 **38** 个 `mali_*`）；文件 390 行 |
+| `configs/symbols.tsv` | M | 有 | 参数名 ↔ `CONFIG_*` 符号（`CONFIG_<NAME>=value` 的来源） | `git diff`：+13 行内容；**仍陈旧**（`boot-args.py --check` 报 out of date） |
 | `devices/manifest.conf` | M | 有 | `hakios-device.py` 认识的 SoC/设备 | +6 行：`soc mt6895 path mtk/mt6895`、`device xaga path devices/xaga` |
 | `drivers/map` | M | 有 | 哪些文件进内核树、放哪 | +2 行：`input bsd/dev/hakios.nvt_fw.h`、`gpu bsd/dev/hakios.mali610_fw.h` |
 | `mtk/loader/build.sh` | M | 有 | `-DBOARD_HEADER` 的选择 | +21 行（board.h 选择逻辑，24-36 行） |
@@ -500,7 +508,7 @@ cpus=4 … mali_preas0=1 headset=1 fb_inuse=1 fb_queue=1 fbfit=0 fbscale=2
 | `mtk/mt6895/configs/`（`mt6895.config`） | **??** | — | **`.config` 的 SoC fragment**；没有它 `make xaga_defconfig` 直接失败 | 5256 字节，未跟踪 |
 | `xnu/files/bsd/sys/hakios.pmif.h` | **??** | — | 3 个 mt6895 驱动 include 它 | 882 字节，未跟踪；内核树里已有副本（`xnu-src/…/bsd/sys/`） |
 
-### 5.2 代码类 —— 38 个
+### 5.2 代码类 —— 23 个（逐项见 5.3b）
 
 | 分组 | 文件 | 说明 |
 |---|---|---|
@@ -511,7 +519,7 @@ cpus=4 … mali_preas0=1 headset=1 fb_inuse=1 fb_queue=1 fbfit=0 fbscale=2
 | **loader 本体** | `mtk/loader/mtkloader.c`（M，+4359）<br>`mtk/loader/mtkdbg.h`（M，+197）<br>`mtk/loader/mtkmali.h`（M）<br>`mtk/loader/msdc.h`（M）<br>`mtk/loader/fbdiag_start.S`（M）<br>`mtk/loader/ufs.h`（**A，空 blob**，141239 B） | `mtkloader.c` 是最大的一块（UFS、Mali 供电、PMIF、headset 日志） |
 | **用户态** | `userland/build.sh`（M）<br>`userland/rc.launchd`（M）<br>`userland/src/init.c`（M）<br>`userland/src/inject.c`（M） | 与内核镜像分开构建，不进 `hakios-kernel` |
 
-### 5.3 文档 / 工具类 —— 17 个
+### 5.3 文档 / 工具类 —— 18 个（逐项见 5.3b）
 
 | 文件 | 状态 | 字节 | 说明 |
 |---|---|---|---|
@@ -656,7 +664,7 @@ grep -o 'headset=1' .config                               # .config:71 里出现
 （影子树实测：`headset=1` 后 170 字符、0 problem；170 + 260（`RUN_OVERHEAD`）< 607，长度安全。）
 
 `board.h:874` 的 `headset=1` **可以留着**（手敲 `mtk/loader/build.sh` 不带 `-D` 时有用），但它不是一次运行的生效路径。
-前置条件已满足：`CONFIG_HAKIOS_MT6895_HEADSET=y`（`.config:39`）、`buttons=2`（`.config:71`）、调用链 `hakios.mt6895_keys.c:506 → hakios.mt6895_headset.c:519`。
+前置条件已满足：`CONFIG_HAKIOS_MT6895_HEADSET=y`（`.config:39`）、`buttons=2`（`.config:71`）、调用链 `hakios.mt6895_keys.c:506 → hakios.mt6895_headset.c` 的 `hakios_mt6895_headset_init()`。
 
 ### 6.3 改 loader 的硬件地址 / 行为
 
@@ -708,23 +716,38 @@ mtk/mt6895/configs/mt6895.config     ← CONFIG_HAKIOS_*=y / "is not set"
 
 ### 6.8 提交这些改动（**危险，先读**）
 
-22 个 `A` 的 index blob 是空的。**不要** `git commit -a`，**不要** `git stash`，**不要** `git checkout .`。
+三件事必须先分清：
+
+| 类别 | 文件 | 要不要 `git add` |
+|---|---|---|
+| **intent-to-add 的 22 个 `A`** | index blob 是 `e69de29`（空），工作区有真实内容 | **要**，按路径逐个 `git add` |
+| **被 gitignore 的设备文件** | `devices/xaga/configs/xaga.config`、`xaga_defconfig`、`device.conf` | **不用**：`.gitignore:120` 的 `/devices/*` 就是这意思（`devices/` 是 `hakios-device.py sync` 克隆进来的仓库，不是本仓库的文件） |
+| **真·未跟踪且没被忽略** | `mtk/mt6895/configs/mt6895.config`、`xnu/files/bsd/sys/hakios.pmif.h` | **要**，否则新 clone 上 `make xaga_defconfig` 找不到 `mt6895.config` 直接失败 |
 
 ```
-# 只加文件，不提交：
-git add -- mtk/mt6895/loader/board.h mtk/mt6895/soc.conf mtk/loader/ufs.h …
+# 只加，不提交；绝不 -a / stash / reset / checkout
+git add -- mtk/mt6895/loader/board.h mtk/mt6895/soc.conf mtk/loader/ufs.h \
+           mtk/mt6895/drivers/gpu/conf mtk/mt6895/drivers/gpu/hakios.mali610.c \
+           mtk/mt6895/drivers/input/conf mtk/mt6895/drivers/input/hakios.nvt.c \
+           mtk/mt6895/drivers/input/hakios.mt6895_keys.c \
+           mtk/mt6895/drivers/usb/conf mtk/mt6895/drivers/usb/hakios.mt6895_usb.c \
+           drivers/gpu/hakios.mali610_fw.h drivers/input/hakios.nvt_fw.h \
+           mtk/tools/*.py mtk/tools/xaga-*.sh mtk/tools/xaga-*.md
+git add -- mtk/mt6895/configs/mt6895.config xnu/files/bsd/sys/hakios.pmif.h
+
 # 确认 index 里不再是空 blob：
-git ls-files -s mtk/mt6895/loader/board.h     # 应显示真实 blob，不是 e69de29
+git ls-files -s mtk/mt6895/loader/board.h     # blob 不能是 e69de29…
 ```
-未跟踪的两个关键文件也要加：`mtk/mt6895/configs/mt6895.config`、`xnu/files/bsd/sys/hakios.pmif.h`。
-否则新 clone 上 `make xaga_defconfig` 直接失败。
+
+`git diff` 对 intent-to-add 的文件显示成「全新增」，`git diff --cached` 显示为空——**只 `git commit`（不加 `-a`）会提交空文件**。
 
 ---
 
 ## 附录 A：`build-config-dump.sh` 的真实输出
 
-命令：`sh docs/headset-wip/build-config-dump.sh`（`sh -n` 通过，exit 0，只读）。
-下面是 2026-11-15 00:47 那次运行的完整输出。
+命令：`sh docs/headset-wip/build-config-dump.sh`，`sh -n` 通过，exit 0，只读（不跑 make、不跑 build.sh、不写树）。
+下面是 2026-11-15 00:54 那次运行的**完整原始输出**，未编辑。
+两处随运行而变：`epoch=`（脚本用 `$(date +%s)` 模拟 `xaga-cycle.sh:78` 的 run id）和文件 mtime。
 
 ```
 
@@ -851,7 +874,7 @@ words           15
 
 --- the same with the flags xaga-cycle.sh passes (the .config's arguments, SECS=600) ---
   BOARD_NAME                 xaga
-  XNU_EXTRA_ARGS             cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0 mali_preas0=1 fb_inuse=1 fb_queue=1 fbfit=0 fbscale=2 epoch=1794674992
+  XNU_EXTRA_ARGS             cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=6 mali_cold=0 mali_preas0=1 fb_inuse=1 fb_queue=1 fbfit=0 fbscale=2 epoch=1794675281
   XNU_CORES                  4
   XNU_RETURN_AFTER           600
   XNU_WATCH_SECONDS          120
@@ -953,7 +976,7 @@ mtk/loader/mtkloader.bin          59720 bytes  2026-11-14 02:48:53  0346f11b0145
 mtk/mt6895/loader/board.h                                2026-11-14 02:04:44
 mtk/loader/mtkloader.c                                   2026-11-14 23:17:59
 mtk/loader/start.S                                       2026-11-04 02:17:43
-mtk/mt6895/drivers/audio/hakios.mt6895_headset.c         2026-11-15 00:32:26
+mtk/mt6895/drivers/audio/hakios.mt6895_headset.c         2026-11-15 00:54:01
 xnu/files/bsd/sys/hakios.pmif.h                          2026-11-15 00:31:56
 
 ===== 7  MISMATCHES THIS DUMP CAN SEE =====

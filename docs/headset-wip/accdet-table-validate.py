@@ -511,12 +511,6 @@ def zero_write_scan(reg, sources):
     return hits
 
 
-PHASES = {"accdet_init": 10, "accdet_init_debounce": 20, "accdet_init_once": 30,
-          "clear_accdet_int": 5, "clear_accdet_int_check": 5,
-          "disable_accdet": 5, "eint_work_callback": 90,
-          "config_eint_init_by_mode": 30, "config_digital_init_by_mode": 30}
-
-
 ROOTS = {"accdet_init": 10, "accdet_init_debounce": 20, "accdet_init_once": 30,
          "eint_work_callback": 90}
 
@@ -1329,8 +1323,14 @@ def selftest():
     rep = run()
     ok("现表: 0 条内容级一定错（位宽/mask/顺序/C 数组）",
        rep["summary"]["hard_errors"] == 0, rep["hard_errors"][:4])
-    ok("现表: 引用级缺陷恰好 1 条（#20 错引另一 eint 分支）",
-       [c[0] for c in rep["citation_errors"]] == [20],
+    # The audit found exactly one citation defect: #20 pointed at the DEBOUNCE1
+    # branch (1967-1971 is DEBOUNCE0, 1974-1978 is DEBOUNCE1). That was fixed in
+    # accdet-init-table.json on 2026-11-15, so the table now carries zero. Accept
+    # either 0 (fixed) or exactly [20] (a table reverted to before the fix); any
+    # other set means a new citation defect nobody has looked at yet.
+    cites = [c[0] for c in rep["citation_errors"]]
+    ok("现表: 引用级缺陷 0 条（#20 已修）或恰好旧的那 1 条",
+       cites in ([], [20]),
        rep["citation_errors"])
     ok("现表: C 数组与 JSON 全一致",
        all(i["c_array_consistent"] in (True, None) for i in rep["items"]))

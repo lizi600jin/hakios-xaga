@@ -21,6 +21,9 @@
 #
 # Exit status: 0 always, unless the tree is not there (2). A finding is printed, not returned: this
 # is an audit tool, and a report that stops at the first problem hides the rest of them.
+#
+# Checked with `sh -n`, and run under both bash and dash: the same output (dash is the strict one --
+# no [[ ]], no process substitution, no here-strings, no local, no arrays).
 
 set -u
 

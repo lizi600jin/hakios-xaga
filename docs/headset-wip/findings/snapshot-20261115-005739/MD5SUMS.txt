@@ -1,0 +1,14 @@
+a7e943d84372396ff046da4b0c8fc161  ./.config
+cfad2e93ea548c9e3859fa3e30b711f8  ./drivers/core/hakios.platform.c
+17106470727dbaa6a94378c166c58da8  ./drivers/core/hakios.stubs.c
+5aff340f35a6ba4f8b9e37931985f588  ./drivers/input/hakios.input.c
+8b8358ab82c2055a254535099674c7da  ./drivers/net/hakios.net.c
+1f9415198278d239fde3c3c0d03fe4e0  ./hakios.drivers.h
+0831050189d5ad0c23e6477c95dda81a  ./mtk/mt6895/drivers/audio/hakios.mt6895_headset.c
+68507eccf61335b71869860a130d80a5  ./mtk/mt6895/drivers/gpu/hakios.mali610.c
+f7da61fd5be31715540a7dab0b51ef71  ./mtk/mt6895/drivers/input/hakios.mt6895_keys.c
+32f2bbf4b54e129f3ff2c532a029018f  ./mtk/mt6895/drivers/input/hakios.nvt.c
+fdc233fefdd0134c655e1c1b755a7aa5  ./mtk/mt6895/drivers/usb/hakios.mt6895_usb.c
+a041b57215e2a1a298a9a5ae5e919fe9  ./xnu-include/hakios.audio.h
+6f8548870c783fbdca88c302f3a00ab8  ./xnu-include/hakios.input.h
+af5a16edf7889f63da31774b414ffb4c  ./xnu-include/hakios.pmif.h

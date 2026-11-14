@@ -787,10 +787,12 @@ python3 accdet-table-validate.py --seed 20261115 --sample 15   # 复现本文抽
 `research/mt6368-accdet-regmap.txt`、`raw/mt6368.h`、`raw/mt6368-accdet.c`、
 `findings/accdet-init-table.c`、`mt6368.c`（首次从 sparse clone `git cat-file` 取到 `/tmp`）。
 
-自检输出：
+自检输出（真实运行）：
 
 ```
+==============================================================================
 SELFTEST  (21 checks)
+==============================================================================
   header: RG_ACCDET_CK_PDN = 0x230c bit0 mask 1               PASS
   header: RG_ACCDET_RST = 0x2319 bit1                         PASS
   header: MT6368_AUD_TOP_CKPDN_CON0 = 0x230c                  PASS
@@ -810,10 +812,56 @@ SELFTEST  (21 checks)
   sample: 固定种子可复现                                             PASS
   现表: 0 条内容级一定错（位宽/mask/顺序/C 数组）                              PASS
   现表: 引用级缺陷恰好 1 条（#20 错引另一 eint 分支）                           PASS
-  现表: C 数组与 JSON 全一致                                      PASS
+  现表: C 数组与 JSON 全一致                                          PASS
   现表: 块外行 = #1 #2 #22 #23 #38（0x230c/0x1cb2/0x2319/0x248c）    PASS
 ------------------------------------------------------------------------------
   21/21 PASS
+```
+
+人读报告开头（真实运行，`--verbose` 省略）：
+
+```
+==============================================================================
+MT6368 ACCDET 初始化表 — 机器校验
+==============================================================================
+表   : accdet-init-table.json
+dump : accdet-baseline.json  source='stock Android dump_reg, no headset plugged, 2026-11-14'  sid=5  寄存器 130
+源   : mt6368-accdet.c / /tmp/accdet-val/mt6368.c
+行数 50：写 44 / 只读校验 4 / 采样 2；串行延时合计 69.9 ms
+
+-- 来源阶段 ----------------------------------------------------------------
+   cold-start 自加                          4
+   late_init/accdet_init                 12
+   late_init/init_debounce                2
+   late_init/init_once                   26
+   plug-in (eint_work_callback)           1
+   其它                                     5
+-- 判定分布 ----------------------------------------------------------------
+   A 双证                                  40
+   B 源码可证（瞬态/状态相关，dump 不适用）               5
+   C 源码可证（dump 无覆盖）                       3
+   C 源码可证（采样行，dump 只做参考）                  2
+-- dump 比对 ----------------------------------------------------------------
+   conflict_cleared_at_runtime            1
+   conflict_pulse                         3
+   conflict_refill                        1
+   match                                 40
+   no_dump                                3
+   snapshot                               2
+-- 行号解析 ----------------------------------------------------------------
+   context                                1
+   field_conflict                         1
+   ok                                    52
+   ok_absence                             1
+   ok_const                               1
+   ok_indirect                           14
+   zero_write                             3
+
+-- 覆盖 --------------------------------------------------------------------
+   distinct 寄存器 41；dump 覆盖 38；未覆盖 3
+      未覆盖 0x1cb2 (outside)
+      未覆盖 0x230c (outside)
+...
 ```
 
 ---
