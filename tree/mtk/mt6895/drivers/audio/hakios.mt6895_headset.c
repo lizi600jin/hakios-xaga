@@ -109,11 +109,22 @@ hakios_mt6895_headset_init(void)
 		return;
 	}
 	if (mode == 2) {
-		/* TODO: complete accdet initialisation, then poll 0x26b6 bits 7:6 -- not
-		 * 0x26a9 bit 0, which is an EINT pending flag. The insertion state is cur_AB,
-		 * bits 7:6 of 0x26b6 in work context (0x26b8 in interrupt context), and 3
-		 * means nothing is plugged in: the Android baseline reads 0xff in both.
-		 * A future poller must serialize PMIF transactions with the keys driver.
+		/* TODO: complete accdet initialisation, then poll cur_AB.
+		 *
+		 * Register meanings, from the vendor source rather than from the .ko:
+		 * sound/soc/codecs/mt6368.h in this tree's xaga kernel names them.
+		 *   0x26a9 bit0      ACCDET_IRQ       the interrupt flag, not a state; write
+		 *                                    0x26aa bit0 (ACCDET_IRQ_CLR) to clear it
+		 *   0x26b6 bits 7:6  ACCDET_MEM_IN   cur_AB, what accdet_read() shifts out
+		 *   0x26b7 bits 2:0  ACCDET_STATE    the state machine's own state
+		 * cur_AB is 0 for a three-pole headset, 1 for a four-pole one and 3 with
+		 * nothing plugged in; 2 does not occur on this phone. It is not a plain
+		 * "plugged in" bit: mt6368-accdet.c's check_cable_type() has a previous
+		 * state and an eint_sync_flag gate, and under MIC_BIAS cur_AB 0 means a
+		 * key is held, not that a three-pole headset is in.
+		 *
+		 * A future poller must serialize its PMIF transactions with the keys
+		 * driver: both use SWINF_2 and neither holds a lock.
 		 */
 		printf("headset: headset=2 is not implemented\n");
 		return;
