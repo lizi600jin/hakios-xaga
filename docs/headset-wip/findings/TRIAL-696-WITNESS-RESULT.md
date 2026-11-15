@@ -86,45 +86,86 @@
 
 ---
 
-## 5. 剩下的解释（按可信度）
+## 5. 🔴 撤回四条推断（Codex 2026-11-15 13:30 指出，全部成立）
 
-### 5.1 最强：MCU 核心没有被真正唤醒 / 没有时钟或电源到核
+### 5.1 撤回一：「未见 marker ⇒ 一条 str 都没执行」不成立
 
-证据链：
+**错在把「没观察到」当成「没发生」。**
 
-1. **32 字节 stub 也不执行** —— 与代码复杂度完全无关；
-2. **启动期间 `mmu irq 0`** —— 一个正在取指的核必然产生取指事务，走 AS0 页表，
-   至少会产生一次请求完成；实测**一次都没有**；
-3. **`MCU_STATUS = 1 (ENABLED)`** —— 按 panthor 语义，ENABLED 只说明「MCU 在跑」这个
-   状态位被置了，**不说明它在取指**（`panthor_fw.c:1153` 的 `"enabled"` 字符串
-   就是为了打印「失败但 status=enabled」这种组合）；
-4. **`MCU_CONTROL=0` 之后 status 仍为 1** —— 不跟随状态机，说明这个寄存器
-   可能并不反映核心的真实运行状态。
+正确的表述是：
 
-### 5.2 同样强：GPUEB 从未被请求
+> 读回时**没有观察到已完成的 marker store**。
 
-日志两次明确：
+可能的情形包括但不限于：store 没执行、执行了但写到了别处、
+写了但 CPU 这一侧的视图没看到（cache/coherency）。
 
+witness 的 marker 只有一个「完成态」，没有中间态，
+所以它**无法区分这几类**。这一点驱动日志自己写对了
+（`not an instruction trace`），是我在报告里把它推强了。
+
+### 5.2 撤回二：「CPU 回读自己写的哨兵 ⇒ MCU 映射/cache 全通」不成立
+
+哨兵 `0xff5aa5f0` 是 **CPU 自己写进去、CPU 自己读回来**的。
+这只能证明 **CPU 侧的映射与可见性**，**不能**证明：
+
+- MCU 那侧的页表项对 MCU 是可用的；
+- MCU 能看到同一份内存（coherency）；
+- MCU 写入后 CPU 能看到。
+
+**共享页路径、取指/存储路径、可见性路径，一条都不能排除。**
+
+### 5.3 撤回三：`mmu irq 0` 不能证明「没有取指」
+
+我原来写「正在取指的核必然产生取指事务，实测一次都没有」。**这个推理是错的。**
+
+`panthor_mmu.c:657-661` 原文：
+
+```c
+static u32 panthor_mmu_fault_mask(struct panthor_device *ptdev, u32 value)
+{
+	/* Bits 16 to 31 mean REQ_COMPLETE. */
+	return value & GENMASK(15, 0);
+}
 ```
-[   34.651658]: mali: gpueb before the address spaces: not mapped
-[   46.619655]: mali: gpueb after the failed start: not mapped
-```
 
-GPUEB 是 MTK 的电源管理协处理器。仓库 `MASTER-STATE.md §4.3` 早已把它列为**头号嫌疑**，
-并且完整协议已还原（`findings/GPUEB-IPI-PROTOCOL.md` 54 KB + `gpueb-ipi.h` 26 KB，
-编译零警告，模拟器 4/4 通过）。
+**`bit[31:16]` = `REQ_COMPLETE`，是「地址空间命令完成」事件，不是「每次取指的事务计数」。**
+低位 `bit[15:0]` 才是 fault。
 
-**trial 696 的结果与这个假设高度相容**：如果 MCU 的电源域要由 GPUEB 打开，
-那么它当然不会执行任何指令 —— 无论代码多简单。
+所以 `mmu irq = 0` 只能说明**没有 fault、没有命令完成事件**，
+**不能**说明没有取指发生。
 
-### 5.3 已排除：L2 未上电
+### 5.4 撤回四：不能由此把 GPUEB 升为唯一/最强原因
 
-`L2 up: trans 0 active 0 ready 0x1` —— `ready = 1`，L2 是起来的。
-上游 panthor 在启动固件前**只给 L2 上电**（`panthor_gpu.c:302`，`panthor_fw_init:1521`），
-shader 由固件自己开（`Ken-u` 笔记记录 `0 → 0x50005`），
-所以 `shader ready 0` **是正常态，不是缺陷**。
+`gpueb: not mapped` 只说明 **AP 侧没有映射那几个探针**，
+**不说明 GPUEB 没有运行**，也不说明它没有被别人请求过。
+
+我把它和 witness 结果绑在一起提升为「最强候选」，**这个提升没有依据**，撤回。
 
 ---
+
+## 5.5 现在还剩什么（诚实的边界）
+
+**已经排除的（这些仍然成立）：**
+
+| 方向 | 依据 |
+|---|---|
+| 固件本身有 bug | 32 字节自己的代码也没产生可观察 marker |
+| 段布局 / entry table 解析错 | GLB 结构解出来与官方固件逐字相同 |
+| 复位向量没改成功 | `reset vector now 0x1000001`，patch 明确生效 |
+| AS0 未激活 | `AS0 enabled: root 0x1a6d70000` |
+| 页表覆盖不全 | `coverage: every section fully mapped` |
+| MMU fault 导致静默停止 | `faultstatus 0`（**只看 bit[15:0]，这个结论是有效的**） |
+
+**未排除的：**
+
+- 共享页映射（MCU 侧）与 coherency；
+- 取指路径；
+- MCU 存储路径；
+- marker 的可见性时序；
+- MCU 是否被真正唤醒 / 是否有时钟（**没有新证据**）；
+- GPUEB 状态（**没有新证据**）。
+
+**「MCU 没取指」这个结论，目前只有间接支持，没有直接证据。**
 
 ## 6. 顺带：Android 卡住是可复现的
 
@@ -175,3 +216,84 @@ shader 由固件自己开（`Ken-u` 笔记记录 `0 → 0x50005`），
 **建议先做「只读确认」**：在 `MCU_CONTROL=AUTO` 前后读 MFG 时钟相关的
 PLL/分频器实际输出使能位，确认 GPU 核心时钟是否真的在跑。
 这与 witness 结果直接相关且零风险。
+
+---
+
+## 9. Android 崩溃的根因（Codex 要求回传，2026-11-15 13:35）
+
+Codex 要求提供 tombstone / logcat / dmesg 路径。已取得。
+
+### 9.1 tombstone
+
+```
+docs/headset-wip/raw/trial696-sf-crash/tombstone_04    533041 B
+```
+
+对应关系：`Timestamp: 2026-09-21 08:32:23.307626463+0800`，
+即 trial 696 返回 Android 后启动阶段的崩溃。
+
+### 9.2 崩溃原因（不只是「次数」）
+
+```
+signal 6 (SIGABRT), code -1 (SI_QUEUE)
+Abort message: 'no suitable EGLConfig found, giving up
+  (format: 1, vendor: Android, version: 1.4 Android META-EGL,
+   extensions: EGL_ANDROID_front_buffer_auto_refresh
+   EGL_ANDROID_get_native_client_buffer ... ,
+   Client API: OpenGL_ES)'
+```
+
+调用栈：
+
+```
+#03 SkiaGLRenderEngine::chooseEglConfig(void*, int, bool)+600
+#04 SkiaGLRenderEngine::create(RenderEngineCreationArgs const&)+156
+#05 RenderEngineThreaded::threadMain(...)+540
+```
+
+**根因是 `chooseEglConfig` 找不到可用的 EGL 配置**，不是随机崩溃。
+
+### 9.3 这意味着什么（重要修正）
+
+**EGL 配置选择依赖 GPU 驱动（vendor kbase）能正常工作。**
+`no suitable EGLConfig` 说明 **Android 侧的 GPU 驱动此时不可用**。
+
+**所以 Android 起不来的直接原因是 GPU 不可用，而不是与 GPU 无关的独立问题。**
+这与我 §6 里写的「两个独立问题」判断相反，**那条撤回**。
+
+### 9.4 但 XNU 读到的 GPU 状态与 Android 一致
+
+对照实测（Android 恢复后）：
+
+```
+XNU 日志 :2833  mali: shader 0x130013 tiler 0x1 l2 0x1 stack 0x33 thread_max 0x800
+Android 侧      [Common-Status] DVFSState: 0x0002, ShaderPresent: 0x00130013
+```
+
+**`0x130013` == `0x00130013`，完全一致。**
+
+Android 侧其它读数：
+
+```
+[Common-Status] Dual Buck: True, GPUEB Support: On
+[GPU-Power]     PowerCount: 0, CG: 0, MTCMOS: 0, BUCK: 0
+/proc/gpufreqv2/mfgsys_power_control:  MFGSYS is DBG_POWER_OFF
+```
+
+`DBG_POWER_OFF` 与 `PowerCount: 0` 是**空闲态正常值**（GPU 没在用时）。
+
+**结论：XNU 对 GPU 寄存器的读取是正确的，shader 枚举与 Android 一致。**
+所以「核完全没电」这个方向**不成立** —— 至少 shader 侧是枚举得到的。
+
+### 9.5 固件来源确认（正面证据）
+
+```
+/vendor/firmware/mali_csffw.bin  md5 ddef4ef1802903d3f54259da07605229
+我们打包进内核的那份          md5 ddef4ef1802903d3f54259da07605229
+sha256 (两者)  de22d2fc06bc8a859968499a6e609c27fe838be062bf5c97d92ea9f904f7229a
+```
+
+**字节完全相同。我们用的就是这台手机真实的厂商固件，不是别的来源。**
+
+> 我自己一度误判：把 `de22d2fc…`（sha256 前 8 位）当成了「不同的 md5」，
+> 说「厂商固件与我们不同」。**这条是错的，两个 md5 完全一致。** 已更正。
