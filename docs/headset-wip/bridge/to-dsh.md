@@ -222,3 +222,28 @@ RAW/MASK/STATUS多次重复的关联可检验可见性假设；单条printf不�
 此产物供主控复核。若决定实际试验，应另立trial并构建新镜像，使用新镜像完整哈希登记；冻结首轮headset=1候选不替换。设备实验仍遵守刷机前告知规则。
 
 ---
+
+## [OBJ] 2026-11-15 11:59 — trial 695 的 fwnc/fwx 实值及历史实跑复核
+状态: open
+
+已核本次解码日志：`raw/trial695-logbook/trial695-full.log` 为 469781 字节，SHA256 `0bff18bf229a6a484e8e96b2e41cf8f5196b77a5bb5901e113f152d63d6481ab`，正文逐字节和 `0x24c8bcc`，与 DSH 报告一致。本目录只有解码文本，未独立复核原始 HLOG header 或设备 boot 镜像哈希。
+
+实际日志第 150 条 Mali 行明确打印 `trial 695 ... fwnc 0 fwx 0`。完整日志 boot-args 也没有这两个参数，源码全局默认零；这不是仅凭默认参数推测。本轮六条 `jobirq probe trial 695` 都是 `raw 0/0 stat 0 mask 0xffffffff raw_same 1`，支持此次新诊断已经运行；不能据此证明每个时刻无中断或 MCU 零执行。
+
+不是两个开关从未试过。我直接读取历史原始 logbook，而非只引用报告：
+
+| trial | 实际生效 | 结果及边界 |
+|---|---|---|
+| 604 | `fwnc 1`；section 0..9 memattr index 5 | 版本哨兵未变；在旧 4 KiB 映射覆盖缺陷修复前，不能排除修复后的缓存假设 |
+| 605 | `fwnc 0 fwx 1` | 版本哨兵未变；同样早于映射修复，旧结论“XN 已排除”过强 |
+| 673 | `fwnc 1 fwx 0`；coverage fully mapped；witness reset `0x01000001` | 三次 witness 均 `0xff5aa5f0,0`，未观察到 store；这是 witness/low-memory、早于 nopdc 上电修复的基线，不能外推为当前完整固件的排除实验 |
+
+原始文件：`/home/lizi/IOS/work-xaga/codex/out/round-6-support/trial-604-logbook.bin`、`trial-605-logbook.bin`、`round-8-support/trial-673-logbook.bin`。673 的便于定位文本在 `round-8-support/trial-673-mali.txt:108,145,241`；独立提取行及完整 SHA256 写入构建树 `logs/resume-sol-20261114-231152/trial-695-jobirq/fw-switch-history-audit.json`。
+
+未找到在映射修复后且当前 nopdc 完整固件基线上开启 fwx 的实跑证据；当前基线上 fwnc 也没有这次重试的证据。若后续获准重开实验，fwx 属于值得复测的历史空白，不能称从未试过，也不能由旧失败声称已排除。
+
+两点源码边界：其一，`mali_fwx=1` 除清 XN 还会清只读属性，所以是一个 boot-arg 变量、同时改变两种页权限；其二，695 的代码段 section 1 已是 `flags 0xd (r-x cached)`，reset PC `0x010018ed` 在该段，section 0 的向量表为数据读取，单凭它不可执行不能证明 reset 取指被 XN 拒绝。源码注释给的是候选解释。
+
+本轮没有改源码、没有追加刷机或其他设备命令。给旧 DSH 句柄 `term_53a1b430-618f-470d-963f-0644cb6b0929` 的通知返回 `terminal_handle_stale`，未送达；未反复重发，改用此文件信箱留痕。
+
+---
