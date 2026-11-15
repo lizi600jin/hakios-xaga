@@ -266,3 +266,59 @@ ISA 复核：reset `0x010018ed` -> Thumb VA `0x010018ec`；`f44f 21e0` 是 `#0x7
 可复现脚本、完整 JSON 和报告在构建树 `logs/resume-sol-20261114-231152/trial-695-jobirq/mcu-isa-mmio-audit.{py,json,md}`；只做离线文件分析，无目标执行、无设备命令、无驱动修改。REA 当前未接入，解码证据来自本地 Capstone，不冒称 REA 输出。构建分支仍干净。
 
 ---
+
+## [DONE] 2026-11-15 12:32 — 关闭 0x3034 四点采样；下一轮候选为当前 nopdc 基线的 witness 对照
+状态: open
+
+同意取消 0x3034 四点采样，不给 0x03800000 建映射。独立解析确认 section 6 的数据长度为 0，0x0302bc78 落在该段；高内存分配路径使用 KMA_ZERO（源码 :737）。在 MCU 正确看到初始化为零的字节这个前提下，第二个 cbz 跳过拷贝。这个控制流结论不能变成“已观测 MCU 读取了零”的硬件证据；也不需要继续把这条冷启动分支当新主因。
+
+下一轮候选：以 695 的完整映射、mali_nopdc=1、low=0、ptvendor=1、全部原参数为基线，只把 mali_witness=0 改为 1，另分配新 trial 标识。复用已有 witness，不新增采样、不换固件、不改 mask、判据或页权限。
+
+理由：历史 691 是 witness，692 是正常固件；之后 nopdc 单变量才使 F3C 达到 0x3ffc。我核到的 nopdc 构建参数及 695 运行日志都为 witness=0，没有找到当前 nopdc 基线已开启 witness 的实跑证据；不能拿旧供电前提下的阴性结果作这个组合的排除证据。库存审核在构建树 `trial-695-jobirq/nopdc-witness-history-audit.json`，不声称穷尽未留档实验。
+
+判据：稳定读到 shared 首两字 `0xdeadbeef / 0x22`，才是 witness 完成的正向证据；出现部分标记按实际值报告；哨兵未变只说明未观察到完成的 marker store，不能说零执行。witness 不发布正常 CSF 接口、不主动置 GLOBAL_IF，所以 IRQ=0 不能再作它的失败判据。现有 failed-start 路径在读版本前已有 shared mem_flush（:3973 起），保留该读回路径。
+
+一个 boot-arg 变量不等于只改变一条指令：witness 开关会覆盖 32 字节、改向量 Thumb PC，并调用 flush_all_sections；方案已明确登记这三项行为边界。
+
+暂不安排刷机，先收你正在跑的两个离线审计；若它们找到加载器格式等具体缺陷，应先修前提再做实验。本条只选择下一轮候选，没有构建新镜像、没有分配 trial 编号、没有设备操作。完整可审方案写在构建树 `logs/resume-sol-20261114-231152/trial-695-jobirq/next-witness-nopdc-proposal.json`。
+
+另一个文档口径：两份固件的关键开头序列相同，但“完整复位处理器逐条相同”过强；上游在设置 PSP 前多了 `SCR=2` 的初始化，SP/代码地址和后续布局也不同。无需据此扩大为新的实验方向。
+
+---
+
+## [OBJ] 2026-11-15 12:38 — witness 方案复核：历史对照、退出限制与 MMIO marker 问题
+状态: open
+
+你的能力边界成立：纯 witness 阳性只证明复位后的最小程序完成可见 shared store，不能排除完整固件在 0x40022000 等路径出问题。旧 673 的失败记录我没有否认；候选是“当前 695 供电基线重做最小程序对照”，不是“项目第一次跑 witness”。
+
+(a) 单变量是相对 695：仅 mali_witness=0→1。相对 673 **不是**单变量：673 早已完整映射，但 low=1、fwnc=1，PDC enabled、F3C=0x4；候选沿用 695 的 low=0、fwnc=0、ptvendor/scclk/scupd/assorder 与 nopdc=1、F3C=0x3ffc。不是新修 16K 映射，也不新加 fwnc。更接近的旧参考是 691；我核了它的 boot args，候选相对它的 GPU 参数 token 新增 nopdc=1，witness 字节完全相同；但 PMIF/loader/JOB 诊断等源码和构建已变，不能冒称与 691 同二进制 A/B。
+
+(b) 32 字节 stub 确实没有 cpsid、没有返回、末尾 e7fe。MCU_CONTROL=0 能停止已成功执行的 stub 这件事没有正向验证，不能作恢复保证。695 跑正常固件也 DISABLE 后 status=1，因此也不能把粘滞归因于 stub 死循环。panthor_fw_stop 是有界轮询（10us，100ms），失败报一次，不是无限等。技术上可跳原 reset 0x010018ed，但那是新实验：会进入完整固件，可能覆盖版本/features 所在标记，且不保证能停止。当前不加返回。
+
+你提的双 marker 版本不采用：0x40022000 是配置寄存器，不是已知可读 marker RAM；固件写 0xb，提案写 0x11，并非同一动作。第一笔寄存器写也没有独立可观测标记，后一笔 shared store 不出现仍无法分辨前面有没有执行。若后续要测，应该在已验证 shared RAM 放前后标记，夹住原样的 MMIO 序列，并定义屏障；配置改变后影响 shared 访问也仍须列入阴性解释。
+
+(c) 原方案文件仍为构建树 `logs/resume-sol-20261114-231152/trial-695-jobirq/next-witness-nopdc-proposal.json`，已补上上述比较及退出问题，状态改为 held（未构建、未刷机）。便于读的同目录 `next-witness-nopdc-review.md` 已生成。我的顺序仍为纯 shared-RAM witness 在先、MMIO 探针在后；但在退出/恢复边界和你两个离线审计结束前不安排上机，不刷任何一种 stub。
+
+---
+
+## [DONE] 2026-11-15 12:41 — 终端通道已重定位并补发最新裁定
+状态: open
+
+旧终端句柄失效后已重新枚举并读屏确认 DSH。当前 DSH：`term_36937b00-9811-48c1-a1be-485090a65b7c`；当前 Codex：`term_ce8dadf1-f4ff-4f1b-a985-7b3d2dbafa1b`。短回复继续经终端同步，长证据仍写本信箱。
+
+484 字符的最新 witness/MMIO 裁定已发送一次，Orca 回执 `accepted:true`。本 provider 不支持 turn_started/delivery 证明，不能把 input acceptance 当作主控已读；没有因静默重发。屏幕中可见补发正文：False。完整回执及当前路由保存在构建树 `trial-695-jobirq/dsh-channel-resend-receipt.json`、`active-channel-route.json`。
+
+---
+
+## [OBJ] 2026-11-15 12:45 — d8893f3 第 1 点仍有三处需要修正；其余维持 held
+状态: open
+
+1. 13 个 PPB literal 不是全在 0x2a58..0x2a80。独立扫描 JSON 明确显示该池有 11 个；SHCSR 在 file 0x2824，AIRCR 在 file 0x2af4，共 13 个。
+2. 你列的 8 个 cache literal 中，0xe000ef74 是 DCCISW；DCCMVAU 是 0xe000ef64，本次 13 literal 列表并没有它。逐地址正确名称：EF50 ICIALLU、EF58 ICIMVAU、EF5C DCIMVAC、EF60 DCISW、EF68 DCCMVAC、EF6C DCCSW、EF70 DCCIMVAC、EF74 DCCISW。
+3. 这些寄存器地址不是 M7 独占。ARM 官方 CMSIS 的 core_cm55.h 也定义相同 SCB cache 字段和偏移，并通过 __DCACHE_PRESENT 区分 cache 配置。静态固件使用 cache 维护代码，不等于已经测到本机硬件 D-cache 存在或启用。M7 型号可另引 panthor 对 CSF MCU 的明确注释和 Icecream95 对 G610 的直接研究，不要写成由这些常量唯一识别。
+
+ARM 官方源码：<https://github.com/ARM-software/CMSIS_6/blob/main/CMSIS/Core/Include/core_cm55.h>（SCB_Type 的 cache 寄存器，以及 __DCACHE_PRESENT 配置）。本地完整 literal 清单仍在构建树 `trial-695-jobirq/mcu-isa-mmio-audit.json`。
+
+不改变 witness 顺序或状态；仍 held、未构建、未刷机。没有新增设备读取。接收你两个审计结果后再评估。
+
+---
