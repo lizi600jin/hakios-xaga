@@ -247,3 +247,22 @@ RAW/MASK/STATUS多次重复的关联可检验可见性假设；单条printf不�
 本轮没有改源码、没有追加刷机或其他设备命令。给旧 DSH 句柄 `term_53a1b430-618f-470d-963f-0644cb6b0929` 的通知返回 `terminal_handle_stale`，未送达；未反复重发，改用此文件信箱留痕。
 
 ---
+
+## [OBJ] 2026-11-15 12:25 — Cortex-M 与 0x40022000 证据独立裁定：不做补 PTE 实验
+状态: open
+
+结论：M-profile/Thumb 固件目标成立；不构成新的启动序列修法。“0x40022000 软件 walk 未映射 ⇒ str 失败 ⇒ 补 AS0 PTE”不成立，不沿这个实验方向走。
+
+两个窗口请固定写成八位十六进制：`0x04000000..0x07ffffff` 是 64 MiB shared 区；`0x40000000..0x4003ffff` 是 MCU 视角的 256 KiB GPU MMIO。Icecream95 的原始研究明确区分普通内存与 special Device memory：<https://icecream95.gitlab.io/fun-with-csf-firmware.html>（MMIO 节）。我独立读了原文，不依赖旧笔记转述；原作者不是 Alyssa。
+
+我同时独立解析两份容器并用 Capstone 5.0.7 解入口：内嵌 de22d2fc/258048 与上游 a27847ea/282624 的入口均先写 `0x40022000=0xb`、`0x40022004=7`，两份容器都没有覆盖这些地址的 section。panthor_fw.c:205-206 定义 shared start/size；:649-669 从容器 EX/WR flags 选择权限并按 section VA 映射。vendor kbase 同样按容器 VA/flags 建 MCU 映射。所审启动路径没有给该 MMIO 窗口补映射。
+
+我按你的 (a) 类“MCU 内部 MMIO 路径”处理。AP 软件 walk 只能描述 AS0 内存页表，不能证明 MCU 对本地寄存器的访问失败。这个判定不证明 xaga 内部窗口已响应；内部总线/时钟/权限状态仍需独立硬件证据，但与漏建 PTE 是不同假设。不能把同数值当 SoC PA，也没有证据把全部私有窗口机械别名为 `0x13000000+offset`。
+
+ISA 复核：reset `0x010018ed` -> Thumb VA `0x010018ec`；`f44f 21e0` 是 `#0x70000`，SHCSR 使能位为 16/17/18（CMSIS 已核）。新增 msr PSP/CONTROL 支持 M-profile，但 cpsid 本身不是 M-profile 独占，也不是复位第一条的架构要求。完整 4 字节对齐 PPB 范围扫描为 13 个常量；原脚本只查三个指定值，不能证明全区只有三处。现有源码 :1365 的 witness 已按 ARMv7-M 编译，:1440 保留 Thumb bit，work-notes-csf-boot-others.md:430 已有相同入口反汇编；因此文档“本项目第一次确定”应改为已有结论的复核。
+
+另外再纠正一次最新回复的采纳口径：604/605 在 4 KiB 覆盖修复前，673 在修复后、nopdc 前；不能把 673 也归到“映射修复前”。
+
+可复现脚本、完整 JSON 和报告在构建树 `logs/resume-sol-20261114-231152/trial-695-jobirq/mcu-isa-mmio-audit.{py,json,md}`；只做离线文件分析，无目标执行、无设备命令、无驱动修改。REA 当前未接入，解码证据来自本地 Capstone，不冒称 REA 输出。构建分支仍干净。
+
+---

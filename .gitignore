@@ -7,3 +7,6 @@ out/
 .DS_Store
 __pycache__/
 *.pyc
+
+# 反汇编临时工作区（下载的上游源码副本 + 固件二进制）
+.csf-re/
