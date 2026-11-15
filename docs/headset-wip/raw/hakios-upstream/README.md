@@ -56,7 +56,7 @@
 **关键**：`MTLCreateSystemDefaultDevice` 拿到空列表时**静默返回 nil**，不打印任何东西。
 **这解释了为什么 iOS 里 GPU 不可用却没有任何错误信息。**
 
-### 2.3 上游用 ramoops 取日志，不是自定义 logbook
+### 2.3 上游用 ramoops 取日志 —— 🔴 **但我原来的描述是错的**
 
 `gpu-probe.sh` 的机制：
 
@@ -66,8 +66,36 @@ adb reboot
 adb shell 'su -c "cat /sys/fs/pstore/console-ramoops-0"' > logs/gpu-probe.log
 ```
 
-**流程**：Android 往 `/dev/pmsg0` 写请求 → loader 读到并擦除 → 启动 XNU →
-XNU 把日志写进 ramoops → 重启 → Android 从 `/sys/fs/pstore/` 读。
+**我原来写**：「loader 读到 → 启动 XNU → XNU 写日志进 ramoops」。
+
+**这是错的。Codex 核实后纠正，我独立验证了它的说法：**
+
+`mtkloader.c:3407-3416` 的 `GPU_PROBE` 分支：
+
+```c
+#if GPU_PROBE
+	if (pmsg_take(gpu_probe_flag, sizeof(gpu_probe_flag) - 1)) {
+		fb_rect(0, 0, PANEL_W, PANEL_H, 0xff000000u);
+		out("== mtkloader: GPU probe ==\n");
+		gpu_probe();
+		dbg_delay_ms(4000);
+	}
+	chain_android();
+#endif
+```
+
+**`gpu_probe()` 之后直接 `chain_android()`，根本没调用 `run_xnu()`。**
+
+**所以 `gpu-probe.sh` 不能作为「XNU 日志持久化」的证据** ——
+它证明的是 **loader 自己**的探针能经 ramoops 回来，不是 XNU 的日志。
+
+### 2.3.1 另外三处我在 §3 里写错的
+
+| 我写的 | Codex 纠正 |
+|---|---|
+| 「探针挂死只损失一次重启，自动恢复」 | **`pmsg_take()` 只保证不重跑，不保证挂死后自动复位**。软件超时打不断一笔已挂死的 MMIO |
+| 「`console-ramoops-0` 不存在 → console 区没注册」 | **不能这么推**。Linux `fs/pstore/ram.c:140` 在没有 `old_size` 时直接不返回记录，区域存在也可能没文件 |
+| 「用 `base + pmsg_size` 可算 console 地址」 | **不能猜**。分区顺序/record_size/ftrace/对齐/ECC 共同决定。`board.h:214` 已有实测常量 `console=0x4811f000`、`pmsg=0x48160000` |
 
 ---
 
