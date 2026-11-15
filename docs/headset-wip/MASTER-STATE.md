@@ -1,6 +1,16 @@
-> **2026-11-15 02:55 最新入口**：Codex 额度耗尽未及自写交接，DSH 已代写 [HANDOFF-2026-11-15-0255.md](./HANDOFF-2026-11-15-0255.md)。**先读它，本文件是它的浓缩版。**
+> **2026-11-15 11:45 最新入口**（压缩上下文前更新）：Codex 额度耗尽未及自写交接，DSH 已代写 [HANDOFF-2026-11-15-0255.md](./HANDOFF-2026-11-15-0255.md)。**先读它，本文件是它的浓缩版。**
 trial 695 已执行（DSH 代办），结果见 [TRIAL-695-RESULT.md](./findings/TRIAL-695-RESULT.md)：mask / 时钟 / 电源 / AS0 走查四类原因全部排除。
-设备：原厂 Android，adb 在线，slot a，无危险状态。构建树在 `trial/jobirq-695` @ `6a51ef2`，未提交改动 0。文档仓最新提交见 `git log`。
+
+**设备**：原厂 Android 17，adb 在线，`boot_completed=1`，`boot_a` 实测 md5 `a63b2e35a7c2522cb24a6a10332b9bc8`（= 原厂）。
+**构建树**：`trial/jobirq-695` @ `6a51ef2`，未提交改动 **0**。
+**文档仓**：`dc9cbfc`，本地 = 远端。
+
+### 🔴 11:45 压缩前修过一件事：文档仓 git 对象损坏
+
+7 个 git 对象文件变成 **0 字节**（磁盘/文件系统问题），报 `bad object HEAD`。
+修法：`find .git/objects -type f -size 0 -delete` 后 `git fetch --force --all`，
+从远端完整取回。**工作区内容从未丢失，远端一直是完好的 `dc9cbfc`。**
+备份在 `/tmp/git-backup-*`。修完 `git fsck` 只剩悬空 blob（正常）。
 
 # MASTER-STATE 2026-11-15 02:55
 
@@ -23,6 +33,22 @@ HakiOS（XNU → Xiaomi xaga / MT6895 / Mali-G610）。
 **GPU**：19 轮未破。`0x10000` 被误读成 `MMU_BUS_ERROR`，已推翻（真义 = AS0 REQ_COMPLETE，走查**成功**）。头号怀疑 = GPUEB 从没发过 IPI。
 **日志**：三个 bug 已定位，codex 在改。
 **SPMI**：审计出 **9 个缺陷，5 个会挂死/重启，3 个默认路径就会踩**。
+
+### 📌 压缩后按这个顺序接
+
+1. **读 `HANDOFF-2026-11-15-0255.md`**（200 行，`[Codex]`/`[DSH]` 逐条标注来源）
+2. **读本文件 §4**（GPU 现状）和 **§5**（日志），跳过历史章节
+3. **读 `COLLAB-PROTOCOL.md`**（协作规则、并发上限 4、硬约束）
+4. 动手前跑三条确认：
+   ```sh
+   cd ~/IOS/repo/hakios-mt6895 && git log --oneline -1 && git status --short | wc -l
+   cd ~/IOS/hakios-mtk && git rev-parse --abbrev-ref HEAD && git status --short | wc -l
+   adb devices && adb shell getprop sys.boot_completed
+   ```
+   期望：`dc9cbfc` / 0，`trial/jobirq-695` / 0，设备在线 / `1`
+
+**不要再重复的**：本轮已排除的 GPU 方向见 `HANDOFF §3.4`；
+我自己犯过并已留档的 6 条错见 `§7` 已推翻表。
 
 ---
 
