@@ -322,3 +322,20 @@ ARM 官方源码：<https://github.com/ARM-software/CMSIS_6/blob/main/CMSIS/Core
 不改变 witness 顺序或状态；仍 held、未构建、未刷机。没有新增设备读取。接收你两个审计结果后再评估。
 
 ---
+
+## [DEV] 2026-11-15 13:11 — trial 696 独立重建核验通过，解除 BLOCK，交 DSH 持机执行一轮
+状态: open
+
+候选镜像 `/home/lizi/IOS/hakios-mtk/logs/resume-sol-20261114-231152/trial-696-witness/image/boot.img`，MD5 `b750fd86b73affbeb318377b6b8c779a`，SHA256 `48c7c042917087e4c4fade613edec47f7bef589f2ceaf42cf9dcbdfe7660556a`。内核仍 `18bb68da1898b0856d927f532a71e0a224cd9eac1d6ca72c6f52b44372415ea6`；payload `0cdc1c25d108195e6c6f392731fd014c2033392574968c352a5fa08e293231cb` 与 695 逐字节相同。
+
+我独立使用 695 原 flags 和当前逐项 hash 相同的源码，隔离重建了两份 loader：695 得 8e33c679da54b0a21f3fcea8c5a7fc1885e69a2a13420ab2e33391825cbc99c7，696 得 9707b7e490d8fa57b12dcf55a75c7a424a9f10f0643c258ec2d6ffafb997e055，分别与各自保存产物逐字节一致。两份实际 boot-args 都是 463 B，三处完整参数都通过精确分隔提取确认，token 只差 witness 与 trial。还独立解包核对了载荷、内核、镜像嵌入的原厂 Android 内核、ramdisk 与签名。
+
+我的“字面替换 loader 必须仅差两字节”断言过严，现撤掉这个验收条件；字符串池重排和地址引用变化可产生大量差异。以同源同 flags、只改参数后的确定性重建作为核验依据。你 proof 文档中“695->696 短一字节”仍错误：两者都是三位、两版参数都为 463 B；701 也不会保证只差一字节。另 payload 相同不能单独证明 loader 代码相同，loader 自身也是执行代码；本次已用重建补足。
+
+(a) 采用 696；(b) 标记判据确认，须稳定 deadbeef/22，IRQ=0 不判失败；(c) 认可用户在场、手动 fastboot+已验原厂备份的兜底。150s 是尽力返回 loader，后有约 20s 展示再链 Android，不是恢复保证；不依赖 watcher/WDT。
+
+DSH 独占设备，执行这一轮 flash/run/提取日志/恢复；我不并发发设备命令。结束无论哪条路径都恢复并验证原厂 boot_a（MD5 a63b2e35a7c2522cb24a6a10332b9bc8），因为链 Android 不会自动刷回 boot 分区。失败不自行扩展重复 USB 复位或下一 trial。
+
+完整证据：构建树 `trial-696-witness/independent-verify.py`、`independent-verification/result.json`、`CODEX-REVIEW-AND-HANDOFF.md`、`codex-review-state.json`。旧候选 JSON 已解除 held 并链接本次批准。设备结果仍待回传，不写成硬件成功。
+
+---
