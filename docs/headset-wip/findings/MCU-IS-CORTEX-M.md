@@ -166,6 +166,88 @@ mali: walk 0x40022000: L0 0x19ddb8403 L1 0 table unset
 | 页表 / 段加载 / `MCU_CONTROL` 语义 | **不受影响**，那是 GPU 的 MMU 与控制寄存器 |
 | 「固件不执行」的因果 | **本文档不解释**。§4 那条线索未证明 |
 
+### 型号：Cortex-M7 是**侧证**，不是从常量唯一识别的（三处修正）
+
+Codex 2026-11-15 12:45 指出我这一节有三处具体错误，我逐条复核后**全部确认他对**。
+
+#### 修正 1：13 个常量不是全在 `0x2a58`-`0x2a80`
+
+我原来写「全部位于 `0x2a58`-`0x2a80` 一段连续字面量池内」。实测：
+
+| 位置 | 数量 |
+|---|---|
+| 字面量池 `0x2a58`-`0x2a80` | **11 个** |
+| `0xe000ed24` SCB->SHCSR @ `0x2824` | 1 个（**独立**） |
+| `0xe000ed0c` SCB->AIRCR @ `0x2af4` | 1 个（**独立**） |
+
+**11 + 2 = 13。** 另两个散在别处，不在该池内。
+
+#### 修正 2：寄存器名整张表偏移了 4 字节（我错得最严重的一处）
+
+按 ARM 官方 CMSIS `core_cm55.h` 的 SCB 结构定义，
+SCB base = `0xE000ED00`，缓存维护寄存器 offset 如下：
+
+| offset | 寄存器 | 真实地址 | 我先前写的 | 对错 |
+|---|---|---|---|---|
+| `0x250` | ICIALLU | `0xE000EF50` | ICIALLU | ✅ |
+| `0x258` | ICIMVAU | `0xE000EF58` | ICIMVAU | ✅ |
+| `0x25C` | DCIMVAC | `0xE000EF5C` | DCIMVAC | ✅ |
+| `0x260` | DCISW | `0xE000EF60` | DCISW | ✅ |
+| `0x264` | **DCCMVAU** | `0xE000EF64` | — （**不在本次 13 项里**） | — |
+| `0x268` | **DCCMVAC** | `0xE000EF68` | 我写成 DCCMVAU | ❌ |
+| `0x26C` | **DCCSW** | `0xE000EF6C` | 我写成 DCCMVAC | ❌ |
+| `0x270` | **DCCIMVAC** | `0xE000EF70` | 我写成 DCCSW | ❌ |
+| `0x274` | **DCCISW** | `0xE000EF74` | 我写成 DCCIMVAC | ❌ |
+
+**后四个全错。** 我们固件里出现的是 `EF50/58/5C/60/68/6C/70/74`
+共 8 个，**缺 `EF64`(DCCMVAU)**，而 `EF74` 是 **DCCISW**，不是 DCCIMVAC。
+
+#### 修正 3：这些常量**不是 M7 独占**
+
+ARM 官方 CMSIS `core_cm55.h`（我 fetch 了原文）在 Cortex-M55 上也定义
+**完全相同的地址和字段**：
+
+> <https://github.com/ARM-software/CMSIS_6/blob/main/CMSIS/Core/Include/core_cm55.h>
+> `__OM uint32_t ICIALLU;  /*!< Offset: 0x250 ... */`
+> …… `__OM uint32_t DCCISW; /*!< Offset: 0x274 ... */`
+
+所以：
+
+| 我原来声称 | 实际 |
+|---|---|
+| 「这是 Cortex-M7 独有的缓存维护寄存器」 | ❌ **M55 也有同一批**，M 系列带缓存的核共用这套布局 |
+| 「所以型号是 M7」 | ❌ 静态常量**不能**唯一识别型号 |
+| 「所以本机有 D-cache」 | ❌ 静态代码**不能证明**本机 D-cache 存在或已开启 |
+
+#### 那么「Cortex-M7」这个结论还站得住吗？
+
+**站得住，但依据换了。** 三条独立侧证：
+
+1. **panthor 源码明写**：`panthor_mmu.c:2890` `/* CSF MCU is a cortex M7, and can only address 4G */`
+2. **Icecream95 对 G610 的实测**：「The MCU ... is ... a Cortex-M7 (r1p2, with no FPU, ECC cache, nor TCM)」
+3. **驱动自己的注释**：`hakios.mali610.c:1365` 已写「32 bytes of Cortex-M7」
+
+**这些是「别人测过/上游写明」，不是我从 13 个常量推出来的。**
+常量只能证明「是 M-profile 且代码里出现缓存维护操作」，不能定型号。
+
+#### 对缓存假设的影响：撤回
+
+我原来写「`DCCMVAC`/`DCCIMVAC` 的存在说明 M7 侧 D-cache 真实存在且需要维护」。
+**这个推论撤回** —— 固件里出现缓存维护寄存器地址，只说明代码**准备**处理缓存，
+不能证明这颗核真的有 D-cache 或已开启。Icecream95 的描述里 G610 的 M7
+甚至写的是「no FPU, ECC cache, nor TCM」，缓存配置本身需独立证据。
+
+---
+
+## 5. 这修正了什么 / 没修正什么
+
+| 项 | 结论 |
+|---|---|
+| CSF MCU 架构 | **32 位 Cortex-M**（已证明） |
+| 复位 PC 对齐语义 | bit0 是 Thumb 标志，真实入口 `0x…ec`（已证明） |
+| 页表 / 段加载 / `MCU_CONTROL` 语义 | **不受影响**，那是 GPU 的 MMU 与控制寄存器 |
+| 「固件不执行」的因果 | **本文档不解释**。§4 那条线索未证明 |
+
 ### 型号已定：**Cortex-M7**（原先写「型号未定」是错的）
 
 Codex 2026-11-15 12:25 指出我原来只查了 3 个指定值，不能证明全区只有三处。
