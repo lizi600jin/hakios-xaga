@@ -1,9 +1,28 @@
-> **2026-11-15 11:45 最新入口**（压缩上下文前更新）：Codex 额度耗尽未及自写交接，DSH 已代写 [HANDOFF-2026-11-15-0255.md](./HANDOFF-2026-11-15-0255.md)。**先读它，本文件是它的浓缩版。**
-trial 695 已执行（DSH 代办），结果见 [TRIAL-695-RESULT.md](./findings/TRIAL-695-RESULT.md)：mask / 时钟 / 电源 / AS0 走查四类原因全部排除。
+> **2026-11-15 12:45 最新入口**：Codex 额度已恢复（实测 session 剩 98%）。
+> 上一份交接 [HANDOFF-2026-11-15-0255.md](./HANDOFF-2026-11-15-0255.md) 仍然有效，本文件是它的浓缩版。
+> trial 695 已执行，结果见 [TRIAL-695-RESULT.md](./findings/TRIAL-695-RESULT.md)：mask / 时钟 / 电源 / AS0 走查四类原因全部排除。
+
+### 🟢 12:45 本轮三个可复用的成果
+
+**① 日志可以随时从设备直接取，不用刷机。**
+设备是 KernelSU **root**，`xnusys` 尾部 8 MiB 处就是 logbook。trial 695 已验证：
+`HLOG @ 0x9f8f8000`，`len = 0x72b15 = 469781`，8 位加和 `0x24c8bcc` 与 header 一致。
+**屏幕只显示 6 行 mali，日志里有 266 行。** 取法见 `raw/trial695-logbook/`。
+（`fastboot oem expdb` 那条死路可以彻底不走了。）
+
+**② CSF MCU 是 32 位 Cortex-M，已由 ARM 官方固件交叉验证。**
+见 [findings/MCU-IS-CORTEX-M.md](./findings/MCU-IS-CORTEX-M.md)。
+我们 v0.1 与 linux-firmware v0.3 的复位处理器**逐条相同**（`cpsid i` + 同一组字面量
+`0x40022000` / `0x40022004` / `0xe000ed24` SCB->SHCSR）。**是架构事实，不是我们固件特殊。**
+
+**③ 两条正式关闭**：
+- 「VA0 段不可执行是 bug」→ 两份固件的 `va==0` 段都是 `flags 0x9`（无 EX），ARM 自己也不标。
+- 「version 在 0x04002000」→ **version 在 `0x04000000`**（shared 段 `+0x00`）；
+  `0x04002000` 是 `input_va`。驱动读法本来就对，是日志措辞要改。
 
 **设备**：原厂 Android 17，adb 在线，`boot_completed=1`，`boot_a` 实测 md5 `a63b2e35a7c2522cb24a6a10332b9bc8`（= 原厂）。
 **构建树**：`trial/jobirq-695` @ `6a51ef2`，未提交改动 **0**。
-**文档仓**：`dc9cbfc`，本地 = 远端。
+**文档仓**：`6204876`，本地 = 远端。
 
 ### 🔴 11:45 压缩前修过一件事：文档仓 git 对象损坏
 
