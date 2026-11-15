@@ -127,3 +127,64 @@ XNU 把日志写进 ramoops → 重启 → Android 从 `/sys/fs/pstore/` 读。
 | 我们设备有 `/dev/pmsg0` 和 pmsg-ramoops-0 | `console-ramoops-0` 为何不存在 |
 | ramoops 三区已配好 address/size | XNU 能否安全写进 console 区 |
 | `metal.md` 的 Metal 五步流程 | 那个 `_MTLDevice` 子类 bundle 是否已存在 |
+
+---
+
+## 6. 🔴 补充：`redwood_mali.c` 读完了，**不能照搬**
+
+### 6.1 它是 Bifrost，不是 Valhall
+
+`redwood_mali.c` 开头原文：
+
+> The GPU of the Infinix Hot 20 (X6826B), **a Mali-G52 MC2**, brought up from the kernel.
+> ...
+> **A Bifrost Mali needs no firmware**, so bringing it up is power and clocks and nothing else.
+
+**上游的 GPU 是 Mali-G52（Bifrost 架构），不需要固件。**
+
+**我们的 G610 是 Valhall CSF，必须启动 MCU 固件。这是完全不同的两类 GPU。**
+
+### 6.2 六步里前四步与我们相同，五六步是基于「无固件」的
+
+| 步 | 内容 | 对我们 |
+|---|---|---|
+| 1 | `mfg_sel` 时钟 mux 到主 PLL 三分频（364 MHz） | ✅ 我们做过 |
+| 2 | SPM 四个电源域 + SRAM + 总线保护释放 | ✅ 我们做过（`0xF3C=0x3ffc`） |
+| 3 | `BG3D` 时钟门（mfgcfg） | ✅ 我们做过 |
+| 4 | GPU 识别、软复位、L2/tiler/两个 shader 核上电 | ⚠️ 部分 |
+| **5** | **一个最小 job：往内存写一个值，AS0 恒等映射** | ❌ **Bifrost 特有，无需固件** |
+| **6** | 同样的 job 走 GPU 自己的页表 | ❌ **同上** |
+
+**第 2 步的 SPM 序列**（`:287-296`）与我们的一致：
+
+```c
+wr(spm, con, rd(spm, con) | PWR_ON);
+wr(spm, con, rd(spm, con) | PWR_ON_2ND);
+wait_for(spm, PWR_STATUS, bit, bit, 20);
+wr(spm, con, rd(spm, con) & ~PWR_CLK_DIS);
+wr(spm, con, rd(spm, con) & ~PWR_ISO);
+wr(spm, con, rd(spm, con) | PWR_RST_B);
+wr(spm, con, rd(spm, con) & ~PWR_SRAM_PDN);
+```
+
+### 6.3 决定性：这个仓库**没有 CSF 驱动**
+
+`xnu/files/bsd/dev/` 下 30 个驱动里，GPU 相关只有两个：
+
+- **`redwood_mali.c`** —— Bifrost G52，无需固件
+- **`redwood_adreno.c`** —— 高通 Adreno
+
+**没有 Valhall CSF / panthor 的实现。**
+
+### 6.4 所以结论是什么
+
+| 问题 | 答案 |
+|---|---|
+| 上游解决了 Mali CSF 吗 | **没有。它根本没遇到这个问题**（Bifrost 不需要固件） |
+| 它的 `mali=1` 能给我们什么 | **第 1-4 步的核对参考**，特别是「哪些寄存器、什么顺序」 |
+| 它的 job 提交能照搬吗 | **不能** —— 那是 Bifrost 的 `JS_CONFIG` 路线，Valhall 走 CSF 队列 |
+| **Metal 的边界分析有用吗** | **✅ 有用，而且很重要** —— 见 §2.2，那与 GPU 型号无关 |
+| **ramoops 日志机制有用吗** | **✅ 有用** —— 见 §2.3 |
+
+**最重要的两个可用产出是「Metal 五步流程」和「ramoops 取日志」，不是 GPU 驱动。**
+
