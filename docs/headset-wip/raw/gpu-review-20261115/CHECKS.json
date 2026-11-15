@@ -1,0 +1,52 @@
+{
+  "dcm0": {
+    "printed_left": "0xc03f",
+    "readback": "0xc03f",
+    "mask": "0x807f",
+    "expected_masked": "0x803f",
+    "pass": true
+  },
+  "async": {
+    "printed_left": "0x3c00000",
+    "readback": "0x3c00000",
+    "mask": "0x3c00000",
+    "expected_masked": "0x3c00000",
+    "pass": true
+  },
+  "async1": {
+    "printed_left": "0xf7",
+    "readback": "0xf7",
+    "mask": "0x1",
+    "expected_masked": "0x1",
+    "pass": true
+  },
+  "global": {
+    "printed_left": "0x3281701",
+    "readback": "0x30e7201",
+    "mask": "0x266500",
+    "expected_masked": "0x66000",
+    "pass": true
+  },
+  "qchannel": {
+    "printed_left": "0x10",
+    "readback": "0x10",
+    "mask": "0x10",
+    "expected_masked": "0x10",
+    "pass": true
+  },
+  "global_exact_transform": {
+    "pass": true
+  },
+  "all_register_checks_pass": true,
+  "gpu_node_has_interconnects_property": false,
+  "gpu_node_has_iommus_property": false,
+  "existing_modified_files": {
+    "mtk/mt6895/drivers/audio/hakios.mt6895_headset.c": "8061361c1ddb53d96b6d8ac88e14bdba408734f940e61ecc214d8f7a6cda9af0",
+    "mtk/mt6895/drivers/gpu/hakios.mali610.c": "4e3d7fe56be8cf726314396e4bdd90c507b8951548ea59dab07ffd39338b1f96",
+    "mtk/mt6895/drivers/input/hakios.mt6895_keys.c": "b00e2e54951e1bfd8cef8bd89a93cedda06b4ce76c6cfe8bf59f9fa2313c44a2",
+    "tools/make-kernel.sh": "a721c62bef30fe755062347c3c680ad4b98592bd1be4c3629d3f0fbb1f8f4a04",
+    "xnu/hakios.patch": "9739b4af958ffd1088c79513ce623d56852fc154d67237b86f729c0841c0c119"
+  },
+  "source_commit": "25fd36e67958d96086b8542340477948ab40c2a2",
+  "trial700_interconnect_line": "[   33.983706]: mali: interconnect before the firmware: dcm0 0xc03f->0xc03f async 0x3c00000->0x3c00000 async1 0xf7->0xf7 global 0x3281701->0x30e7201 qchannel 0x10->0x10 rpc 0->0"
+}

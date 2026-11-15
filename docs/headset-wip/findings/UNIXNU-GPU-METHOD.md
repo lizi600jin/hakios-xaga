@@ -92,11 +92,55 @@ Mali 与 Adreno 是两套完全不同的硬件接口，**不能照搬**。
 | 固件 | ✅ 与厂商字节一致 |
 | 电源域 | ✅ `0xF3C = 0x3ffc` 全 up |
 | 时钟 / 电压 | ✅ 已核对（stacks = `mainpll_d5_d2`） |
-| **interconnect votes** | ⚠️ 有 `interconnect before the firmware` 日志，但**未核对是否足够** |
+| **interconnect votes** | ✅ **已核，见下方修正** |
+| `iommus`（SMMU stream ID） | ⚠️ GPU 节点**没有** `iommus` 属性，见下方修正 |
 | RAM 保留 | ✅ 共享区 `0x7c600000` |
 | scanout 布局 | ✅ 显示已通 |
 
-**最值得注意的两项**：**中断**（我们一个都没注册）和 **interconnect votes**。
+### 🔴 修正（6-Astra 2026-11-15 复核，我独立复算确认）
+
+**我原来把「interconnect votes 缺」列成我们的缺口。这是错的。**
+
+#### 修正一：那组日志不是 bandwidth vote
+
+`mfg_master_gates()` 操作的 `MFG_GLOBAL_CON`（`0x13fbf0b0`）是 **MFG 时钟/DCM/握手配置**，
+**没有 avg_bw/peak_bw 单位**，不存在「把 global 数字调大 = 带宽更高」的关系。
+
+**五组读回用掩码核对，全部通过**（我独立复算，5/5 一致）：
+
+| 项 | 掩码 | 读回 & 掩码 | 期望 | 结果 |
+|---|---|---|---|---|
+| `DCM_CON_0` | `0x807f` | `0x803f` | `0x803f` | ✅ |
+| `ASYNC_CON` | `0x3c00000` | `0x3c00000` | `0x3c00000` | ✅ |
+| `ASYNC_CON_1` | `0x1` | `0x1` | `0x1` | ✅ |
+| `GLOBAL_CON` | `0x266500` | `0x66000` | `0x66000` | ✅ |
+| `QCHANNEL_CON` | `0x10` | `0x10` | `0x10` | ✅ |
+
+`global` 的精确变换也对上了：
+`(0x03281701 & ~0x00200500) | 0x00066000 = 0x030e7201`，与日志完全相等。
+
+#### 修正二：主线 GPU 节点根本没有 `interconnects`
+
+`mt6895.dtsi:2734-2768` 的 GPU 节点**没有** `interconnects`/`interconnect-names`；
+对 `drivers/gpu/drm/panthor` 与 `drivers/gpu/mediatek/gpueb` 搜索
+**没有 `icc_set_bw`/`of_icc_get`** 这类请求调用。
+
+**所以不能从 Adreno 的清单反推出「这份 MT6895 启动路径必缺一笔 ICC 带宽请求」。**
+
+#### 修正三：SMMU stream ID 也不适用
+
+GPU 节点**没有 `iommus` 属性** —— Panthor 用的是**GPU 内部 MMU**（`0x2000` 块的
+`AS_TRANSTAB` 那套），不是平台 SMMU。
+
+**不能因为我们没有 Adreno 式的 stream-ID 配置就认定缺步骤。**
+
+#### 修正四：`mali_gpueb=1` 不能被当成「试一次 GPUEB 上电」
+
+它只让 `:4303-4304` 映射窗口，随后 `:2333-2362` 读 watchdog/IRQ/GPR 探针；
+**不发上电 IPI、不建立共享区、不打开已确认的访问前提。**
+
+**所以：中断注册也不该列为首要修复** —— `RAW/STATUS` 都是 0 时，
+缺 CPU IRQ handler 解释不了设备侧全零。
 
 ---
 
