@@ -1,6 +1,20 @@
-# CSF MCU 是 32 位 Cortex-M，不是 AArch64
+# CSF MCU 是 32 位 Cortex-M7，不是 AArch64
 
 > 2026-11-15 12:35，DSH。**离线可复现**，不需要刷机。
+>
+> 🔴 **口径更正（Codex 2026-11-15 12:25 指出）**：本文档最初写「这是本项目第一次确定
+> MCU 的指令集架构」。**这个说法过强，应改为「对已有结论的复核与扩证」。**
+> `hakios-mtk/work-notes-csf-boot-others.md:420-445` **早已有同一入口的 capstone 反汇编**
+> （`cpsid i` / `0x40022000=0xb` / `0xE000ED24 (SCB->SHCSR)` 都标了），
+> 驱动源码 `:1365` 的 witness 注释也已写明「32 bytes of Cortex-M7」。
+> 本文档新增的是：**官方固件交叉验证、完整 PPB 扫描定为 M7、以及几处旧误判的修正**。
+>
+> **本次修订（13:45）按 Codex 裁定改了 5 处口径：**
+> 1. 标题「Cortex-M」→「**Cortex-M7**」，并给出完整 PPB 扫描证据（13 个常量，非 3 个）
+> 2. 删掉「本项目第一次确定」，改为「复核与扩证」
+> 3. 「完整复位处理器逐条相同」→「关键开头序列相同」，并列出 `SCR=2` 的真实差异
+> 4. §11.5「`0x40022000` 未映射 ⇒ 固件失败」**整个推理作废**（MMIO 不走页表）
+> 5. §11.6「双 marker 写 `0x40022000`」**方案作废**（配置寄存器，不是可读 marker RAM）
 > 反汇编用 **capstone 5.0.7**（`CS_ARCH_ARM, CS_MODE_THUMB|CS_MODE_MCLASS`），**不再手工解码**。
 > 输入：`drivers/gpu/hakios.mali610_fw.h`（258048 B，sha256 `de22d2fc…`）。
 
@@ -152,8 +166,39 @@ mali: walk 0x40022000: L0 0x19ddb8403 L1 0 table unset
 | 页表 / 段加载 / `MCU_CONTROL` 语义 | **不受影响**，那是 GPU 的 MMU 与控制寄存器 |
 | 「固件不执行」的因果 | **本文档不解释**。§4 那条线索未证明 |
 
-**型号未定**：`AIRCR`/`CCR`/`SHCSR` 在 M3~M55 上都有。要定型号需看 FPU 指令
-（`vldr`/`vmov`）或 TrustZone 的 SAU（`0xE000ED94`）—— 本次未查。
+### 型号已定：**Cortex-M7**（原先写「型号未定」是错的）
+
+Codex 2026-11-15 12:25 指出我原来只查了 3 个指定值，不能证明全区只有三处。
+我做**完整 4 字节对齐 PPB 区扫描**（`0xE000E000`-`0xE000EFFF`），命中 **13 个**，
+全部位于 `0x2a58`-`0x2a80` 一段连续字面量池内（紧跟 `bx lr` 之后）：
+
+| 常量 | 寄存器 | 含义 |
+|---|---|---|
+| `0xe000ed0c` | SCB->AIRCR | 应用中断与复位控制 |
+| `0xe000ed14` | SCB->CCR | 配置与控制 |
+| `0xe000ed24` | SCB->SHCSR | 系统异常控制与状态 |
+| `0xe000ed80` | NVIC SHPR 区 | 系统异常优先级 |
+| `0xe000ed84` | **CPACR** | 协处理器访问控制 |
+| `0xe000ef50` | **ICIALLU** | I-cache 全失效到 PoU |
+| `0xe000ef58` | **ICIMVAU** | I-cache 按 MVA 失效 |
+| `0xe000ef5c` | **DCIMVAC** | D-cache 按 MVA 失效到 PoC |
+| `0xe000ef60` | **DCISW** | D-cache 按 set/way 失效 |
+| `0xe000ef68` | **DCCMVAU** | D-cache 按 MVA clean 到 PoU |
+| `0xe000ef6c` | **DCCMVAC** | D-cache 按 MVA clean 到 PoC |
+| `0xe000ef70` | **DCCSW** | D-cache 按 set/way clean |
+| `0xe000ef74` | **DCCIMVAC** | D-cache clean+invalidate 到 PoC |
+
+**`0xE000EF50`-`0xE000EF7F` 在 ARMv7-M 里是「实现定义」区，Cortex-M7 把它填成
+缓存维护操作寄存器。Cortex-M3/M4 没有数据缓存，也就没有这些寄存器。**
+
+> 所以型号不只是「某个 Cortex-M」，而是 **M7 类、且带 D-cache 的核**。
+> 这与 panthor 源码注释 `/* CSF MCU is a cortex M7 */`（`panthor_mmu.c:2890`）
+> 以及 icecream95 原文「a Cortex-M7 (r1p2, with no FPU, ECC cache, nor TCM)」一致。
+
+**这条对缓存假设有直接影响**：固件里存在 `DCCMVAC`/`DCCIMVAC` 这类
+「按 MVA clean 到 PoC」的操作，说明 **M7 侧的 D-cache 是真实存在且需要维护的**。
+「段数据缓存」假说此前用 `mali_fwnc=1`（trial 604）测过并失败，
+但那是在旧映射缺陷下测的，严格说仍未在修复后的基线上重测。
 
 ---
 
@@ -242,6 +287,25 @@ sha256 `a27847ea11f8efb3…`），与我们的 v0.1 逐项对比。
 
 **结论从「我们这份固件如此」升级为「CSF 架构如此」。**
 两份不同版本、不同大小、不同段布局的固件，启动代码是同一套。
+
+#### ⚠️ 口径修正：不是「完整复位处理器逐条相同」
+
+Codex 2026-11-15 12:32 指出这个说法过强，我复核后**确认他对**。实测差异：
+
+| | 我们 v0.1 | ARM v0.3 |
+|---|---|---|
+| `SCB->SCR` (`0xe000ed10`) | **完全不碰**（全固件零命中） | **写 `= 2`**（两处字面量：`0x4724`、`0x4a8c`） |
+| 设 PSP 前的序列 | 直接 `ldr r0,=SP` | 先 `*(0xe000ed10)=2`，再 `ldr r0,=SP` |
+| SP 值 | `0x02040000` | `0x02030000` |
+| 代码段基址 | `0x01000000` | `0x00800000` |
+
+`SCR` bit1 是 `SLEEPONEXIT`。**这是我们两份固件之间一个真实的行为差异**，
+虽然与当前故障的因果关系未证明。
+
+**准确表述**：关键开头序列（`cpsid i` → 两个 MMIO 写 → `SHCSR` → `msr psp/control`
+→ `isb`）**相同**；但**不是逐条相同**，ARM 版在设 PSP 前多一条 `SCR=2`。
+
+另外，两份固件的**段布局也完全不同**（见 §9.4），布局差异本身是正常的。
 
 ### 9.2 VA0 段不需要可执行 —— 官方同样如此
 
@@ -521,30 +585,91 @@ kbase_mali_kbase_regmap_legacy_csf.h:38:#define IPA_CONTROL_BASE 0x40000
 | `0x0100198c` | `0x40022004` | 复位第 2 个 store 目标 |
 | `0x01001998` | `0x40003034` | 守卫读（= GPU_CONTROL_MCU+0x34） |
 
-### 11.5 🔴 未解矛盾（必须承认）
+### 11.5 🔴 更正：我原来的推理是错的（Codex 2026-11-15 12:25 指出）
 
-- 按 panthor 源码，`0x40022000` 在 MCU 的 4 GiB 空间里**未映射**。
-- 但真实固件**复位后第二条指令就写它**。
-- Cortex-M 上对未映射地址做 `str` 会触发 fault；若没有 fault handler，核会停在那里。
+我原来在这里写：「按 panthor 源码 `0x40022000` 未映射，但固件要写它，这是矛盾」。
+**这个推理不成立。** 我拿 AS0 页表走查去推断一个 MMIO 地址不可访问 —— 是错的。
 
-**两种可能，目前无法区分：**
+原文依据（我亲自 fetch 并通读）：
+<https://icecream95.gitlab.io/fun-with-csf-firmware.html> 的 MMIO 节：
 
-| 可能 | 说明 | 需要什么才能证实 |
+> At `0x04000000` ... is a **64 MiB region of memory** which is used for
+> **buffers shared** between the kernel and the MCU.
+>
+> From `0x40000000` is a **256 KiB region of memory mapped IO**
+> (**not all of it backed by real storage**) which **controls the hardware of the GPU**.
+>
+> The region at `0x04000000` is just another memory region, but the
+> `0x40000000` is **special Device memory**. They aren't really so related.
+
+**所以：**
+
+| 地址 | 性质 | 走页表吗 |
 |---|---|---|
-| A | 真实硬件上该区域由 **GPU 硬件在 CSF 侧**提供（不经 panthor 页表） | ARM 的 CSF 地址空间文档；或反汇编更多固件看它是否依赖那两个 store |
-| B | 那两条 `str` 在真实硬件上也**静默失败**，固件不依赖结果 | 需要确认 Cortex-M 在此平台上的 fault 行为是否真的致命 |
+| `0x04000000`..`0x07ffffff` | 64 MiB **普通内存**，kernel↔MCU 共享缓冲 | ✅ 走 AS0 页表 |
+| `0x40000000`..`0x4003ffff` | 256 KiB **Device MMIO**，控制 GPU 硬件 | ❌ **不走页表** |
 
-**注意**：这两个 store **写进去的值从未被读回**（§11.4 已证）。
-所以「值有没有写进去」本身不影响后续流程 —— 影响的只是**写失败会不会让核停下**。
+`0x40022000` 落在后者。**AS0 页表走查报 `table unset` 完全正常，与它能不能访问无关。**
 
-### 11.6 这条对下一轮实验的意义
+### 11.5.1 原文还指出 MCU 有**三层**地址解析，我漏了前两层
 
-如果要做 witness 实验（§10），**应该带上 `0x40022000` 这个 marker**：
+> To access memory, there are three layers that must be navigated:
+> 1. The MCU's integrated **MPU** (memory protection unit)
+> 2. The **MCU memory mappings**
+> 3. The **GPU MMU**
 
-- 若「写 `0x40022000`」+「写 `0x04000000`」**两个 marker 都出现** → A 成立，该区域可写，
-  固件不该卡在这里，问题在更深处。
-- 若**只有 `0x04000000` 出现** → 写 `0x40022000` 就让核停了（B 的变体），
-  那么**必须给 `0x40022000` 加映射**，这是此前 19 轮从未试过的方向。
-- 若**两个都没有** → 取指本身就失败，与 witness 历史失败一致（`GPU-ROUND-8.md:95`）。
+| 层 | 控制者 | 粒度 | 我此前是否考虑 |
+|---|---|---|---|
+| **MPU** | MCU | 16 个区，32 字节起 | ❌ **完全没有** |
+| **MCU mappings** | MCU | 8 × 128 MiB，64 MiB 对齐 | ❌ **完全没有** |
+| GPU MMU (AS0) | 内核 | 4 KiB | ✅ 只考虑了这一层 |
 
-**这是目前唯一能把「取指失败」与「第一条 store 失败」分开的实验。**
+原文还给了一段真实代码，演示 MCU 怎么通过 `0x40022100` 处的寄存器
+**自己建立 128 MiB 映射**（`map_reg_base = 0x40022100`）—— 那正是
+`0x40022000` 一带。**这直接证明那片区域是 MCU 可访问的 MMIO。**
+
+### 11.5.2 修正后的结论
+
+- **不能说**「`0x40022000` 未映射，所以固件第一条 store 就失败」。
+- **能说**：`0x40022000` 是 GPU MMIO，不在任何固件声明段内，也不需要声明。
+- **仍然未知**：xaga 这颗 MT6895 上，那片内部 MMIO 窗口在 MCU 启动那一刻
+  是否已响应（总线/时钟/权限状态）。这需要独立硬件证据，但与「漏建 PTE」是**不同假设**。
+
+**我原来的 §11.6「双 marker 写 `0x40022000`」方案一并作废** —— 那是配置寄存器，
+固件写的是 `0xb`，不是可读 marker RAM；写 `0x11` 不是同一动作，也无法读出前后差异。
+
+### 11.6 作废：原来的「双 marker」方案
+
+我原来提议在 witness 里先写 `0x40022000 <- 0x11` 再写 `0x04000000 <- 0x22`。
+**方案作废**（Codex 2026-11-15 12:38 指出，我复核同意）：
+
+1. `0x40022000` 是**配置寄存器**，不是已知可读的 marker RAM。固件往里写的是 `0xb`，
+   我提议写 `0x11`，**不是同一个动作**。
+2. 第一笔写寄存器**没有独立可观测标记**，后一笔 shared store 不出现时，
+   仍然无法分辨前面那笔有没有执行。
+
+**如果将来要测**，正确做法是：在**已验证可写的 shared RAM** 里放前后两个 marker，
+把**原样的 MMIO 序列夹在中间**，并明确屏障。即使那样，
+「配置改变后影响 shared 访问」仍必须列入阴性解释。
+
+### 11.7 与 695 基线一致的下一轮候选（Codex 选定，我未执行）
+
+Codex 在 `logs/resume-sol-20261114-231152/trial-695-jobirq/next-witness-nopdc-proposal.json`
+（同目录 `next-witness-nopdc-review.md`）里选定：**纯 shared-RAM witness**，
+相对 695 **只改 `mali_witness=0`→`1`**，其余参数全部沿用。
+
+我核过并同意的三条边界：
+
+| 项 | 事实 |
+|---|---|
+| 相对 695 | 单变量（只动 witness） |
+| 相对 673 | **不是**单变量：673 是 `low=1` / `fwnc=1` / PDC enabled / `F3C=0x4`，且早已完整映射 |
+| 更近的参照 691 | 候选相对它只多 `nopdc=1`，witness 字节相同，**但源码与构建已变，不能称同二进制 A/B** |
+
+退出与恢复：stub 确实没有 `cpsid`、没有返回、末尾 `e7fe`。
+`MCU_CONTROL=0` 能停住已成功执行的 stub **没有正向验证**，不能作恢复保证。
+`panthor_fw_stop()` 是**有界轮询**（10 µs × 100 ms），失败报一次，不是无限等。
+技术上可以加「跳回原 reset `0x010018ed`」，但那是**新实验**（会进入完整固件，
+可能覆盖 marker），当前不加。
+
+**状态：held。未构建、未刷机。** 需等两个离线审计结束、且退出/恢复边界明确后再议。
