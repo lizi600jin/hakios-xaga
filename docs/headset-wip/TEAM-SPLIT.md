@@ -114,3 +114,41 @@
 
 **`headset=3` 由 Codex 正在写，不打断。**
 新分工从**下一轮任务**开始执行。
+
+---
+
+## 7. Codex 断线的处置（2026-11-15 21:35 实战验证）
+
+**现象**：Codex 会话显示 `Reconnecting... 4/5 (52m 02s)`，
+错误为 `Stream disconnected: Transport error: network error: error decoding response body`。
+**这不是会话失效，是网络流断了。**
+
+### 判断顺序
+
+| # | 动作 | 判据 |
+|---|---|---|
+| 1 | 看当前节点 `curl --unix-socket $SOCK "http://localhost/proxies/%E8%8A%82%E7%82%B9%E9%80%89%E6%8B%A9"` | 看 `now` 是哪个 |
+| 2 | 测真实端点 `curl -w "%{http_code}" https://chatgpt.com/backend-api/codex/responses` | **`405` = 通**，空/000 = 断 |
+| 3 | 换节点 `PUT .../proxies/节点选择 {"name":"新加坡-优化-GPT"}` | — |
+| 4 | 发一条 `ping` 给会话 | `orca terminal send ... --text 'ping' --enter` |
+
+### 🔴 重要陷阱
+
+**Clash 的延迟测试接口对这些 GPT 节点会报错或超时，但实际通道是通的。**
+
+```bash
+# 这个会失败，但不代表节点不能用
+curl ".../proxies/台湾-优化2-GPT/delay?timeout=8000&url=https://chatgpt.com"
+# -> {"message":"An error occurred in the delay test"}
+```
+
+**要判断通道，用第 2 步的端点测试（405），不要用延迟测试。**
+
+### 可用的 GPT 节点（8 个）
+
+`台湾-优化2-GPT`、`新加坡-优化-GPT`、`新加坡-优化2-GPT`、
+`美国LA-优化-GPT`、`美国LA-优化2-GPT`、`美国LA-优化3-GPT`、`英国-优化-GPT`。
+
+**2026-11-15 21:35 实测**：`台湾-优化2-GPT` 端点通但 Codex 流断；
+换 `新加坡-优化-GPT` 后 Codex 立刻从 `Reconnecting` 回到 `Working`。
+
