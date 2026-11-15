@@ -3597,6 +3597,20 @@ gpu_flush_caches(void)
 	return true;
 }
 
+/* Diagnostic-only snapshot. RAW reads bracket STATUS/MASK; nothing is cleared. */
+static void
+job_irq_snapshot(const char *where, unsigned spins)
+{
+	uint32_t raw_before = mrd(kJobIntRaw);
+	uint32_t mask = mrd(kJobIntMask);
+	uint32_t status = mrd(kJobIntStatus);
+	uint32_t raw_after = mrd(kJobIntRaw);
+
+	printf("mali: jobirq probe trial %u %s spin %u: raw %#x/%#x stat %#x mask %#x raw_same %u\n",
+	    gMaliTrial, where, spins, raw_before, raw_after, status, mask,
+	    raw_before == raw_after ? 1u : 0u);
+}
+
 static bool
 start_mcu(void)
 {
@@ -3840,6 +3854,7 @@ start_mcu(void)
 		printf("mali: mcuseq: after ENABLE write, control reads %#x status %#x\n",
 		    mrd(kMcuControl), mrd(kMcuStatus));
 	}
+	job_irq_snapshot("before AUTO", 0u);
 	mwr(kMcuControl, kMcuControlAuto);
 	if (gMaliMcuSeq) {
 		__asm__ volatile ("dsb sy" ::: "memory");
@@ -3916,6 +3931,7 @@ start_mcu(void)
 			 * four points is the only way to tell those apart, and the address is what names the
 			 * page if one is named.
 			 */
+			job_irq_snapshot("sample", spins);
 			printf("mali: spin %u: status %u job %#x mmu %#x fault %#x at %#llx top %#x\n",
 			    spins, st, stat, mrd(kMmuIntRaw),
 			    mrd(asReg(0, kAsFaultStatus)),
@@ -3931,6 +3947,7 @@ start_mcu(void)
 			printf("mali: the MCU reported fatal at spin %u\n", spins);
 		}
 		if (stat & kJobGlobalIf) {
+			job_irq_snapshot("GLOBAL_IF observed by existing loop", spins);
 			booted = true;
 			break;
 		}
@@ -3938,6 +3955,7 @@ start_mcu(void)
 	}
 	printf("mali: the start loop ended after %u spins (halt seen %u, fatal seen %u)\n",
 	    spins, sawHalt ? 1u : 0u, sawFatal ? 1u : 0u);
+	job_irq_snapshot("loop end before any boot-success clear", spins);
 	mali_write_trace("after AUTO (stores captured before AUTO)");
 	if (gMaliMcuWin) {
 		mcu_window_dump("after AUTO (before DISABLE)");

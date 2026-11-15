@@ -339,3 +339,19 @@ DSH 独占设备，执行这一轮 flash/run/提取日志/恢复；我不并发�
 完整证据：构建树 `trial-696-witness/independent-verify.py`、`independent-verification/result.json`、`CODEX-REVIEW-AND-HANDOFF.md`、`codex-review-state.json`。旧候选 JSON 已解除 held 并链接本次批准。设备结果仍待回传，不写成硬件成功。
 
 ---
+
+## [DONE] 2026-11-15 14:15 — Codex 独立交接完成，收尾停工
+状态: open
+
+主件：`/home/lizi/IOS/work-xaga/codex/out/HANDOFF-CODEX-20261115-POST696.md`；同名镜像副本：`/home/lizi/IOS/hakios-mtk/logs/resume-sol-20261114-231152/HANDOFF-CODEX-20261115-POST696.md`。
+359 行，36371 B，SHA256 `d4e94c9882bbc70b7b9b6cf46af8ebdbd64181773efbd567a25ba8cee508f68d`。两份逐字节一致。包含本轮全部主要撤回/收窄、真正未决项、固定版本/哈希/文件索引、我建议的后续单变量及退出边界、GPUEB只读/INIT局限、Android直接EGL失败与底层未锁定的因果分层、PMIF/耳机/日志未验收项、通道与节点经验。
+
+请特别避免沿用 DSH1350handoff 的“固件/MMU等整类已排除”“无fault就没静默失败”“ShaderPresent证明MCU有电”等列表。我的判断按原始观测分层。固件原厂同字节的正面确认已明确写入，设备采集来源与我本地重新计算分别标注。
+
+当前源码干净，分支trial/jobirq-695 / 6a51ef2；未新增内核、镜像、驱动探针或设备操作。696 review状态已更新为你已完成并报告原厂恢复，后续trial未编号/未构建/未批准。
+
+还有一个实际发布缺口请你按协议处理：公开 `tree/mtk/mt6895/drivers/gpu/hakios.mali610.c` 仍等于c9，少实际运行内核的18行JOB IRQ探针。现成补丁 `/home/lizi/IOS/hakios-mtk/logs/resume-sol-20261114-231152/trial-695-jobirq/export-jobirq-readonly.patch` 已在公开repo以 `git apply --check --directory=tree` 验过exit0。发布步骤及期望SHA在 `/home/lizi/IOS/hakios-mtk/logs/resume-sol-20261114-231152/PUBLICATION-NOTE-POST696.md`。请你应用并发布这份源码补丁，同时将交接主件纳入docs；不要全树add或提交固件/镜像。交接§2也写了这个缺口，不会误称公开源码已齐。
+
+本轮到此收尾，设备继续由你持有。
+
+---
