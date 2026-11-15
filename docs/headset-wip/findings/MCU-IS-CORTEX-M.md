@@ -6,7 +6,8 @@
 > MCU 的指令集架构」。**这个说法过强，应改为「对已有结论的复核与扩证」。**
 > `hakios-mtk/work-notes-csf-boot-others.md:420-445` **早已有同一入口的 capstone 反汇编**
 > （`cpsid i` / `0x40022000=0xb` / `0xE000ED24 (SCB->SHCSR)` 都标了），
-> 驱动源码 `:1365` 的 witness 注释也已写明「32 bytes of Cortex-M7」。
+> 驱动源码 `:1365` 的 witness 注释也写了「32 bytes of Cortex-M7」——但那是**我们自己的
+> 实现记录，不能当作硬件识别证明**（见 §4 证据分层）。
 > 本文档新增的是：**官方固件交叉验证、完整 PPB 扫描定为 M7、以及几处旧误判的修正**。
 >
 > **本次修订（13:45）按 Codex 裁定改了 5 处口径：**
@@ -221,14 +222,24 @@ ARM 官方 CMSIS `core_cm55.h`（我 fetch 了原文）在 Cortex-M55 上也定�
 
 #### 那么「Cortex-M7」这个结论还站得住吗？
 
-**站得住，但依据换了。** 三条独立侧证：
+**站得住，但依据必须分层。** Codex 2026-11-15 12:50 指出这一点，我同意：
 
-1. **panthor 源码明写**：`panthor_mmu.c:2890` `/* CSF MCU is a cortex M7, and can only address 4G */`
-2. **Icecream95 对 G610 的实测**：「The MCU ... is ... a Cortex-M7 (r1p2, with no FPU, ECC cache, nor TCM)」
-3. **驱动自己的注释**：`hakios.mali610.c:1365` 已写「32 bytes of Cortex-M7」
+### 证据分层（不要把自家注释当硬件识别证明）
 
-**这些是「别人测过/上游写明」，不是我从 13 个常量推出来的。**
-常量只能证明「是 M-profile 且代码里出现缓存维护操作」，不能定型号。
+| 层级 | 来源 | 内容 | 能否作为「这颗核是什么」的证据 |
+|---|---|---|---|
+| **外部依据 ①** | `panthor_mmu.c:2890`（上游 Linux 内核） | `/* CSF MCU is a cortex M7, and can only address 4G */` | ✅ 上游对 CSF 的独立判断 |
+| **外部依据 ②** | Icecream95 对 **G610**（RK3588）的实测研究 | 「The MCU ... is ... a Cortex-M7 (r1p2, with no FPU, ECC cache, nor TCM), which I have found runs off the GPU clock ... 990 MHz on RK3588」 | ✅ 同型号 GPU 的实测 |
+| **实现记录**（**不算佐证**） | `hakios.mali610.c:1365` 自家注释 | 「32 bytes of Cortex-M7, assembled by clang for armv7m」 | ❌ **这是我们自己写下的，不能反过来证明硬件** |
+
+**所以准确表述是：两项外部依据 + 一项实现记录。**
+
+自家注释只能说明**我们当时写代码时的理解**；用它当「Cortex-M7」的证明是循环论证。
+它可以证明的是「witness 代码是按 armv7m 目标汇编的」，仅此而已。
+
+**常量本身能证明的只有**：「是 M-profile，且代码里出现缓存维护操作」。
+**不能**定型号（M55 也有同一批地址，见修正 3），
+**也不能**证明本机 D-cache 存在或已开启 —— 这一点**仍未实测**。
 
 #### 对缓存假设的影响：撤回
 
@@ -265,13 +276,17 @@ Codex 2026-11-15 12:25 指出我原来只查了 3 个指定值，不能证明全
 | `0xe000ef58` | **ICIMVAU** | I-cache 按 MVA 失效 |
 | `0xe000ef5c` | **DCIMVAC** | D-cache 按 MVA 失效到 PoC |
 | `0xe000ef60` | **DCISW** | D-cache 按 set/way 失效 |
-| `0xe000ef68` | **DCCMVAU** | D-cache 按 MVA clean 到 PoU |
-| `0xe000ef6c` | **DCCMVAC** | D-cache 按 MVA clean 到 PoC |
-| `0xe000ef70` | **DCCSW** | D-cache 按 set/way clean |
-| `0xe000ef74` | **DCCIMVAC** | D-cache clean+invalidate 到 PoC |
+| `0xe000ef68` | **DCCMVAC** | D-cache 按 MVA clean 到 PoC（offset `0x268`） |
+| `0xe000ef6c` | **DCCSW** | D-cache 按 set/way clean（offset `0x26C`） |
+| `0xe000ef70` | **DCCIMVAC** | D-cache clean+invalidate 按 MVA 到 PoC（offset `0x270`） |
+| `0xe000ef74` | **DCCISW** | D-cache clean+invalidate 按 set/way（offset `0x274`） |
 
-**`0xE000EF50`-`0xE000EF7F` 在 ARMv7-M 里是「实现定义」区，Cortex-M7 把它填成
-缓存维护操作寄存器。Cortex-M3/M4 没有数据缓存，也就没有这些寄存器。**
+> 表中地址按 ARM `core_cm55.h` 的 SCB offset 换算（base `0xE000ED00`）。
+> 注意 `0xE000EF64`(DCCMVAU) **不出现在本固件的 13 个常量里**。
+
+**`0xE000EF50`-`0xE000EF7F` 在 ARMv7-M 里是「实现定义」区。**
+⚠️ **但不能说「M7 独占」** —— ARM 官方 `core_cm55.h` 在 Cortex-M55 上
+定义了**完全相同的地址和字段**。这批常量只能说明「代码里有缓存维护操作」。
 
 > 所以型号不只是「某个 Cortex-M」，而是 **M7 类、且带 D-cache 的核**。
 > 这与 panthor 源码注释 `/* CSF MCU is a cortex M7 */`（`panthor_mmu.c:2890`）
