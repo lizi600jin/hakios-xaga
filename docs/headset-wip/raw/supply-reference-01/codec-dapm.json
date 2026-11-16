@@ -1,0 +1,5281 @@
+{
+  "source": {
+    "binary": "/home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip/ko/snd-soc-mt6368.ko",
+    "sha256": "4ce5cab06d3d29aa3e2ccfbd8044d68d691b27f3b4e336332bfb41ee6e479475",
+    "c": "/home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip/raw/mt6368.c",
+    "c_sha256": "84ebc78fead84adbea5ff7208bde3d130123637e5bc6a46069712043fa846ddc"
+  },
+  "layout": {
+    "widget_stride": 320,
+    "route_stride": 96,
+    "widget_count": 120,
+    "route_count": 186,
+    "complete_source_inventory_matches": true
+  },
+  "limitations": [
+    "No hardware access or target code execution",
+    "Codec static graph only; machine graph and actual stream state are unobserved",
+    "Dependency edges do not prove electrical necessity",
+    "Supply subseq is sorted within widget-type ordering, not a global recipe"
+  ],
+  "widgets": [
+    {
+      "name": "CLK_BUF",
+      "stream": null,
+      "module_offset": 20312,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53736,
+        "symbols": [
+          "mt_dcxo_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "mt6368_vaud18",
+      "stream": null,
+      "module_offset": 20632,
+      "type": 21,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53744,
+        "symbols": [
+          "dapm_regulator_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "AUDGLB",
+      "stream": null,
+      "module_offset": 20952,
+      "type": 19,
+      "reg": 9634,
+      "shift": 4,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 2,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AUDGLB_VOW",
+      "stream": null,
+      "module_offset": 21272,
+      "type": 19,
+      "reg": 9634,
+      "shift": 6,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 39,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "CLKSQ Audio",
+      "stream": null,
+      "module_offset": 21592,
+      "type": 19,
+      "reg": 9527,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 6,
+      "event_flags": 1,
+      "event": null
+    },
+    {
+      "name": "AUDNCP_CK",
+      "stream": null,
+      "module_offset": 21912,
+      "type": 19,
+      "reg": 8972,
+      "shift": 6,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 8,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "ZCD13M_CK",
+      "stream": null,
+      "module_offset": 22232,
+      "type": 19,
+      "reg": 8972,
+      "shift": 5,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 8,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AUD_CK",
+      "stream": null,
+      "module_offset": 22552,
+      "type": 19,
+      "reg": 8972,
+      "shift": 1,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 9,
+      "event_flags": 6,
+      "event": {
+        "section": 1,
+        "offset": 53752,
+        "symbols": [
+          "mt_delay_250_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "AUDIF_CK",
+      "stream": null,
+      "module_offset": 22872,
+      "type": 19,
+      "reg": 8972,
+      "shift": 2,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 8,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "VOW_AUD_LPW",
+      "stream": null,
+      "module_offset": 23192,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 33,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53760,
+        "symbols": [
+          "mt_vow_aud_lpw_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "AUD_VOW",
+      "stream": null,
+      "module_offset": 23512,
+      "type": 19,
+      "reg": 9527,
+      "shift": 3,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 34,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "VOW_PLL",
+      "stream": null,
+      "module_offset": 23832,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 35,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53768,
+        "symbols": [
+          "mt_vow_pll_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "VOW_CLK",
+      "stream": null,
+      "module_offset": 24152,
+      "type": 19,
+      "reg": 8975,
+      "shift": 5,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 36,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "VOW_SOURCE_CLK",
+      "stream": null,
+      "module_offset": 24472,
+      "type": 19,
+      "reg": 9227,
+      "shift": 7,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 37,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "VOW_DIG_CFG",
+      "stream": null,
+      "module_offset": 24792,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 40,
+      "event_flags": 6,
+      "event": {
+        "section": 1,
+        "offset": 53776,
+        "symbols": [
+          "mt_vow_digital_cfg_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "VOW_PERIODIC_CFG",
+      "stream": null,
+      "module_offset": 25112,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 41,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53784,
+        "symbols": [
+          "mt_vow_periodic_cfg_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "AUDIO_TOP_AFE_CTL",
+      "stream": null,
+      "module_offset": 25432,
+      "type": 19,
+      "reg": 9103,
+      "shift": 7,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 14,
+      "event_flags": 6,
+      "event": {
+        "section": 1,
+        "offset": 53752,
+        "symbols": [
+          "mt_delay_250_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "AUDIO_TOP_DAC_CTL",
+      "stream": null,
+      "module_offset": 25752,
+      "type": 19,
+      "reg": 9103,
+      "shift": 6,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 13,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AUDIO_TOP_ADC_CTL",
+      "stream": null,
+      "module_offset": 26072,
+      "type": 19,
+      "reg": 9103,
+      "shift": 5,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 13,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AUDIO_TOP_ADDA6_ADC_CTL",
+      "stream": null,
+      "module_offset": 26392,
+      "type": 19,
+      "reg": 9103,
+      "shift": 4,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 13,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AUDIO_TOP_PWR_CLK",
+      "stream": null,
+      "module_offset": 26712,
+      "type": 19,
+      "reg": 9103,
+      "shift": 2,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 13,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AUDIO_TOP_PDN_AFE_TESTMODEL",
+      "stream": null,
+      "module_offset": 27032,
+      "type": 19,
+      "reg": 9103,
+      "shift": 1,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 13,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AUDIO_TOP_PDN_RESERVED",
+      "stream": null,
+      "module_offset": 27352,
+      "type": 19,
+      "reg": 9103,
+      "shift": 0,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 13,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "SDM",
+      "stream": null,
+      "module_offset": 27672,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 16,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53792,
+        "symbols": [
+          "mt_sdm_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "SDM_3RD",
+      "stream": null,
+      "module_offset": 27992,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 16,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53800,
+        "symbols": [
+          "mt_sdm_3rd_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "SDM_FIFO_CLK",
+      "stream": null,
+      "module_offset": 28312,
+      "type": 19,
+      "reg": 9110,
+      "shift": 1,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 15,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "NCP",
+      "stream": null,
+      "module_offset": 28632,
+      "type": 19,
+      "reg": 9352,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 17,
+      "event_flags": 1,
+      "event": {
+        "section": 1,
+        "offset": 53808,
+        "symbols": [
+          "mt_ncp_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "DL Digital Clock",
+      "stream": null,
+      "module_offset": 28952,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DL Digital Clock CH_1_2",
+      "stream": null,
+      "module_offset": 29272,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DL Digital Clock CH_3",
+      "stream": null,
+      "module_offset": 29592,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AFE_ON",
+      "stream": null,
+      "module_offset": 29912,
+      "type": 19,
+      "reg": 9096,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 18,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DL_GPIO",
+      "stream": null,
+      "module_offset": 30232,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 3,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53816,
+        "symbols": [
+          "mt_dl_gpio_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "UL_GPIO",
+      "stream": null,
+      "module_offset": 30552,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 4,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53824,
+        "symbols": [
+          "mt_ul_gpio_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "AIF_RX",
+      "stream": "AIF1 Playback",
+      "module_offset": 30872,
+      "type": 23,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIF2_RX",
+      "stream": "AIF2 Playback",
+      "module_offset": 31192,
+      "type": 23,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AFE_DL_SRC",
+      "stream": null,
+      "module_offset": 31512,
+      "type": 19,
+      "reg": 9097,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 19,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DL Power Supply",
+      "stream": null,
+      "module_offset": 31832,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "ESD_RESIST",
+      "stream": null,
+      "module_offset": 32152,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 20,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53832,
+        "symbols": [
+          "mt_esd_resist_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "LDO",
+      "stream": null,
+      "module_offset": 32472,
+      "type": 19,
+      "reg": 9635,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 24,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "LDO_REMOTE",
+      "stream": null,
+      "module_offset": 32792,
+      "type": 19,
+      "reg": 9635,
+      "shift": 2,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 23,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "NV_REGULATOR",
+      "stream": null,
+      "module_offset": 33112,
+      "type": 19,
+      "reg": 9635,
+      "shift": 4,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 25,
+      "event_flags": 2,
+      "event": {
+        "section": 1,
+        "offset": 53840,
+        "symbols": [
+          "mt_delay_100_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "IBIST",
+      "stream": null,
+      "module_offset": 33432,
+      "type": 19,
+      "reg": 9632,
+      "shift": 4,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 27,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DAC In Mux",
+      "stream": null,
+      "module_offset": 33752,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DACL",
+      "stream": null,
+      "module_offset": 34072,
+      "type": 9,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DACR",
+      "stream": null,
+      "module_offset": 34392,
+      "type": 9,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DAC_3RD",
+      "stream": null,
+      "module_offset": 34712,
+      "type": 9,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "HPL Mux",
+      "stream": null,
+      "module_offset": 35032,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 5,
+      "event": {
+        "section": 1,
+        "offset": 53848,
+        "symbols": [
+          "mt_hp_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "HPR Mux",
+      "stream": null,
+      "module_offset": 35352,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 5,
+      "event": {
+        "section": 1,
+        "offset": 53848,
+        "symbols": [
+          "mt_hp_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "HP_Supply",
+      "stream": null,
+      "module_offset": 35672,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "HP_PULL_DOWN",
+      "stream": null,
+      "module_offset": 35992,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 5,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53856,
+        "symbols": [
+          "mt_hp_pull_down_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "HP_MUTE",
+      "stream": null,
+      "module_offset": 36312,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 22,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53864,
+        "symbols": [
+          "mt_hp_mute_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "HP_DAMP",
+      "stream": null,
+      "module_offset": 36632,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 21,
+      "event_flags": 8,
+      "event": {
+        "section": 1,
+        "offset": 53872,
+        "symbols": [
+          "mt_hp_damp_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "HP_ANA_TRIM",
+      "stream": null,
+      "module_offset": 36952,
+      "type": 19,
+      "reg": 9613,
+      "shift": 7,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 26,
+      "event_flags": 10,
+      "event": {
+        "section": 1,
+        "offset": 53880,
+        "symbols": [
+          "mt_hp_ana_trim_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "RCV Mux",
+      "stream": null,
+      "module_offset": 37272,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 5,
+      "event": {
+        "section": 1,
+        "offset": 53888,
+        "symbols": [
+          "mt_rcv_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "LOL Mux",
+      "stream": null,
+      "module_offset": 37592,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 5,
+      "event": {
+        "section": 1,
+        "offset": 53896,
+        "symbols": [
+          "mt_lo_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "Receiver",
+      "stream": null,
+      "module_offset": 37912,
+      "type": 1,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "Headphone L",
+      "stream": null,
+      "module_offset": 38232,
+      "type": 1,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "Headphone R",
+      "stream": null,
+      "module_offset": 38552,
+      "type": 1,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "Headphone L Ext Spk Amp",
+      "stream": null,
+      "module_offset": 38872,
+      "type": 1,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "Headphone R Ext Spk Amp",
+      "stream": null,
+      "module_offset": 39192,
+      "type": 1,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "LINEOUT L",
+      "stream": null,
+      "module_offset": 39512,
+      "type": 1,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "SGEN DL Enable",
+      "stream": null,
+      "module_offset": 39832,
+      "type": 19,
+      "reg": 9160,
+      "shift": 7,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "SGEN MUTE",
+      "stream": null,
+      "module_offset": 40152,
+      "type": 19,
+      "reg": 9160,
+      "shift": 6,
+      "mask": 1,
+      "on": 0,
+      "off": 1,
+      "subseq": 0,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53904,
+        "symbols": [
+          "mt_sgen_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "SGEN DL SRC",
+      "stream": null,
+      "module_offset": 40472,
+      "type": 19,
+      "reg": 9097,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "SGEN DL",
+      "stream": null,
+      "module_offset": 40792,
+      "type": 0,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIF1TX",
+      "stream": "AIF1 Capture",
+      "module_offset": 41112,
+      "type": 24,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIF2TX",
+      "stream": "AIF2 Capture",
+      "module_offset": 41432,
+      "type": 24,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "ADC_CLKGEN",
+      "stream": null,
+      "module_offset": 41752,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 7,
+      "event_flags": 6,
+      "event": {
+        "section": 1,
+        "offset": 53912,
+        "symbols": [
+          "mt_adc_clk_gen_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "DCC_CLK",
+      "stream": null,
+      "module_offset": 42072,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 10,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53920,
+        "symbols": [
+          "mt_dcc_clk_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "AIF Out Mux",
+      "stream": null,
+      "module_offset": 42392,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIF2 Out Mux",
+      "stream": null,
+      "module_offset": 42712,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIFTX_Supply",
+      "stream": null,
+      "module_offset": 43032,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "MTKAIF_TX",
+      "stream": null,
+      "module_offset": 43352,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 30,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53928,
+        "symbols": [
+          "mt_mtkaif_tx_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "UL_SRC",
+      "stream": null,
+      "module_offset": 43672,
+      "type": 19,
+      "reg": 9099,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 32,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "UL_SRC_DMIC",
+      "stream": null,
+      "module_offset": 43992,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 31,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53936,
+        "symbols": [
+          "mt_ul_src_dmic_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "UL_SRC_34",
+      "stream": null,
+      "module_offset": 44312,
+      "type": 19,
+      "reg": 9101,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 32,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "UL_SRC_34_DMIC",
+      "stream": null,
+      "module_offset": 44632,
+      "type": 19,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 31,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 53944,
+        "symbols": [
+          "mt_ul_src_34_dmic_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "MISO0_MUX",
+      "stream": null,
+      "module_offset": 44952,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "MISO1_MUX",
+      "stream": null,
+      "module_offset": 45272,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "MISO2_MUX",
+      "stream": null,
+      "module_offset": 45592,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "UL_SRC_MUX",
+      "stream": null,
+      "module_offset": 45912,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "UL2_SRC_MUX",
+      "stream": null,
+      "module_offset": 46232,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "VOW_UL_SRC_MUX",
+      "stream": null,
+      "module_offset": 46552,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DMIC0_MUX",
+      "stream": null,
+      "module_offset": 46872,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DMIC1_MUX",
+      "stream": null,
+      "module_offset": 47192,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DMIC2_MUX",
+      "stream": null,
+      "module_offset": 47512,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "VOW_AMIC0_MUX",
+      "stream": null,
+      "module_offset": 47832,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "VOW_AMIC1_MUX",
+      "stream": null,
+      "module_offset": 48152,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "ADC_L_Mux",
+      "stream": null,
+      "module_offset": 48472,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "ADC_R_Mux",
+      "stream": null,
+      "module_offset": 48792,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "ADC_3_Mux",
+      "stream": null,
+      "module_offset": 49112,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "ADC_L",
+      "stream": null,
+      "module_offset": 49432,
+      "type": 8,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "ADC_R",
+      "stream": null,
+      "module_offset": 49752,
+      "type": 8,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "ADC_3",
+      "stream": null,
+      "module_offset": 50072,
+      "type": 8,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "ADC_L_EN",
+      "stream": null,
+      "module_offset": 50392,
+      "type": 19,
+      "reg": 9481,
+      "shift": 4,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 29,
+      "event_flags": 2,
+      "event": {
+        "section": 1,
+        "offset": 53952,
+        "symbols": [
+          "mt_adc_l_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "ADC_R_EN",
+      "stream": null,
+      "module_offset": 50712,
+      "type": 19,
+      "reg": 9483,
+      "shift": 4,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 29,
+      "event_flags": 2,
+      "event": {
+        "section": 1,
+        "offset": 53960,
+        "symbols": [
+          "mt_adc_r_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "ADC_3_EN",
+      "stream": null,
+      "module_offset": 51032,
+      "type": 19,
+      "reg": 9485,
+      "shift": 4,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 29,
+      "event_flags": 2,
+      "event": {
+        "section": 1,
+        "offset": 53968,
+        "symbols": [
+          "mt_adc_3_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "PGA_L_Mux",
+      "stream": null,
+      "module_offset": 51352,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 64,
+      "event": {
+        "section": 1,
+        "offset": 53976,
+        "symbols": [
+          "mt_pga_l_mux_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "PGA_R_Mux",
+      "stream": null,
+      "module_offset": 51672,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 64,
+      "event": {
+        "section": 1,
+        "offset": 53984,
+        "symbols": [
+          "mt_pga_r_mux_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "PGA_3_Mux",
+      "stream": null,
+      "module_offset": 51992,
+      "type": 2,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 64,
+      "event": {
+        "section": 1,
+        "offset": 53992,
+        "symbols": [
+          "mt_pga_3_mux_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "PGA_L",
+      "stream": null,
+      "module_offset": 52312,
+      "type": 6,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "PGA_R",
+      "stream": null,
+      "module_offset": 52632,
+      "type": 6,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "PGA_3",
+      "stream": null,
+      "module_offset": 52952,
+      "type": 6,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "PGA_L_EN",
+      "stream": null,
+      "module_offset": 53272,
+      "type": 19,
+      "reg": 9480,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 28,
+      "event_flags": 11,
+      "event": {
+        "section": 1,
+        "offset": 54000,
+        "symbols": [
+          "mt_pga_l_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "PGA_R_EN",
+      "stream": null,
+      "module_offset": 53592,
+      "type": 19,
+      "reg": 9482,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 28,
+      "event_flags": 11,
+      "event": {
+        "section": 1,
+        "offset": 54008,
+        "symbols": [
+          "mt_pga_r_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "PGA_3_EN",
+      "stream": null,
+      "module_offset": 53912,
+      "type": 19,
+      "reg": 9484,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 28,
+      "event_flags": 11,
+      "event": {
+        "section": 1,
+        "offset": 54016,
+        "symbols": [
+          "mt_pga_3_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "AIN0",
+      "stream": null,
+      "module_offset": 54232,
+      "type": 0,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIN1",
+      "stream": null,
+      "module_offset": 54552,
+      "type": 0,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIN2",
+      "stream": null,
+      "module_offset": 54872,
+      "type": 0,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIN3",
+      "stream": null,
+      "module_offset": 55192,
+      "type": 0,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIN0_DMIC",
+      "stream": null,
+      "module_offset": 55512,
+      "type": 0,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIN2_DMIC",
+      "stream": null,
+      "module_offset": 55832,
+      "type": 0,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "AIN3_DMIC",
+      "stream": null,
+      "module_offset": 56152,
+      "type": 0,
+      "reg": -1,
+      "shift": 0,
+      "mask": 0,
+      "on": 0,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "MIC_BIAS_0",
+      "stream": null,
+      "module_offset": 56472,
+      "type": 19,
+      "reg": 9511,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 11,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 54024,
+        "symbols": [
+          "mt_mic_bias_0_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "MIC_BIAS_1",
+      "stream": null,
+      "module_offset": 56792,
+      "type": 19,
+      "reg": 9513,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 11,
+      "event_flags": 1,
+      "event": {
+        "section": 1,
+        "offset": 54032,
+        "symbols": [
+          "mt_mic_bias_1_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "MIC_BIAS_2",
+      "stream": null,
+      "module_offset": 57112,
+      "type": 19,
+      "reg": 9515,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 11,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 54040,
+        "symbols": [
+          "mt_mic_bias_2_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "DMIC_0",
+      "stream": null,
+      "module_offset": 57432,
+      "type": 19,
+      "reg": 9507,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 12,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "DMIC_1",
+      "stream": null,
+      "module_offset": 57752,
+      "type": 19,
+      "reg": 9509,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 12,
+      "event_flags": 0,
+      "event": null
+    },
+    {
+      "name": "VOW TX",
+      "stream": "VOW Capture",
+      "module_offset": 58072,
+      "type": 24,
+      "reg": -1,
+      "shift": 0,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 9,
+      "event": {
+        "section": 1,
+        "offset": 54048,
+        "symbols": [
+          "mt_aif_vow_tx_event.cfi_jt"
+        ]
+      }
+    },
+    {
+      "name": "DC Trim",
+      "stream": null,
+      "module_offset": 58392,
+      "type": 19,
+      "reg": 9624,
+      "shift": 6,
+      "mask": 1,
+      "on": 1,
+      "off": 0,
+      "subseq": 0,
+      "event_flags": 8,
+      "event": {
+        "section": 1,
+        "offset": 54056,
+        "symbols": [
+          "mt_dc_trim_event.cfi_jt"
+        ]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "CLK_BUF",
+      "connected": null,
+      "module_offset": 58712
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "mt6368_vaud18",
+      "connected": null,
+      "module_offset": 58808
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "AUDGLB",
+      "connected": null,
+      "module_offset": 58904
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "CLKSQ Audio",
+      "connected": null,
+      "module_offset": 59000
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "AUD_CK",
+      "connected": null,
+      "module_offset": 59096
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "AUDIF_CK",
+      "connected": null,
+      "module_offset": 59192
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "AUDIO_TOP_AFE_CTL",
+      "connected": null,
+      "module_offset": 59288
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "AUDIO_TOP_PWR_CLK",
+      "connected": null,
+      "module_offset": 59384
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "AUDIO_TOP_PDN_RESERVED",
+      "connected": null,
+      "module_offset": 59480
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "AUDIO_TOP_ADC_CTL",
+      "connected": null,
+      "module_offset": 59576
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "AUDIO_TOP_ADDA6_ADC_CTL",
+      "connected": null,
+      "module_offset": 59672
+    },
+    {
+      "sink": "AIFTX_Supply",
+      "control": null,
+      "source": "AFE_ON",
+      "connected": null,
+      "module_offset": 59768
+    },
+    {
+      "sink": "AIF1TX",
+      "control": null,
+      "source": "AIF Out Mux",
+      "connected": null,
+      "module_offset": 59864
+    },
+    {
+      "sink": "AIF1TX",
+      "control": null,
+      "source": "AIFTX_Supply",
+      "connected": null,
+      "module_offset": 59960
+    },
+    {
+      "sink": "AIF1TX",
+      "control": null,
+      "source": "MTKAIF_TX",
+      "connected": null,
+      "module_offset": 60056
+    },
+    {
+      "sink": "AIF1TX",
+      "control": null,
+      "source": "UL_GPIO",
+      "connected": null,
+      "module_offset": 60152
+    },
+    {
+      "sink": "AIF2TX",
+      "control": null,
+      "source": "AIF2 Out Mux",
+      "connected": null,
+      "module_offset": 60248
+    },
+    {
+      "sink": "AIF2TX",
+      "control": null,
+      "source": "AIFTX_Supply",
+      "connected": null,
+      "module_offset": 60344
+    },
+    {
+      "sink": "AIF2TX",
+      "control": null,
+      "source": "MTKAIF_TX",
+      "connected": null,
+      "module_offset": 60440
+    },
+    {
+      "sink": "AIF2TX",
+      "control": null,
+      "source": "UL_GPIO",
+      "connected": null,
+      "module_offset": 60536
+    },
+    {
+      "sink": "AIF Out Mux",
+      "control": "Normal Path",
+      "source": "MISO0_MUX",
+      "connected": null,
+      "module_offset": 60632
+    },
+    {
+      "sink": "AIF Out Mux",
+      "control": "Normal Path",
+      "source": "MISO1_MUX",
+      "connected": null,
+      "module_offset": 60728
+    },
+    {
+      "sink": "AIF2 Out Mux",
+      "control": "Normal Path",
+      "source": "MISO2_MUX",
+      "connected": null,
+      "module_offset": 60824
+    },
+    {
+      "sink": "MISO0_MUX",
+      "control": "UL1_CH1",
+      "source": "UL_SRC_MUX",
+      "connected": null,
+      "module_offset": 60920
+    },
+    {
+      "sink": "MISO0_MUX",
+      "control": "UL1_CH2",
+      "source": "UL_SRC_MUX",
+      "connected": null,
+      "module_offset": 61016
+    },
+    {
+      "sink": "MISO0_MUX",
+      "control": "UL2_CH1",
+      "source": "UL2_SRC_MUX",
+      "connected": null,
+      "module_offset": 61112
+    },
+    {
+      "sink": "MISO0_MUX",
+      "control": "UL2_CH2",
+      "source": "UL2_SRC_MUX",
+      "connected": null,
+      "module_offset": 61208
+    },
+    {
+      "sink": "MISO1_MUX",
+      "control": "UL1_CH1",
+      "source": "UL_SRC_MUX",
+      "connected": null,
+      "module_offset": 61304
+    },
+    {
+      "sink": "MISO1_MUX",
+      "control": "UL1_CH2",
+      "source": "UL_SRC_MUX",
+      "connected": null,
+      "module_offset": 61400
+    },
+    {
+      "sink": "MISO1_MUX",
+      "control": "UL2_CH1",
+      "source": "UL2_SRC_MUX",
+      "connected": null,
+      "module_offset": 61496
+    },
+    {
+      "sink": "MISO1_MUX",
+      "control": "UL2_CH2",
+      "source": "UL2_SRC_MUX",
+      "connected": null,
+      "module_offset": 61592
+    },
+    {
+      "sink": "MISO2_MUX",
+      "control": "UL1_CH1",
+      "source": "UL_SRC_MUX",
+      "connected": null,
+      "module_offset": 61688
+    },
+    {
+      "sink": "MISO2_MUX",
+      "control": "UL1_CH2",
+      "source": "UL_SRC_MUX",
+      "connected": null,
+      "module_offset": 61784
+    },
+    {
+      "sink": "MISO2_MUX",
+      "control": "UL2_CH1",
+      "source": "UL2_SRC_MUX",
+      "connected": null,
+      "module_offset": 61880
+    },
+    {
+      "sink": "MISO2_MUX",
+      "control": "UL2_CH2",
+      "source": "UL2_SRC_MUX",
+      "connected": null,
+      "module_offset": 61976
+    },
+    {
+      "sink": "UL_SRC_MUX",
+      "control": "AMIC",
+      "source": "ADC_L",
+      "connected": null,
+      "module_offset": 62072
+    },
+    {
+      "sink": "UL_SRC_MUX",
+      "control": "AMIC",
+      "source": "ADC_R",
+      "connected": null,
+      "module_offset": 62168
+    },
+    {
+      "sink": "UL_SRC_MUX",
+      "control": "DMIC",
+      "source": "DMIC0_MUX",
+      "connected": null,
+      "module_offset": 62264
+    },
+    {
+      "sink": "UL_SRC_MUX",
+      "control": "DMIC",
+      "source": "DMIC1_MUX",
+      "connected": null,
+      "module_offset": 62360
+    },
+    {
+      "sink": "UL_SRC_MUX",
+      "control": null,
+      "source": "UL_SRC",
+      "connected": null,
+      "module_offset": 62456
+    },
+    {
+      "sink": "UL2_SRC_MUX",
+      "control": "AMIC",
+      "source": "ADC_3",
+      "connected": null,
+      "module_offset": 62552
+    },
+    {
+      "sink": "UL2_SRC_MUX",
+      "control": "DMIC",
+      "source": "DMIC2_MUX",
+      "connected": null,
+      "module_offset": 62648
+    },
+    {
+      "sink": "UL2_SRC_MUX",
+      "control": null,
+      "source": "UL_SRC_34",
+      "connected": null,
+      "module_offset": 62744
+    },
+    {
+      "sink": "DMIC0_MUX",
+      "control": "DMIC_DATA0",
+      "source": "AIN0_DMIC",
+      "connected": null,
+      "module_offset": 62840
+    },
+    {
+      "sink": "DMIC0_MUX",
+      "control": "DMIC_DATA1_L",
+      "source": "AIN2_DMIC",
+      "connected": null,
+      "module_offset": 62936
+    },
+    {
+      "sink": "DMIC0_MUX",
+      "control": "DMIC_DATA1_L_1",
+      "source": "AIN2_DMIC",
+      "connected": null,
+      "module_offset": 63032
+    },
+    {
+      "sink": "DMIC0_MUX",
+      "control": "DMIC_DATA1_R",
+      "source": "AIN3_DMIC",
+      "connected": null,
+      "module_offset": 63128
+    },
+    {
+      "sink": "DMIC1_MUX",
+      "control": "DMIC_DATA0",
+      "source": "AIN0_DMIC",
+      "connected": null,
+      "module_offset": 63224
+    },
+    {
+      "sink": "DMIC1_MUX",
+      "control": "DMIC_DATA1_L",
+      "source": "AIN2_DMIC",
+      "connected": null,
+      "module_offset": 63320
+    },
+    {
+      "sink": "DMIC1_MUX",
+      "control": "DMIC_DATA1_L_1",
+      "source": "AIN2_DMIC",
+      "connected": null,
+      "module_offset": 63416
+    },
+    {
+      "sink": "DMIC1_MUX",
+      "control": "DMIC_DATA1_R",
+      "source": "AIN3_DMIC",
+      "connected": null,
+      "module_offset": 63512
+    },
+    {
+      "sink": "DMIC2_MUX",
+      "control": "DMIC_DATA0",
+      "source": "AIN0_DMIC",
+      "connected": null,
+      "module_offset": 63608
+    },
+    {
+      "sink": "DMIC2_MUX",
+      "control": "DMIC_DATA1_L",
+      "source": "AIN2_DMIC",
+      "connected": null,
+      "module_offset": 63704
+    },
+    {
+      "sink": "DMIC2_MUX",
+      "control": "DMIC_DATA1_L_1",
+      "source": "AIN2_DMIC",
+      "connected": null,
+      "module_offset": 63800
+    },
+    {
+      "sink": "DMIC2_MUX",
+      "control": "DMIC_DATA1_R",
+      "source": "AIN3_DMIC",
+      "connected": null,
+      "module_offset": 63896
+    },
+    {
+      "sink": "DMIC0_MUX",
+      "control": null,
+      "source": "UL_SRC_DMIC",
+      "connected": null,
+      "module_offset": 63992
+    },
+    {
+      "sink": "DMIC1_MUX",
+      "control": null,
+      "source": "UL_SRC_DMIC",
+      "connected": null,
+      "module_offset": 64088
+    },
+    {
+      "sink": "DMIC2_MUX",
+      "control": null,
+      "source": "UL_SRC_34_DMIC",
+      "connected": null,
+      "module_offset": 64184
+    },
+    {
+      "sink": "AIN0_DMIC",
+      "control": null,
+      "source": "DMIC_0",
+      "connected": null,
+      "module_offset": 64280
+    },
+    {
+      "sink": "AIN2_DMIC",
+      "control": null,
+      "source": "DMIC_1",
+      "connected": null,
+      "module_offset": 64376
+    },
+    {
+      "sink": "AIN3_DMIC",
+      "control": null,
+      "source": "DMIC_1",
+      "connected": null,
+      "module_offset": 64472
+    },
+    {
+      "sink": "AIN0_DMIC",
+      "control": null,
+      "source": "MIC_BIAS_0",
+      "connected": null,
+      "module_offset": 64568
+    },
+    {
+      "sink": "AIN2_DMIC",
+      "control": null,
+      "source": "MIC_BIAS_2",
+      "connected": null,
+      "module_offset": 64664
+    },
+    {
+      "sink": "AIN3_DMIC",
+      "control": null,
+      "source": "MIC_BIAS_2",
+      "connected": null,
+      "module_offset": 64760
+    },
+    {
+      "sink": "ADC_L",
+      "control": null,
+      "source": "ADC_L_Mux",
+      "connected": null,
+      "module_offset": 64856
+    },
+    {
+      "sink": "ADC_L",
+      "control": null,
+      "source": "ADC_CLKGEN",
+      "connected": null,
+      "module_offset": 64952
+    },
+    {
+      "sink": "ADC_L",
+      "control": null,
+      "source": "ADC_L_EN",
+      "connected": null,
+      "module_offset": 65048
+    },
+    {
+      "sink": "ADC_R",
+      "control": null,
+      "source": "ADC_R_Mux",
+      "connected": null,
+      "module_offset": 65144
+    },
+    {
+      "sink": "ADC_R",
+      "control": null,
+      "source": "ADC_CLKGEN",
+      "connected": null,
+      "module_offset": 65240
+    },
+    {
+      "sink": "ADC_R",
+      "control": null,
+      "source": "ADC_R_EN",
+      "connected": null,
+      "module_offset": 65336
+    },
+    {
+      "sink": "ADC_R",
+      "control": null,
+      "source": "ADC_L_EN",
+      "connected": null,
+      "module_offset": 65432
+    },
+    {
+      "sink": "ADC_3",
+      "control": null,
+      "source": "ADC_3_Mux",
+      "connected": null,
+      "module_offset": 65528
+    },
+    {
+      "sink": "ADC_3",
+      "control": null,
+      "source": "ADC_CLKGEN",
+      "connected": null,
+      "module_offset": 65624
+    },
+    {
+      "sink": "ADC_3",
+      "control": null,
+      "source": "ADC_3_EN",
+      "connected": null,
+      "module_offset": 65720
+    },
+    {
+      "sink": "ADC_L_Mux",
+      "control": "Left Preamplifier",
+      "source": "PGA_L",
+      "connected": null,
+      "module_offset": 65816
+    },
+    {
+      "sink": "ADC_R_Mux",
+      "control": "Right Preamplifier",
+      "source": "PGA_R",
+      "connected": null,
+      "module_offset": 65912
+    },
+    {
+      "sink": "ADC_3_Mux",
+      "control": "Preamplifier",
+      "source": "PGA_3",
+      "connected": null,
+      "module_offset": 66008
+    },
+    {
+      "sink": "PGA_L",
+      "control": null,
+      "source": "PGA_L_Mux",
+      "connected": null,
+      "module_offset": 66104
+    },
+    {
+      "sink": "PGA_L",
+      "control": null,
+      "source": "PGA_L_EN",
+      "connected": null,
+      "module_offset": 66200
+    },
+    {
+      "sink": "PGA_R",
+      "control": null,
+      "source": "PGA_R_Mux",
+      "connected": null,
+      "module_offset": 66296
+    },
+    {
+      "sink": "PGA_R",
+      "control": null,
+      "source": "PGA_R_EN",
+      "connected": null,
+      "module_offset": 66392
+    },
+    {
+      "sink": "PGA_3",
+      "control": null,
+      "source": "PGA_3_Mux",
+      "connected": null,
+      "module_offset": 66488
+    },
+    {
+      "sink": "PGA_3",
+      "control": null,
+      "source": "PGA_3_EN",
+      "connected": null,
+      "module_offset": 66584
+    },
+    {
+      "sink": "PGA_L",
+      "control": null,
+      "source": "DCC_CLK",
+      "connected": {
+        "section": 1,
+        "offset": 53712,
+        "symbols": [
+          "mt_dcc_clk_connect.cfi_jt"
+        ]
+      },
+      "module_offset": 66680
+    },
+    {
+      "sink": "PGA_R",
+      "control": null,
+      "source": "DCC_CLK",
+      "connected": {
+        "section": 1,
+        "offset": 53712,
+        "symbols": [
+          "mt_dcc_clk_connect.cfi_jt"
+        ]
+      },
+      "module_offset": 66776
+    },
+    {
+      "sink": "PGA_3",
+      "control": null,
+      "source": "DCC_CLK",
+      "connected": {
+        "section": 1,
+        "offset": 53712,
+        "symbols": [
+          "mt_dcc_clk_connect.cfi_jt"
+        ]
+      },
+      "module_offset": 66872
+    },
+    {
+      "sink": "PGA_L_Mux",
+      "control": "AIN0",
+      "source": "AIN0",
+      "connected": null,
+      "module_offset": 66968
+    },
+    {
+      "sink": "PGA_L_Mux",
+      "control": "AIN1",
+      "source": "AIN1",
+      "connected": null,
+      "module_offset": 67064
+    },
+    {
+      "sink": "PGA_R_Mux",
+      "control": "AIN0",
+      "source": "AIN0",
+      "connected": null,
+      "module_offset": 67160
+    },
+    {
+      "sink": "PGA_R_Mux",
+      "control": "AIN2",
+      "source": "AIN2",
+      "connected": null,
+      "module_offset": 67256
+    },
+    {
+      "sink": "PGA_R_Mux",
+      "control": "AIN3",
+      "source": "AIN3",
+      "connected": null,
+      "module_offset": 67352
+    },
+    {
+      "sink": "PGA_3_Mux",
+      "control": "AIN2",
+      "source": "AIN2",
+      "connected": null,
+      "module_offset": 67448
+    },
+    {
+      "sink": "PGA_3_Mux",
+      "control": "AIN3",
+      "source": "AIN3",
+      "connected": null,
+      "module_offset": 67544
+    },
+    {
+      "sink": "AIN0",
+      "control": null,
+      "source": "MIC_BIAS_0",
+      "connected": null,
+      "module_offset": 67640
+    },
+    {
+      "sink": "AIN1",
+      "control": null,
+      "source": "MIC_BIAS_1",
+      "connected": null,
+      "module_offset": 67736
+    },
+    {
+      "sink": "AIN2",
+      "control": null,
+      "source": "MIC_BIAS_0",
+      "connected": null,
+      "module_offset": 67832
+    },
+    {
+      "sink": "AIN2",
+      "control": null,
+      "source": "MIC_BIAS_2",
+      "connected": null,
+      "module_offset": 67928
+    },
+    {
+      "sink": "AIN3",
+      "control": null,
+      "source": "MIC_BIAS_2",
+      "connected": null,
+      "module_offset": 68024
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "CLK_BUF",
+      "connected": null,
+      "module_offset": 68120
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "mt6368_vaud18",
+      "connected": null,
+      "module_offset": 68216
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "AUDGLB",
+      "connected": null,
+      "module_offset": 68312
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "CLKSQ Audio",
+      "connected": null,
+      "module_offset": 68408
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "AUDNCP_CK",
+      "connected": null,
+      "module_offset": 68504
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "ZCD13M_CK",
+      "connected": null,
+      "module_offset": 68600
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "AUD_CK",
+      "connected": null,
+      "module_offset": 68696
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "AUDIF_CK",
+      "connected": null,
+      "module_offset": 68792
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "ESD_RESIST",
+      "connected": null,
+      "module_offset": 68888
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "LDO",
+      "connected": null,
+      "module_offset": 68984
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "LDO_REMOTE",
+      "connected": null,
+      "module_offset": 69080
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "NV_REGULATOR",
+      "connected": null,
+      "module_offset": 69176
+    },
+    {
+      "sink": "DL Power Supply",
+      "control": null,
+      "source": "IBIST",
+      "connected": null,
+      "module_offset": 69272
+    },
+    {
+      "sink": "DL Digital Clock",
+      "control": null,
+      "source": "AUDIO_TOP_AFE_CTL",
+      "connected": null,
+      "module_offset": 69368
+    },
+    {
+      "sink": "DL Digital Clock",
+      "control": null,
+      "source": "AUDIO_TOP_DAC_CTL",
+      "connected": null,
+      "module_offset": 69464
+    },
+    {
+      "sink": "DL Digital Clock",
+      "control": null,
+      "source": "AUDIO_TOP_PWR_CLK",
+      "connected": null,
+      "module_offset": 69560
+    },
+    {
+      "sink": "DL Digital Clock",
+      "control": null,
+      "source": "AUDIO_TOP_PDN_RESERVED",
+      "connected": null,
+      "module_offset": 69656
+    },
+    {
+      "sink": "DL Digital Clock",
+      "control": null,
+      "source": "SDM_FIFO_CLK",
+      "connected": null,
+      "module_offset": 69752
+    },
+    {
+      "sink": "DL Digital Clock",
+      "control": null,
+      "source": "NCP",
+      "connected": null,
+      "module_offset": 69848
+    },
+    {
+      "sink": "DL Digital Clock",
+      "control": null,
+      "source": "AFE_ON",
+      "connected": null,
+      "module_offset": 69944
+    },
+    {
+      "sink": "DL Digital Clock",
+      "control": null,
+      "source": "AFE_DL_SRC",
+      "connected": null,
+      "module_offset": 70040
+    },
+    {
+      "sink": "DL Digital Clock CH_1_2",
+      "control": null,
+      "source": "DL Digital Clock",
+      "connected": null,
+      "module_offset": 70136
+    },
+    {
+      "sink": "DL Digital Clock CH_1_2",
+      "control": null,
+      "source": "SDM",
+      "connected": null,
+      "module_offset": 70232
+    },
+    {
+      "sink": "DL Digital Clock CH_3",
+      "control": null,
+      "source": "DL Digital Clock",
+      "connected": null,
+      "module_offset": 70328
+    },
+    {
+      "sink": "DL Digital Clock CH_3",
+      "control": null,
+      "source": "SDM_3RD",
+      "connected": null,
+      "module_offset": 70424
+    },
+    {
+      "sink": "AIF_RX",
+      "control": null,
+      "source": "DL Digital Clock CH_1_2",
+      "connected": null,
+      "module_offset": 70520
+    },
+    {
+      "sink": "AIF_RX",
+      "control": null,
+      "source": "DL_GPIO",
+      "connected": null,
+      "module_offset": 70616
+    },
+    {
+      "sink": "AIF2_RX",
+      "control": null,
+      "source": "DL Digital Clock CH_3",
+      "connected": null,
+      "module_offset": 70712
+    },
+    {
+      "sink": "AIF2_RX",
+      "control": null,
+      "source": "DL_GPIO",
+      "connected": null,
+      "module_offset": 70808
+    },
+    {
+      "sink": "DAC In Mux",
+      "control": "Normal Path",
+      "source": "AIF_RX",
+      "connected": null,
+      "module_offset": 70904
+    },
+    {
+      "sink": "DAC In Mux",
+      "control": "Sgen",
+      "source": "SGEN DL",
+      "connected": null,
+      "module_offset": 71000
+    },
+    {
+      "sink": "SGEN DL",
+      "control": null,
+      "source": "SGEN DL SRC",
+      "connected": null,
+      "module_offset": 71096
+    },
+    {
+      "sink": "SGEN DL",
+      "control": null,
+      "source": "SGEN MUTE",
+      "connected": null,
+      "module_offset": 71192
+    },
+    {
+      "sink": "SGEN DL",
+      "control": null,
+      "source": "SGEN DL Enable",
+      "connected": null,
+      "module_offset": 71288
+    },
+    {
+      "sink": "SGEN DL",
+      "control": null,
+      "source": "DL Digital Clock CH_1_2",
+      "connected": null,
+      "module_offset": 71384
+    },
+    {
+      "sink": "SGEN DL",
+      "control": null,
+      "source": "DL Digital Clock CH_3",
+      "connected": null,
+      "module_offset": 71480
+    },
+    {
+      "sink": "SGEN DL",
+      "control": null,
+      "source": "AUDIO_TOP_PDN_AFE_TESTMODEL",
+      "connected": null,
+      "module_offset": 71576
+    },
+    {
+      "sink": "DACL",
+      "control": null,
+      "source": "DAC In Mux",
+      "connected": null,
+      "module_offset": 71672
+    },
+    {
+      "sink": "DACL",
+      "control": null,
+      "source": "DL Power Supply",
+      "connected": null,
+      "module_offset": 71768
+    },
+    {
+      "sink": "DACR",
+      "control": null,
+      "source": "DAC In Mux",
+      "connected": null,
+      "module_offset": 71864
+    },
+    {
+      "sink": "DACR",
+      "control": null,
+      "source": "DL Power Supply",
+      "connected": null,
+      "module_offset": 71960
+    },
+    {
+      "sink": "DAC In Mux",
+      "control": "Normal Path",
+      "source": "AIF2_RX",
+      "connected": null,
+      "module_offset": 72056
+    },
+    {
+      "sink": "DAC_3RD",
+      "control": null,
+      "source": "DAC In Mux",
+      "connected": null,
+      "module_offset": 72152
+    },
+    {
+      "sink": "DAC_3RD",
+      "control": null,
+      "source": "DL Power Supply",
+      "connected": null,
+      "module_offset": 72248
+    },
+    {
+      "sink": "LOL Mux",
+      "control": "Playback",
+      "source": "DAC_3RD",
+      "connected": null,
+      "module_offset": 72344
+    },
+    {
+      "sink": "LOL Mux",
+      "control": "Playback_L_DAC",
+      "source": "DACL",
+      "connected": null,
+      "module_offset": 72440
+    },
+    {
+      "sink": "LINEOUT L",
+      "control": null,
+      "source": "LOL Mux",
+      "connected": null,
+      "module_offset": 72536
+    },
+    {
+      "sink": "HP_Supply",
+      "control": null,
+      "source": "HP_PULL_DOWN",
+      "connected": null,
+      "module_offset": 72632
+    },
+    {
+      "sink": "HP_Supply",
+      "control": null,
+      "source": "HP_MUTE",
+      "connected": null,
+      "module_offset": 72728
+    },
+    {
+      "sink": "HP_Supply",
+      "control": null,
+      "source": "HP_DAMP",
+      "connected": null,
+      "module_offset": 72824
+    },
+    {
+      "sink": "HP_Supply",
+      "control": null,
+      "source": "HP_ANA_TRIM",
+      "connected": null,
+      "module_offset": 72920
+    },
+    {
+      "sink": "HPL Mux",
+      "control": null,
+      "source": "HP_Supply",
+      "connected": null,
+      "module_offset": 73016
+    },
+    {
+      "sink": "HPR Mux",
+      "control": null,
+      "source": "HP_Supply",
+      "connected": null,
+      "module_offset": 73112
+    },
+    {
+      "sink": "HPL Mux",
+      "control": "Audio Playback",
+      "source": "DACL",
+      "connected": null,
+      "module_offset": 73208
+    },
+    {
+      "sink": "HPR Mux",
+      "control": "Audio Playback",
+      "source": "DACR",
+      "connected": null,
+      "module_offset": 73304
+    },
+    {
+      "sink": "HPL Mux",
+      "control": "HP Impedance",
+      "source": "DACL",
+      "connected": null,
+      "module_offset": 73400
+    },
+    {
+      "sink": "HPR Mux",
+      "control": "HP Impedance",
+      "source": "DACR",
+      "connected": null,
+      "module_offset": 73496
+    },
+    {
+      "sink": "HPL Mux",
+      "control": "LoudSPK Playback",
+      "source": "DACL",
+      "connected": null,
+      "module_offset": 73592
+    },
+    {
+      "sink": "HPR Mux",
+      "control": "LoudSPK Playback",
+      "source": "DACR",
+      "connected": null,
+      "module_offset": 73688
+    },
+    {
+      "sink": "Headphone L",
+      "control": null,
+      "source": "HPL Mux",
+      "connected": null,
+      "module_offset": 73784
+    },
+    {
+      "sink": "Headphone R",
+      "control": null,
+      "source": "HPR Mux",
+      "connected": null,
+      "module_offset": 73880
+    },
+    {
+      "sink": "Headphone L Ext Spk Amp",
+      "control": null,
+      "source": "HPL Mux",
+      "connected": null,
+      "module_offset": 73976
+    },
+    {
+      "sink": "Headphone R Ext Spk Amp",
+      "control": null,
+      "source": "HPR Mux",
+      "connected": null,
+      "module_offset": 74072
+    },
+    {
+      "sink": "RCV Mux",
+      "control": "Voice Playback",
+      "source": "DACL",
+      "connected": null,
+      "module_offset": 74168
+    },
+    {
+      "sink": "Receiver",
+      "control": null,
+      "source": "RCV Mux",
+      "connected": null,
+      "module_offset": 74264
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "VOW_UL_SRC_MUX",
+      "connected": null,
+      "module_offset": 74360
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "CLK_BUF",
+      "connected": null,
+      "module_offset": 74456
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "mt6368_vaud18",
+      "connected": null,
+      "module_offset": 74552
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "AUDGLB",
+      "connected": null,
+      "module_offset": 74648
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "AUDGLB_VOW",
+      "connected": {
+        "section": 1,
+        "offset": 53720,
+        "symbols": [
+          "mt_vow_amic_connect.cfi_jt"
+        ]
+      },
+      "module_offset": 74744
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "AUD_CK",
+      "connected": {
+        "section": 1,
+        "offset": 53720,
+        "symbols": [
+          "mt_vow_amic_connect.cfi_jt"
+        ]
+      },
+      "module_offset": 74840
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "VOW_AUD_LPW",
+      "connected": {
+        "section": 1,
+        "offset": 53720,
+        "symbols": [
+          "mt_vow_amic_connect.cfi_jt"
+        ]
+      },
+      "module_offset": 74936
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "AUD_VOW",
+      "connected": null,
+      "module_offset": 75032
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "VOW_PLL",
+      "connected": null,
+      "module_offset": 75128
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "VOW_CLK",
+      "connected": null,
+      "module_offset": 75224
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "VOW_SOURCE_CLK",
+      "connected": null,
+      "module_offset": 75320
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "VOW_DIG_CFG",
+      "connected": null,
+      "module_offset": 75416
+    },
+    {
+      "sink": "VOW TX",
+      "control": null,
+      "source": "VOW_PERIODIC_CFG",
+      "connected": {
+        "section": 1,
+        "offset": 53728,
+        "symbols": [
+          "mt_vow_amic_dcc_connect.cfi_jt"
+        ]
+      },
+      "module_offset": 75512
+    },
+    {
+      "sink": "VOW_UL_SRC_MUX",
+      "control": "AMIC",
+      "source": "VOW_AMIC0_MUX",
+      "connected": null,
+      "module_offset": 75608
+    },
+    {
+      "sink": "VOW_UL_SRC_MUX",
+      "control": "AMIC",
+      "source": "VOW_AMIC1_MUX",
+      "connected": null,
+      "module_offset": 75704
+    },
+    {
+      "sink": "VOW_UL_SRC_MUX",
+      "control": "DMIC",
+      "source": "DMIC0_MUX",
+      "connected": null,
+      "module_offset": 75800
+    },
+    {
+      "sink": "VOW_UL_SRC_MUX",
+      "control": "DMIC",
+      "source": "DMIC1_MUX",
+      "connected": null,
+      "module_offset": 75896
+    },
+    {
+      "sink": "VOW_AMIC0_MUX",
+      "control": "ADC_L",
+      "source": "ADC_L",
+      "connected": null,
+      "module_offset": 75992
+    },
+    {
+      "sink": "VOW_AMIC0_MUX",
+      "control": "ADC_R",
+      "source": "ADC_R",
+      "connected": null,
+      "module_offset": 76088
+    },
+    {
+      "sink": "VOW_AMIC0_MUX",
+      "control": "ADC_T",
+      "source": "ADC_3",
+      "connected": null,
+      "module_offset": 76184
+    },
+    {
+      "sink": "VOW_AMIC1_MUX",
+      "control": "ADC_L",
+      "source": "ADC_L",
+      "connected": null,
+      "module_offset": 76280
+    },
+    {
+      "sink": "VOW_AMIC1_MUX",
+      "control": "ADC_R",
+      "source": "ADC_R",
+      "connected": null,
+      "module_offset": 76376
+    },
+    {
+      "sink": "VOW_AMIC1_MUX",
+      "control": "ADC_T",
+      "source": "ADC_3",
+      "connected": null,
+      "module_offset": 76472
+    }
+  ],
+  "normal_aif1_hp": {
+    "assumptions": {
+      "DAC In Mux": "Normal Path",
+      "HPL Mux": "Audio Playback",
+      "HPR Mux": "Audio Playback"
+    },
+    "widgets": [
+      {
+        "name": "AFE_DL_SRC",
+        "stream": null,
+        "module_offset": 31512,
+        "type": 19,
+        "reg": 9097,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 19,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AFE_ON",
+        "stream": null,
+        "module_offset": 29912,
+        "type": 19,
+        "reg": 9096,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 18,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AIF_RX",
+        "stream": "AIF1 Playback",
+        "module_offset": 30872,
+        "type": 23,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDGLB",
+        "stream": null,
+        "module_offset": 20952,
+        "type": 19,
+        "reg": 9634,
+        "shift": 4,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 2,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDIF_CK",
+        "stream": null,
+        "module_offset": 22872,
+        "type": 19,
+        "reg": 8972,
+        "shift": 2,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 8,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDIO_TOP_AFE_CTL",
+        "stream": null,
+        "module_offset": 25432,
+        "type": 19,
+        "reg": 9103,
+        "shift": 7,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 14,
+        "event_flags": 6,
+        "event": {
+          "section": 1,
+          "offset": 53752,
+          "symbols": [
+            "mt_delay_250_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "AUDIO_TOP_DAC_CTL",
+        "stream": null,
+        "module_offset": 25752,
+        "type": 19,
+        "reg": 9103,
+        "shift": 6,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 13,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDIO_TOP_PDN_RESERVED",
+        "stream": null,
+        "module_offset": 27352,
+        "type": 19,
+        "reg": 9103,
+        "shift": 0,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 13,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDIO_TOP_PWR_CLK",
+        "stream": null,
+        "module_offset": 26712,
+        "type": 19,
+        "reg": 9103,
+        "shift": 2,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 13,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDNCP_CK",
+        "stream": null,
+        "module_offset": 21912,
+        "type": 19,
+        "reg": 8972,
+        "shift": 6,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 8,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUD_CK",
+        "stream": null,
+        "module_offset": 22552,
+        "type": 19,
+        "reg": 8972,
+        "shift": 1,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 9,
+        "event_flags": 6,
+        "event": {
+          "section": 1,
+          "offset": 53752,
+          "symbols": [
+            "mt_delay_250_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "CLKSQ Audio",
+        "stream": null,
+        "module_offset": 21592,
+        "type": 19,
+        "reg": 9527,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 6,
+        "event_flags": 1,
+        "event": null
+      },
+      {
+        "name": "CLK_BUF",
+        "stream": null,
+        "module_offset": 20312,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53736,
+          "symbols": [
+            "mt_dcxo_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "DAC In Mux",
+        "stream": null,
+        "module_offset": 33752,
+        "type": 2,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DACL",
+        "stream": null,
+        "module_offset": 34072,
+        "type": 9,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DACR",
+        "stream": null,
+        "module_offset": 34392,
+        "type": 9,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DL Digital Clock",
+        "stream": null,
+        "module_offset": 28952,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DL Digital Clock CH_1_2",
+        "stream": null,
+        "module_offset": 29272,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DL Power Supply",
+        "stream": null,
+        "module_offset": 31832,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DL_GPIO",
+        "stream": null,
+        "module_offset": 30232,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 3,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53816,
+          "symbols": [
+            "mt_dl_gpio_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "ESD_RESIST",
+        "stream": null,
+        "module_offset": 32152,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 20,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53832,
+          "symbols": [
+            "mt_esd_resist_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HPL Mux",
+        "stream": null,
+        "module_offset": 35032,
+        "type": 2,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 5,
+        "event": {
+          "section": 1,
+          "offset": 53848,
+          "symbols": [
+            "mt_hp_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HPR Mux",
+        "stream": null,
+        "module_offset": 35352,
+        "type": 2,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 5,
+        "event": {
+          "section": 1,
+          "offset": 53848,
+          "symbols": [
+            "mt_hp_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HP_ANA_TRIM",
+        "stream": null,
+        "module_offset": 36952,
+        "type": 19,
+        "reg": 9613,
+        "shift": 7,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 26,
+        "event_flags": 10,
+        "event": {
+          "section": 1,
+          "offset": 53880,
+          "symbols": [
+            "mt_hp_ana_trim_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HP_DAMP",
+        "stream": null,
+        "module_offset": 36632,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 21,
+        "event_flags": 8,
+        "event": {
+          "section": 1,
+          "offset": 53872,
+          "symbols": [
+            "mt_hp_damp_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HP_MUTE",
+        "stream": null,
+        "module_offset": 36312,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 22,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53864,
+          "symbols": [
+            "mt_hp_mute_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HP_PULL_DOWN",
+        "stream": null,
+        "module_offset": 35992,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 5,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53856,
+          "symbols": [
+            "mt_hp_pull_down_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HP_Supply",
+        "stream": null,
+        "module_offset": 35672,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "Headphone L",
+        "stream": null,
+        "module_offset": 38232,
+        "type": 1,
+        "reg": -1,
+        "shift": 0,
+        "mask": 0,
+        "on": 0,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "Headphone R",
+        "stream": null,
+        "module_offset": 38552,
+        "type": 1,
+        "reg": -1,
+        "shift": 0,
+        "mask": 0,
+        "on": 0,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "IBIST",
+        "stream": null,
+        "module_offset": 33432,
+        "type": 19,
+        "reg": 9632,
+        "shift": 4,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 27,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "LDO",
+        "stream": null,
+        "module_offset": 32472,
+        "type": 19,
+        "reg": 9635,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 24,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "LDO_REMOTE",
+        "stream": null,
+        "module_offset": 32792,
+        "type": 19,
+        "reg": 9635,
+        "shift": 2,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 23,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "NCP",
+        "stream": null,
+        "module_offset": 28632,
+        "type": 19,
+        "reg": 9352,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 17,
+        "event_flags": 1,
+        "event": {
+          "section": 1,
+          "offset": 53808,
+          "symbols": [
+            "mt_ncp_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "NV_REGULATOR",
+        "stream": null,
+        "module_offset": 33112,
+        "type": 19,
+        "reg": 9635,
+        "shift": 4,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 25,
+        "event_flags": 2,
+        "event": {
+          "section": 1,
+          "offset": 53840,
+          "symbols": [
+            "mt_delay_100_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "SDM",
+        "stream": null,
+        "module_offset": 27672,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 16,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53792,
+          "symbols": [
+            "mt_sdm_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "SDM_FIFO_CLK",
+        "stream": null,
+        "module_offset": 28312,
+        "type": 19,
+        "reg": 9110,
+        "shift": 1,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 15,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "ZCD13M_CK",
+        "stream": null,
+        "module_offset": 22232,
+        "type": 19,
+        "reg": 8972,
+        "shift": 5,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 8,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "mt6368_vaud18",
+        "stream": null,
+        "module_offset": 20632,
+        "type": 21,
+        "reg": -1,
+        "shift": 0,
+        "mask": 0,
+        "on": 0,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53744,
+          "symbols": [
+            "dapm_regulator_event.cfi_jt"
+          ]
+        }
+      }
+    ],
+    "routes": [
+      {
+        "sink": "Headphone R",
+        "control": null,
+        "source": "HPR Mux",
+        "connected": null,
+        "module_offset": 73880
+      },
+      {
+        "sink": "HPR Mux",
+        "control": null,
+        "source": "HP_Supply",
+        "connected": null,
+        "module_offset": 73112
+      },
+      {
+        "sink": "HPR Mux",
+        "control": "Audio Playback",
+        "source": "DACR",
+        "connected": null,
+        "module_offset": 73304
+      },
+      {
+        "sink": "DACR",
+        "control": null,
+        "source": "DAC In Mux",
+        "connected": null,
+        "module_offset": 71864
+      },
+      {
+        "sink": "DACR",
+        "control": null,
+        "source": "DL Power Supply",
+        "connected": null,
+        "module_offset": 71960
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "CLK_BUF",
+        "connected": null,
+        "module_offset": 68120
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "mt6368_vaud18",
+        "connected": null,
+        "module_offset": 68216
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "AUDGLB",
+        "connected": null,
+        "module_offset": 68312
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "CLKSQ Audio",
+        "connected": null,
+        "module_offset": 68408
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "AUDNCP_CK",
+        "connected": null,
+        "module_offset": 68504
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "ZCD13M_CK",
+        "connected": null,
+        "module_offset": 68600
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "AUD_CK",
+        "connected": null,
+        "module_offset": 68696
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "AUDIF_CK",
+        "connected": null,
+        "module_offset": 68792
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "ESD_RESIST",
+        "connected": null,
+        "module_offset": 68888
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "LDO",
+        "connected": null,
+        "module_offset": 68984
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "LDO_REMOTE",
+        "connected": null,
+        "module_offset": 69080
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "NV_REGULATOR",
+        "connected": null,
+        "module_offset": 69176
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "IBIST",
+        "connected": null,
+        "module_offset": 69272
+      },
+      {
+        "sink": "DAC In Mux",
+        "control": "Normal Path",
+        "source": "AIF_RX",
+        "connected": null,
+        "module_offset": 70904
+      },
+      {
+        "sink": "AIF_RX",
+        "control": null,
+        "source": "DL Digital Clock CH_1_2",
+        "connected": null,
+        "module_offset": 70520
+      },
+      {
+        "sink": "AIF_RX",
+        "control": null,
+        "source": "DL_GPIO",
+        "connected": null,
+        "module_offset": 70616
+      },
+      {
+        "sink": "DL Digital Clock CH_1_2",
+        "control": null,
+        "source": "DL Digital Clock",
+        "connected": null,
+        "module_offset": 70136
+      },
+      {
+        "sink": "DL Digital Clock CH_1_2",
+        "control": null,
+        "source": "SDM",
+        "connected": null,
+        "module_offset": 70232
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AUDIO_TOP_AFE_CTL",
+        "connected": null,
+        "module_offset": 69368
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AUDIO_TOP_DAC_CTL",
+        "connected": null,
+        "module_offset": 69464
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AUDIO_TOP_PWR_CLK",
+        "connected": null,
+        "module_offset": 69560
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AUDIO_TOP_PDN_RESERVED",
+        "connected": null,
+        "module_offset": 69656
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "SDM_FIFO_CLK",
+        "connected": null,
+        "module_offset": 69752
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "NCP",
+        "connected": null,
+        "module_offset": 69848
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AFE_ON",
+        "connected": null,
+        "module_offset": 69944
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AFE_DL_SRC",
+        "connected": null,
+        "module_offset": 70040
+      },
+      {
+        "sink": "HP_Supply",
+        "control": null,
+        "source": "HP_PULL_DOWN",
+        "connected": null,
+        "module_offset": 72632
+      },
+      {
+        "sink": "HP_Supply",
+        "control": null,
+        "source": "HP_MUTE",
+        "connected": null,
+        "module_offset": 72728
+      },
+      {
+        "sink": "HP_Supply",
+        "control": null,
+        "source": "HP_DAMP",
+        "connected": null,
+        "module_offset": 72824
+      },
+      {
+        "sink": "HP_Supply",
+        "control": null,
+        "source": "HP_ANA_TRIM",
+        "connected": null,
+        "module_offset": 72920
+      },
+      {
+        "sink": "Headphone L",
+        "control": null,
+        "source": "HPL Mux",
+        "connected": null,
+        "module_offset": 73784
+      },
+      {
+        "sink": "HPL Mux",
+        "control": null,
+        "source": "HP_Supply",
+        "connected": null,
+        "module_offset": 73016
+      },
+      {
+        "sink": "HPL Mux",
+        "control": "Audio Playback",
+        "source": "DACL",
+        "connected": null,
+        "module_offset": 73208
+      },
+      {
+        "sink": "DACL",
+        "control": null,
+        "source": "DAC In Mux",
+        "connected": null,
+        "module_offset": 71672
+      },
+      {
+        "sink": "DACL",
+        "control": null,
+        "source": "DL Power Supply",
+        "connected": null,
+        "module_offset": 71768
+      }
+    ],
+    "has_clk_buf": true
+  },
+  "internal_sgen_hp": {
+    "assumptions": {
+      "DAC In Mux": "Sgen",
+      "HPL Mux": "Audio Playback",
+      "HPR Mux": "Audio Playback"
+    },
+    "widgets": [
+      {
+        "name": "AFE_DL_SRC",
+        "stream": null,
+        "module_offset": 31512,
+        "type": 19,
+        "reg": 9097,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 19,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AFE_ON",
+        "stream": null,
+        "module_offset": 29912,
+        "type": 19,
+        "reg": 9096,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 18,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDGLB",
+        "stream": null,
+        "module_offset": 20952,
+        "type": 19,
+        "reg": 9634,
+        "shift": 4,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 2,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDIF_CK",
+        "stream": null,
+        "module_offset": 22872,
+        "type": 19,
+        "reg": 8972,
+        "shift": 2,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 8,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDIO_TOP_AFE_CTL",
+        "stream": null,
+        "module_offset": 25432,
+        "type": 19,
+        "reg": 9103,
+        "shift": 7,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 14,
+        "event_flags": 6,
+        "event": {
+          "section": 1,
+          "offset": 53752,
+          "symbols": [
+            "mt_delay_250_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "AUDIO_TOP_DAC_CTL",
+        "stream": null,
+        "module_offset": 25752,
+        "type": 19,
+        "reg": 9103,
+        "shift": 6,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 13,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDIO_TOP_PDN_AFE_TESTMODEL",
+        "stream": null,
+        "module_offset": 27032,
+        "type": 19,
+        "reg": 9103,
+        "shift": 1,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 13,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDIO_TOP_PDN_RESERVED",
+        "stream": null,
+        "module_offset": 27352,
+        "type": 19,
+        "reg": 9103,
+        "shift": 0,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 13,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDIO_TOP_PWR_CLK",
+        "stream": null,
+        "module_offset": 26712,
+        "type": 19,
+        "reg": 9103,
+        "shift": 2,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 13,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUDNCP_CK",
+        "stream": null,
+        "module_offset": 21912,
+        "type": 19,
+        "reg": 8972,
+        "shift": 6,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 8,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "AUD_CK",
+        "stream": null,
+        "module_offset": 22552,
+        "type": 19,
+        "reg": 8972,
+        "shift": 1,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 9,
+        "event_flags": 6,
+        "event": {
+          "section": 1,
+          "offset": 53752,
+          "symbols": [
+            "mt_delay_250_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "CLKSQ Audio",
+        "stream": null,
+        "module_offset": 21592,
+        "type": 19,
+        "reg": 9527,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 6,
+        "event_flags": 1,
+        "event": null
+      },
+      {
+        "name": "CLK_BUF",
+        "stream": null,
+        "module_offset": 20312,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53736,
+          "symbols": [
+            "mt_dcxo_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "DAC In Mux",
+        "stream": null,
+        "module_offset": 33752,
+        "type": 2,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DACL",
+        "stream": null,
+        "module_offset": 34072,
+        "type": 9,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DACR",
+        "stream": null,
+        "module_offset": 34392,
+        "type": 9,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DL Digital Clock",
+        "stream": null,
+        "module_offset": 28952,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DL Digital Clock CH_1_2",
+        "stream": null,
+        "module_offset": 29272,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DL Digital Clock CH_3",
+        "stream": null,
+        "module_offset": 29592,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "DL Power Supply",
+        "stream": null,
+        "module_offset": 31832,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "ESD_RESIST",
+        "stream": null,
+        "module_offset": 32152,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 20,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53832,
+          "symbols": [
+            "mt_esd_resist_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HPL Mux",
+        "stream": null,
+        "module_offset": 35032,
+        "type": 2,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 5,
+        "event": {
+          "section": 1,
+          "offset": 53848,
+          "symbols": [
+            "mt_hp_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HPR Mux",
+        "stream": null,
+        "module_offset": 35352,
+        "type": 2,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 5,
+        "event": {
+          "section": 1,
+          "offset": 53848,
+          "symbols": [
+            "mt_hp_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HP_ANA_TRIM",
+        "stream": null,
+        "module_offset": 36952,
+        "type": 19,
+        "reg": 9613,
+        "shift": 7,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 26,
+        "event_flags": 10,
+        "event": {
+          "section": 1,
+          "offset": 53880,
+          "symbols": [
+            "mt_hp_ana_trim_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HP_DAMP",
+        "stream": null,
+        "module_offset": 36632,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 21,
+        "event_flags": 8,
+        "event": {
+          "section": 1,
+          "offset": 53872,
+          "symbols": [
+            "mt_hp_damp_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HP_MUTE",
+        "stream": null,
+        "module_offset": 36312,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 22,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53864,
+          "symbols": [
+            "mt_hp_mute_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HP_PULL_DOWN",
+        "stream": null,
+        "module_offset": 35992,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 5,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53856,
+          "symbols": [
+            "mt_hp_pull_down_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "HP_Supply",
+        "stream": null,
+        "module_offset": 35672,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "Headphone L",
+        "stream": null,
+        "module_offset": 38232,
+        "type": 1,
+        "reg": -1,
+        "shift": 0,
+        "mask": 0,
+        "on": 0,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "Headphone R",
+        "stream": null,
+        "module_offset": 38552,
+        "type": 1,
+        "reg": -1,
+        "shift": 0,
+        "mask": 0,
+        "on": 0,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "IBIST",
+        "stream": null,
+        "module_offset": 33432,
+        "type": 19,
+        "reg": 9632,
+        "shift": 4,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 27,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "LDO",
+        "stream": null,
+        "module_offset": 32472,
+        "type": 19,
+        "reg": 9635,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 24,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "LDO_REMOTE",
+        "stream": null,
+        "module_offset": 32792,
+        "type": 19,
+        "reg": 9635,
+        "shift": 2,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 23,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "NCP",
+        "stream": null,
+        "module_offset": 28632,
+        "type": 19,
+        "reg": 9352,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 17,
+        "event_flags": 1,
+        "event": {
+          "section": 1,
+          "offset": 53808,
+          "symbols": [
+            "mt_ncp_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "NV_REGULATOR",
+        "stream": null,
+        "module_offset": 33112,
+        "type": 19,
+        "reg": 9635,
+        "shift": 4,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 25,
+        "event_flags": 2,
+        "event": {
+          "section": 1,
+          "offset": 53840,
+          "symbols": [
+            "mt_delay_100_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "SDM",
+        "stream": null,
+        "module_offset": 27672,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 16,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53792,
+          "symbols": [
+            "mt_sdm_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "SDM_3RD",
+        "stream": null,
+        "module_offset": 27992,
+        "type": 19,
+        "reg": -1,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 16,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53800,
+          "symbols": [
+            "mt_sdm_3rd_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "SDM_FIFO_CLK",
+        "stream": null,
+        "module_offset": 28312,
+        "type": 19,
+        "reg": 9110,
+        "shift": 1,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 15,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "SGEN DL",
+        "stream": null,
+        "module_offset": 40792,
+        "type": 0,
+        "reg": -1,
+        "shift": 0,
+        "mask": 0,
+        "on": 0,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "SGEN DL Enable",
+        "stream": null,
+        "module_offset": 39832,
+        "type": 19,
+        "reg": 9160,
+        "shift": 7,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "SGEN DL SRC",
+        "stream": null,
+        "module_offset": 40472,
+        "type": 19,
+        "reg": 9097,
+        "shift": 0,
+        "mask": 1,
+        "on": 1,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "SGEN MUTE",
+        "stream": null,
+        "module_offset": 40152,
+        "type": 19,
+        "reg": 9160,
+        "shift": 6,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 0,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53904,
+          "symbols": [
+            "mt_sgen_event.cfi_jt"
+          ]
+        }
+      },
+      {
+        "name": "ZCD13M_CK",
+        "stream": null,
+        "module_offset": 22232,
+        "type": 19,
+        "reg": 8972,
+        "shift": 5,
+        "mask": 1,
+        "on": 0,
+        "off": 1,
+        "subseq": 8,
+        "event_flags": 0,
+        "event": null
+      },
+      {
+        "name": "mt6368_vaud18",
+        "stream": null,
+        "module_offset": 20632,
+        "type": 21,
+        "reg": -1,
+        "shift": 0,
+        "mask": 0,
+        "on": 0,
+        "off": 0,
+        "subseq": 0,
+        "event_flags": 9,
+        "event": {
+          "section": 1,
+          "offset": 53744,
+          "symbols": [
+            "dapm_regulator_event.cfi_jt"
+          ]
+        }
+      }
+    ],
+    "routes": [
+      {
+        "sink": "Headphone R",
+        "control": null,
+        "source": "HPR Mux",
+        "connected": null,
+        "module_offset": 73880
+      },
+      {
+        "sink": "HPR Mux",
+        "control": null,
+        "source": "HP_Supply",
+        "connected": null,
+        "module_offset": 73112
+      },
+      {
+        "sink": "HPR Mux",
+        "control": "Audio Playback",
+        "source": "DACR",
+        "connected": null,
+        "module_offset": 73304
+      },
+      {
+        "sink": "DACR",
+        "control": null,
+        "source": "DAC In Mux",
+        "connected": null,
+        "module_offset": 71864
+      },
+      {
+        "sink": "DACR",
+        "control": null,
+        "source": "DL Power Supply",
+        "connected": null,
+        "module_offset": 71960
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "CLK_BUF",
+        "connected": null,
+        "module_offset": 68120
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "mt6368_vaud18",
+        "connected": null,
+        "module_offset": 68216
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "AUDGLB",
+        "connected": null,
+        "module_offset": 68312
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "CLKSQ Audio",
+        "connected": null,
+        "module_offset": 68408
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "AUDNCP_CK",
+        "connected": null,
+        "module_offset": 68504
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "ZCD13M_CK",
+        "connected": null,
+        "module_offset": 68600
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "AUD_CK",
+        "connected": null,
+        "module_offset": 68696
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "AUDIF_CK",
+        "connected": null,
+        "module_offset": 68792
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "ESD_RESIST",
+        "connected": null,
+        "module_offset": 68888
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "LDO",
+        "connected": null,
+        "module_offset": 68984
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "LDO_REMOTE",
+        "connected": null,
+        "module_offset": 69080
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "NV_REGULATOR",
+        "connected": null,
+        "module_offset": 69176
+      },
+      {
+        "sink": "DL Power Supply",
+        "control": null,
+        "source": "IBIST",
+        "connected": null,
+        "module_offset": 69272
+      },
+      {
+        "sink": "DAC In Mux",
+        "control": "Sgen",
+        "source": "SGEN DL",
+        "connected": null,
+        "module_offset": 71000
+      },
+      {
+        "sink": "SGEN DL",
+        "control": null,
+        "source": "SGEN DL SRC",
+        "connected": null,
+        "module_offset": 71096
+      },
+      {
+        "sink": "SGEN DL",
+        "control": null,
+        "source": "SGEN MUTE",
+        "connected": null,
+        "module_offset": 71192
+      },
+      {
+        "sink": "SGEN DL",
+        "control": null,
+        "source": "SGEN DL Enable",
+        "connected": null,
+        "module_offset": 71288
+      },
+      {
+        "sink": "SGEN DL",
+        "control": null,
+        "source": "DL Digital Clock CH_1_2",
+        "connected": null,
+        "module_offset": 71384
+      },
+      {
+        "sink": "SGEN DL",
+        "control": null,
+        "source": "DL Digital Clock CH_3",
+        "connected": null,
+        "module_offset": 71480
+      },
+      {
+        "sink": "SGEN DL",
+        "control": null,
+        "source": "AUDIO_TOP_PDN_AFE_TESTMODEL",
+        "connected": null,
+        "module_offset": 71576
+      },
+      {
+        "sink": "DL Digital Clock CH_3",
+        "control": null,
+        "source": "DL Digital Clock",
+        "connected": null,
+        "module_offset": 70328
+      },
+      {
+        "sink": "DL Digital Clock CH_3",
+        "control": null,
+        "source": "SDM_3RD",
+        "connected": null,
+        "module_offset": 70424
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AUDIO_TOP_AFE_CTL",
+        "connected": null,
+        "module_offset": 69368
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AUDIO_TOP_DAC_CTL",
+        "connected": null,
+        "module_offset": 69464
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AUDIO_TOP_PWR_CLK",
+        "connected": null,
+        "module_offset": 69560
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AUDIO_TOP_PDN_RESERVED",
+        "connected": null,
+        "module_offset": 69656
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "SDM_FIFO_CLK",
+        "connected": null,
+        "module_offset": 69752
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "NCP",
+        "connected": null,
+        "module_offset": 69848
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AFE_ON",
+        "connected": null,
+        "module_offset": 69944
+      },
+      {
+        "sink": "DL Digital Clock",
+        "control": null,
+        "source": "AFE_DL_SRC",
+        "connected": null,
+        "module_offset": 70040
+      },
+      {
+        "sink": "DL Digital Clock CH_1_2",
+        "control": null,
+        "source": "DL Digital Clock",
+        "connected": null,
+        "module_offset": 70136
+      },
+      {
+        "sink": "DL Digital Clock CH_1_2",
+        "control": null,
+        "source": "SDM",
+        "connected": null,
+        "module_offset": 70232
+      },
+      {
+        "sink": "HP_Supply",
+        "control": null,
+        "source": "HP_PULL_DOWN",
+        "connected": null,
+        "module_offset": 72632
+      },
+      {
+        "sink": "HP_Supply",
+        "control": null,
+        "source": "HP_MUTE",
+        "connected": null,
+        "module_offset": 72728
+      },
+      {
+        "sink": "HP_Supply",
+        "control": null,
+        "source": "HP_DAMP",
+        "connected": null,
+        "module_offset": 72824
+      },
+      {
+        "sink": "HP_Supply",
+        "control": null,
+        "source": "HP_ANA_TRIM",
+        "connected": null,
+        "module_offset": 72920
+      },
+      {
+        "sink": "Headphone L",
+        "control": null,
+        "source": "HPL Mux",
+        "connected": null,
+        "module_offset": 73784
+      },
+      {
+        "sink": "HPL Mux",
+        "control": null,
+        "source": "HP_Supply",
+        "connected": null,
+        "module_offset": 73016
+      },
+      {
+        "sink": "HPL Mux",
+        "control": "Audio Playback",
+        "source": "DACL",
+        "connected": null,
+        "module_offset": 73208
+      },
+      {
+        "sink": "DACL",
+        "control": null,
+        "source": "DAC In Mux",
+        "connected": null,
+        "module_offset": 71672
+      },
+      {
+        "sink": "DACL",
+        "control": null,
+        "source": "DL Power Supply",
+        "connected": null,
+        "module_offset": 71768
+      }
+    ],
+    "has_clk_buf": true
+  }
+}

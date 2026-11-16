@@ -1,0 +1,249 @@
+{
+  "source": "/home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip/raw/dapm-observe-02",
+  "states": {
+    "CLK_BUF": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "mt6368_vaud18": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "AUDGLB": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "CLKSQ Audio": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "AUDNCP_CK": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "ZCD13M_CK": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "AUD_CK": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "AUDIF_CK": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "DL Power Supply": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "DL Digital Clock": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "NCP": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "SDM": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "AFE_ON": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "AFE_DL_SRC": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "LDO": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "LDO_REMOTE": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "NV_REGULATOR": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "IBIST": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "HP_ANA_TRIM": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "HP_MUTE": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "HP_PULL_DOWN": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "DAC In Mux": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "DACL": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "DACR": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "HPL Mux": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "HPR Mux": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "AIF_RX": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "Headphone L": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "Headphone R": [
+      "Off",
+      "On",
+      "On",
+      "Off"
+    ],
+    "DC Trim": [
+      "Off",
+      "Off",
+      "Off",
+      "Off"
+    ]
+  },
+  "B2": {
+    "pointer": "0xb400007a20fcf4d0",
+    "io": "21",
+    "standby": "no",
+    "device": "0x8 (AUDIO_DEVICE_OUT_WIRED_HEADPHONE)",
+    "frames": 3870720,
+    "writes": 1890,
+    "last_write_ms": 55
+  },
+  "C": {
+    "pointer": "0xb400007a20fcf4d0",
+    "io": "21",
+    "standby": "yes",
+    "device": "0x8 (AUDIO_DEVICE_OUT_WIRED_HEADPHONE)",
+    "frames": 5943296,
+    "writes": 2902,
+    "last_write_ms": 23405
+  },
+  "delta_frames": 2072576,
+  "delta_writes": 1012,
+  "files": {
+    "README.md": {
+      "sha256": "22ffa01348cc737957a253de6272254144962e83e6e1bc10a6da4ca58ddef20a",
+      "bytes": 10373
+    },
+    "B2-playing.txt": {
+      "sha256": "b0d74b83a6d3ad3a94b69e05e0b66440ba84df5090dec28918dcdf93843efa30",
+      "bytes": 1590
+    },
+    "C-after.txt": {
+      "sha256": "5610d2e996163f1beb2c3cef5bd7ef94350d87c4de244e689c4af0527165ef28",
+      "bytes": 1614
+    },
+    "C-audio-flinger.txt": {
+      "sha256": "185687b0c2193bc287e6d77ba365b6e4d9fbb430dd3ef682759c44c561ba4e91",
+      "bytes": 48633
+    },
+    "B1-playing.txt": {
+      "sha256": "a55d5a03e41f4820a789067fb6bfececd32517e85f6e5e48bff4efd629b24eb1",
+      "bytes": 4031
+    },
+    "B2-audio-flinger.txt": {
+      "sha256": "abd1d3787cb3e49e6523e30c68ca018a9087586490b0ceabdf045c8b226b4fda",
+      "bytes": 46957
+    },
+    "A-baseline.txt": {
+      "sha256": "8c012011c4d9a5bddfecdd7eb0bc2961d59a28c5f663adfb65fac1ba9414a2ae",
+      "bytes": 1615
+    },
+    "launch.log": {
+      "sha256": "19b82082d0e732c61c45654965fb2acddbc968dc0c8bfd88e2f84c9c4948c64f",
+      "bytes": 368
+    },
+    "volume-before.txt": {
+      "sha256": "8286c336ce3669d38462546c7b96598c4e75fe83d350091efec8174af18a1a0d",
+      "bytes": 99
+    }
+  },
+  "limitations": [
+    "Four samples; no continuous event trace",
+    "AIF_RX active flag is not the DAI active flag",
+    "AudioFlinger written frames do not prove analog output or received PCM",
+    "B1 full AudioFlinger dump is not archived"
+  ]
+}
