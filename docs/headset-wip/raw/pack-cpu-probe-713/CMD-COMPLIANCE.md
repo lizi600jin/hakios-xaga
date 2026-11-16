@@ -81,7 +81,7 @@
 | 保留 ramdisk | ✅ 1867873 相同 |
 | 保留 header 24..40 | ✅ 相同 |
 | 保留 cmdline | ✅ `44..1068` 逐字节相同 |
-| **保留 signature size 与 signature** | ✅ **`signature_size = 0`，此镜像无 v4 签名段**，无签名可破坏 |
+| **保留 signature size 与 signature** | 🔴 **原写「`signature_size = 0`」是错的**。正确：字段在 offset **1580**，值 **4096**；三方签名均 `AVB0` 且 SHA256 `692c87ad…` 逐字节相同。见 [`SIGNATURE-CORRECTION.md`](SIGNATURE-CORRECTION.md) |
 | 保留 stock Android Image | ✅ 逐字节相同 `12d255cd…` |
 | **loader 差异只在于文档化的 0x10/0x28/0x30 补丁** | ✅ **恰好 10 字节**：`0x12/0x13/0x28-2b/0x30-33` |
 | 零填充 | ✅ `[48768, 0x40000)` 全零 |

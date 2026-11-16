@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "kernel_sha256": "ecdc9194fbcc635a63d8da6be7c5f4ef6a1c6bc7f3c1b715c9373cca9fe7da38",
+  "kernel_bytes": 15321328,
+  "input_files_verified": 5206,
+  "source_changes_since_freeze": 0,
+  "new_source_files_outside_BUILD": 0,
+  "original_ufs_candidate_unchanged": true,
+  "production_inputs_unchanged": true,
+  "cpu_probe_included": false,
+  "device_executed": false,
+  "limits": [
+    "host build identity only; no UFS runtime or storage IO result"
+  ]
+}

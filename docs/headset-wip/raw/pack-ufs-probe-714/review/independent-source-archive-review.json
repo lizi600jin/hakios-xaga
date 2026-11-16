@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "committed_blobs": [
+    {
+      "revision": "a59babf",
+      "path": "docs/headset-wip/raw/device-cpu-probe-713/raw/trial713-logbook.bin",
+      "bytes": 4198400,
+      "sha256": "310c2f0a8084019c8b9f72d877b7d7f0670d7eda0b952d9dd991c8c73f073213"
+    },
+    {
+      "revision": "a59babf",
+      "path": "docs/headset-wip/raw/device-cpu-probe-713/raw/trial713-logbook-body.bin",
+      "bytes": 519004,
+      "sha256": "7fbecaa318c1e1496c23f1fedfe8d9e4d66ed816f141faa0587efb92345b87d8"
+    },
+    {
+      "revision": "f52f62a",
+      "path": "docs/headset-wip/raw/ufs-probe-revision2-714/source/hakios.mt6895_ufs.c",
+      "bytes": 8138,
+      "sha256": "ce6aa5850fba8d318e44cdb18e2f3c9592820a12e27c1a1e3847cede730045f2"
+    },
+    {
+      "revision": "f52f62a",
+      "path": "docs/headset-wip/raw/ufs-probe-revision2-714/source/test-ufs.c",
+      "bytes": 11579,
+      "sha256": "94eafe7d23358f36ab952759e9803577ff9b578320c7478b22a6c268e40df2ba"
+    }
+  ]
+}

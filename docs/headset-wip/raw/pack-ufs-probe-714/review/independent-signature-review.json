@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "byte_preservation_only": true,
+  "records": [
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/backup/boot_a_stock_real.img",
+      "size_field_offset": 1580,
+      "signature_bytes": 4096,
+      "offset": 17190912,
+      "sha256": "692c87adcc6ad5fcf0592878a6fe56f13e0da9dfade792f1e8aa1f03e34623c5",
+      "magic": "AVB0"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/mt6895-cpu-baseline-20261116/trial713/boot.img",
+      "size_field_offset": 1580,
+      "signature_bytes": 4096,
+      "offset": 22990848,
+      "sha256": "692c87adcc6ad5fcf0592878a6fe56f13e0da9dfade792f1e8aa1f03e34623c5",
+      "magic": "AVB0"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial714/boot.img",
+      "size_field_offset": 1580,
+      "signature_bytes": 4096,
+      "offset": 22990848,
+      "sha256": "692c87adcc6ad5fcf0592878a6fe56f13e0da9dfade792f1e8aa1f03e34623c5",
+      "magic": "AVB0"
+    }
+  ]
+}

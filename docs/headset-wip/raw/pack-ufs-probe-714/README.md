@@ -197,7 +197,69 @@ int main(void) {
 
 ---
 
-## 8. 边界
+## 8. 独立复核归档（2026-11-17 01:30 追加）
+
+**Codex 独立审查 PASS。归档在本目录 `review/`：**
+
+| 文件 | 内容 |
+|---|---|
+| `POST-PACK-AUDIT-714.md`（本目录根，4140 B / `c0c19dc4…`）| **完整审查报告** |
+| `review/independent-kernel-review.json` | 内核算查 |
+| `review/independent-package-review.json` | 打包结构 |
+| `review/independent-loader-review.json` | **loader 安全重编** |
+| `review/independent-signature-review.json` | **签名核验** |
+| `review/independent-source-archive-review.json` | 源码归档 |
+| `review/reproduce-loader-safe.py` | **可复现的安全重编脚本** |
+
+### 8.1 它的关键结论
+
+| 项 | Codex 独立结论 |
+|---|---|
+| 镜像 `91122cdf…` | ✅ 结构/provenance 全过 |
+| **loader 安全临时目录重编** | ✅ 逐字节一致 `0623637e…` |
+| **714 两个 `.o`** | ✅ **hash 已记录且复现**（见 §8.2）|
+| 713 最终 image/payload | ✅ 匹配原审查值（`127e48e9` / `871508dc`）|
+| 713 恢复 loader | ✅ 匹配 `78611b0f` |
+
+**🔴 「主机 PASS 不是 UFS 运行时、存储读、文件系统或无人值守恢复的结果」—— 这句我完全同意。**
+
+### 8.2 714 的 `.o` hash（现在有记录了）
+
+```
+start.o      e42598afd6c57632fa396ff21ef6961a9feb73b21bc560110add8e4fa84000e3
+mtkloader.o  5c69cbc49a351689f569888427e0252d72622e7b706c0bbe2e7b69bc05dd7efa
+```
+
+**→ 这正是我在 §7 里指出的缺口（713 的 `.o` 没记录）。714 补上了。**
+
+### 8.3 `reproduce-loader-safe.py` 的做法（比我原来的对）
+
+**Codex 写的这个脚本「解析带路径的 argv，而不是做一次笼统的 substring 替换」：**
+
+| 步 | 动作 |
+|---|---|
+| 1 | **解析**每条 argv 里哪些元素承载路径 |
+| 2 | 把编译器源、`BOARD_HEADER`、链接脚本/对象、**三个 `-o` 输出**全部改写到一个**私有临时目录** |
+| 3 | **在任何命令执行之前审计全部输出** |
+| 4 | 然后才跑 |
+
+**→ 这正面解决了我 §7 那个 bug 的根因（我用了相对路径 `str.replace`，漏掉了 argv 里同时存在的绝对与相对两种形式）。**
+
+**它的新 loader 与 714 逐字节相同。**
+
+### 8.4 防止复发的要求（我记下）
+
+**Codex 明确：**
+
+> 「Future packaging must resolve both relative and absolute paths and **validate the complete
+> output set before the first compiler is launched**. **Do not replay a recorded output
+> destination blindly.**」
+
+**我照做。**
+
+---
+
+## 9. 边界
 
 **未做**：任何 adb/fastboot/设备操作、刷写、重建内核、改候选或生产、
 替换旧 BUILD、stage GPUEB WIP、push 生产仓。
