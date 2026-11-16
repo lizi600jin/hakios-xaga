@@ -1,0 +1,23 @@
+# PACK-UFS-714 产物（镜像留本地）
+# 路径 /home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial714/
+
+boot.img
+  size   22994944 B
+  sha256 91122cdfc72ce3d204bb6ffdd71c1bca7c470e525d28cfdd7ce19bb014231f07
+  md5    c230bf743ce03e8799e404b593c2b7f7
+
+loader.bin
+  size   48768 B
+  sha256 0623637e7d34256a5163e6d886bd7b2f0f0e3e545d9b78ed68b509590384c89a
+
+payload.bin
+  size   19515784 B
+  sha256 c7d73935a1338a3e75cba6d01da536e7352c0a73dd2a51c18ae94239b1fe97c3
+
+kernel（嵌套在 payload 内）
+  size   15321328 B
+  sha256 ecdc9194fbcc635a63d8da6be7c5f4ef6a1c6bc7f3c1b715c9373cca9fe7da38
+
+candidate
+  hakios.mt6895_ufs.c  8138 B
+  sha256 ce6aa5850fba8d318e44cdb18e2f3c9592820a12e27c1a1e3847cede730045f2

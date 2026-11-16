@@ -1,0 +1,7 @@
+argv: ['python3', 'mtk/tools/chainboot.py', '/home/lizi/IOS/hakios-mtk/backup/boot_a_stock_real.img', 'logs/ufs-probe-20261117/trial714/loader.bin', 'logs/ufs-probe-20261117/trial714/boot.img', 'logs/ufs-probe-20261117/trial714/payload.bin', '--partition-size', '64M']
+native rc=0
+stdout: logs/ufs-probe-20261117/trial714/boot.img: 22994944 bytes (program 48768, Image 42201364, payload 19515784, kernel gz 21113379)
+
+  boot.img 22994944 B
+  sha256 91122cdfc72ce3d204bb6ffdd71c1bca7c470e525d28cfdd7ce19bb014231f07
+  md5    c230bf743ce03e8799e404b593c2b7f7
