@@ -81,7 +81,10 @@ grep -lE 'xaga'                bsd/dev/hakios.* | sed 's|bsd/dev/||' | sort
 | **57** | **`# CONFIG_HAKIOS_MODEM is not set`** |
 | 36 | `# CONFIG_MODEM_AGAIN is not set` |
 
-**显式开启的五项（`=y`）：**
+**显式开启的六项（`=y`）：**
+
+> 🔴 **更正**：原文写「五项」是笔误 —— 下表实为 **6 行**。
+> 已逐行核对 `mt6895.config`，`=y` 的 MT6895 自有驱动共 6 个。
 
 | 行号 | 配置 | 驱动文件 |
 |---|---|---|
