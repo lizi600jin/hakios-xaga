@@ -1,0 +1,150 @@
+{
+  "status": "PASS",
+  "device_commands_run": false,
+  "production_inputs_verified": [
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/drivers/input/hakios.input.c",
+      "bytes": 7145,
+      "sha256": "990ef7c316bebcbd439708af8af6c2a90290ea88ec1b59b5360640694a4d26b3"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/drivers/core/hakios.stubs.c",
+      "bytes": 6075,
+      "sha256": "dd0fc309c171c929a5f4415cad3865062e173dff6fdcf9556c3b5b797533b0f4"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/xnu/files/bsd/sys/hakios.input.h",
+      "bytes": 10730,
+      "sha256": "9024194d6d2177ffeb2988f68da78abbd881c523034c0e48b392b3f332b75bcd"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/mtk/mt6895/configs/mt6895.config",
+      "bytes": 5284,
+      "sha256": "b8edfb815291c9d45a06a964a919c7ebaaafbf1869b0be5d98acc4367134a2de"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/mtk/mt6895/loader/board.h",
+      "bytes": 48016,
+      "sha256": "5b2cf1392c2262a800ab270846b5dc8b895b966098166e2677261d1432dee5aa"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/mtk/loader/mtkloader.c",
+      "bytes": 263793,
+      "sha256": "60647f896d02708984388e0c60051824dbae6327d180385a8ac7d754652af3e7"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/mtk/mt6895/drivers/audio/hakios.mt6895_headset.c",
+      "bytes": 71087,
+      "sha256": "8c0cf1c232d0ac4f108a9ab4693559e99cb5efeecc00753c1e2bf7e96d300a02"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/mtk/mt6895/drivers/gpu/hakios.mali610.c",
+      "bytes": 250835,
+      "sha256": "583e7aff8c5d722af5f76e21f5b60a60c031be1feb8b6314824cf7cc8f569c63"
+    }
+  ],
+  "original_candidate_verified": [
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261116/candidate/hakios.mt6895_ufs.c",
+      "bytes": 6065,
+      "sha256": "35c9c297a0df1f49736bbe158ea10b8377789676faa11c86602c2c4d8e2f6929"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261116/candidate/test-ufs.c",
+      "bytes": 8147,
+      "sha256": "95e34a2942744da81674153b91026a3a2af7d69dd7391df6689288d9bac15ea5"
+    }
+  ],
+  "retained_713_714_artifacts_verified": [
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/mt6895-cpu-baseline-20261116/trial713/boot.img",
+      "bytes": 22994944,
+      "sha256": "127e48e9c7089e9845bfd0a3565ccacfb1b80acd3d84776b3946fa8a702b165c"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/mt6895-cpu-baseline-20261116/trial713/payload.bin",
+      "bytes": 19515800,
+      "sha256": "871508dc8fbe6dab094aea2154e701acf1125a717794655ba90de30ee4aefdb2"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/mt6895-cpu-baseline-20261116/trial713/loader.bin",
+      "bytes": 48768,
+      "sha256": "78611b0fe1bf4d3f5c84ba4a48ea55c88ab0cde0da1dda09df04a223906de669"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial714/boot.img",
+      "bytes": 22994944,
+      "sha256": "91122cdfc72ce3d204bb6ffdd71c1bca7c470e525d28cfdd7ce19bb014231f07"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial714/payload.bin",
+      "bytes": 19515784,
+      "sha256": "c7d73935a1338a3e75cba6d01da536e7352c0a73dd2a51c18ae94239b1fe97c3"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial714/loader.bin",
+      "bytes": 48768,
+      "sha256": "0623637e7d34256a5163e6d886bd7b2f0f0e3e545d9b78ed68b509590384c89a"
+    }
+  ],
+  "stock_source": {
+    "path": "/home/lizi/IOS/hakios-mtk/backup/boot_a_stock_real.img",
+    "bytes": 67108864,
+    "sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc"
+  },
+  "gpueb_wip_unchanged_and_unstaged": {
+    "path": "/home/lizi/IOS/repo/hakios-mt6895/docs/headset-wip/findings/GPUEB-INTEGRATION.patch",
+    "bytes": 50153,
+    "sha256": "9cdcb0da826e9bd561fce98aae81304789fee2742c63b10235942f028e53eb16"
+  },
+  "current_715_verified": [
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/start.o",
+      "bytes": 8648,
+      "sha256": "e42598afd6c57632fa396ff21ef6961a9feb73b21bc560110add8e4fa84000e3"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/mtkloader.o",
+      "bytes": 84512,
+      "sha256": "d43bda03bee1587b2c88a7c49b589222d29c8a5bc71d93638f404ceb483f66a6"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader.bin",
+      "bytes": 46504,
+      "sha256": "c3d9c30a0c14c3e6c644fbf499fc189819b818c03080fe2beee18590cf7eafea"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/payload.bin",
+      "bytes": 19515784,
+      "sha256": "c7d73935a1338a3e75cba6d01da536e7352c0a73dd2a51c18ae94239b1fe97c3"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/boot.img",
+      "bytes": 22994944,
+      "sha256": "65bd797dce99a4f29d898c7055a25fcce207e1b3642109daae0ad217f653c994"
+    }
+  ],
+  "packaging_native_rc": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "loader_mali_macros": {
+    "BOARD_MALI_DOMAINS": "2",
+    "BOARD_MALI_EARLY": "0",
+    "BOARD_MALI_POWER": "0",
+    "BOARD_MALI_PREPOWER": "0",
+    "BOARD_MALI_PROBE": "0",
+    "BOARD_MALI_RETURN": "0",
+    "BOARD_MALI_STAGE": "0",
+    "BOARD_MALI_STOP": "0"
+  },
+  "compiler_warnings_retained": "In file included from /home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/mtkloader.c:36:\n/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/ufs.h:762:11: warning: unused parameter 'which' [-Wunused-parameter]\n  762 |                            int which)\n      |                                ^\n/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/mtkloader.c:7488:12: warning: unused variable 'xnu_chosen' [-Wunused-variable]\n 7488 |         const int xnu_chosen = 1;\n      |                   ^~~~~~~~~~\nIn file included from /home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/mtkloader.c:36:\n/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/ufs.h:1544:13: warning: unused function 'ufs_mtk_host_reset' [-Wunused-function]\n 1544 | static void ufs_mtk_host_reset(void)\n      |             ^~~~~~~~~~~~~~~~~~\n/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/ufs.h:1608:13: warning: unused function 'ufs_mtk_host_enable' [-Wunused-function]\n 1608 | static void ufs_mtk_host_enable(void)\n      |             ^~~~~~~~~~~~~~~~~~~\n/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/ufs.h:2702:13: warning: unused function 'ufs_probe_variants' [-Wunused-function]\n 2702 | static void ufs_probe_variants(void)\n      |             ^~~~~~~~~~~~~~~~~~\n/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/ufs.h:2882:12: warning: unused function 'ufs_capacity' [-Wunused-function]\n 2882 | static int ufs_capacity(uint8_t lun, uint32_t *lbs_out)\n      |            ^~~~~~~~~~~~\nIn file included from /home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/mtkloader.c:586:\n/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/mtkconnsys.h:98:1: warning: unused function 'connsys_dt_report' [-Wunused-function]\n   98 | connsys_dt_report(uint64_t dtb)\n      | ^~~~~~~~~~~~~~~~~\n/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/mtkloader.c:611:13: warning: unused function 'ufs_step' [-Wunused-function]\n  611 | static void ufs_step(uint32_t n)\n      |             ^~~~~~~~\n/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader-src/mtk/loader/mtkloader.c:617:17: warning: unused function 'ufs_step_get' [-Wunused-function]\n  617 | static uint32_t ufs_step_get(void)\n      |                 ^~~~~~~~~~~~\n9 warnings generated.\n",
+  "limits": [
+    "713 historical object identities remain unproven; original hashes absent",
+    "Stock source hash is a host-file check, not a new device measurement",
+    "Only enumerated production inputs and artifact identities checked here"
+  ]
+}
