@@ -8,7 +8,7 @@
 
 ## 0. 一句话
 
-**29 个目标 widget 全部走 `Off → On(播放) → On → Off(结束)`，只有 `DC Trim` 全程 `Off`。**
+**29 个目标 widget 全部走 `Off → On(播放) → On → Off(结束)`。`DC Trim` 在四次采样中都是 `Off`。**
 
 **播放经 `AudioOut_15`、输出设备 `0x8 AUDIO_DEVICE_OUT_WIRED_HEADPHONE`，
 帧统计 `n=1496 → 1934` 有真实推进。**
@@ -60,6 +60,22 @@ adb shell 'am start -a android.intent.action.VIEW \
 
 ---
 
+## 2.5 四个采样点的实际主机时间（原文，不复述间隔）
+
+| 采样 | uptime | host 时间 |
+|---|---|---|
+| **A**（播放前） | 51329.01 | **2026-11-16T13:37:41+08:00** |
+| **B1**（播放中第 1 组） | 51343.39 | **2026-11-16T13:37:55+08:00** |
+| **B2**（播放中第 2 组） | 51355.17 | **2026-11-16T13:38:07+08:00** |
+| **C**（播放后） | 51414.27 | **2026-11-16T13:39:06+08:00** |
+
+**相邻间隔**：A→B1 **14 秒**、B1→B2 **12 秒**、B2→C **59 秒**。
+
+**这四段间隔是实测，不是我原来写的"恰好再 2 秒"或"结束后 15 秒内"。**
+**采样点之外的状态没有被观察。**
+
+---
+
 ## 3. 三阶段状态表（30 个 widget 全文见 A/B1/B2/C 四个文件）
 
 | widget | A（前） | B1（播放5s） | B2（+2s） | C（后） |
@@ -107,24 +123,24 @@ adb shell 'am start -a android.intent.action.VIEW \
 
 **实测结果：**
 
-| 阶段 | `DC Trim` |
+| 阶段 | `DC Trim`（四次采样） |
 |---|---|
-| A（播放前，已开机约 14 小时） | **Off** |
-| B1（播放中） | **Off** |
-| B2（播放中） | **Off** |
-| C（播放后） | **Off** |
+| A（播放前，host 13:37:41） | **Off** |
+| B1（播放中，host 13:37:55） | **Off** |
+| B2（播放中，host 13:38:07） | **Off** |
+| C（播放后，host 13:39:06） | **Off** |
 
-**即使在完整播放过程中，`DC Trim` 也没有变成 On。**
+**🔴 修正后的表述（Codex 审定）：**
 
-**这与审定文案的关系要说清：**
+**只能说「A/B1/B2/C 四次采样均为 Off」，不能说「连续全程无瞬态」。**
 
-- **它不否定文案**：文案说的是"有触发路径"，不是"一定会触发"
-- **它补充了一个实测事实**：这次播放从头到尾，`DC Trim` 的 DAPM 状态没有变化
-- **但它不能证明 trim 没跑** —— `DC Trim` 的 `POST_PMD` 回调触发的是**异步线程**
-  （`kthread_run`），线程可能在 widget 状态变化之外执行，DAPM 状态不反映线程运行
+理由：四次采样之间有空隙（A→B1 间隔 14 秒、B1→B2 间隔 12 秒、B2→C 间隔 59 秒），
+**采样点之外的瞬态开合没有被观察到**。
 
-**所以正确表述：`DC Trim` 的 DAPM 状态在本次播放全程为 Off；
-这不等于 trim 校准线程没有运行，也不等于它运行了。**
+**当前没有证据表明本次播放触发了校准，也没有需求因此强制重新校准。**
+
+**仍然成立**：`DC Trim` 的 `POST_PMD` 回调触发的是异步线程（`kthread_run`），
+DAPM 状态不反映线程运行 —— 所以「四次采样 Off」既不证明 trim 没跑，也不证明它跑了。
 
 ---
 
@@ -132,18 +148,29 @@ adb shell 'am start -a android.intent.action.VIEW \
 
 ### 5.1 `AudioOut_15` 线程
 
-| 字段 | B2（播放中） |
-|---|---|
-| `Standby` | **`no`** |
-| `Sample rate` | **48000 Hz** |
-| `Channel mask` | `0x3 (front-left, front-right)` |
-| **`Output devices`** | **`0x8 (AUDIO_DEVICE_OUT_WIRED_HEADPHONE)`** ✅ |
-| **`Timestamp stats`** | **`n=1934`**（B1 时 `n=1496`）→ **帧推进 +438** |
-| **`Last write occurred`** | **55 ms**（新鲜） |
+**同一线程指针 `0xb400007a20fcf4d0`、`I/O handle: 21`（B2 与 C 都是这一个）：**
+
+| 字段 | B2（host 13:38:07） | C（host 13:39:06） | **delta** |
+|---|---|---|---|
+| `Standby` | **`no`** | `yes` | — |
+| `Sample rate` | **48000 Hz** | — | — |
+| `Output devices` | **`0x8 (AUDIO_DEVICE_OUT_WIRED_HEADPHONE)`** | — | — |
+| **`Frames written`** | **3870720** | **5943296** | **+2072576** |
+| **`Total writes`** | **1890** | **2902** | **+1012** |
+| `Last write occurred` | 55 ms | 23405 ms | — |
+
+**帧继续推进的真实证据**：`Frames written` 3870720 → 5943296（**+2,072,576 帧**），
+`Total writes` 1890 → 2902（**+1012 次**）。
+
+**🔴 撤回**：原 README 用 `Timestamp stats n=1496 → 1934` 说"帧推进 +438" ——
+**`n` 不是音频帧数**，该推论作废。**B1 的完整 audio_flinger dump 未归档，
+所以 B1 的 `n=1496` 不能当独立帧证据，标缺失。**
 
 ### 5.2 C 阶段
 
-`Standby: yes`（已回待机），`Last write occurred (msecs): 9796`（9.8 秒前最后一次写）。
+`Standby: yes`（已回待机），**`Last write occurred (msecs): 23405`**（C 采样时距最后一次写 23.4 秒）。
+
+> 原 README 写 `9796` 是错的 —— 那是**上一次播放**留下的值，不是本次。已按 C 归档原文更正。
 
 ### 5.3 三个 playback PCM 全部 `closed`
 
@@ -152,7 +179,7 @@ adb shell 'am start -a android.intent.action.VIEW \
 **所以 `pcm0p` 等不是本次播放的实际端点** —— 与 [CMD] 的提醒一致
 （"不预设 pcm0p 是实际播放端点"）。
 
-**真实证据是 `AudioOut_15` 的 `Standby: no` + `n` 递增 + `Last write` 新鲜 + 耳机路由。**
+**真实证据是 `AudioOut_15` 的 `Standby: no` + `Frames written` 与 `Total writes` 递增 + `Last write` 新鲜 + 耳机路由。**
 
 ---
 
@@ -192,7 +219,7 @@ adb shell 'am start -a android.intent.action.VIEW \
 | 3 | **路由到有线耳机**（`0x8 WIRED_HEADPHONE`） |
 | 4 | **29 个 widget 在播放时 On、结束后 Off** |
 | 5 | **`DC Trim` 全程 Off** |
-| 6 | **`AIF_RX` 在 B 阶段是 `On` 但仍显示 `stream AIF1 Playback inactive`** |
+| 6 | **`AIF_RX` 在 B 阶段 `On`；其上游 `AIF1 Playback`（自动 DAI widget）显示 inactive** |
 
 ### 未证明
 
@@ -202,13 +229,31 @@ adb shell 'am start -a android.intent.action.VIEW \
 | **`DCXO` 电气必要性** | 只知道 `CLK_BUF` 在播放时 On |
 | **实际出声** | 耳机不戴耳上，没有听觉确认 |
 | **`DC Trim` 的校准是否运行** | DAPM 状态不反映异步线程 |
-| **`AIF_RX` inactive 但 On 意味着走 ADDA 还是 SGEN** | 需要 Codex 从源码判 |
+| ~~`AIF_RX` inactive 意味着走 ADDA 还是 SGEN~~ | **已撤回** —— active 状态属 `AIF1 Playback` widget，不构成绕过证据 |
 
-### 🔴 `AIF_RX` 这条值得单独交给 Codex
+### 🔴 `AIF_RX` 的解释已修正（Codex 审定）
 
-**B 阶段 `AIF_RX: On  in 1 out 2`，但最后一行仍是 `stream AIF1 Playback inactive`。**
+**我原来的表述是「`AIF_RX` 是 On 但仍显示 inactive，所以实际数据流可能绕过 AIF1」。
+这条撤回。**
 
-**这与审定修正 4 呼应**：machine 源码里 `Primary Codec` 后端是把 CPU `ADDA` 接到
-`mt6368-snd-codec-aif1`，且 init 选择 `MTKAIF_PROTOCOL_2_CLK_P2`。
+**Codex 的判定：**
 
-**所以实际数据流可能不走 AIF1 DAI，而走 ADDA/MTKAIF 路径。** 这需要 Codex 判定。
+1. **`AIF_RX` 是普通 aif widget。**
+2. **`soc-dapm.c:4402..4438` 的 active 更新对象，是 `snd_soc_dai_get_widget()` 返回的
+   自动 DAI widget** —— codec 这边名称是 **`AIF1 Playback`**，**不是 `AIF_RX`**。
+3. **B1 原文里有 `in  "static"  "AIF1 Playback"` → `AIF_RX` 这条边**，
+   说明 `AIF_RX` 的上游正是 `AIF1 Playback`。
+4. **ADDA/MTKAIF 与 codec AIF1 不是互斥路径** —— 不能因为 `AIF_RX` 自身不显示 active
+   就推断绕过了 AIF1。
+5. **Codex 同时撤回了上一条 [CMD] 里「要求 `AIF_RX` 自身 active」的判据** ——
+   那条判据不准确，**不据此判本实验失败**。
+
+**修正后的结论**：`AIF_RX` 在播放时 `On`，其上游 `AIF1 Playback` 才是承载 active
+状态的自动 DAI widget。**这不构成「绕过 AIF1」的证据。**
+
+> 原始 B1 行（见 `B1-playing.txt`）：
+> ```
+> AIF_RX :: AIF_RX: On  in 1 out 2| stream AIF1 Playback inactive|
+>   out  "Normal Path" "DAC In Mux"| in  "static" "AIF1 Playback"|
+>   in  "static" "DL_GPIO"| in  "static" "DL Digital Clock CH_1_2"|
+> ```
