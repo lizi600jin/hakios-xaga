@@ -1,0 +1,19 @@
+[host] 2026-11-16T19:38:50.227496
+== fastboot 确认 ==
+  rc=0  < waiting for <SERIAL>>
+product: xaga
+Fini
+
+== stock 复查 ==
+  67108864 B  sha256 c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc
+  md5 a63b2e35a7c2522cb24a6a10332b9bc8
+  ✅ 确认
+
+== STOCK FLASH ==
+  native rc=0 timed_out=False elapsed=2.31s
+  Sending 'boot_a' (65536 KB)                        OKAY [  1.720s]
+Writing 'boot_a'                                   OKAY [  0.404s]
+Finished. Total time: 2.183s
+
+== REBOOT ==
+  native rc=0 timed_out=False  Rebooting                                         

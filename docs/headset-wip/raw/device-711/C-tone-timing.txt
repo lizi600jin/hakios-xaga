@@ -1,0 +1,23 @@
+== 时序（实际值）==
+    19.945s  armed  pulse=0/3  sgen=c0  verified
+    21.993s  on     pulse=1/3  sgen=80  verified
+    23.021s  mute   pulse=1/3  sgen=c0  verified
+    24.033s  on     pulse=2/3  sgen=80  verified
+    25.046s  mute   pulse=2/3  sgen=c0  verified
+    26.058s  on     pulse=3/3  sgen=80  verified
+    27.075s  mute   pulse=3/3  sgen=c0  verified
+
+== 段间间隔 ==
+从               到                    实际 ms    900-1250
+armed p0        on p1               2048.4        🔴OUT
+on p1           mute p1             1027.7          OK
+mute p1         on p2               1012.6          OK
+on p2           mute p2             1012.6          OK
+mute p2         on p3               1011.5          OK
+on p3           mute p3             1017.5          OK
+
+== 检查 ==
+  edge 总数 7（期望 7：armed + 3 on + 3 mute）
+  全部 verified: True
+  全部 gain=1e/1e: True
+  全部 sgen 符合期望: True
