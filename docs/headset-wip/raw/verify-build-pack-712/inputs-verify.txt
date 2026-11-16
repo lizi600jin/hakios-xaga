@@ -1,0 +1,10 @@
+# VERIFY-BUILD-PACK-712 输入核验  host: 2026-11-16T19:55:27+08:00
+文件                                                   结果   大小
+mtk/mt6895/drivers/audio/hakios.mt6895_headset.c         OK       71087 B
+xnu/files/bsd/sys/hakios.pmif.h                          OK       3356 B
+mtk/tools/test-headset.py                                OK       21122 B
+mtk/tools/test-headset-profile.py                        OK       7783 B
+mtk/tools/fixtures/mt6368-profile4-prefix.c              OK       6053 B
+mtk/tools/fixtures/mt6368-profile4-suffix.c              OK       15690 B
+mtk/tools/fixtures/mt6368-profile4-vendor.json           OK       70412 B
+mtk/tools/fixtures/mt6368-hp-normal.json                 OK       14273 B
