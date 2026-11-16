@@ -1,0 +1,9 @@
+[+  0.0s] boot_completed=<empty>
+[+  5.0s] boot_completed=<empty>
+[+ 10.0s] boot_completed=<empty>
+[+ 15.0s] boot_completed=<empty>
+[+ 20.0s] boot_completed=<empty>
+[+ 25.8s] boot_completed=<empty>
+[+ 30.8s] boot_completed=1
+
+Android ready: True  (用时 31s)

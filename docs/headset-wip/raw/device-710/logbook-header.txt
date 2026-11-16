@@ -1,0 +1,15 @@
+== HLOG header ==
+  magic   = 0x474f4c48  (HLOG)
+  version = 1  (OK)
+  len     = 528685  (0<len<=4MiB: True)
+  reason  = 0x0  (正常返回)
+  elr     = 0x22a51a251a
+  sum     = 0x291d3ce
+  捕获字节 = 4198400  足够容纳 body: True
+
+== 独立重算 additive checksum ==
+  body 528685 B
+  8-bit additive = 0xce
+  header sum 低 8 位 = 0xce
+  匹配: True
+  body sha256 = 7032ba03ee75a62f7ed71e3189ad5d0de6552cf96880671a896fd3c582f485fc

@@ -1,0 +1,9 @@
+argv: ['adb', '-s', '<SERIAL>', 'shell', '-T', '-n', 'su', '-c', "'dd if=/dev/block/by-name/xnusys bs=4096 skip=653560 count=2048 2>/dev/null'"]
+native rc=0
+stdout 8388608 B  期望 8388608
+stderr 0 B
+sha256 418c6dd0860e694e7bb42e19ab05bdacac526f80c524a278661ef3a165d493d5
+
+字节数精确: True
+header: magic=0x474f4c48 version=1 len=524668 reason=0x0
+  magic 是 HLOG: True

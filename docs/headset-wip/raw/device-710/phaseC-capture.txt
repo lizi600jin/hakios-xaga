@@ -1,0 +1,8 @@
+[host time] 2026-11-16T18:54:09.269283
+[body] dd if=/dev/block/by-name/xnusys bs=4096 skip=653560 count=1025 2>/dev/null
+[cmd] adb -s <SERIAL> shell -T -n su -c <quoted>
+  native rc = 0   timed_out=False   elapsed=0.52s
+  stdout    = 4198400 B  （期望 4198400）
+  stderr    = 0 B
+  sha256    = 347a3089c1e10217f84fa252ea6faf15f2e23f4bc2b3e906e3b1a6c4b76ad189
+  字节精确  = True

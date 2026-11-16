@@ -1,0 +1,19 @@
+header: magic=0x474f4c48 version=1 len=524668 reason=0x0 sum=0x28ce7c0
+body 长度: 524668
+
+== checksum ==  计算 0xc0  header 0x28ce7c0
+
+== trial710 证据（必须全 0，否则 STOP）==
+  mali_trial=710       0 次
+  headset=4            0 次
+  hp_trim_l=3          0 次
+  profile4             0 次
+
+  已含 trial710 证据: False  → ✅ 可继续
+
+== 旧记录身份 ==  mali_trial=709  reason=0x0
+
+== 前 3 行 ==
+  cpu 0 (phys id 0x0) is a slower core: the scheduler uses it after cpu 3 (phys id 0x700)
+  
+  === init: process 1, started as /redwood/sbin/init ===

@@ -1,0 +1,11 @@
+== checksum 正确核验（完整 64 位 sum）==
+  body 长度      = 528685
+  body SHA256    = 7032ba03ee75a62f7ed71e3189ad5d0de6552cf96880671a896fd3c582f485fc
+  完整 sum(body) = 0x291d3ce  (43111374)
+  header sum 64  = 0x291d3ce  (43111374)
+  精确相等       = True
+
+  低 8 位        = 0xce   （仅作参考，非判据）
+
+  ⚠️ 更正：此前我说『8-bit additive』不准确。
+     实际是 sum of all body bytes，与 header 的 64 位 sum 字段精确相等。

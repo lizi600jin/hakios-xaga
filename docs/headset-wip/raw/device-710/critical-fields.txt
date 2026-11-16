@@ -1,0 +1,27 @@
+== 阶段条数 ==
+  on        38
+  off       38
+  restored  38
+
+== 判据关键 on 字段（read&check==expected 且 verified）==
+  OK  sid=5 0x230c own=66 check=66 expected=00 read=00 keep=81 verified
+  OK  sid=5 0x2388 own=01 check=01 expected=01 read=01 keep=c0 verified
+  OK  sid=5 0x2389 own=01 check=01 expected=01 read=01 keep=00 verified
+  OK  sid=5 0x238e own=01 check=01 expected=01 read=01 keep=1e verified
+  OK  sid=5 0x23c8 own=fc check=fc expected=80 read=80 keep=00 verified
+  OK  sid=5 0x2488 own=ff check=ff expected=01 read=01 keep=00 verified
+  OK  sid=5 0x2537 own=01 check=01 expected=01 read=01 keep=7e verified
+  OK  sid=5 0x2588 own=ff check=ff expected=ff read=ff keep=00 verified
+  OK  sid=5 0x2589 own=ff check=ff expected=3a read=3a keep=00 verified
+  OK  sid=5 0x258a own=ff check=ff expected=03 read=03 keep=00 verified
+  OK  sid=5 0x258e own=ff check=ff expected=18 read=18 keep=00 verified
+  OK  sid=5 0x258f own=ff check=ff expected=8b read=8b keep=00 verified
+  OK  sid=5 0x260b own=1f check=1f expected=1f read=1f keep=00 verified
+  OK  sid=5 0x260c own=1f check=1f expected=1f read=1f keep=00 verified
+  OK  sid=9 0x079e own=04 check=04 expected=04 read=bc keep=fb verified
+
+全部通过: True
+
+== SID9 079e 说明 ==
+  own=04 check=04 expected=04 read=bc keep=fb
+  (check=04 只看 bit2，read=bc 的其余位由 keep=fb 保护)

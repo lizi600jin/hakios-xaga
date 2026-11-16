@@ -1,0 +1,8 @@
+[cmd] fastboot -s <SERIAL> reboot
+[host time] 2026-11-16T18:50:36.606282
+  native rc = 0   timed_out=False   elapsed=0.17s
+  stdout    = 
+  stderr    = Rebooting                                          OKAY [  0.017s]
+Finished. Total time: 0.068s
+
+  链式返回窗口: loader_return_after=150s，从此刻开始计

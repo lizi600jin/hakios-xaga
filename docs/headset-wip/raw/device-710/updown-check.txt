@@ -1,0 +1,22 @@
+===== UP_READBACK =====
+  [profile4 captured 38 field groups] 1 条
+    [   20.040446]: headset: profile4 captured 38 field groups; muted SGEN, low-power 48k reference
+  [profile4 codec configuration verified] 1 条
+    [   20.064802]: headset: profile4 codec configuration verified; muted SGEN, physical output unmeasured
+  [headphone without mic] 1 条
+    [   20.039814]: headset: cable headphone without mic (AB 0, detector 2)
+  [chip] 2 条
+    [   56.098154]: nvt: the chip is running the image this driver sent it
+    [   56.300588]: nvt: chip id reads 0e 00 00 72 66 03
+  [VAUD18] 0 条
+  [CLKSQ] 0 条
+
+===== DOWN_RESTORE =====
+  [profile4 off and 38 original field groups restored] 1 条
+    [  169.719854]: headset: profile4 off and 38 original field groups restored: verified
+  [HP off] 1 条
+    [  169.397338]: headset: profile4 HP off shape 2588=00 258a=00 2589=30 25a2=00: verified
+  [restored 36 configuration bytes] 1 条
+    [  169.726847]: headset: restored 36 configuration bytes: ok
+  [shutdown attempt] 0 条
+  [sequence=ok] 0 条

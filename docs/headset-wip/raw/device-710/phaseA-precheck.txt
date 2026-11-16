@@ -1,0 +1,25 @@
+# Phase A 前置核验  host: 2026-11-16T18:49:02+08:00
+
+## adb devices -l
+List of devices attached
+<SERIAL>       device usb:1-1 product:xaga model:22041216C device:xaga transport_id:1
+
+
+## slot / boot_completed / boot_id / SELinux
+_a
+1
+0ebf2d81-4822-47df-be3c-51916b1a7663
+Enforcing
+
+## boot_a 大小与 MD5
+67108864
+a63b2e35a7c2522cb24a6a10332b9bc8  /dev/block/by-name/boot_a
+
+## xnusys 大小与 logbook 起点核算
+  xnusys size: 2685370368
+  size - 8388608 = 2676981760
+  hex            = 0x9f8f8000
+  期望            = 2676981760 (0x9f8f8000)
+  匹配: True
+
+  dd 参数: bs=4096 skip=653560 count=2048
