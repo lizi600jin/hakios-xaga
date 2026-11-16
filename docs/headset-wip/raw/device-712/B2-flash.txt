@@ -1,0 +1,18 @@
+== 刷前复查 ==
+  22994944 B  sha256 b97f96722c5c7961326dadbf36d8624320ee696ac299a89a9663e1897e3379ee  md5 337fe6900a93fd80bc1965d911526da0
+  ✅ 批准镜像
+
+== reboot bootloader ==
+  rc=0 timeout=False
+  fastboot OK @ 1
+
+== TRIAL712 FLASH ==
+  native rc=0 timed_out=False elapsed=0.90s
+  Sending 'boot_a' (22456 KB)                        OKAY [  0.597s]
+Writing 'boot_a'                                   OKAY [  0.089s]
+Finished. Total time: 0.765s
+
+== REBOOT ==
+  native rc=0 timed_out=False
+
+[trial reboot] 2026-11-16T20:05:36.894627

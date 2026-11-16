@@ -1,0 +1,14 @@
+{
+  "trial": 712,
+  "approved_image_sha256": "b97f96722c5c7961326dadbf36d8624320ee696ac299a89a9663e1897e3379ee",
+  "requested_gain_code": 31,
+  "method": "User placed one headphone by recording phone microphone and the other outside the ear, with the tested phone farther away as requested",
+  "question": "Can the sound clearly be identified as coming from the headphone outside the ear?",
+  "user_reply": "能明确确认耳机出声",
+  "classification": "USER_CONFIRMED_HEADPHONE_AUDIBLE",
+  "limits": [
+    "User observation; no calibrated voltage/SPL or DC-offset measurement",
+    "Does not establish acoustic silence between gate requests",
+    "Does not exclude all simultaneous speaker sound"
+  ]
+}

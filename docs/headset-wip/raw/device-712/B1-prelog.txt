@@ -1,0 +1,7 @@
+[host] 2026-11-16T20:05:09.010035
+  xnusys 2685370368  -8388608 = 2676981760 (0x9f8f8000)  匹配 0x9f8f8000: True
+  dd rc=0  8388608 B  精确=True
+  sha256 9749fe471bf0113f7fa540a6f1dce6c848358060a61a843b8f36b75d2f8bdf26
+  header magic=0x474f4c48 ver=1 len=531234 reason=0x0
+  旧记录 mali_trial=711
+  含 trial712 证据: False  ✅ 非重复

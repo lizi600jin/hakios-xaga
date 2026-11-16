@@ -1,0 +1,10 @@
+[host] 2026-11-16T20:10:42.542177
+
+== STOCK_RECOVERY ==
+  slot            _a                     ✅
+  boot_completed  1                      ✅
+  SELinux         Enforcing              ✅
+  boot_id         686cb45c-3f54-481f-ba0c-5e9945f95449
+  boot_a size     67108864  ✅
+  boot_a MD5      a63b2e35a7c2522cb24a6a10332b9bc8  ✅ 回到原厂
+  SurfaceFlinger  Build configuration: [sf PRESENT_TIME_OFFSET=0 FORCE_HWC_FOR

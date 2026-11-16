@@ -1,0 +1,21 @@
+== 七条 edge ==
+    19.963s armed  p0/3 sgen=c0 gain=1f/1f amp=01 freq=00 verified
+    22.000s on     p1/3 sgen=80 gain=1f/1f amp=01 freq=00 verified
+    23.043s mute   p1/3 sgen=c0 gain=1f/1f amp=01 freq=00 verified
+    24.070s on     p2/3 sgen=80 gain=1f/1f amp=01 freq=00 verified
+    25.094s mute   p2/3 sgen=c0 gain=1f/1f amp=01 freq=00 verified
+    26.107s on     p3/3 sgen=80 gain=1f/1f amp=01 freq=00 verified
+    27.124s mute   p3/3 sgen=c0 gain=1f/1f amp=01 freq=00 verified
+
+== 段间间隔 ==
+  armed p0       → on p1            2037.1 ms  设计2000ms
+  on p1          → mute p1          1043.1 ms  OK
+  mute p1        → on p2            1027.0 ms  OK
+  on p2          → mute p2          1024.3 ms  OK
+  mute p2        → on p3            1012.4 ms  OK
+  on p3          → mute p3          1016.7 ms  OK
+
+  edge 数 7/7  全 verified: True
+  全 gain=1f/1f: True
+  sgen 序列: ['c0', '80', 'c0', '80', 'c0', '80', 'c0']
+  amp/freq 恒 01/00: True

@@ -1,0 +1,19 @@
+[host] 2026-11-16T20:09:31.927757
+== 主动 reboot bootloader ==
+  rc=1 timeout=False
+  attempt 1: rc=None
+  fastboot OK @ 2  < waiting for <SERIAL>>
+product:
+
+== stock 复查 ==
+  67108864 B  c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc  md5 a63b2e35a7c2522cb24a6a10332b9bc8
+  ✅
+
+== STOCK FLASH ==
+  native rc=0 timed_out=False elapsed=2.28s
+  Sending 'boot_a' (65536 KB)                        OKAY [  1.721s]
+Writing 'boot_a'                                   OKAY [  0.376s]
+Finished. Total time: 2.156s
+
+== REBOOT ==
+  native rc=0 timed_out=False
