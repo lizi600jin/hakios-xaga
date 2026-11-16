@@ -1,0 +1,8 @@
+# DAPM-OBSERVE-02 播放入口
+# date: 2026-11-16T13:36:15+08:00
+# resolve-activity 结果：com.miui.mediaviewer/com.miui.musicplayer.activity.AudioActivity
+
+## 命令
+am start -a android.intent.action.VIEW -d file:///data/local/tmp/dapm-observe-02-reference.wav -t audio/x-wav
+Starting: Intent { act=android.intent.action.VIEW dat=file:///... typ=audio/x-wav }
+rc=0

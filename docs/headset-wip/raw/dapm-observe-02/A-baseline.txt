@@ -1,0 +1,31 @@
+# A 阶段（播放前）  uptime=51329.01  host=2026-11-16T13:37:41+08:00
+CLK_BUF :: CLK_BUF: Off  in 0 out 0
+mt6368_vaud18 :: mt6368_vaud18: Off  in 0 out 0
+AUDGLB :: AUDGLB: Off  in 0 out 0 - R9634(0x25a2) mask 0x10
+CLKSQ Audio :: CLKSQ Audio: Off  in 0 out 0 - R9527(0x2537) mask 0x1
+AUDNCP_CK :: AUDNCP_CK: Off  in 0 out 0 - R8972(0x230c) mask 0x40
+ZCD13M_CK :: ZCD13M_CK: Off  in 0 out 0 - R8972(0x230c) mask 0x20
+AUD_CK :: AUD_CK: Off  in 0 out 0 - R8972(0x230c) mask 0x2
+AUDIF_CK :: AUDIF_CK: Off  in 0 out 0 - R8972(0x230c) mask 0x4
+DL Power Supply :: DL Power Supply: Off  in 0 out 0
+DL Digital Clock :: DL Digital Clock: Off  in 0 out 0
+NCP :: NCP: Off  in 0 out 0 - R9352(0x2488) mask 0x1
+SDM :: SDM: Off  in 0 out 0
+AFE_ON :: AFE_ON: Off  in 0 out 0 - R9096(0x2388) mask 0x1
+AFE_DL_SRC :: AFE_DL_SRC: Off  in 0 out 0 - R9097(0x2389) mask 0x1
+LDO :: LDO: Off  in 0 out 0 - R9635(0x25a3) mask 0x1
+LDO_REMOTE :: LDO_REMOTE: Off  in 0 out 0 - R9635(0x25a3) mask 0x4
+NV_REGULATOR :: NV_REGULATOR: Off  in 0 out 0 - R9635(0x25a3) mask 0x10
+IBIST :: IBIST: Off  in 0 out 0 - R9632(0x25a0) mask 0x10
+HP_ANA_TRIM :: HP_ANA_TRIM: Off  in 0 out 0 - R9613(0x258d) mask 0x80
+HP_MUTE :: HP_MUTE: Off  in 0 out 0
+HP_PULL_DOWN :: HP_PULL_DOWN: Off  in 0 out 0
+DAC In Mux :: DAC In Mux: Off  in 0 out 0
+DACL :: DACL: Off  in 0 out 0
+DACR :: DACR: Off  in 0 out 0
+HPL Mux :: HPL Mux: Off  in 0 out 1
+HPR Mux :: HPR Mux: Off  in 0 out 1
+AIF_RX :: AIF_RX: Off  in 0 out 0
+Headphone L :: Headphone L: Off  in 0 out 1
+Headphone R :: Headphone R: Off  in 0 out 1
+DC Trim :: DC Trim: Off  in 0 out 0 - R9624(0x2598) mask 0x40

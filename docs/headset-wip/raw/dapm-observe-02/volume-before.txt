@@ -1,0 +1,6 @@
+- STREAM_MUSIC:
+   Muted: false
+   Muted Internally: false
+--
+   Volume Group: AUDIO_STREAM_MUSIC
+

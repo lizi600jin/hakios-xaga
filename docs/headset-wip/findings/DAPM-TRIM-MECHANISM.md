@@ -197,3 +197,27 @@ DAPM 对 `SND_SOC_DAPM_SUPPLY` 有隐式规则：supply widget 可以被它的 c
 | 触发点是 `DC Trim` widget 的 `POST_PMD` | `DC Trim` 是否被某条隐式路径带动 |
 | 不在 codec probe 路径里 | 我们的实现应该走路线 A 还是 B |
 | 我们的驱动不走 DAPM，不会触发它 | trim 的实际值是多少 |
+
+---
+
+## 🔴 修正（2026-11-16，Codex 审定文案见 `DAPM-CORRECTIONS-AUDITED.md` §2）
+
+**本文件的核心推论「trim 不跑是因为没播放」被修正：**
+
+`mt6368_codec_init_reg` 末尾调用 `enable_trim_buf(priv, true)`，
+**明确注释会触发 `DC trim` widget power-down**；该 init 由 **codec probe** 调用。
+实际模块已内联该 init：`.text+0x12d0..0x12e8` 是 `update_bits(reg=2598, mask=40, val=40)`。
+
+**DAPM 新建 widget 时读取初始寄存器作为旧 power，再做初始同步，
+因此不需要先播放一次 —— 启动同步本身有触发该异步工作的路径。**
+
+| 本文件原表述 | 修正 |
+|---|---|
+| 「原厂 Android 开机后如果没走过那条 DAPM 路径，它就不会跑」 | **不能作为因果结论** |
+| 「所以 dmesg 里没有那两行是预期的，不是校准失败」 | **缺少日志仍判证据不足**，不能推出 trim=0、未运行或校准成功 |
+| 「DC Trim 放在 widget 表最后，靠最后被关闭来保证」 | **放在声明表最后不等于全部关闭操作中的绝对最后** |
+
+**仍然成立的部分**：校准线程由 `DC Trim` 的 `POST_PMD` 回调异步调度；
+打印格式串与判据一致；`mtk_hp_disable()` 里没有 CLKSQ（那部分属 §1 与 §6）。
+
+**证据边界不变**：`observ-01` 实测 30 widget 全 Off，但那只是软件状态。

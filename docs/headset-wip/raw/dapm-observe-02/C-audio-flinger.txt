@@ -1,0 +1,748 @@
+Start begin: 01-01 08:00:50.486
+Start end:   01-01 08:00:53.856
+Now:         11-16 13:39:15.949
+Notification Clients:
+   pid    uid  name
+  1192   1041  audioserver
+  1799   1000  android.uid.system
+  2607   1002  android.uid.bluetooth
+  2640   1001  android.uid.phone
+  2712   1000  android.uid.system
+  3344   1002  android.uid.bluetooth
+  4040   1000  android.uid.system
+  4516   1000  android.uid.system
+  4735   1000  android.uid.system
+  8064  10145  com.android.camera
+ 11640  10175  com.miui.mediaviewer
+ 12975  10152  com.miui.voiceassist
+Global session refs:
+  session  cnt     pid    uid  name
+      249    1    2712   1000  android.uid.system
+Hardware status: 0
+Vibrator infos(size=1):
+  - AudioVibratorInfo{id: 0, resonantFrequency: nan, qFactor: nan, maxAmplitude: nan}
+Bluetooth latency modes are enabled
+
+ ## BEGIN thread dump 
+
+Output thread 0xb400007a21a794d0, name AudioOut_D, tid 1433, type 0 (MIXER):
+  I/O handle: 13
+  Standby: yes
+  RT thread: yes
+  Sample rate: 48000 Hz
+  HAL frame count: 1024
+  HAL format: 0x3 (AUDIO_FORMAT_PCM_32_BIT)
+  HAL buffer size: 8192 bytes
+  Channel count: 2
+  Channel mask: 0x00000003 (front-left, front-right)
+  Processing format: 0x3 (AUDIO_FORMAT_PCM_32_BIT)
+  Processing frame size: 8 bytes
+  Pending config events: none
+  Output devices: 0x2 (AUDIO_DEVICE_OUT_SPEAKER)
+  Input device: 0 (AUDIO_DEVICE_NONE)
+  Audio source: 0 (AUDIO_SOURCE_DEFAULT)
+  Timestamp stats: n=0 disc=0 cold=0 nRdy=0 err=1 jitterMs(unavail) localSR(nan, nan) correctedJitterMs(unavail)
+  Timestamp corrected: no
+  Master volume: 1.000000
+  Master mute: off
+  Mixer channel Mask: 0x3 (front-left, front-right)
+  Normal frame count: 1024
+  Total writes: 0
+  Delayed writes: 0
+  Blocked in write: no
+  Suspend count: 0
+  Fast track availMask=0xfe
+  Standby delay ns=2000000000
+  Hw supports pause: no
+  Hw paused: no
+  Flush pending: no
+  AudioStreamOut: 0xb4000079216a9fe0 flags 0x2 (AUDIO_OUTPUT_FLAG_PRIMARY)
+  Frames written: 0
+  Suspended frames: 0
+  Hal stream dump:
+      Signal power history: (none)
+      Signal power history: (none)
+  Thread throttle time (msecs): 0
+  AudioMixer tracks: 
+  Master mono: off
+  Master balance: 0.000000 (balance 0 channelCount 2 volumes: 1 1)
+  No FastMixer
+Bluetooth latency modes are not enabled
+HAL does not support Bluetooth latency modes
+Supported latency modes: { }
+
+  Normal mixer raw underrun counters: partial=0 empty=0
+  0 Tracks
+  WakeLock debug:
+    tag=AudioMix held=false token=0x0 heldMs=0 lastAcquireMsAgo=85231 lastReleaseMsAgo=83224 uids=[]
+    updateFailedCount=0 updateTokenNullCount=3
+  1 Effect Chains
+    2 effects for session 0
+	In buffer                         Out buffer                           Active tracks:
+	0xb4000078e168c220 -> 0x7a21f71000   0x7a21f71000 -> 0xb4000078e168c220   0
+	Effect ID 19:
+		Session State Registered Internal Enabled Suspended:
+		00000   000   y          n        n       n
+		Descriptor:
+		- UUID: 5b8e36a5-144a-4c38-b1d7-0002a5d5c51b
+		- TYPE: f46b26a0-dddd-11db-8afd-0002a5d5c51b
+		- apiVersion: 00000000
+		- flags: 07460208 (conn. mode: insert, insert pref: first, volume mgmt: none, device indication: requires updates, input mode: not set, output mode: not set, hardware acceleration: tunneled, mode indication: required, offloadable)
+		- name: MiSound
+		- implementor: MiSound Audio Effect
+		5 Clients:
+			  Pid Priority Ctrl Locked client server
+			 4735        0  yes    yes      0      0
+			 1192        0  yes    yes      0      0
+			 4516        0  yes    yes      0      0
+			 3344        0  yes    yes      0      0
+			 1799        0  yes    yes      0      0
+		Status Engine:
+		000    0xb4000078d1690520
+		- data: float
+		- Input configuration:
+			Buffer     Frames  Smp rate Channels Format
+			0x7a21f71000 01024   48000    00000003      5 (AUDIO_FORMAT_PCM_FLOAT)
+		- Output configuration:
+			Buffer     Frames  Smp rate Channels Format
+			0x7a21f71000 01024   48000    00000003      5 (AUDIO_FORMAT_PCM_FLOAT)
+		- HAL buffers:
+			In(0xb4000078e168c220 -> 0x7a21f71000) InConversion(nullptr) Out(0x7a21f71000 -> 0xb4000078e168c220) OutConversion(nullptr)
+	Effect ID 19 HAL dump:
+	Effect ID 27:
+		Session State Registered Internal Enabled Suspended:
+		00000   003   y          n        y       n
+		Descriptor:
+		- UUID: 9d4921da-8225-4f29-aefa-39537a04bcaa
+		- TYPE: 46d279d9-9be7-453d-9d7c-ef937f675587
+		- apiVersion: 00000000
+		- flags: 00040288 (conn. mode: insert, insert pref: first, volume mgmt: requires indication, device indication: requires updates, input mode: not set, output mode: not set, mode indication: required)
+		- name: DAP
+		- implementor: Dolby Laboratories
+		4 Clients:
+			  Pid Priority Ctrl Locked client server
+			 4735        0  yes    yes      0      0
+			 1192        0  yes    yes      0      0
+			 4516        0  yes    yes      0      0
+			 1799        0  yes    yes      0      0
+		Status Engine:
+		000    0xb4000078d1690940
+		- data: float
+		- Input configuration:
+			Buffer     Frames  Smp rate Channels Format
+			0x7a21f71000 01024   48000    00000003      5 (AUDIO_FORMAT_PCM_FLOAT)
+		- Output configuration:
+			Buffer     Frames  Smp rate Channels Format
+			0x7a21f71000 01024   48000    00000003      5 (AUDIO_FORMAT_PCM_FLOAT)
+		- HAL buffers:
+			In(0xb4000078e168c220 -> 0x7a21f71000) InConversion(nullptr) Out(0x7a21f71000 -> 0xb4000078e168c220) OutConversion(nullptr)
+	Effect ID 27 HAL dump:
+  Local log:
+                                                         Type     Id Active Client(pid/uid) Session Port Id S  Flags   Format Chn mask  SRate ST Usg CT  G db  L dB  R dB  VS dB  PortVol dB  PortMuted   Server FrmCnt  FrmRdy F Underruns  Flushed BitPerfect InternalMute   Latency
+   01-01 08:00:50.918 threadLoop_standby
+   01-01 08:00:50.966 CFG_EVENT_CREATE_AUDIO_PATCH: old device  (Empty device types) new device 0x2 (AUDIO_DEVICE_OUT_SPEAKER)
+   09-20 22:15:30.965 removeTrack_l (0xb4000077c1696df8)          56     no    1192/   1041       0       0 T  0x000 00000005 00000003  48000 13   f  0  -inf     0     0     0            0      false 00000000   4096       0 I         0        0      false        false       new
+   11-16 13:20:44.719 removeTrack_l (0xb4000077c1696df8)          58     no    1192/   1041       0       0 T  0x000 00000005 00000003  48000 13   f  0  -inf     0     0     0            0      false 00000000   4096       0 I         0        0      false        false       new
+  WakeLock log:
+   01-01 08:00:50.918 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   01-01 08:00:50.918 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   09-20 22:15:28.581 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   09-20 22:15:30.995 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6350 status=0 uids=[]
+   09-20 22:15:32.997 WL::RELEASE tag=AudioMix token=0xb4000078916a6350 heldMs=2002 uids=[]
+   09-20 22:15:33.040 WL::ACQUIRE tag=AudioMix token=0xb4000078916a4110 status=0 uids=[]
+   09-20 22:15:35.044 WL::RELEASE tag=AudioMix token=0xb4000078916a4110 heldMs=2004 uids=[]
+   09-20 22:15:35.286 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6350 status=0 uids=[]
+   11-15 23:22:39.734 WL::RELEASE tag=AudioMix token=0xb4000078916a6350 heldMs=2003 uids=[]
+   11-15 23:22:40.862 WL::ACQUIRE tag=AudioMix token=0xb40000789168f190 status=0 uids=[]
+   11-15 23:22:42.866 WL::RELEASE tag=AudioMix token=0xb40000789168f190 heldMs=2004 uids=[]
+   11-15 23:22:44.031 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6c50 status=0 uids=[]
+   11-15 23:22:46.039 WL::RELEASE tag=AudioMix token=0xb4000078916a6c50 heldMs=2008 uids=[]
+   11-15 23:22:49.163 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6850 status=0 uids=[]
+   11-15 23:22:51.170 WL::RELEASE tag=AudioMix token=0xb4000078916a6850 heldMs=2008 uids=[]
+   11-15 23:23:32.078 WL::ACQUIRE tag=AudioMix token=0xb4000078916a5fd0 status=0 uids=[]
+   11-15 23:23:34.081 WL::RELEASE tag=AudioMix token=0xb4000078916a5fd0 heldMs=2008 uids=[]
+   11-15 23:33:22.445 WL::ACQUIRE tag=AudioMix token=0xb40000789168f190 status=0 uids=[]
+   11-15 23:33:24.449 WL::RELEASE tag=AudioMix token=0xb40000789168f190 heldMs=2003 uids=[]
+   11-16 00:09:41.391 WL::ACQUIRE tag=AudioMix token=0xb4000078916a68d0 status=0 uids=[]
+   11-16 00:09:43.393 WL::RELEASE tag=AudioMix token=0xb4000078916a68d0 heldMs=2002 uids=[]
+   11-16 13:20:44.741 WL::ACQUIRE tag=AudioMix token=0xb4000078916a5b50 status=0 uids=[]
+   11-16 13:20:46.748 WL::RELEASE tag=AudioMix token=0xb4000078916a5b50 heldMs=2008 uids=[]
+   11-16 13:36:16.499 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6d90 status=0 uids=[]
+   11-16 13:36:18.505 WL::RELEASE tag=AudioMix token=0xb4000078916a6d90 heldMs=2006 uids=[]
+   11-16 13:37:50.719 WL::ACQUIRE tag=AudioMix token=0xb4000078916cf390 status=0 uids=[]
+   11-16 13:37:52.726 WL::RELEASE tag=AudioMix token=0xb4000078916cf390 heldMs=2007 uids=[]
+
+Output thread 0xb400007a20fcf4d0, name AudioOut_15, tid 1446, type 0 (MIXER):
+  I/O handle: 21
+  Standby: yes
+  RT thread: yes
+  Sample rate: 48000 Hz
+  HAL frame count: 2048
+  HAL format: 0x3 (AUDIO_FORMAT_PCM_32_BIT)
+  HAL buffer size: 16384 bytes
+  Channel count: 2
+  Channel mask: 0x00000003 (front-left, front-right)
+  Processing format: 0x3 (AUDIO_FORMAT_PCM_32_BIT)
+  Processing frame size: 8 bytes
+  Pending config events: none
+  Output devices: 0x8 (AUDIO_DEVICE_OUT_WIRED_HEADPHONE)
+  Input device: 0 (AUDIO_DEVICE_NONE)
+  Audio source: 0 (AUDIO_SOURCE_DEFAULT)
+  Timestamp stats: n=2992 disc=1 cold=0 nRdy=0 err=3 rate=1 jitterMs(ave=-2.15093e-05 std=0.0173641 min=-0.0415127 max=0.0406413) localSR(48000, 1.06763e-11) correctedJitterMs(ave=-3.19058e-05 std=0.00855191 min=-0.020308 max=0.024192)
+  Timestamp corrected: no
+  Last write occurred (msecs): 23405
+  Process time ms stats: ave=7.29394 std=0.619759 min=1.18708 max=14.4852
+  Hal write jitter ms stats: ave=-0.00296454 std=1.00721 min=-40.0723 max=3.02326
+  Threadloop write latency stats: ave=163.64 std=53.9432 min=-32148.4 max=169.274
+  Master volume: 1.000000
+  Master mute: off
+  Mixer channel Mask: 0x3 (front-left, front-right)
+  Normal frame count: 2048
+  Total writes: 2902
+  Delayed writes: 0
+  Blocked in write: no
+  Suspend count: 0
+  Fast track availMask=0xfe
+  Standby delay ns=2000000000
+  Hw supports pause: no
+  Hw paused: no
+  Flush pending: no
+  AudioStreamOut: 0xb4000079216a5800 flags 0x8 (AUDIO_OUTPUT_FLAG_DEEP_BUFFER)
+  Frames written: 5943296
+  Suspended frames: 0
+  Hal stream dump:
+      Signal power history (resolution: 1000.0 ms):
+       11-16 13:36:16.818: [  -88.9  -89.2  -89.4  -89.5  -89.4  -89.4  -89.1  -87.9  -86.5  -85.5
+       11-16 13:36:26.817:    -85.2  -85.1  -85.1  -85.0  -85.0  -85.0  -85.0  -85.0  -84.9  -84.9
+       11-16 13:36:36.819:    -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9
+       11-16 13:36:46.818:    -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9
+       11-16 13:36:56.818:    -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9
+       11-16 13:37:06.818:    -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -84.9  -86.5 ] sum(-17.8)
+       11-16 13:37:50.807: [  -84.2  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:00.765:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:10.765:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:20.765:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:30.766:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:40.765:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -84.1
+       11-16 13:38:50.765:   -133.1
+      Signal power history (resolution: 50.0 ms):
+       11-16 13:38:41.365:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:41.865:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:42.365:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:42.865:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:43.365:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:43.867:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:44.365:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:44.865:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:45.365:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:45.865:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:46.366:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:46.866:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:47.367:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:47.865:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:48.366:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:48.866:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:49.366:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:49.865:    -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7  -83.7
+       11-16 13:38:50.365:    -83.7  -83.7  -83.7  -83.7  -83.7  -84.0  -93.6 -112.4 -120.5 -130.8 ] sum(-24.1)
+
+    -78.9 -|
+    -83.7 -|******************************************************************************************************************************************************************************************
+    -88.4 -|
+    -93.1 -|                                                                                                                                                                                          *
+    -97.8 -|
+   -102.5 -|
+   -107.2 -|
+   -112.0 -|                                                                                                                                                                                           *
+   -116.7 -|
+   -121.4 -|                                                                                                                                                                                            *
+   -126.1 -|
+   -130.8 -|                                                                                                                                                                                             *
+   -135.6 -|
+   -140.3 -|
+           |______________________________________________________________________________________________________________________________________________________________________________________________
+
+
+  Thread throttle time (msecs): 102
+  AudioMixer tracks: 
+  Master mono: off
+  Master balance: 0.000000 (balance 0 channelCount 2 volumes: 1 1)
+  No FastMixer
+Bluetooth latency modes are not enabled
+HAL does not support Bluetooth latency modes
+Supported latency modes: { }
+
+  Normal mixer raw underrun counters: partial=0 empty=0
+  0 Tracks
+  WakeLock debug:
+    tag=AudioMix held=false token=0x0 heldMs=0 lastAcquireMsAgo=85236 lastReleaseMsAgo=23315 uids=[]
+    updateFailedCount=0 updateTokenNullCount=3
+  0 Effect Chains
+  Local log:
+                                                         Type     Id Active Client(pid/uid) Session Port Id S  Flags   Format Chn mask  SRate ST Usg CT  G db  L dB  R dB  VS dB  PortVol dB  PortMuted   Server FrmCnt  FrmRdy F Underruns  Flushed BitPerfect InternalMute   Latency
+   01-01 08:00:50.985 threadLoop_standby
+   01-01 08:00:50.996 CFG_EVENT_CREATE_AUDIO_PATCH: old device  (Empty device types) new device 0x2 (AUDIO_DEVICE_OUT_SPEAKER)
+   11-16 13:36:16.533 CFG_EVENT_CREATE_AUDIO_PATCH: old device 0x2 (AUDIO_DEVICE_OUT_SPEAKER) new device 0x8 (AUDIO_DEVICE_OUT_WIRED_HEADPHONE)
+   11-16 13:36:16.542 AT::add       (0xb4000077c1694978)          59     no   11640/  10175     241      34 A  0x000 00000001 00000003  48000  3   1  0  -inf  -inf  -inf     0          -46      false 00000000   8200       0 f         0        0      false        false       new
+   11-16 13:37:16.490 removeTrack_l (0xb4000077c1696e08)          61     no   11640/  10175     257      36 T  0x200 00000001 00000003  48000  3   1  0  -inf     0     0     0         -inf      false 00000000   8200       0 f         0        0      false        false       new
+   11-16 13:37:16.595 AT::remove    (0xb4000077c1694978)          59     no   11640/  10175     241      34 T  0x600 00000001 00000003  48000  3   1  0  -inf     0     0     0          -46      false 002BE000   8200    4608 f         0        0      false        false  261.56 k
+   11-16 13:37:16.595 removeTrack_l (0xb4000077c1694978)          59     no   11640/  10175     241      34 T  0x600 00000001 00000003  48000  3   1  0  -inf     0     0     0          -46      false 002BE000   8200    4608 f         0        0      false        false  261.56 k
+   11-16 13:37:18.430 threadLoop_standby
+   11-16 13:37:50.736 CFG_EVENT_CREATE_AUDIO_PATCH: old device 0x8 (AUDIO_DEVICE_OUT_WIRED_HEADPHONE) new device 0x8 (AUDIO_DEVICE_OUT_WIRED_HEADPHONE)
+   11-16 13:37:50.744 AT::add       (0xb4000077c1696e08)          62     no   11640/  10175     265      37 A  0x000 00000001 00000003  48000  3   1  0  -inf  -inf  -inf     0          -46      false 00000000   8200       0 f         0        0      false        false       new
+   11-16 13:38:50.652 removeTrack_l (0xb4000077c1699298)          63     no   11640/  10175     273      38 T  0x200 00000001 00000003  48000  3   1  0  -inf     0     0     0         -inf      false 00000000   8200       0 f         0        0      false        false       new
+   11-16 13:38:50.755 AT::remove    (0xb4000077c1696e08)          62     no   11640/  10175     265      37 T  0x600 00000001 00000003  48000  3   1  0  -inf     0     0     0          -46      false 002BE000   8200    4608 f         0        0      false        false  260.69 k
+   11-16 13:38:50.755 removeTrack_l (0xb4000077c1696e08)          62     no   11640/  10175     265      37 T  0x600 00000001 00000003  48000  3   1  0  -inf     0     0     0          -46      false 002BE000   8200    4608 f         0        0      false        false  260.69 k
+   11-16 13:38:52.592 threadLoop_standby
+  WakeLock log:
+   01-01 08:00:50.984 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   01-01 08:00:50.995 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   09-20 22:15:28.581 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   09-20 22:15:31.095 WL::ACQUIRE tag=AudioMix token=0xb4000078916a5f90 status=0 uids=[]
+   09-20 22:15:33.104 WL::RELEASE tag=AudioMix token=0xb4000078916a5f90 heldMs=2009 uids=[]
+   09-20 22:15:35.012 WL::ACQUIRE tag=AudioMix token=0xb4000078916a4690 status=0 uids=[]
+   11-15 23:22:39.467 WL::RELEASE tag=AudioMix token=0xb4000078916a4690 heldMs=2010 uids=[]
+   11-15 23:22:40.862 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6610 status=0 uids=[]
+   11-15 23:22:42.879 WL::RELEASE tag=AudioMix token=0xb4000078916a6610 heldMs=2017 uids=[]
+   11-15 23:22:44.032 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6950 status=0 uids=[]
+   11-15 23:22:46.039 WL::RELEASE tag=AudioMix token=0xb4000078916a6950 heldMs=2008 uids=[]
+   11-15 23:22:49.163 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6a10 status=0 uids=[]
+   11-15 23:22:51.181 WL::RELEASE tag=AudioMix token=0xb4000078916a6a10 heldMs=2018 uids=[]
+   11-15 23:23:32.078 WL::ACQUIRE tag=AudioMix token=0xb4000078916a7150 status=0 uids=[]
+   11-15 23:23:34.090 WL::RELEASE tag=AudioMix token=0xb4000078916a7150 heldMs=2018 uids=[]
+   11-16 00:09:41.391 WL::ACQUIRE tag=AudioMix token=0xb4000078916a53d0 status=0 uids=[]
+   11-16 00:09:43.404 WL::RELEASE tag=AudioMix token=0xb4000078916a53d0 heldMs=2013 uids=[]
+   11-16 13:36:16.500 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6c10 status=0 uids=[]
+   11-16 13:36:16.542 WL::TRACK_ADD track=0xb4000077c1694978 id=59 uid=10175 pid=11640 session=241 port=34
+   11-16 13:36:16.546 WL::POWER_STATE_UPDATE force=0 activeTracks=1
+   11-16 13:36:16.546 WL::UPDATE_UIDS token=0xb4000078916a6c10 old=[] new=[10175 ] status=0
+   11-16 13:37:16.595 WL::TRACK_REMOVE track=0xb4000077c1694978 id=59 uid=10175 pid=11640 session=241 port=34
+   11-16 13:37:16.595 WL::POWER_STATE_UPDATE force=0 activeTracks=0
+   11-16 13:37:16.595 WL::UPDATE_UIDS token=0xb4000078916a6c10 old=[10175 ] new=[] status=0
+   11-16 13:37:18.479 WL::RELEASE tag=AudioMix token=0xb4000078916a6c10 heldMs=61979 uids=[]
+   11-16 13:37:50.720 WL::ACQUIRE tag=AudioMix token=0xb4000078916a7650 status=0 uids=[]
+   11-16 13:37:50.744 WL::TRACK_ADD track=0xb4000077c1696e08 id=62 uid=10175 pid=11640 session=265 port=37
+   11-16 13:37:50.745 WL::POWER_STATE_UPDATE force=0 activeTracks=1
+   11-16 13:37:50.745 WL::UPDATE_UIDS token=0xb4000078916a7650 old=[] new=[10175 ] status=0
+   11-16 13:38:50.755 WL::TRACK_REMOVE track=0xb4000077c1696e08 id=62 uid=10175 pid=11640 session=265 port=37
+   11-16 13:38:50.755 WL::POWER_STATE_UPDATE force=0 activeTracks=0
+   11-16 13:38:50.755 WL::UPDATE_UIDS token=0xb4000078916a7650 old=[10175 ] new=[] status=0
+   11-16 13:38:52.640 WL::RELEASE tag=AudioMix token=0xb4000078916a7650 heldMs=61920 uids=[]
+
+Output thread 0xb400007a20e174d0, name AudioOut_1D, tid 1452, type 0 (MIXER):
+  I/O handle: 29
+  Standby: yes
+  RT thread: yes
+  Sample rate: 48000 Hz
+  HAL frame count: 256
+  HAL format: 0x3 (AUDIO_FORMAT_PCM_32_BIT)
+  HAL buffer size: 2048 bytes
+  Channel count: 2
+  Channel mask: 0x00000003 (front-left, front-right)
+  Processing format: 0x5 (AUDIO_FORMAT_PCM_FLOAT)
+  Processing frame size: 8 bytes
+  Pending config events: none
+  Output devices: 0x8 (AUDIO_DEVICE_OUT_WIRED_HEADPHONE)
+  Input device: 0 (AUDIO_DEVICE_NONE)
+  Audio source: 0 (AUDIO_SOURCE_DEFAULT)
+  Timestamp stats: n=268 disc=1 cold=0 nRdy=0 err=10 rate=1 jitterMs(ave=1.47166e-05 std=0.0174838 min=-0.0400507 max=0.043846) localSR(48000, 5.4626e-10) correctedJitterMs(ave=4.0795e-06 std=0.00844282 min=-0.019423 max=0.020692)
+  Timestamp corrected: no
+  Last write occurred (msecs): 151948
+  Master volume: 1.000000
+  Master mute: off
+  Mixer channel Mask: 0x3 (front-left, front-right)
+  Normal frame count: 768
+  Total writes: 152
+  Delayed writes: 0
+  Blocked in write: no
+  Suspend count: 0
+  Fast track availMask=0xfe
+  Standby delay ns=2000000000
+  Hw supports pause: no
+  Hw paused: no
+  Flush pending: no
+  AudioStreamOut: 0xb4000079216a9a40 flags 0x4 (AUDIO_OUTPUT_FLAG_FAST)
+  Frames written: 116736
+  Suspended frames: 0
+  PipeSink frames written: 116736
+  Hal stream dump:
+      Signal power history: (none)
+      Signal power history: (none)
+  Thread throttle time (msecs): 0
+  AudioMixer tracks: 60 
+  Master mono: off
+  Master balance: 0.000000 (0.000000)
+  FastMixer thread 0xb400007a1cf87f20 tid=1451  FastMixer command=COLD_IDLE writeSequence=914 framesWritten=116992
+            numTracks=1 writeErrors=0 underruns=0 overruns=0
+            sampleRate=48000 frameCount=256 measuredWarmup=24.2 ms, warmupCycles=4
+            mixPeriod=5.33 ms latency=10.21 ms
+  FastMixer Timestamp stats: n=453 disc=0 cold=0 nRdy=0 err=0 rate=0.999988 jitterMs(ave=6.0046e-05 std=0.0172752 min=-0.0385127 max=0.045308) localSR(48000, 7.25031e-10) correctedJitterMs(ave=4.91234e-05 std=0.00844416 min=-0.020846 max=0.0267953)
+  Simple moving statistics over last 2.4 seconds:
+    wall clock time in ms per mix cycle:
+      mean=5.33 min=3.72 max=6.96 stddev=0.34
+    raw CPU load in us per mix cycle:
+      mean=321 min=0 max=900 stddev=137
+  Fast tracks: sMaxFastTracks=8 activeMask=0x1
+  Index Active Full Partial Empty  Recent Ready    Written
+      0    yes  453       0     0    full  1024     115712
+      1     no    0       0     0    full     0          0
+      2     no    0       0     0    full     0          0
+      3     no    0       0     0    full     0          0
+      4     no    0       0     0    full     0          0
+      5     no    0       0     0    full     0          0
+      6     no    0       0     0    full     0          0
+      7     no    0       0     0    full     0          0
+Bluetooth latency modes are not enabled
+HAL does not support Bluetooth latency modes
+Supported latency modes: { }
+
+  Normal mixer raw underrun counters: partial=0 empty=0
+  1 Tracks of which 0 are active
+    Type     Id Active Client(pid/uid) Session Port Id S  Flags   Format Chn mask  SRate ST Usg CT  G db  L dB  R dB  VS dB  PortVol dB  PortMuted   Server FrmCnt  FrmRdy F Underruns  Flushed BitPerfect InternalMute   Latency
+       S     60     no    2712/   1000     249      35 S  0x600 00000001 00000003  44100  1   d  4  -inf    -6    -6     0          -36       true 00004CB5  19637       0 f         0        0      false        false   51.12 k
+  WakeLock debug:
+    tag=AudioMix held=false token=0x0 heldMs=0 lastAcquireMsAgo=85238 lastReleaseMsAgo=83237 uids=[]
+    updateFailedCount=0 updateTokenNullCount=3
+  0 Effect Chains
+  Local log:
+                                                         Type     Id Active Client(pid/uid) Session Port Id S  Flags   Format Chn mask  SRate ST Usg CT  G db  L dB  R dB  VS dB  PortVol dB  PortMuted   Server FrmCnt  FrmRdy F Underruns  Flushed BitPerfect InternalMute   Latency
+   01-01 08:00:51.000 threadLoop_standby
+   01-01 08:00:51.011 CFG_EVENT_CREATE_AUDIO_PATCH: old device  (Empty device types) new device 0x2 (AUDIO_DEVICE_OUT_SPEAKER)
+   11-16 13:36:41.579 CFG_EVENT_CREATE_AUDIO_PATCH: old device 0x2 (AUDIO_DEVICE_OUT_SPEAKER) new device 0x8 (AUDIO_DEVICE_OUT_WIRED_HEADPHONE)
+   11-16 13:36:41.582 AT::add       (0xb4000077c1697a38)    S     60     no    2712/   1000     249      35 A  0x000 00000001 00000003  44100  1   d  4  -inf    -6    -6     0          -36       true 00000000  19637   19637 F         0        0      false        false       new
+   11-16 13:36:42.081 AT::remove    (0xb4000077c1697a38)    S     60     no    2712/   1000     249      35 S  0x600 00000001 00000003  44100  1   d  4  -inf    -6    -6     0          -36       true 00004CB5  19637       0 f         0        0      false        false   51.12 k
+   11-16 13:36:44.024 threadLoop_standby: framesWritten:116736  suspendedFrames:0  monoPipeWritten:116736  monoPipeLeft:768
+   11-16 13:36:44.024 threadLoop_standby: BOOTTIME offset 45607604206530: ExtendedTimestamp: ([0]  position: 0  time: -1), ([1]  position: 116736  time: 5663983102644), ([2]  position: 115222  time: 5663995379336), ([3]  position: 116736  time: 5663983102644), ([4]  position: 114968  time: 5663990059567)
+   11-16 13:36:44.027 threadLoop_standby
+  WakeLock log:
+   01-01 08:00:51.000 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   01-01 08:00:51.010 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   09-20 22:15:28.581 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   09-20 22:15:31.095 WL::ACQUIRE tag=AudioMix token=0xb4000078916a5b10 status=0 uids=[]
+   09-20 22:15:33.097 WL::RELEASE tag=AudioMix token=0xb4000078916a5b10 heldMs=2002 uids=[]
+   09-20 22:15:35.012 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6990 status=0 uids=[]
+   11-15 23:22:39.459 WL::RELEASE tag=AudioMix token=0xb4000078916a6990 heldMs=2002 uids=[]
+   11-15 23:22:40.862 WL::ACQUIRE tag=AudioMix token=0xb4000078916a7250 status=0 uids=[]
+   11-15 23:22:42.865 WL::RELEASE tag=AudioMix token=0xb4000078916a7250 heldMs=2003 uids=[]
+   11-15 23:22:44.032 WL::ACQUIRE tag=AudioMix token=0xb4000078916a7210 status=0 uids=[]
+   11-15 23:22:46.036 WL::RELEASE tag=AudioMix token=0xb4000078916a7210 heldMs=2005 uids=[]
+   11-15 23:22:49.164 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6b90 status=0 uids=[]
+   11-15 23:22:51.165 WL::RELEASE tag=AudioMix token=0xb4000078916a6b90 heldMs=2002 uids=[]
+   11-15 23:23:32.073 WL::ACQUIRE tag=AudioMix token=0xb4000078916a7110 status=0 uids=[]
+   11-15 23:23:34.075 WL::RELEASE tag=AudioMix token=0xb4000078916a7110 heldMs=2002 uids=[]
+   11-16 00:09:41.391 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6f50 status=0 uids=[]
+   11-16 00:09:43.395 WL::RELEASE tag=AudioMix token=0xb4000078916a6f50 heldMs=2004 uids=[]
+   11-16 13:36:16.500 WL::ACQUIRE tag=AudioMix token=0xb4000078916a75d0 status=0 uids=[]
+   11-16 13:36:18.504 WL::RELEASE tag=AudioMix token=0xb4000078916a75d0 heldMs=2004 uids=[]
+   11-16 13:36:41.570 WL::ACQUIRE tag=AudioMix token=0xb4000078916cf110 status=0 uids=[]
+   11-16 13:36:41.582 WL::TRACK_ADD track=0xb4000077c1697a38 id=60 uid=1000 pid=2712 session=249 port=35
+   11-16 13:36:41.583 WL::POWER_STATE_UPDATE force=0 activeTracks=1
+   11-16 13:36:41.583 WL::UPDATE_UIDS token=0xb4000078916cf110 old=[] new=[1000 ] status=0
+   11-16 13:36:42.081 WL::TRACK_REMOVE track=0xb4000077c1697a38 id=60 uid=1000 pid=2712 session=249 port=35
+   11-16 13:36:42.081 WL::POWER_STATE_UPDATE force=0 activeTracks=0
+   11-16 13:36:42.081 WL::UPDATE_UIDS token=0xb4000078916cf110 old=[1000 ] new=[] status=0
+   11-16 13:36:44.044 WL::RELEASE tag=AudioMix token=0xb4000078916cf110 heldMs=2474 uids=[]
+   11-16 13:37:50.720 WL::ACQUIRE tag=AudioMix token=0xb4000078916cf750 status=0 uids=[]
+   11-16 13:37:52.720 WL::RELEASE tag=AudioMix token=0xb4000078916cf750 heldMs=2000 uids=[]
+
+Output thread 0xb400007a1ce074d0, name AudioOut_25, tid 1456, type 0 (MIXER):
+  I/O handle: 37
+  Standby: yes
+  RT thread: yes
+  Sample rate: 48000 Hz
+  HAL frame count: 1024
+  HAL format: 0x3 (AUDIO_FORMAT_PCM_32_BIT)
+  HAL buffer size: 8192 bytes
+  Channel count: 2
+  Channel mask: 0x00000003 (front-left, front-right)
+  Processing format: 0x3 (AUDIO_FORMAT_PCM_32_BIT)
+  Processing frame size: 8 bytes
+  Pending config events: none
+  Output devices: 0x2 (AUDIO_DEVICE_OUT_SPEAKER)
+  Input device: 0 (AUDIO_DEVICE_NONE)
+  Audio source: 0 (AUDIO_SOURCE_DEFAULT)
+  Timestamp stats: n=0 disc=0 cold=0 nRdy=0 err=1 jitterMs(unavail) localSR(nan, nan) correctedJitterMs(unavail)
+  Timestamp corrected: no
+  Master volume: 1.000000
+  Master mute: off
+  Mixer channel Mask: 0x3 (front-left, front-right)
+  Normal frame count: 1024
+  Total writes: 0
+  Delayed writes: 0
+  Blocked in write: no
+  Suspend count: 0
+  Fast track availMask=0xfe
+  Standby delay ns=2000000000
+  Hw supports pause: no
+  Hw paused: no
+  Flush pending: no
+  AudioStreamOut: 0xb4000079216ab0c0 flags 0x8000 (AUDIO_OUTPUT_FLAG_VOIP_RX)
+  Frames written: 0
+  Suspended frames: 0
+  Hal stream dump:
+      Signal power history: (none)
+      Signal power history: (none)
+  Thread throttle time (msecs): 0
+  AudioMixer tracks: 
+  Master mono: off
+  Master balance: 0.000000 (balance 0 channelCount 2 volumes: 1 1)
+  No FastMixer
+Bluetooth latency modes are not enabled
+HAL does not support Bluetooth latency modes
+Supported latency modes: { }
+
+  Normal mixer raw underrun counters: partial=0 empty=0
+  0 Tracks
+  WakeLock debug:
+    tag=AudioMix held=false token=0x0 heldMs=0 lastAcquireMsAgo=85240 lastReleaseMsAgo=83233 uids=[]
+    updateFailedCount=0 updateTokenNullCount=3
+  0 Effect Chains
+  Local log:
+                                                         Type     Id Active Client(pid/uid) Session Port Id S  Flags   Format Chn mask  SRate ST Usg CT  G db  L dB  R dB  VS dB  PortVol dB  PortMuted   Server FrmCnt  FrmRdy F Underruns  Flushed BitPerfect InternalMute   Latency
+   01-01 08:00:51.022 threadLoop_standby
+   01-01 08:00:51.031 CFG_EVENT_CREATE_AUDIO_PATCH: old device  (Empty device types) new device 0x2 (AUDIO_DEVICE_OUT_SPEAKER)
+  WakeLock log:
+   01-01 08:00:51.022 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   01-01 08:00:51.029 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   09-20 22:15:28.581 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   09-20 22:15:31.095 WL::ACQUIRE tag=AudioMix token=0xb4000078916a53d0 status=0 uids=[]
+   09-20 22:15:33.104 WL::RELEASE tag=AudioMix token=0xb4000078916a53d0 heldMs=2009 uids=[]
+   09-20 22:15:35.012 WL::ACQUIRE tag=AudioMix token=0xb4000078916a5090 status=0 uids=[]
+   11-15 23:22:39.462 WL::RELEASE tag=AudioMix token=0xb4000078916a5090 heldMs=2004 uids=[]
+   11-15 23:22:40.862 WL::ACQUIRE tag=AudioMix token=0xb4000078916a7110 status=0 uids=[]
+   11-15 23:22:42.866 WL::RELEASE tag=AudioMix token=0xb4000078916a7110 heldMs=2004 uids=[]
+   11-15 23:22:44.032 WL::ACQUIRE tag=AudioMix token=0xb4000078916a68d0 status=0 uids=[]
+   11-15 23:22:46.041 WL::RELEASE tag=AudioMix token=0xb4000078916a68d0 heldMs=2010 uids=[]
+   11-15 23:22:49.163 WL::ACQUIRE tag=AudioMix token=0xb4000078916a5b10 status=0 uids=[]
+   11-15 23:22:51.168 WL::RELEASE tag=AudioMix token=0xb4000078916a5b10 heldMs=2005 uids=[]
+   11-15 23:23:32.072 WL::ACQUIRE tag=AudioMix token=0xb4000078916a4690 status=0 uids=[]
+   11-15 23:23:34.076 WL::RELEASE tag=AudioMix token=0xb4000078916a4690 heldMs=2004 uids=[]
+   11-16 00:09:41.391 WL::ACQUIRE tag=AudioMix token=0xb4000078916a5fd0 status=0 uids=[]
+   11-16 00:09:43.401 WL::RELEASE tag=AudioMix token=0xb4000078916a5fd0 heldMs=2010 uids=[]
+   11-16 13:36:16.500 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6c90 status=0 uids=[]
+   11-16 13:36:18.505 WL::RELEASE tag=AudioMix token=0xb4000078916a6c90 heldMs=2005 uids=[]
+   11-16 13:37:50.719 WL::ACQUIRE tag=AudioMix token=0xb4000078916a7810 status=0 uids=[]
+   11-16 13:37:52.726 WL::RELEASE tag=AudioMix token=0xb4000078916a7810 heldMs=2006 uids=[]
+
+Output thread 0xb400007a190a64d0, name AudioOut_2D, tid 1461, type 0 (MIXER):
+  I/O handle: 45
+  Standby: yes
+  RT thread: yes
+  Sample rate: 48000 Hz
+  HAL frame count: 1024
+  HAL format: 0x3 (AUDIO_FORMAT_PCM_32_BIT)
+  HAL buffer size: 8192 bytes
+  Channel count: 2
+  Channel mask: 0x00000003 (front-left, front-right)
+  Processing format: 0x3 (AUDIO_FORMAT_PCM_32_BIT)
+  Processing frame size: 8 bytes
+  Pending config events: none
+  Output devices: 0x10000 (AUDIO_DEVICE_OUT_TELEPHONY_TX)
+  Input device: 0 (AUDIO_DEVICE_NONE)
+  Audio source: 0 (AUDIO_SOURCE_DEFAULT)
+  Timestamp stats: n=0 disc=0 cold=0 nRdy=0 err=1 jitterMs(unavail) localSR(nan, nan) correctedJitterMs(unavail)
+  Timestamp corrected: no
+  Master volume: 1.000000
+  Master mute: off
+  Mixer channel Mask: 0x3 (front-left, front-right)
+  Normal frame count: 1024
+  Total writes: 0
+  Delayed writes: 0
+  Blocked in write: no
+  Suspend count: 0
+  Fast track availMask=0xfe
+  Standby delay ns=2000000000
+  Hw supports pause: no
+  Hw paused: no
+  Flush pending: no
+  AudioStreamOut: 0xb4000079216aa850 flags 0x80000000 (AUDIO_OUTPUT_FLAG_INCALL_MUSIC)
+  Frames written: 0
+  Suspended frames: 0
+  Hal stream dump:
+      Signal power history: (none)
+      Signal power history: (none)
+  Thread throttle time (msecs): 0
+  AudioMixer tracks: 
+  Master mono: off
+  Master balance: 0.000000 (balance 0 channelCount 2 volumes: 1 1)
+  No FastMixer
+Bluetooth latency modes are not enabled
+HAL does not support Bluetooth latency modes
+Supported latency modes: { }
+
+  Normal mixer raw underrun counters: partial=0 empty=0
+  0 Tracks
+  WakeLock debug:
+    tag=AudioMix held=false token=0x0 heldMs=0 lastAcquireMsAgo=85241 lastReleaseMsAgo=83234 uids=[]
+    updateFailedCount=0 updateTokenNullCount=3
+  0 Effect Chains
+  Local log:
+                                                         Type     Id Active Client(pid/uid) Session Port Id S  Flags   Format Chn mask  SRate ST Usg CT  G db  L dB  R dB  VS dB  PortVol dB  PortMuted   Server FrmCnt  FrmRdy F Underruns  Flushed BitPerfect InternalMute   Latency
+   01-01 08:00:51.040 threadLoop_standby
+   01-01 08:00:51.059 CFG_EVENT_CREATE_AUDIO_PATCH: old device  (Empty device types) new device 0x10000 (AUDIO_DEVICE_OUT_TELEPHONY_TX)
+  WakeLock log:
+   01-01 08:00:51.040 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   01-01 08:00:51.058 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   09-20 22:15:28.581 WL::UPDATE_UIDS_SKIP token=null old=[] new=[] systemReady=0
+   09-20 22:15:31.095 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6490 status=0 uids=[]
+   09-20 22:15:33.104 WL::RELEASE tag=AudioMix token=0xb4000078916a6490 heldMs=2009 uids=[]
+   09-20 22:15:35.012 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6710 status=0 uids=[]
+   11-15 23:22:39.462 WL::RELEASE tag=AudioMix token=0xb4000078916a6710 heldMs=2004 uids=[]
+   11-15 23:22:40.862 WL::ACQUIRE tag=AudioMix token=0xb4000078916a7350 status=0 uids=[]
+   11-15 23:22:42.866 WL::RELEASE tag=AudioMix token=0xb4000078916a7350 heldMs=2004 uids=[]
+   11-15 23:22:44.032 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6490 status=0 uids=[]
+   11-15 23:22:46.041 WL::RELEASE tag=AudioMix token=0xb4000078916a6490 heldMs=2010 uids=[]
+   11-15 23:22:49.164 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6b10 status=0 uids=[]
+   11-15 23:22:51.168 WL::RELEASE tag=AudioMix token=0xb4000078916a6b10 heldMs=2005 uids=[]
+   11-15 23:23:32.073 WL::ACQUIRE tag=AudioMix token=0xb4000078916a6c50 status=0 uids=[]
+   11-15 23:23:34.076 WL::RELEASE tag=AudioMix token=0xb4000078916a6c50 heldMs=2004 uids=[]
+   11-16 00:09:41.391 WL::ACQUIRE tag=AudioMix token=0xb4000078916a7110 status=0 uids=[]
+   11-16 00:09:43.401 WL::RELEASE tag=AudioMix token=0xb4000078916a7110 heldMs=2010 uids=[]
+   11-16 13:36:16.500 WL::ACQUIRE tag=AudioMix token=0xb4000078916a7810 status=0 uids=[]
+   11-16 13:36:18.505 WL::RELEASE tag=AudioMix token=0xb4000078916a7810 heldMs=2005 uids=[]
+   11-16 13:37:50.719 WL::ACQUIRE tag=AudioMix token=0xb4000078916cf610 status=0 uids=[]
+   11-16 13:37:52.726 WL::RELEASE tag=AudioMix token=0xb4000078916cf610 heldMs=2006 uids=[]
+
+ ## BEGIN setParameters dump 
+
+  Rejected setParameters:
+
+  App setParameters:
+
+  System setParameters:
+    09-20 22:15:31.121 UID  1000, 1 KVP received: audio_volume_stream_music_device_headphone=0
+    09-20 22:15:31.123 UID  1000, 1 KVP received: audio_volume_stream_music_device_0x40000000=1
+    09-20 22:15:31.127 UID  1000, 1 KVP received: audio_volume_stream_voice_call_device_earpiece=8
+    09-20 22:15:31.128 UID  1000, 1 KVP received: audio_volume_stream_voice_call_device_headphone=8
+    09-20 22:15:31.129 UID  1000, 1 KVP received: audio_volume_stream_voice_call_device_bt_sco=7
+    09-20 22:15:31.131 UID  1000, 1 KVP received: audio_volume_stream_voice_call_device_bt_sco_hs=7
+    09-20 22:15:31.133 UID  1000, 1 KVP received: audio_volume_stream_voice_call_device_0x40000000=8
+    09-20 22:15:31.134 UID  1000, 1 KVP received: audio_volume_stream_music_device_speaker=0
+    09-20 22:15:31.137 UID  1000, 1 KVP received: audio_volume_stream_music_device_headphone=0
+    09-20 22:15:31.138 UID  1000, 1 KVP received: audio_volume_stream_music_device_0x40000000=1
+    09-20 22:15:31.163 UID  1000, 1 KVP received: hifi_volume=0
+    09-20 22:15:31.164 UID  1000, 1 KVP received: audio_volume_stream_music_device_speaker=0
+    09-20 22:15:31.166 UID  1000, 1 KVP received: audio_volume_stream_music_device_headphone=0
+    09-20 22:15:31.167 UID  1000, 1 KVP received: audio_volume_stream_music_device_0x40000000=1
+    09-20 22:15:31.202 UID  1000, 1 KVP received: dolby_effect_enable=true
+    09-20 22:15:31.504 UID  1000, 1 KVP received: audio_volume_stream_music_device_speaker=0
+    09-20 22:15:31.507 UID  1000, 1 KVP received: audio_volume_stream_music_device_headphone=0
+    09-20 22:15:31.509 UID  1000, 1 KVP received: audio_volume_stream_music_device_0x40000000=1
+    09-20 22:15:31.771 UID  1002, 1 KVP received: DSPPARAM=BTPLC,22,0
+    09-20 22:15:32.286 UID  1001, 1 KVP received: ims_rtt_capability=0
+    09-20 22:15:32.290 UID  1001, 1 KVP received: ims_rtt_capability=0
+    09-20 22:15:35.377 UID  1000, 1 KVP received: dolby_effect_enable=true
+    09-20 22:15:35.388 UID  1000, 1 KVP received: audiocloudctrl_add_record_unsilence_app_name_list=com.xiaomi.aiasst.vision
+    09-20 22:15:35.389 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=com.hzkge.mok com.tencent.liteav.demo
+    09-20 22:15:35.390 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=com.zhiliaoapp.musically com.ss.android.ugc.trill rtc.vertcdemo.android com.bytedance.watchcat
+    09-20 22:15:35.391 UID  1000, 1 KVP received: audiocloudctrl_add_record_unsilence_app_name_list=com.android.incallui
+    09-20 22:15:35.392 UID  1000, 1 KVP received: audiocloudctrl_add_capture_app_name_list=com.ss.android.ugc.livepro
+    09-20 22:15:35.395 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=com.vv51.mvbox com.vv51.vpian com.vv51.vvsing com.great.hope.lifegram
+    09-20 22:15:35.395 UID  1000, 1 KVP received: audiocloudctrl_add_record_unsilence_app_name_list=com.miui.carlink
+    09-20 22:15:35.396 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=com.happy.voh
+    09-20 22:15:35.397 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=com.tencent.mm
+    09-20 22:15:35.399 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=com.kwai.hisense
+    09-20 22:15:35.401 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=com.tencent.tmetown com.ahsj.earbackendorsement com.tencent.trtc com.example.mediademo com.itgsa com.kugou.fanxing com.kugou.android.kuqunapp tv.yinhua.main
+    09-20 22:15:35.402 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=com.kuaishou.nebula
+    09-20 22:15:35.403 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=com.vv51.mvbox com.vv51.vpian com.vv51.vvsing om.great.hope.lifegram
+    09-20 22:15:35.405 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=im.zego.GoEnjoy com.zq.live
+    09-20 22:15:35.406 UID  1000, 1 KVP received: audiocloudctrl_add_kara_app_name_list=io.agora.premium
+    11-15 23:23:01.943 UID  1000, 1 KVP received: hifi_volume=0
+    11-15 23:33:22.422 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-15 23:33:22.424 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-15 23:33:22.449 UID  1000, 1 KVP received: audio_volume_stream_music_device_speaker=0
+    11-15 23:33:22.454 UID  1000, 1 KVP received: audio_volume_stream_music_device_headphone=0
+    11-15 23:33:22.462 UID  1000, 1 KVP received: audio_volume_stream_music_device_0x40000000=1
+    11-15 23:33:22.508 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-15 23:33:28.233 UID  1000, 1 KVP received: power_connected=false
+    11-15 23:33:38.544 UID  1000, 1 KVP received: screen_state=off
+    11-16 00:50:17.646 UID  1000, 1 KVP received: screen_state=on
+    11-16 00:50:18.807 UID  1000, 1 KVP received: screen_state=off
+    11-16 12:52:43.749 UID  1000, 1 KVP received: power_connected=true
+    11-16 12:52:43.843 UID  1000, 1 KVP received: screen_state=on
+    11-16 12:52:56.363 UID  1000, 1 KVP received: screen_state=on
+    11-16 12:53:37.455 UID  1000, 1 KVP received: screen_state=on
+    11-16 12:53:42.909 UID  1000, 1 KVP received: power_connected=false
+    11-16 12:53:45.649 UID  1000, 1 KVP received: power_connected=true
+    11-16 12:53:55.948 UID  1000, 1 KVP received: screen_state=on
+    11-16 13:20:40.872 UID  1000, 1 KVP received: screen_state=on
+    11-16 13:20:44.407 UID  1000, 1 KVP received: audio_volume_stream_music_device_speaker=0
+    11-16 13:20:44.419 UID  1000, 1 KVP received: audio_volume_stream_music_device_headphone=0
+    11-16 13:20:44.427 UID  1000, 1 KVP received: audio_volume_stream_music_device_0x40000000=1
+    11-16 13:20:44.881 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-16 13:20:44.886 UID  1000, 1 KVP received: audio_volume_stream_music_device_speaker=0
+    11-16 13:20:44.886 UID  1000, 1 KVP received: audio_volume_stream_music_device_headphone=0
+    11-16 13:20:44.887 UID  1000, 1 KVP received: audio_volume_stream_music_device_0x40000000=1
+    11-16 13:20:44.890 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-16 13:20:44.890 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-16 13:20:44.915 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-16 13:20:44.917 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-16 13:20:45.360 UID  1000, 1 KVP received: audio_volume_stream_music_device_speaker=0
+    11-16 13:20:45.362 UID  1000, 1 KVP received: audio_volume_stream_music_device_headphone=0
+    11-16 13:20:45.364 UID  1000, 1 KVP received: audio_volume_stream_music_device_0x40000000=1
+    11-16 13:23:11.714 UID  1000, 1 KVP received: screen_state=on
+    11-16 13:23:18.347 UID  1000, 1 KVP received: screen_state=on
+    11-16 13:23:40.346 UID  1000, 1 KVP received: screen_state=on
+    11-16 13:36:16.849 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-16 13:36:16.859 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-16 13:36:16.879 UID  1000, 1 KVP received: dolby_effect_enable=true
+    11-16 13:37:16.646 UID  1000, 1 KVP received: screen_state=on
+    11-16 13:37:50.744 UID  1000, 1 KVP received: screen_state=on
+    11-16 13:37:51.733 UID  1000, 1 KVP received: screen_state=on
+    11-16 13:38:50.782 UID  1000, 1 KVP received: screen_state=on
+
+ ## BEGIN misc af dump 
+
+Patches:
+  Patch 12: No software bridge (thread 0x0 => thread 0x0) thread 0xb400007a21abdfe8 num sinks (1) first device type 00000002
+  Patch 36: No software bridge (thread 0x0 => thread 0x0) thread 0xb400007a1ce4bfe8 num sinks (1) first device type 00000002
+  Patch 44: No software bridge (thread 0x0 => thread 0x0) thread 0xb400007a190eafe8 num sinks (1) first device type 00010000
+  Patch 76: No software bridge (thread 0x0 => thread 0x0) thread 0xb400007a20e5bfe8 num sinks (1) first device type 00000008
+  Patch 84: No software bridge (thread 0x0 => thread 0x0) thread 0xb400007a21013fe8 num sinks (1) first device type 00000008
+  01-01 08:00:50.966 add patch 12 srcs {mix 13 id 1} sinks {dev 0x2 id 3} hal create
+  01-01 08:00:50.996 add patch 20 srcs {mix 21 id 5} sinks {dev 0x2 id 3} hal create
+  01-01 08:00:51.011 add patch 28 srcs {mix 29 id 7} sinks {dev 0x2 id 3} hal create
+  01-01 08:00:51.031 add patch 36 srcs {mix 37 id 9} sinks {dev 0x2 id 3} hal create
+  01-01 08:00:51.059 add patch 44 srcs {mix 45 id 11} sinks {dev 0x10000 id 12} hal create
+  09-20 22:15:30.953 add patch 52 srcs {mix 53 id 27} sinks {dev 0x8 id 26} hal create
+  09-20 22:15:30.984 del patch 52 srcs {mix 53 id 27} sinks {dev 0x8 id 26} reused false
+  11-16 13:20:44.648 add patch 60 srcs {mix 69 id 31} sinks {dev 0x8 id 30} hal create
+  11-16 13:20:44.725 del patch 60 srcs {mix 69 id 31} sinks {dev 0x8 id 30} reused false
+  11-16 13:36:16.535 add patch 68 srcs {mix 21 id 5} sinks {dev 0x8 id 30} hal create
+  11-16 13:36:41.580 add patch 76 srcs {mix 29 id 7} sinks {dev 0x8 id 30} hal create
+  11-16 13:37:50.736 add patch 84 srcs {mix 21 id 5} sinks {dev 0x8 id 30} hal update
+
+Device Effects:
+
+Sound Dose:
+CSD is disabled
+ ## BEGIN power dump
+CP2A.260605.016
+Power Tokens:
+  Client-0:  start: 23:22:27.004 pid: 1192
+  Client-10:  start: 23:22:49.162 pid: 4516
+  Client-11:  start: 23:23:32.071 pid: 8064
+  Client-12:  start: 00:09:41.390 pid: 12975
+  Client-13:  start: 13:36:16.499 pid: 11640
+  Client-1:  start: 23:22:31.027 pid: 1799
+  Client-2:  start: 23:22:33.540 pid: 2640
+  Client-3:  start: 23:22:34.214 pid: 2607
+  Client-4:  start: 23:22:34.858 pid: 3344
+  Client-5:  start: 23:22:35.485 pid: 2712
+  Client-6:  start: 23:22:37.457 pid: 4040
+  Client-7:  start: 23:22:40.861 pid: 4735
+Power Clients: (some snapshots quantized in time)
+  (idle) uid: 1000 android.uid.system  sessions: 1  actual_seconds: 0.498860 { 1799 2712 4040 4516 4735 }{ { 13:36:41.582, ~:42.081} }
+    Sum:    11-16 13:36:41.582 duration_boottime: 0.499000 duration_monotonic: 0.499000
+    Max:    11-16 13:36:41.582 duration_boottime: 0.499000 duration_monotonic: 0.499000
+  (idle) uid: 1001 android.uid.phone  sessions: 0  actual_seconds: 0.000000 { 2640 }{ }
+  (idle) uid: 1002 android.uid.bluetooth  sessions: 0  actual_seconds: 0.000000 { 2607 3344 }{ }
+  (idle) uid: 1041 audioserver  sessions: 0  actual_seconds: 0.000000 { 1192 }{ }
+  (idle) uid: 10145 com.android.camera  sessions: 0  actual_seconds: 0.000000 { 8064 }{ }
+  (idle) uid: 10152 com.miui.voiceassist  sessions: 0  actual_seconds: 0.000000 { 12975 }{ }
+  (idle) uid: 10175 com.miui.mediaviewer  sessions: 2  actual_seconds: 120.063212 { 11640 }{ { 13:36:16.543, ~:37:16.595} { ~:37:50.744, ~:38:50.755} }
+    Sum:    11-16 13:36:16.543 duration_boottime: 120.062004 duration_monotonic: 120.063004
+    Max:    11-16 13:36:16.543 duration_boottime: 60.051003 duration_monotonic: 60.052002
+Power Client History:
+
+ ## BEGIN AudioScheduler dump 

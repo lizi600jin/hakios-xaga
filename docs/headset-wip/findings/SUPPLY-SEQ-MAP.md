@@ -141,3 +141,18 @@ NCP=0x00    →  0x2488（AFE_NCP_CFG0），**不是时钟门控**
 | `0x230c` 是 PDN 极性，`0` = 运行 | `AFE_NCP_CFG0`（`0x2488`）的语义 |
 | `HP_ANA_TRIM` 排第 26 | trim 是否需要先有 CLKSQ |
 | 706 已能跑通模拟上电序列 | 出声还差几步 |
+
+---
+
+## 🔴 修正（2026-11-16，Codex 审定文案见 `DAPM-CORRECTIONS-AUDITED.md` §1）
+
+本文件里三处表述需要按审定文案更正：
+
+| 本文件原表述 | 审定后的正确说法 |
+|---|---|
+| 「vendor 用 31 个编号固定了 MT6368 所有 supply 的开关顺序」 | **enum 不是全部必经流程，也不是整个设备的严格线性时序** |
+| 「按 vendor 的顺序，CLKSQ 是第 6 步，前面还有 6 步」 | **不能据此推出必须先做那 6 步** —— `soc-dapm.c` 先按 widget 类型 up/down 表排序，再比较 subseq；`regulator_supply` 还可在普通 supply 之前执行 |
+| 「`CLK_BUF`（#0）是最先开启的」 | **不能这么说** —— 不能说 `CLK_BUF` #0 绝对最先 |
+| 「31 项」 | **完整 enum 实际包含 42 个值（0..41）**，普通 HP 不需执行全部 capture/VOW 项 |
+
+**历史 trial 705/707 的 FAIL 不受影响。**

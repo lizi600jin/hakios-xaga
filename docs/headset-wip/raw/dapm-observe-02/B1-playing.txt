@@ -1,0 +1,31 @@
+# B1（播放中，第1组）  uptime=51343.39  host=2026-11-16T13:37:55+08:00
+CLK_BUF :: CLK_BUF: On  in 0 out 0| out  "static" "VOW TX"| out  "static" "DL Power Supply"| out  "static" "AIFTX_Supply"|
+mt6368_vaud18 :: mt6368_vaud18: On  in 0 out 0| out  "static" "VOW TX"| out  "static" "DL Power Supply"| out  "static" "AIFTX_Supply"|
+AUDGLB :: AUDGLB: On  in 0 out 0 - R9634(0x25a2) mask 0x10| out  "static" "VOW TX"| out  "static" "DL Power Supply"| out  "static" "AIFTX_Supply"|
+CLKSQ Audio :: CLKSQ Audio: On  in 0 out 0 - R9527(0x2537) mask 0x1| out  "static" "DL Power Supply"| out  "static" "AIFTX_Supply"|
+AUDNCP_CK :: AUDNCP_CK: On  in 0 out 0 - R8972(0x230c) mask 0x40| out  "static" "DL Power Supply"|
+ZCD13M_CK :: ZCD13M_CK: On  in 0 out 0 - R8972(0x230c) mask 0x20| out  "static" "DL Power Supply"|
+AUD_CK :: AUD_CK: On  in 0 out 0 - R8972(0x230c) mask 0x2| out  "static" "VOW TX"| out  "static" "DL Power Supply"| out  "static" "AIFTX_Supply"|
+AUDIF_CK :: AUDIF_CK: On  in 0 out 0 - R8972(0x230c) mask 0x4| out  "static" "DL Power Supply"| out  "static" "AIFTX_Supply"|
+DL Power Supply :: DL Power Supply: On  in 0 out 0| out  "static" "DAC_3RD"| out  "static" "DACR"| out  "static" "DACL"| in  "static" "IBIST"| in  "static" "NV_REGULATOR"| in  "static" "LDO_REMOTE"| in  "static" "LDO"| in  "static" "ESD_RESIST"| in  "static" "AUDIF_CK"| in  "static" "AUD_CK"| in  "static" "ZCD13M_CK"| in  "static" "AUDNCP_CK"| in  "static" "CLKSQ Audio"| in  "static" "AUDGLB"| in  "static" "mt6368_vaud18"| in  "static" "CLK_BUF"|
+DL Digital Clock :: DL Digital Clock: On  in 0 out 0| out  "static" "DL Digital Clock CH_3"| out  "static" "DL Digital Clock CH_1_2"| in  "static" "AFE_DL_SRC"| in  "static" "AFE_ON"| in  "static" "NCP"| in  "static" "SDM_FIFO_CLK"| in  "static" "AUDIO_TOP_PDN_RESERVED"| in  "static" "AUDIO_TOP_PWR_CLK"| in  "static" "AUDIO_TOP_DAC_CTL"| in  "static" "AUDIO_TOP_AFE_CTL"|
+NCP :: NCP: On  in 0 out 0 - R9352(0x2488) mask 0x1| out  "static" "DL Digital Clock"|
+SDM :: SDM: On  in 0 out 0| out  "static" "DL Digital Clock CH_1_2"|
+AFE_ON :: AFE_ON: On  in 0 out 0 - R9096(0x2388) mask 0x1| out  "static" "DL Digital Clock"| out  "static" "AIFTX_Supply"|
+AFE_DL_SRC :: AFE_DL_SRC: On  in 0 out 0 - R9097(0x2389) mask 0x1| out  "static" "DL Digital Clock"|
+LDO :: LDO: On  in 0 out 0 - R9635(0x25a3) mask 0x1| out  "static" "DL Power Supply"|
+LDO_REMOTE :: LDO_REMOTE: On  in 0 out 0 - R9635(0x25a3) mask 0x4| out  "static" "DL Power Supply"|
+NV_REGULATOR :: NV_REGULATOR: On  in 0 out 0 - R9635(0x25a3) mask 0x10| out  "static" "DL Power Supply"|
+IBIST :: IBIST: On  in 0 out 0 - R9632(0x25a0) mask 0x10| out  "static" "DL Power Supply"|
+HP_ANA_TRIM :: HP_ANA_TRIM: On  in 0 out 0 - R9613(0x258d) mask 0x80| out  "static" "HP_Supply"|
+HP_MUTE :: HP_MUTE: On  in 0 out 0| out  "static" "HP_Supply"|
+HP_PULL_DOWN :: HP_PULL_DOWN: On  in 0 out 0| out  "static" "HP_Supply"|
+DAC In Mux :: DAC In Mux: On  in 2 out 2| out  "static" "DAC_3RD"| out  "static" "DACR"| out  "static" "DACL"| in  "Normal Path" "AIF2_RX"| in  "Normal Path" "AIF_RX"|
+DACL :: DACL: On  in 2 out 1| out  "Audio Playback" "HPL Mux"| in  "static" "DL Power Supply"| in  "static" "DAC In Mux"|
+DACR :: DACR: On  in 2 out 1| out  "Audio Playback" "HPR Mux"| in  "static" "DL Power Supply"| in  "static" "DAC In Mux"|
+HPL Mux :: HPL Mux: On  in 2 out 1| out  "static" "Headphone L Ext Spk Amp"| out  "static" "Headphone L"| in  "Audio Playback" "DACL"| in  "static" "HP_Supply"|
+HPR Mux :: HPR Mux: On  in 2 out 1| out  "static" "Headphone R Ext Spk Amp"| out  "static" "Headphone R"| in  "Audio Playback" "DACR"| in  "static" "HP_Supply"|
+AIF_RX :: AIF_RX: On  in 1 out 2| stream AIF1 Playback inactive| out  "Normal Path" "DAC In Mux"| in  "static" "AIF1 Playback"| in  "static" "DL_GPIO"| in  "static" "DL Digital Clock CH_1_2"|
+Headphone L :: Headphone L: On  in 2 out 1| in  "static" "HPL Mux"|
+Headphone R :: Headphone R: On  in 2 out 1| in  "static" "HPR Mux"|
+DC Trim :: DC Trim: Off  in 0 out 0 - R9624(0x2598) mask 0x40|
