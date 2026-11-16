@@ -1,0 +1,8 @@
+[play start] 2026-11-16T19:33:53.954131
+  am native rc=0
+  stdout Starting: Intent { act=android.intent.action.VIEW dat=file:///... typ=audio/x-wav }
+  d1 @ +3.14s  39479 B  rc=0
+  d2 @ +4.19s  39840 B  rc=0
+[play window done] +4.19s
+  焦点: mCurrentFocus=Window{e3dbc42 u0 com.miui.mediaviewer/com.miui.musicplayer.activity.AudioActivity}
+    isKeyguardShowing=false

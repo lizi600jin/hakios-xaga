@@ -1,0 +1,9 @@
+[host] 2026-11-16T19:33:45.891756
+  host wav 1536044 B sha256 b994ddba0465ab54e6d33944f49373e8539b51601e7b392c7e2c2eee96408a29
+  目标存在性检查: ls: /data/local/tmp/profile4-reference-711.wav: No such file or directory
+  argv ['adb', '-s', '<SERIAL>', 'push', '/home/lizi/IOS/hakios-mtk/logs/profile4-tone-20261116/reference-711.wav', '/data/local/tmp/profile4-reference-711.wav']
+  push native rc=0  elapsed=0.08s
+  stdout 
+  stderr /home/lizi/IOS/hakios-mtk/logs/profile4-tone-20261116/reference-711.wav: 1 file pushed, 0 skipped. 956.6 MB/s (1536044 bytes in 0.002s)
+  设备侧 b994ddba0465ab54e6d33944f49373e8539b51601e7b392c7e2c2eee96408a29  /data/local/tmp/profile4-reference-711.wav
+  MATCH: True

@@ -1,0 +1,13 @@
+[host] 2026-11-16T19:34:12.098987
+== A6 停止测试播放器 ==
+  force-stop rc=0
+  活动线程计数 0 (期望 0)
+  删除 WAV: ls: /data/local/tmp/profile4-reference-711.wav: No such file or directory
+
+== B1 保存旧 logbook ==
+  xnusys 2685370368  -8388608 = 2676981760 (0x9f8f8000)  匹配 0x9f8f8000: True
+  dd rc=0  8388608 B (期望 8388608)  精确=True
+  sha256 2ec28bb4d1bb4985c5238b8b4ff8f14b88a92a718c737225efcf97bd42aa29a2
+  header magic=0x474f4c48 ver=1 len=528685 reason=0x0
+  含 trial711 证据: False  (必须 False)
+  旧记录 mali_trial=710

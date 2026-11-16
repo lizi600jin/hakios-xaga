@@ -1,0 +1,11 @@
+== d1 活动线程 ==
+  {'ptr': '0xb40000748bca24d0', 'name': 'AudioOut_15', 'dev': '0x8', 'io': '21', 'rate': '48000', 'ch': '2', 'fw': '88064', 'tw': '43'}
+== d2 活动线程 ==
+  {'ptr': '0xb40000748bca24d0', 'name': 'AudioOut_15', 'dev': '0x8', 'io': '21', 'rate': '48000', 'ch': '2', 'fw': '139264', 'tw': '68'}
+
+  同一 thread: True  (ptr 0xb40000748bca24d0 / io 21)
+  device 0x8: True   48k/2ch: True
+  frames 88064 → 139264  delta 51200
+  writes 43 → 68  delta 25
+
+REFERENCE_SOFTWARE_PLAYBACK: PASS
