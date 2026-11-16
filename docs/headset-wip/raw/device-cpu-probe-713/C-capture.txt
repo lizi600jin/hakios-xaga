@@ -1,0 +1,7 @@
+[host] 2026-11-17T00:50:24.689799
+  dd native rc=0 timed_out=False  4198400 B  精确=True
+  sha256 310c2f0a8084019c8b9f72d877b7d7f0670d7eda0b952d9dd991c8c73f073213
+  HLOG magic=0x474f4c48 ver=1 len=519004 reason=0x0 sum=0x2865061
+  len <= 4194304: True
+  body 519004 B  sha256 7fbecaa318c1e1496c23f1fedfe8d9e4d66ed816f141faa0587efb92345b87d8
+  完整 sum(body)=0x2865061  等于 header: True

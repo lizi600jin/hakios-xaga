@@ -1,0 +1,14 @@
+[host] 2026-11-17T00:50:30.845004
+== D11 主动 reboot bootloader ==
+  native rc=None timed_out=True
+  attempt 1 rc=None
+  attempt 2 rc=None
+  attempt 3 rc=None
+  attempt 4 rc=None
+  attempt 5 rc=None
+  attempt 6 rc=None
+  attempt 7 rc=None
+  attempt 8 rc=None
+Traceback (most recent call last):
+  File "<stdin>", line 23, in <module>
+AssertionError: fastboot 未出现

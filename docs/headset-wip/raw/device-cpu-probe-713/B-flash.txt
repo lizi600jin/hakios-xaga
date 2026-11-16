@@ -1,0 +1,16 @@
+[host] 2026-11-17T00:46:41.575803
+== B5 reboot bootloader ==
+  native rc=0 timed_out=False
+  fastboot OK @ attempt 1  < waiting for <SERIAL>>
+product:
+
+== B6 TRIAL713 FLASH ==
+  native rc=0  timed_out=False  elapsed=0.88s
+  Sending 'boot_a' (22456 KB)                        OKAY [  0.598s]
+Writing 'boot_a'                                   OKAY [  0.080s]
+Finished. Total time: 0.754s
+
+== B7 REBOOT ==
+  native rc=0 timed_out=False
+
+[trial reboot 时刻] 2026-11-17T00:47:02.054405

@@ -1,0 +1,21 @@
+[host] 2026-11-17T00:53:53.244545
+== 1 确认 fastboot 与设备 ==
+  rc=0 timed_out=False  product: xaga
+Finished. Total time: 0.011s
+
+== 2 恢复文件身份复查 ==
+  67108864 B
+  sha256 c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc
+  md5    a63b2e35a7c2522cb24a6a10332b9bc8
+  身份确认
+
+== 3 STOCK FLASH boot_a（只此一个分区，不换 slot）==
+  native rc=0  timed_out=False  elapsed=2.18s
+  Sending 'boot_a' (65536 KB)                        OKAY [  1.717s]
+Writing 'boot_a'                                   OKAY [  0.281s]
+Finished. Total time: 2.057s
+
+== 4 REBOOT ==
+  native rc=0 timed_out=False  Rebooting                                         
+
+[恢复 reboot] 2026-11-17T00:53:55.910802
