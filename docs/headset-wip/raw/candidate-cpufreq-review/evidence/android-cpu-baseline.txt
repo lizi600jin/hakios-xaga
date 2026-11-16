@@ -1,6 +1,6 @@
 [host] 2026-11-16T20:44:22.305555
 === 设备身份 ===
-  serial     GAJZ4HIN99AQ69Y9
+  serial     <SERIAL>
   boot_id    686cb45c-3f54-481f-ba0c-5e9945f95449
   slot       _a
 
