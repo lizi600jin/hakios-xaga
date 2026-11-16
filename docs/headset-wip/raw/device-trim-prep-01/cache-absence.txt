@@ -1,0 +1,21 @@
+# cache 属性三项核验  host: 2026-11-16T18:02:09+08:00
+
+## 目录列举中是否出现三 cache（应为 0）
+0
+
+## 逐项 open 测试（用 cat 的重定向失败判断，非 test -e）
+--- cache_only ---
+cat: /sys/kernel/debug/regmap/0-05/cache_only: No such file or directory
+  rc=1
+--- cache_bypass ---
+cat: /sys/kernel/debug/regmap/0-05/cache_bypass: No such file or directory
+  rc=1
+--- cache_dirty ---
+cat: /sys/kernel/debug/regmap/0-05/cache_dirty: No such file or directory
+  rc=1
+
+## 目录完整成员（排序）
+access
+name
+range
+registers

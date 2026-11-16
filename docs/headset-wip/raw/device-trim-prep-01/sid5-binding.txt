@@ -1,0 +1,21 @@
+# SID5 绑定核验  host: 2026-11-16T18:01:46+08:00
+
+## uevent
+DRIVER=mtk-spmi-pmic
+OF_NAME=second_pmic
+OF_FULLNAME=/spmi@1c804000/second_pmic@5
+OF_COMPATIBLE_0=mediatek,mt6368
+OF_COMPATIBLE_N=1
+MODALIAS=of:Nsecond_pmicT(null)Cmediatek,mt6368
+
+## driver 符号链接
+lrwxrwxrwx 1 root root 0 2026-11-16 18:01 /sys/bus/spmi/devices/0-05/driver -> ../../../../../bus/spmi/drivers/mtk-spmi-pmic
+
+## of_node 符号链接
+lrwxrwxrwx 1 root root 0 2026-11-16 18:01 /sys/bus/spmi/devices/0-05/of_node -> ../../../../../firmware/devicetree/base/spmi@1c804000/second_pmic@5
+
+## of_node/compatible（原始字节，od）
+   m   e   d   i   a   t   e   k   ,   m   t   6   3   6   8  \0
+
+## of_node/compatible（hex，确认 NUL）
+ 6d 65 64 69 61 74 65 6b 2c 6d 74 36 33 36 38 00

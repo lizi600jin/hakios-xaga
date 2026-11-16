@@ -1,0 +1,12 @@
+# dumpsys 摘要（完整体留本地）  host: 2026-11-16T18:03:19+08:00
+
+dumpsys audio: 966 行，49696 B
+dumpsys media.audio_flinger: 759 行，49399 B
+
+## audio_flinger 活动线程检查
+Standby: no 计数 = 0
+0
+
+## 完整体位置（hakios-mtk，不入本仓）
+/home/lizi/IOS/hakios-mtk/logs/device-trim-prep-01-20261116-180141/dumpsys-audio.txt
+/home/lizi/IOS/hakios-mtk/logs/device-trim-prep-01-20261116-180141/dumpsys-audio-flinger.txt

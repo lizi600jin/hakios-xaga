@@ -1,0 +1,10 @@
+# 设备侧 hash 核验  host: 2026-11-16T18:02:46+08:00
+# reader: /data/local/tmp/regmap-reader-prep01-180239.aarch64
+# wav:    /data/local/tmp/reference-prep01-180239.wav
+
+63688efccd5728b0155a782eb299db979d6150b2096b4dacbc1e083429aa30e1  /data/local/tmp/regmap-reader-prep01-180239.aarch64
+c6586d5173c366fc66c37a71743919774b643f4776d6d2bccb53e088baeaba97  /data/local/tmp/reference-prep01-180239.wav
+
+## 期望
+reader  4232      63688efccd5728b0155a782eb299db979d6150b2096b4dacbc1e083429aa30e1
+wav     11520044  c6586d5173c366fc66c37a71743919774b643f4776d6d2bccb53e088baeaba97

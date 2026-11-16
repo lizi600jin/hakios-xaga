@@ -1,0 +1,22 @@
+# regmap/0-05 元数据  host: 2026-11-16T18:02:03+08:00
+
+## 目录列举（必须成功）
+total 0
+drwxr-xr-x  2 root root 0 1970-01-01 08:00 .
+drwxr-xr-x 62 root root 0 1970-01-01 08:00 ..
+-r--------  1 root root 0 1970-01-01 08:00 access
+-r--------  1 root root 0 1970-01-01 08:00 name
+-r--------  1 root root 0 1970-01-01 08:00 range
+-r--------  1 root root 0 1970-01-01 08:00 registers
+
+## name（原始字节 od -c）
+   m   t   k   -   s   p   m   i   -   p   m   i   c  \n
+
+## name（hex）
+ 6d 74 6b 2d 73 70 6d 69 2d 70 6d 69 63 0a
+
+## range（原始字节 od -c）
+   0   -   f   f   f   f  \n
+
+## range（hex）
+ 30 2d 66 66 66 66 0a

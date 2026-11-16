@@ -1,0 +1,9 @@
+# 播放器入口  host: 2026-11-16T18:02:28+08:00
+priority=0 preferredOrder=0 match=0x608000 specificIndex=-1 isDefault=true
+ActivityInfo:
+  name=com.miui.musicplayer.activity.AudioActivity
+  packageName=com.miui.mediaviewer
+  labelRes=0x0 nonLocalizedLabel=null icon=0x7f080154 banner=0x0
+  enabled=true exported=true directBootAware=false
+  taskAffinity=com.miui.mediaviewer targetActivity=null persistableMode=PERSIST_ROOT_ONLY
+  launchMode=LAUNCH_MULTIPLE flags=0x310200 privateFlags=0x2 theme=0x7f110281
