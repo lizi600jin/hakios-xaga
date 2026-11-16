@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "inputs": {
+    "headset": "3c79386ac367ba81fe02774fbb8d37a6475845432a644ff91fdcb56a98c279ce",
+    "pmif_header": "f4d9a964e304ea14686359b85e75560325e9d47ee2ecb5614aae538f9e293d78",
+    "pmif_core": "57a5d61dec1a3d9ec649e8c2505e0294e2dee11a34660365d35c2027d607b433",
+    "oracle": "81a836bf6777b881f691b6d62400ffc4849dc71384908f2a8b7c41d0775ce508",
+    "model_prefix": "75971b91567dcb9532f1a18c9150c72090115ffc4a242dc0e1596cff09ecb119",
+    "model_suffix": "99ba5f30120552b37b8853b9d847f350660a9ecbcb3ec2a3639b7161c0f7d0fe",
+    "runner": "afb21db55cbfc2147988ad4fec0e65eb1bf0ea7e38356ec712250948fab050a0"
+  },
+  "trace_events": {
+    "up": 161,
+    "down": 139
+  },
+  "model_summary": "PASS 271 cases; up bus writes=113; close+restore bus writes=114",
+  "limitations": [
+    "Field-normalized writes/delays, not electrical clock or audio validation",
+    "VAUD18 must already be enabled; the profile does not switch its regulator",
+    "Initial shared-field patterns and trim values are synthetic model inputs",
+    "Oracle DAPM ties use declaration order; no physical hardware tested"
+  ]
+}
