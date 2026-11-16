@@ -1,0 +1,151 @@
+[
+  {
+    "domain": 0,
+    "enable_raw": [
+      513,
+      513
+    ],
+    "status_raw": [
+      3,
+      3
+    ],
+    "request_index_raw": [
+      0,
+      0
+    ],
+    "decoded_lut_mhz": [
+      2000,
+      1900,
+      1800,
+      1700,
+      1600,
+      1500,
+      1400,
+      1300,
+      1250,
+      1200,
+      1150,
+      1100,
+      1050,
+      1000,
+      950,
+      900,
+      850,
+      800,
+      750,
+      700,
+      650,
+      600,
+      550,
+      500,
+      450
+    ],
+    "entries": 25,
+    "strictly_descending_nonzero": true,
+    "limits": "offline vendor bitfield interpretation only; not measured CPU clock, readiness or write permission",
+    "request_table_mhz": 2000
+  },
+  {
+    "domain": 1,
+    "enable_raw": [
+      0,
+      0
+    ],
+    "status_raw": [
+      3,
+      3
+    ],
+    "request_index_raw": [
+      19,
+      19
+    ],
+    "decoded_lut_mhz": [
+      2850,
+      2750,
+      2650,
+      2550,
+      2450,
+      2400,
+      2350,
+      2300,
+      2250,
+      2200,
+      2150,
+      2100,
+      2050,
+      2000,
+      1900,
+      1800,
+      1700,
+      1600,
+      1500,
+      1400,
+      1300,
+      1200,
+      1100,
+      1000,
+      900,
+      800,
+      700,
+      600,
+      500,
+      400,
+      300,
+      200
+    ],
+    "entries": 32,
+    "strictly_descending_nonzero": true,
+    "limits": "offline vendor bitfield interpretation only; not measured CPU clock, readiness or write permission",
+    "request_table_mhz": 1400
+  },
+  {
+    "domain": 2,
+    "enable_raw": [
+      0,
+      0
+    ],
+    "status_raw": [
+      3,
+      3
+    ],
+    "request_index_raw": [
+      28,
+      28
+    ],
+    "decoded_lut_mhz": [
+      2850,
+      2750,
+      2650,
+      2550,
+      2450,
+      2400,
+      2350,
+      2300,
+      2250,
+      2200,
+      2150,
+      2100,
+      2050,
+      2000,
+      1900,
+      1800,
+      1700,
+      1600,
+      1500,
+      1400,
+      1300,
+      1200,
+      1100,
+      1000,
+      900,
+      800,
+      700,
+      600,
+      500
+    ],
+    "entries": 29,
+    "strictly_descending_nonzero": true,
+    "limits": "offline vendor bitfield interpretation only; not measured CPU clock, readiness or write permission",
+    "request_table_mhz": 500
+  }
+]
