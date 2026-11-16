@@ -1,0 +1,160 @@
+{
+  "inputs": [
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/msgbuf-1m-20261115/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837",
+      "size": 15320872,
+      "sha256": "c17cf881745511a3c2aa0225ca7a28f3e7b65e853688e13839319d8e6515010d"
+    },
+    {
+      "path": "/home/lizi/IOS/hakios-mtk/logs/profile4-kernel-src-20261116-1525/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837",
+      "size": 15321160,
+      "sha256": "cac498da96406cc4f660e2cc717dbcf93b259ae1d864de6f30a9e920ed03401d"
+    }
+  ],
+  "changed_section_layout": [
+    {
+      "section": "__DATA.__bss",
+      "old_size": 1606569,
+      "new_size": 1606601
+    },
+    {
+      "section": "__DATA.__data",
+      "old_size": 160808,
+      "new_size": 161192
+    },
+    {
+      "section": "__DATA.__lock_grp",
+      "old_size": 89544,
+      "new_size": 89544
+    },
+    {
+      "section": "__DATA.__refgrps",
+      "old_size": 2688,
+      "new_size": 2688
+    },
+    {
+      "section": "__TEXT.__const",
+      "old_size": 644720,
+      "new_size": 647440
+    },
+    {
+      "section": "__TEXT.__copyio_vectors",
+      "old_size": 288,
+      "new_size": 288
+    },
+    {
+      "section": "__TEXT.__cstring",
+      "old_size": 1055893,
+      "new_size": 1058112
+    },
+    {
+      "section": "__TEXT.__eh_frame",
+      "old_size": 920,
+      "new_size": 920
+    },
+    {
+      "section": "__TEXT.__os_log",
+      "old_size": 132730,
+      "new_size": 132730
+    },
+    {
+      "section": "__TEXT.__thread_starts",
+      "old_size": 0,
+      "new_size": 0
+    },
+    {
+      "section": "__TEXT_EXEC.__hib_text",
+      "old_size": 3856,
+      "new_size": 3856
+    },
+    {
+      "section": "__TEXT_EXEC.__text",
+      "old_size": 8418780,
+      "new_size": 8423932
+    }
+  ],
+  "profile_symbols": [
+    {
+      "name": "_p4_down",
+      "address": "0xfffffff00700bb14",
+      "section": 1,
+      "type": 14
+    },
+    {
+      "name": "_p4_up",
+      "address": "0xfffffff00700bfac",
+      "section": 1,
+      "type": 14
+    },
+    {
+      "name": "_p4_enable",
+      "address": "0xfffffff0074ece4c",
+      "section": 14,
+      "type": 14
+    },
+    {
+      "name": "_p4_down_until",
+      "address": "0xfffffff0074edc5c",
+      "section": 14,
+      "type": 14
+    },
+    {
+      "name": "_p4_verify",
+      "address": "0xfffffff0074edd54",
+      "section": 14,
+      "type": 14
+    },
+    {
+      "name": "_p4_apply",
+      "address": "0xfffffff0074ee030",
+      "section": 14,
+      "type": 14
+    },
+    {
+      "name": "_p4_step",
+      "address": "0xfffffff0074ee224",
+      "section": 14,
+      "type": 14
+    },
+    {
+      "name": "_p4_write_byte",
+      "address": "0xfffffff0074ee3d0",
+      "section": 14,
+      "type": 14
+    },
+    {
+      "name": "_p4_registers",
+      "address": "0xfffffff007ad979c",
+      "section": 23,
+      "type": 14
+    },
+    {
+      "name": "_hakios_mt6895_headset_init",
+      "address": "0xfffffff0074eae50",
+      "section": 14,
+      "type": 15
+    },
+    {
+      "name": "_hakios_mt6895_headset_poll",
+      "address": "0xfffffff0074eba08",
+      "section": 14,
+      "type": 15
+    },
+    {
+      "name": "_hakios_mt6895_headset_quiesce",
+      "address": "0xfffffff0074ebb88",
+      "section": 14,
+      "type": 15
+    },
+    {
+      "name": "_hakios_mt6895_headset_stop",
+      "address": "0xfffffff0074ebaf8",
+      "section": 14,
+      "type": 15
+    }
+  ],
+  "limitations": [
+    "Section sizes include alignment; total file size is not code size",
+    "Linked symbol presence is not hardware execution proof"
+  ]
+}

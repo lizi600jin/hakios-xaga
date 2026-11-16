@@ -1,0 +1,13 @@
+{
+  "base_files": 5205,
+  "changes": [
+    {
+      "path": "bsd/sys/hakios.pmif.h",
+      "sha256": "f4d9a964e304ea14686359b85e75560325e9d47ee2ecb5614aae538f9e293d78"
+    },
+    {
+      "path": "bsd/dev/hakios.mt6895_headset.c",
+      "sha256": "3c79386ac367ba81fe02774fbb8d37a6475845432a644ff91fdcb56a98c279ce"
+    }
+  ]
+}

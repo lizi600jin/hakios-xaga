@@ -1,0 +1,15 @@
+# HOST-TRIM-INPUTS-01 有效源码身份清单
+date: 2026-11-16T15:38:07+08:00
+repo: XagaForge/android_kernel_xiaomi_mt6895
+commit: 0a8d13c1a180fed82803f56337a0b065ff704fb4
+
+文件                                         字节  SHA256
+-------------------------------------------- --------  ----------------------------------------------------------------
+drivers__base__regmap__regmap-debugfs.c         17087  4fe6a9900c47819d4ebe42270994b9a48a9f39b2fb06003d9cbdc38a8583e00d
+drivers__base__regmap__regmap.c                 82148  f41ff8ab333303c20d650c8eba997d1accdb0bd67365cc3803942ba7589e30d2
+drivers__base__regmap__internal.h                8442  4f3153445578d0ee4006f81207eea823c52e30cfddb0bf4d345eda764d5f9f5f
+include__linux__regmap.h                        60734  ad811a96011145ba01178f34c1db7c256535572fd0c67ecff1533f6f7c077d94
+drivers__mfd__Makefile                          10548  6253f76f9095364fda45bb44dfec028b993444d5cc5c685292d722b209756ff1
+
+## 主机绝对路径
+/home/lizi/IOS/hakios-mtk/logs/headset-trim-inputs-20261116-153613/

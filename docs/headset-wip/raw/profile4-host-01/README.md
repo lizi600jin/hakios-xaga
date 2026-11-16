@@ -119,8 +119,16 @@ repeat insertion, fault rollback, worker stop and zero-access post-stop passed
 
 **审定的 `IMPLEMENTATION-REVIEW.md` §主机验证写明「ASan/UBSan 下 271 个用例通过」。**
 
-**我这边看到的证据是**：`rc=0`、stderr 空、`profile.log` 2.5 MB。
-**日志里是否含 sanitizer 输出，我没有逐行搜** —— 按审定的说法记录，不额外推断。
+**我当初只确认了 `rc=0`、stderr 空，没有逐行检索 2.5 MB 的 `profile.log`。**
+
+**🔴 Codex 已对完整两份日志检索，零命中：**
+
+| 日志 | 字节 | 检索结果 |
+|---|---|---|
+| `profile.log` | **2580890** | **AddressSanitizer / UndefinedBehaviorSanitizer / LeakSanitizer / `runtime error` 等诊断模式均零命中** |
+| `legacy.log` | **177844** | 同上 |
+
+**日志实测 hash 与检索模式记录在 `dsh-sanitizer-audit.json`（sha256 `72f74099…`）。**
 
 ---
 
@@ -214,7 +222,26 @@ XNU_SRC=/home/lizi/IOS/hakios-mtk/logs/profile4-kernel-src-20261116-1525 ./xnu-b
 | **字节** | **15321160** |
 | **SHA256** | **`cac498da96406cc4f660e2cc717dbcf93b259ae1d864de6f30a9e920ed03401d`** |
 
-**对比 709 的 15320872 字节 → 多 288 字节**（符合新增 profile4 代码的量级）。
+**对比 709 的 15320872 字节 → 文件总长多 288 字节。**
+
+### 🔴 288 字节**不是**代码增量（Codex 审定）
+
+| 段/节 | 增量 |
+|---|---|
+| **`__TEXT_EXEC.__text`** | **+5152 字节** |
+| `__TEXT.__const` | +2720 |
+| `__TEXT.__cstring` | +2219 |
+| `__DATA.__data` | +384 |
+| `__DATA.__bss` | +32 |
+
+**总文件大小增加 288 不表示只增加 288 字节代码；段、节与尾部元数据布局影响文件总长。**
+
+**我原来写「多 288 字节，符合新增 profile4 代码的量级」是把文件增量当成代码增量 —— 撤回。**
+
+**新内核含的 p4 符号（Codex 核验）**：`p4_enable`、`p4_apply`、`p4_step`、`p4_verify`、
+`p4_down_until` 等函数，`p4_up`、`p4_down`、`p4_registers` 数据，以及四个 trim 参数名。
+
+**这些只证明链接产物包含实现，不能证明运行或硬件正确。**
 
 ### 4.3 judge（显式 KERNEL）
 
@@ -273,13 +300,16 @@ KERNEL=<新树>/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837 \
 | 8 项输入核验通过 | ✅ **8/8** |
 | 两套主机测试均通过 | ✅ **profile rc=0、legacy rc=0** |
 | profile JSON 的被测输入与清单一致 | ✅ 见 `profile-result.json` 与 `input-verify.txt` |
-| ASan/UBSan 无错误 | ⚠️ **按审定文字记录**（rc=0、stderr 空；我未逐行搜 sanitizer 输出） |
+| ASan/UBSan 无错误 | ✅ **Codex 已对完整两份日志检索，零命中**（我当初只确认退出码） |
 | 新隔离树恰好两项变化 | ✅ **新增 0、消失 0、不同 2** |
 | 编译前后输入零变化 | ✅ **0** |
 | 内核实际新生成 | ✅ **`cac498da…`，15321160 B** |
 | 显式 KERNEL judge 仅豁免既有 symbolset | ✅ **judge rc=0，源码错误 0** |
 
 **full build 完成（内核已链接），所以可以报链接通过。**
+
+**🔴 但按审定：不能把 judge `rc=0` 改写成完整 make `rc=0`。
+真实 make 退出码是 `2`；judge `rc=0` 仅豁免既有 symbolset 失败。两者分别保留。**
 
 ---
 
@@ -350,3 +380,92 @@ KERNEL=<新树>/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837 \
 | `base-manifest-check.txt` | 177583 B（5205 行逐项 OK） |
 
 **新树**：`/home/lizi/IOS/hakios-mtk/logs/profile4-kernel-src-20261116-1525/`（含 BUILD）
+
+---
+
+# 补充（HOST-TRIM-INPUTS-01，2026-11-16 15:38）
+
+> 仅主机。**未追加构建、未打包镜像、未碰设备、未改生产代码/封存源码/旧 BUILD/wrapper/hakios-kernel。**
+
+## A. 审定文字归档
+
+| 文件 | 字节 | SHA256 | 逐字节 |
+|---|---|---|---|
+| **`TRIM-READ-DECISION.md`** | **3650** | `066f60b48ae19b0c3fbb46069deac596161829530fb193bdae0b671980995593` | **IDENTICAL** |
+| `linked-profile4-presence.json` | 916 | `90ac25d8a712057e4cc9be26e06741af851b40f17a736a47bd04a23593108a7f` | IDENTICAL |
+| `linked-section-audit.json` | 3566 | `2db9b00bdb811ab25ebebd4cbba81e3b7fb16bd3bf2060388c006a092896d4ac` | IDENTICAL |
+| `dsh-new-tree-audit.json` | 324 | `7dea4cd3ada4a1b494b398a18c4bdcf422aec55a1ce76664e11cb9eb2a53f01c` | IDENTICAL |
+| `dsh-sanitizer-audit.json` | 802 | `72f740994c168564c27d3e7208b5b74669aa736b703bf8917939ec1220bce57d` | IDENTICAL |
+
+## B. 本文件已按审定补入的三处
+
+| # | 补入内容 |
+|---|---|
+| 1 | **sanitizer 检索**：Codex 已对完整 `profile.log`（2580890 B）与 `legacy.log`（177844 B）检索 AddressSanitizer / UndefinedBehaviorSanitizer / LeakSanitizer / `runtime error`，**零命中**。这补上我当初只确认退出码的缺口。 |
+| 2 | **288 字节不是代码增量**：`__TEXT_EXEC.__text` **+5152 B**、`__TEXT.__const` +2720、`__TEXT.__cstring` +2219、`__DATA.__data` +384、`__DATA.__bss` +32。我原来把文件增量当代码增量，已撤回。 |
+| 3 | **make rc 与 judge rc 分开**：真实 make 退出码是 `2`；judge `rc=0` 仅豁免既有 symbolset，**不能把 judge rc=0 改写成完整 make rc=0**。 |
+
+**新内核含 p4 符号（Codex 核验）**：`p4_enable`、`p4_apply`、`p4_step`、`p4_verify`、
+`p4_down_until` 等函数，`p4_up`、`p4_down`、`p4_registers` 数据，四个 trim 参数名。
+**只证明链接产物包含实现，不证明运行或硬件正确。**
+
+## C. trim 读取入口的源码采集
+
+**固定提交** `0a8d13c1a180fed82803f56337a0b065ff704fb4`，
+采集目录 **`/home/lizi/IOS/hakios-mtk/logs/headset-trim-inputs-20261116-153613/`**。
+
+**有效源码 5 项（5/6）**：
+
+| 文件 | HTTP | 字节 | SHA256 |
+|---|---|---|---|
+| `drivers__base__regmap__regmap-debugfs.c` | 200 | **17087** | `4fe6a9900c47819d4ebe42270994b9a48a9f39b2fb06003d9cbdc38a8583e00d` |
+| `drivers__base__regmap__regmap.c` | 200 | **82148** | `f41ff8ab333303c20d650c8eba997d1accdb0bd67365cc3803942ba7589e30d2` |
+| `drivers__base__regmap__internal.h` | 200 | **8442** | `4f3153445578d0ee4006f81207eea823c52e30cfddb0bf4d345eda764d5f9f5f` |
+| `include__linux__regmap.h` | 200 | **60734** | `ad811a96011145ba01178f34c1db7c256535572fd0c67ecff1533f6f7c077d94` |
+| `drivers__mfd__Makefile` | 200 | **10548** | `6253f76f9095364fda45bb44dfec028b993444d5cc5c685292d722b209756ff1` |
+
+**命名用完整相对路径双下划线编码（不是 basename），所以不会撞名。
+每份先落临时文件，验 HTTP 200 + 大小 + 首行 SPDX 才进入有效清单。**
+
+### 🔴 第 6 项 `drivers/mfd/mt6368-core.c`：HTTP 404，缺失
+
+**按指令机械查 `drivers/mfd/Makefile` 的 mt6368 对象名 —— 结果 `mt6368` 零命中。**
+
+```
+mt6368   0
+mt6363   0
+mt6685   2     ← 这个 Makefile 里只有 mt6685，没有 mt6368
+mt6359   0
+spmi     3
+```
+
+**该 Makefile（281 行）不含 `mt6368` 对象，没有可推导的同目录 `.c` 文件名。**
+
+**仅探测（全 404，未下载内容、不计入有效输入）**：
+`drivers/mfd/mt6368.c`、`drivers/mfd/mt6368-mfd.c`、
+`drivers/misc/mediatek/pmic/mt6368/mt6368-core.c`。
+
+**按指令：记录缺失，不自行更换 commit，不拿错误页当源码，不覆盖任何已有文件。**
+
+**覆盖率 5/6，第 6 项明确缺失 —— 不把下载失败当作完整覆盖。**
+
+## D. 判据核对
+
+| 判据 | 结果 |
+|---|---|
+| 复核文件 hash 与 Codex 原件一致 | ✅ **五份全部 `cmp` IDENTICAL** |
+| sanitizer 审计两份日志零命中 | ✅ **按 `dsh-sanitizer-audit.json`** |
+| make/judge 真实退出码分别保留 | ✅ **make `rc=2`、judge `rc=0`** |
+| 六个请求项分别有 HTTP/内容/hash 记录 | ✅ **5 个 200 + 1 个 404 明确记录** |
+| 缺失项明确列出 | ✅ **`mt6368-core.c`** |
+| 没有把下载失败当完整覆盖 | ✅ **5/6 已标注** |
+| 8 项生产输入未变 | ✅ **不一致 0** |
+| 已生成 host kernel 未变 | ✅ **`cac498da…` 一致** |
+
+## E. 我没有做的事
+
+**只做存在性核验与文件取证。**
+**没有做 regmap 缓存、读取副作用、错误处理或寄存器语义判断 —— 那些由 Codex 核定。**
+
+**没有 trim 实值、没有硬件 PASS、没有可刷镜像。**
+**合成 trim 3/7 fine 1/2 仍只用于模型，未生成任何设备 boot-args。**
