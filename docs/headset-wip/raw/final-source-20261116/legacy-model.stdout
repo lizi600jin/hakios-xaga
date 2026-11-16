@@ -1,0 +1,1 @@
+production accdet: mode1 no writes, 19 stock config bytes, EINT gating, mic button, unplug, 3-pole timer, W1C; HP matches independent vendor instruction trace, 5-bit gain readback, bounded stereo retries, shared-field corruption, repeat insertion, fault rollback, worker stop and zero-access post-stop passed

@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "head": "c68abd37a16f14fb9151134bd9c08bae3cd83cd0",
+  "remote_matches": true,
+  "raw_evidence": [
+    {
+      "path": "docs/headset-wip/raw/device-712/raw/trial712-logbook.bin",
+      "bytes": 4198400,
+      "sha256": "d3434640a209afb616eabaf777c52d45fca57cf932705f2aac0408e55eea3e9b",
+      "all_identical": true
+    },
+    {
+      "path": "docs/headset-wip/raw/device-712/raw/trial712-logbook-body.bin",
+      "bytes": 531977,
+      "sha256": "19ab2ed6544281ebe6626ffca45809cba024288a76e6ff1a7a3aba84ce61a2e3",
+      "all_identical": true
+    }
+  ]
+}

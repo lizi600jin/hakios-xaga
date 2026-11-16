@@ -1,0 +1,138 @@
+--- a/mtk/mt6895/drivers/audio/hakios.mt6895_headset.c
++++ b/mtk/mt6895/drivers/audio/hakios.mt6895_headset.c
+@@ -11,6 +11,7 @@
+  *            VAUD18 must be on already; electrical silence is not guaranteed.
+  * hp_tone=1: after the normal profile4 check, use gain30 for three digitally gated
+  *            one-second pulses, then close and restore. Frequency/output are unmeasured.
++ * hp_tone_gain=31 selects the more attenuated vendor reference code for this experiment.
+  *
+  * Register definitions and the EINT0 / mode 4 / no-moisture sequence are from
+  * XagaForge/android_kernel_xiaomi_mt6895, commit 0a8d13c1a180fed82803f56337a0b065ff704fb4,
+@@ -959,7 +960,7 @@
+ enum p4_tone_phase { P4_TONE_IDLE, P4_TONE_WAIT, P4_TONE_ON, P4_TONE_GAP, P4_TONE_DONE };
+ static struct {
+     uint32_t trim_l, trim_r, fine_l, fine_r;
+-    uint32_t tone;
++    uint32_t tone, tone_gain;
+     uint64_t tone_deadline;
+     unsigned tone_pulses;
+     enum p4_tone_phase tone_phase;
+@@ -983,6 +984,7 @@
+ p4_configure_arguments(void)
+ {
+     uint32_t tone = 0;
++    uint32_t tone_gain = 30;
+ 
+     if (!PE_parse_boot_argn("hp_trim_l", &p4.trim_l, sizeof(p4.trim_l)) ||
+         !PE_parse_boot_argn("hp_trim_r", &p4.trim_r, sizeof(p4.trim_r)) ||
+@@ -996,11 +998,18 @@
+         printf("headset: hp_tone must be 0 or 1; no PMIF access\n");
+         return false;
+     }
++    if (!PE_parse_boot_argn("hp_tone_gain", &tone_gain, sizeof(tone_gain))) tone_gain = 30;
++    if (tone_gain != 30 && tone_gain != 31) {
++        printf("headset: hp_tone_gain must be 30 or 31; no PMIF access\n");
++        return false;
++    }
+     p4.tone = tone;
++    p4.tone_gain = tone_gain;
+     printf("headset: profile4 caller-supplied trim L=%u/%u R=%u/%u; calibration quality unverified\n",
+         p4.trim_l, p4.fine_l, p4.trim_r, p4.fine_r);
+     if (p4.tone) {
+-        printf("headset: tone experiment requested: fixed gain30, three 1000ms pulses; physical output unmeasured\n");
++        printf("headset: tone experiment requested: gain%u, three 1000ms pulses; physical output unmeasured\n",
++            p4.tone_gain);
+     }
+     return true;
+ }
+@@ -1223,7 +1232,7 @@
+         return false;
+     }
+     bool ok = (sgen & 0xfc) == (audible ? 0x80 : 0xc0) &&
+-        (left & 0x1f) == 30 && (right & 0x1f) == 30 &&
++        (left & 0x1f) == p4.tone_gain && (right & 0x1f) == p4.tone_gain &&
+         (amp & 0x0f) == 1 && (freq & 0xdf) == 0;
+     printf("headset: tone edge %s pulse=%u/3 sgen=%02x gain=%02x/%02x amp=%02x freq=%02x: %s\n",
+         edge, p4.tone_pulses, sgen, left & 0x1f, right & 0x1f,
+@@ -1237,7 +1246,7 @@
+     p4.tone_pulses = 0;
+     /* Confirm digital mute before changing either analog gain from the baseline31. */
+     if (!p4_apply(5, 0x23c8, 0x40, 0x40, false) ||
+-        !p4_tone_gain(30) || !p4_tone_gate(false, "armed")) {
++        !p4_tone_gain((uint8_t)p4.tone_gain) || !p4_tone_gate(false, "armed")) {
+         return false;
+     }
+     p4.tone_phase = P4_TONE_WAIT;
+--- a/mtk/tools/fixtures/mt6368-profile4-prefix.c
++++ b/mtk/tools/fixtures/mt6368-profile4-prefix.c
+@@ -13,6 +13,8 @@
+ static uint32_t model_trim[4];
+ static uint32_t model_tone;
+ static bool model_tone_present;
++static uint32_t model_tone_gain;
++static bool model_tone_gain_present;
+ static uint8_t model_regs[2][65536], model_original[2][65536], rdata, wdata;
+ static unsigned bus_state, error_samples, status_reads, pmic_reads, profile_writes, all_writes;
+ static unsigned fail_write_no, fail_sid, fail_reg, fail_phase;
+@@ -113,6 +115,9 @@
+     if (strcmp(name, "hp_tone") == 0 && model_tone_present) {
+         *(uint32_t *)out = model_tone; return true;
+     }
++    if (strcmp(name, "hp_tone_gain") == 0 && model_tone_gain_present) {
++        *(uint32_t *)out = model_tone_gain; return true;
++    }
+     const char *names[] = {"hp_trim_l", "hp_trim_r", "hp_fine_l", "hp_fine_r"};
+     for (unsigned i = 0; i < 4; i++) {
+         if (strcmp(name, names[i]) == 0 && (boot_arg_mask & (1u << i))) {
+--- a/mtk/tools/fixtures/mt6368-profile4-suffix.c
++++ b/mtk/tools/fixtures/mt6368-profile4-suffix.c
+@@ -8,6 +8,7 @@
+     boot_mode = 4; boot_arg_mask = 15;
+     model_trim[0] = 3; model_trim[1] = 7; model_trim[2] = 1; model_trim[3] = 2;
+     model_tone = 0; model_tone_present = false;
++    model_tone_gain = 30; model_tone_gain_present = false;
+     mode = 0; quiesced = active = eint_sync = button_down = first_sample = micbias_disabled = false;
+     cable = CABLE_NONE; detector = PLUG_OUT; inserted_ms = poll_elapsed = saved_count = 0;
+     hp_owned = hp_on = false; hp_worker_state = 0;
+@@ -232,6 +233,41 @@
+     hakios_mt6895_headset_poll(50); assert(p4_tone_poll());
+     assert(io == all_writes + pmic_reads + status_reads); cases++;
+ 
++    /* Only the two reviewed experiment gain codes are accepted, before PMIF access. */
++    const uint32_t bad_tone_gain[] = {0, 29, 32, UINT32_MAX};
++    for (unsigned i = 0; i < sizeof(bad_tone_gain)/sizeof(bad_tone_gain[0]); i++) {
++        reset_model(); model_tone_present = true; model_tone = 1;
++        model_tone_gain_present = true; model_tone_gain = bad_tone_gain[i];
++        hakios_mt6895_headset_init();
++        assert(!pmic_reads && !all_writes && !status_reads); cases++;
++    }
++
++    /* The lower-output selection retains the same gate timing and closes after slot3. */
++    reset_model(); model_tone_present = true; model_tone = 1;
++    model_tone_gain_present = true; model_tone_gain = 31;
++    begin_worker(); event(0, 0, IRQ_ACCDET);
++    assert(p4.on && p4.tone_gain == 31 && p4.tone_phase == P4_TONE_WAIT);
++    for (unsigned edge = 0; edge < 6; edge++) {
++        model_now = p4.tone_deadline; event(0, 0, 0);
++        if (edge < 5) {
++            assert(p4.on && model_regs[0][0x260b] == 31 && model_regs[0][0x260c] == 31);
++            assert(model_regs[0][0x23c8] == (edge % 2 == 0 ? 0x80 : 0xc0));
++        }
++    }
++    assert(!active && !saved_count && p4.tone_pulses == 3); check_profile_original(); cases++;
++
++    /* Seven new gate writes remain when both gain changes are idempotent at code31. */
++    for (unsigned n = 1; n <= 7; n++) {
++        reset_model(); model_tone_present = true; model_tone = 1;
++        model_tone_gain_present = true; model_tone_gain = 31;
++        fail_write_no = up_writes + n;
++        begin_worker(); event(0, 0, IRQ_ACCDET);
++        for (unsigned edge = 0; edge < 6 && active && p4.on; edge++) {
++            model_now = p4.tone_deadline; event(0, 0, 0);
++        }
++        assert(!active && !saved_count); check_profile_original(); cases++;
++    }
++
+     /* Header rejects every other SID9 write, wide address/value, and unrelated SID. */
+     ready_direct(); io = all_writes + pmic_reads + status_reads;
+     assert(pmif_write8(9, 0x079d, 0) != PMIF_OK && pmif_write8(9, 0x079f, 0) != PMIF_OK);
