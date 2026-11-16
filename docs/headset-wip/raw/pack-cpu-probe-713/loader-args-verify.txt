@@ -1,0 +1,30 @@
+base 479 B  full 539 B  full+NUL 540  <=608: True
+
+== base 在 loader.bin 里的出现位置 ==
+  [1] offset 39757 (0x9b4d)  后随 00 (NUL 本体)
+  [2] offset 40570 (0x9e7a)  后随 0a (printf 片段)
+  [3] offset 42379 (0xa58b)  后随 0a (printf 片段)
+
+== 本体 offset 39757，长度 479，逐字节匹配: True ==
+
+== 完整 base 串 ==
+rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=0 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=0 mali_mcuwin=0 mali_mcuseq=0 mali_doorbell=0 mali_pdcsettle=0 mali_statussem=0 mali_assorder=1 mali_trial=713 mali_nopdc=1 headset=0 mtk_cpu_probe=1 loader_return_after=150
+
+== 关键项 ==
+  mali_trial=713           1 次
+  headset=0                1 次
+  mtk_cpu_probe=1          1 次
+  cpus=4                   1 次
+  loader_return_after=150  1 次
+  mali_nopdc=1             1 次
+
+== 禁止项 ==
+  mali_trial=712           0 次
+  mali_trial=711           0 次
+  headset=4                0 次
+  hp_tone                  0 次
+  hp_trim                  0 次
+  cpufreq=                 0 次
+
+== hakios_kver 是否也在 ==
+  offset -1  找到=False

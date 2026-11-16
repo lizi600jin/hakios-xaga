@@ -1,0 +1,4 @@
+argv: ['python3', 'xnuloader/mkpayload.py', '-o', 'logs/mt6895-cpu-baseline-20261116/trial713/payload.bin', '--no-version', 'kernel=/home/lizi/IOS/hakios-mtk/logs/mt6895-cpu-baseline-20261116/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837', 'ramdisk=logs/profile4-device-20261116/trial710/revision2/ref-ramdisk.bin', 'kernel.ver=logs/profile4-device-20261116/trial710/revision2/ref-kernel.ver.bin']
+native rc=0
+stdout: logs/mt6895-cpu-baseline-20261116/trial713/payload.bin: 19515800 bytes
+  payload 19515800 B  871508dc8fbe6dab094aea2154e701acf1125a717794655ba90de30ee4aefdb2
