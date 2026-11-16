@@ -1,0 +1,6 @@
+CMD: am start -a android.intent.action.VIEW -d file:///data/local/tmp/reference-prep01-180239.wav -t audio/x-wav
+argv: ['adb', '-s', 'GAJZ4HIN99AQ69Y9', 'shell', '-T', '-n', 'su', '-c', "'am start -a android.intent.action.VIEW -d file:///data/local/tmp/reference-prep01-180239.wav -t audio/x-wav'"]
+rc  : 0
+stdout: Starting: Intent { act=android.intent.action.VIEW dat=file:///... typ=audio/x-wav }
+
+stderr: 

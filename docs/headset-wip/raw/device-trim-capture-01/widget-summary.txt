@@ -1,0 +1,7 @@
+A          total=30  On=0  Off=30
+B1-pre     total=30  On=29  Off=1
+B1-post    total=30  On=29  Off=1
+B2-pre     total=30  On=29  Off=1
+B2-post    total=30  On=29  Off=1
+C          total=30  On=0  Off=30
+   C 全 Off: True

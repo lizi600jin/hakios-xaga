@@ -1,0 +1,7 @@
+argv: ['adb', '-s', 'GAJZ4HIN99AQ69Y9', 'shell', '-T', '-n', 'su', '-c', '\'printf \'"\'"\'\\101\\000\\102\'"\'"\'; printf \'"\'"\'transport-check\\n\'"\'"\' >&2; exit 7\'']
+rc  : 7 (期望 7)
+stdout hex: 410042 (期望 410042)
+stdout len: 3 (期望 3)
+stderr repr: b'transport-check\n' (期望 b'transport-check\n')
+
+SELFCHECK: PASS
