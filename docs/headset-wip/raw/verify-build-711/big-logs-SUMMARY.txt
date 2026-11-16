@@ -1,0 +1,9 @@
+# 大日志摘要（完整体留本地）
+profile.log: 2829744 B
+legacy.log:  177844 B
+build-stdout.log: 124870 B
+build-stderr.log: 76191 B
+base-manifest-check.txt: 177583 B
+
+## 位置
+/home/lizi/IOS/hakios-mtk/logs/profile4-tone-20261116/host-review/
