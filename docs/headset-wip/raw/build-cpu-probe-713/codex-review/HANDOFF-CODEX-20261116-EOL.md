@@ -169,7 +169,7 @@ GPU、存储、基带仍是独立方向；目前不能宣称 CPU 固定频率是
   SHA256 `c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc`。
   MD5 `a63b2e35a7c2522cb24a6a10332b9bc8`。
 - 最近已知 Android boot_id `686cb45c-3f54-481f-ba0c-5e9945f95449`，slot_a、boot_completed1、SELinux Enforcing。
-- 设备序列号只用于本地指定设备，不进入公开归档：`GAJZ4HIN99AQ69Y9`。DSH 归档本文件时必须脱敏此行。
+- 设备序列号只用于本地指定设备，不进入公开归档：`<SERIAL>`。DSH 归档本文件时必须脱敏此行。
 - GPUEB旧WIP：`D/docs/headset-wip/findings/GPUEB-INTEGRATION.patch`
   SHA256 `9cdcb0da826e9bd561fce98aae81304789fee2742c63b10235942f028e53eb16`，未改未提交。
 
