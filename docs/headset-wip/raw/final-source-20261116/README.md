@@ -80,6 +80,10 @@ gain31 全程 pattern、七个新 gate 写逐点注入失败。
 | **`audio712-spectrum-84-98.png`** | **84–98 s 频谱图**（独立解码的片段） |
 | `audio712-envelope.json` | 包络数据 |
 
+**另有**：[`ANDROID-PLAYBACK-CONTROL.md`](ANDROID-PLAYBACK-CONTROL.md) ——
+**Android 播放链对照实验**（2026-11-16 20:24）：证明 Android 会出声，
+故 711 录音缺 997 Hz 属录音链问题。
+
 **🔴 原始 MP3 不上传** —— 它在 `/home/lizi/下载/标准录音+6.mp3`
 （4368212 B / `4a432907…`），保留在本地以避免发布环境录音。
 

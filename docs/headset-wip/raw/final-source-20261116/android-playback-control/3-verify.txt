@@ -1,0 +1,11 @@
+== flinger-1 ==
+  {'ptr': '0xb400007f5e5384d0', 'name': 'AudioOut_15', 'dev': '0x8', 'io': '21', 'rate': '48000', 'ch': '2', 'fw': '65536', 'tw': '32'}
+== flinger-2 ==
+  {'ptr': '0xb400007f5e5384d0', 'name': 'AudioOut_15', 'dev': '0x8', 'io': '21', 'rate': '48000', 'ch': '2', 'fw': '141312', 'tw': '69'}
+
+  同一 thread: True    device 0x8: True
+  48000Hz/2ch
+  frames 65536 → 141312  delta 75776
+  writes 32 → 69  delta 37
+
+  Android 软件播放链: ✅ 确实在播

@@ -1,0 +1,14 @@
+[host] 2026-11-16T20:24:21.165710
+  设备侧 b994ddba0465ab54e6d33944f49373e8539b51601e7b392c7e2c2eee96408a29  /data/local/tm
+  期望 b994ddba0465ab54...
+  -rw-rw-rw- 1 root root 1536044 2026-11-16 19:20 /data/local/tmp/audio-check-997.wav
+
+== 解锁确认 ==
+  isKeyguardShowing=false
+
+== 播放（8 秒，请听三声短音）==
+  am native rc=0  开始 20:24:23
+  Starting: Intent { act=android.intent.action.VIEW dat=file:///... typ=audio/x-wav }
+  flinger-1 @ +1.72s  38292 B  rc=0
+  flinger-2 @ +3.27s  38645 B  rc=0
+[结束] 3.3s
