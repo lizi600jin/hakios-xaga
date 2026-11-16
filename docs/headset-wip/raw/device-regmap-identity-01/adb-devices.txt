@@ -1,0 +1,3 @@
+List of devices attached
+GAJZ4HIN99AQ69Y9       device usb:1-1 product:xaga model:22041216C device:xaga transport_id:1
+

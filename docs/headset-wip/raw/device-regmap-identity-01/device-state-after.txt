@@ -1,0 +1,10 @@
+# 读取后状态复查  host: 2026-11-16T17:54:28+08:00
+
+## boot_id
+0ebf2d81-4822-47df-be3c-51916b1a7663
+
+## sys.boot_completed
+1
+
+## /proc/uptime
+66736.67 161884.08

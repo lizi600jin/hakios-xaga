@@ -1,0 +1,8 @@
+# DEVICE-REGMAP-IDENTITY-01 身份核验
+# host: 2026-11-16T17:54:17+08:00
+
+文件                   实测 期望 cmp      SHA256（实测）
+------------------------ ------ ------ -------- ----------------------------------------------------------------
+kernel.notes                 60     60 IDENT    0203fb7ac2483fe8cb5ce8cffab4daf67044f9dc69f54f34ef9d2edd70798847
+mtk_spmi_pmic.notes          36     36 IDENT    d2e241e3ee565d2dc3d1ddacd3ba8bc3dfbc2a0365778d7a3f483d64756c113a
+regmap_spmi.notes            36     36 IDENT    7d919564de7f200e9a447be133187c60c12c92c72d015bb25a381c671c7a6070
