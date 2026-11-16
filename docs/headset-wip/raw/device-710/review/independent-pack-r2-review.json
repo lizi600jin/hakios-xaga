@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "image": "/home/lizi/IOS/hakios-mtk/logs/profile4-device-20261116/trial710/revision2/boot.img",
+  "image_bytes": 22994944,
+  "image_sha256": "ca161c1bdb002540a2454e8222ef7306255e175108ead9fffe48d995aebe56b1",
+  "image_md5": "b016ef1708b46830e9f74787bb169815",
+  "loader_bytes": 48872,
+  "loader_sha256": "daa05b1736fafcb24499a8b063b20d9d94ee2403f95e46014ae02b2676cad18d",
+  "payload_bytes": 19515624,
+  "payload_sha256": "e29f55eba59aa2569d9d440d0f8fe3f71b0861a819e7e46242a5ad11b741eb7d",
+  "kernel_sha256": "cac498da96406cc4f660e2cc717dbcf93b259ae1d864de6f30a9e920ed03401d",
+  "entries": {
+    "kernel": {
+      "bytes": 15321160,
+      "sha256": "cac498da96406cc4f660e2cc717dbcf93b259ae1d864de6f30a9e920ed03401d"
+    },
+    "ramdisk": {
+      "bytes": 4194304,
+      "sha256": "78985f67583b4d4666e4612681b879720259d83b309530e2b82c1246d5ed5bce"
+    },
+    "kernel.ver": {
+      "bytes": 48,
+      "sha256": "363b5257dc819017ddb1f97c15be0d3c542f023ef8052c3c4801eb4463dd06f6"
+    }
+  },
+  "base_args_bytes": 512,
+  "full_args_bytes": 572,
+  "full_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=0 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=0 mali_mcuwin=0 mali_mcuseq=0 mali_doorbell=0 mali_pdcsettle=0 mali_statussem=0 mali_assorder=1 mali_trial=710 mali_nopdc=1 headset=4 hp_trim_l=3 hp_trim_r=17 hp_fine_l=0 hp_fine_r=3 loader_return_after=150 hakios_kver=2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty",
+  "chain_blob_bytes": 61979144,
+  "limitations": [
+    "Host structural/provenance checks only; no hardware or electrical result"
+  ]
+}

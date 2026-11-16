@@ -7,6 +7,51 @@
 
 ---
 
+## 🔴 候选版本说明（必读）
+
+| 版本 | payload | boot.img SHA256 | 状态 |
+|---|---|---|---|
+| **r1（首版）** | 19515600 B | `201688e5…` | **🔴 拒绝** —— 缺 XNUP 必需的 24 字节全零终止项，**从未刷写** |
+| **r2（revision2）** | **19515624 B** | **`ca161c1bdb002540a2454e8222ef7306255e175108ead9fffe48d995aebe56b1`** | **✅ 唯一实际刷写件** |
+
+**本轮试验刷写的就是 r2。** r1 失败产物按历史证据保留在
+`../pack-710/`，`../pack-710/README.md` 顶部已加拒绝横幅。
+
+### 本轮原始字节归档（本轮补齐）
+
+**这两份是设备上抓到的原始字节，直接纳入本目录：**
+
+| 文件 | 大小 | SHA256 |
+|---|---|---|
+| **`raw/trial710-logbook.bin`** | **4198400** | **`347a3089c1e10217f84fa252ea6faf15f2e23f4bc2b3e906e3b1a6c4b76ad189`** |
+| **`raw/trial710-logbook-body.bin`** | **528685** | **`7032ba03ee75a62f7ed71e3189ad5d0de6552cf96880671a896fd3c582f485fc`** |
+
+**两者被 `.gitignore` 的 `*.bin` 规则挡住，本轮用 `git add -f` 仅对这两条路径强制纳入。**
+**原始文件仍留在 `hakios-mtk/logs/profile4-device-20261116/device710/`，未删除。**
+
+### Codex 独立复核
+
+| 文件 | 说明 |
+|---|---|
+| `review/independent-device710-review.json` | 逐项复核 114 项，共享位/阶段顺序/完整 checksum 均通过 |
+| `review/independent-pack-r2-review.json` | r2 打包复核 |
+| `review/TRIAL710-CRITERIA.md` | 判据原文 |
+| `review/CMD-DEVICE-710.md` | 本轮 CMD 原文 |
+
+### checksum 口径更正
+
+**判据是完整 `sum(body)` 与 header 的 64 位 `sum` 字段精确相等（`0x291d3ce`）。**
+**不是 8-bit additive；低 8 位 `0xce` 只是巧合匹配。**
+见 `checksum-corrected.txt` 与 `HLOG-SUMMARY.txt`。
+
+### 原厂恢复已核验
+
+**`boot_a` MD5 回到 `a63b2e35a7c2522cb24a6a10332b9bc8`、slot `_a`、
+`boot_completed=1`、SELinux `Enforcing`、SurfaceFlinger 正常。**
+**本轮之后不再做任何设备操作。**
+
+---
+
 ## 0. 五个标签分开陈述
 
 | 标签 | 结果 |
