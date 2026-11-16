@@ -1,0 +1,14 @@
+# 录音文件身份
+路径（主机原件，未移动）
+  /home/lizi/下载/标准录音+5.mp3
+大小 11143945 B
+SHA256 654c41faf6a0aa58e3ded654cbc8ad8088f8855303128b90d8542d37d955da1e
+格式 MP3 320 kb/s, 48000 Hz, stereo, fltp
+时长 00:04:38.60 (278.6 s)
+ffprobe 警告 Estimating duration from bitrate, this may be inaccurate
+
+# 用户补充的口述信息（主观，非文件内容）
+- 环境不是绝对安静，有杂音
+- 安卓播放的参考音可能太小、不确定有没有录上
+- XNU 播放的录上了
+- 在 XNU 里听到明显三段短音，但音量大，耳机/扬声器声源未分清，倾向耳机
