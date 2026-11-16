@@ -1,0 +1,40 @@
+# PREP-REGMAP-READER-HOST-01 构建与工具链记录
+date: 2026-11-16T16:21:26+08:00
+
+## 工具链
+Ubuntu clang version 21.1.8 (6ubuntu1)
+Ubuntu LLD 21.1.8 (compatible with GNU linkers)
+
+## 主机测试构建命令
+clang -std=c11 -O1 -g -Wall -Wextra -Werror \
+  -fsanitize=address,undefined -fno-omit-frame-pointer \
+  reader_core.c test_reader.c -o test_reader
+
+## ARM64 交叉编译命令
+clang --target=aarch64-linux-gnu -std=c11 -O2 -Wall -Wextra -Werror \
+  -ffreestanding -nostdlib -static -fno-stack-protector -fno-pic \
+  -Wl,-e,_start -Wl,--build-id=none -fuse-ld=lld \
+  reader_core.c reader_start.c -o regmap-reader.aarch64
+
+## 源文件与产物 size + SHA256
+文件                         字节  SHA256
+---------------------------- --------  ----------------------------------------------------------------
+reader_core.h                    2703  05f0f0751b6da00d652720825fdc7d268e4eb948f8043a41d15c6053b821656f
+reader_core.c                    6054  a4d793dd05763c897b88aebae1b0d20aa6cdd0bea6438df309e6ca191207f1d6
+reader_start.c                   3652  14f6b0a3edf8602e9c85ceeae465d90d12e84a1134427e0d8ef79017510fc1d7
+test_reader.c                   12653  5b6f04e14b32a79f57549ae45026eaac5fcaca7555837e52c98b566b676f74d3
+regmap-reader.aarch64            4104  1d96bdd5d3d87eeaf3b92c124126e6934292c6dc8994f136e75bc82432af1c7f
+test_reader                   1818600  a324bc610f22332d40092414f86f3454220bd0e01c851adb9cc17016f36c9c94
+
+## 测试结果
+退出码: 0（191 passed, 0 failed）
+
+191 passed, 0 failed
+
+## ELF 核验
+  file: ARM aarch64, statically linked
+  类型 EXEC、系统架构 AArch64
+  入口点 0x210978 = _start
+  INTERP 段: 0（无）
+  动态段: 无 dynamic section
+  未定义符号: 无
