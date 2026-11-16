@@ -1,0 +1,16 @@
+PASS cold exact two-byte window
+PASS warm exact window
+PASS one complete line
+PASS less than one line
+PASS not enough for two lines
+PASS zero count
+PASS negative offset
+PASS left read error
+PASS right read error
+PASS both read errors
+PASS user copy fault retains offset
+PASS allocation failure
+PASS zero and ff are valid bytes
+PASS misaligned seek skips partial line
+PASS cold range metadata does not read registers
+PASS 15 stock-kernel instruction cases

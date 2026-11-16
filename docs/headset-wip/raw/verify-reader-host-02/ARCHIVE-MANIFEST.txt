@@ -1,0 +1,28 @@
+# VERIFY-REGMAP-READER-HOST-02 归档件完整 hash
+date: 2026-11-16T16:44:20+08:00
+
+文件                                             字节  SHA256
+---------------------------------------------- ----------  ----------------------------------------------------------------
+kernel/emulate-read-window.py                       12336  29d120cbd1679e552151c17274bcff88b89ccbf93772c75db959a801a290b724
+kernel/emu.rc                                          13  bbf1c1a19f77bb9375d90fccf92b39938c14b404021e094ecbb1b647d44324eb
+kernel/emu.stdout.txt                                 455  34fb33611c554f802ae904f1cf7acc7a623d0b7459f48d7fc006489b1af860b1
+kernel/extract.rc                                      13  bbf1c1a19f77bb9375d90fccf92b39938c14b404021e094ecbb1b647d44324eb
+kernel/extract.stdout.txt                             627  e8f7a53946c0a2d9962f9d1d7a5a21be6471587c87a3e77f5c50c22edc03ed45
+kernel/read-window-emulation.json                    4097  4a23d64b5e99b19a27833978316375ef6b0130e21a0efaf3c79270bf60bb04dd
+kernel/stock-config-1.txt                          181983  af94c6617b42394cce7978ee307306aa880a38f4bf45472cd0826fb86641f13d
+kernel/stock-kallsyms-layout.json                     291  a7759695f906ce184c6adb9d93bda5b2fdc7dfece149826d2dcb9e4b55b08d58
+kernel/stock-kernel-identity.json                    2177  1f78789a8aaa687c1d11d22d6d177bae1e1c130e054f91af9c4d2ed888678176
+negative.rc                                            13  2a0cdcb5736c809df97a9155474db0b6e9c89ab97f8a6e1d29796941072e2fc5
+negative.stdout.txt                                   150  bef1e35b1fa28cb797b821673a487441001867925731fde4c8087fd6b92dfbb9
+READER-AUDIT.md                                      2814  54786226bd58f52818473419d32072a0473daa66b24fbad89e4cd0c1941baa17
+reader/reader_core.c                                 6402  eb7b9a09dcece6e57112fefed1bb3fdcc8f93e243ecc629b1c7daf034dc10169
+reader/reader_core.h                                 2747  9caa46d2c31d2269c5e2a4bb4d2308842243c599359b64abc2df446bea914b67
+reader/reader_start.c                                3652  14f6b0a3edf8602e9c85ceeae465d90d12e84a1134427e0d8ef79017510fc1d7
+reader/replay-checks.py                              2959  4c86a11caaeab4b65f049fe7674fa4eaf5673e18df1d5b44d8a5a5e1b5fdbd47
+reader/replay.rc                                       13  bbf1c1a19f77bb9375d90fccf92b39938c14b404021e094ecbb1b647d44324eb
+reader/replay-result.json                            1916  2b0f2e951c0a4a1dd92b0b4ddf4166514491f9cc0e2a55bed00525c189bc871b
+reader/replay.stdout.txt                              259  405c203061ac9f91289f2b5f5fb2163ae221e2b6a17a7a488f033ec5341f2228
+reader/reviewed-elf-readelf.txt                      3142  bb67f180cd18dae6f8494d2ac9b1a15350fd63d2154a6c12aefdd6ab271846f6
+reader/test_reader.c                                15089  490cd8cfc12415c1136f73eef9ff836978e618275ffe7141df71da6ac129e0ea
+reader/test-reader-elf.py                           10546  f70a54c1dc225b772f9556feeaa8403066b4d7abca48839d47b8423712a219a1
+REGMAP-READ-AUDITED.md                               5449  a89172a6b1e640c9cc0137417ec4ee5a621fabf9b89eb9842060d9d00f256f68

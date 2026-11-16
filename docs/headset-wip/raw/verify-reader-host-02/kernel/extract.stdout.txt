@@ -1,0 +1,8 @@
+{
+  "image_sha256": "12d255cdd09fb5b9fb5cf9608e6b060a5b2dabc109fd4344b071a3dbdc0cf391",
+  "linux_banner": "Linux version 5.10.237-Fuutao-Qn_miao-gc5e20589c (moon-source@c5-cose-moon-core-source-merge) (Android (on r584948) clang version 22.0.0, LLD 22.0.0 (r584948-release 2d65e4108)) #0 SMP PREEMPT Thu Feb 20 00:00:00 CST 2025\n",
+  "kernel_build_id": "76cc81c2a436243ca099b361b84defb940552ea2",
+  "config_sha256": "af94c6617b42394cce7978ee307306aa880a38f4bf45472cd0826fb86641f13d",
+  "symbols_sha256": "4b49954e0c7be2d71166e7c8652f2be6ef48f68af2f9e5b0fc011e580eadebda"
+}
+Decoded 140592 symbol records; 550 markers validated

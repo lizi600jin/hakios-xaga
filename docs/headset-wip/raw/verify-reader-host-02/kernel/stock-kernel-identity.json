@@ -1,0 +1,57 @@
+{
+  "source": "/home/lizi/IOS/hakios-mtk/backup/boot_a_stock_real.img",
+  "source_bytes": 67108864,
+  "source_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+  "source_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+  "header_version": 4,
+  "header_size": 1584,
+  "kernel_size": 15311555,
+  "ramdisk_size": 1867873,
+  "compression": "gzip",
+  "image_bytes": 42201364,
+  "image_sha256": "12d255cdd09fb5b9fb5cf9608e6b060a5b2dabc109fd4344b071a3dbdc0cf391",
+  "arm64_header_image_size": 40108032,
+  "linux_banner": "Linux version 5.10.237-Fuutao-Qn_miao-gc5e20589c (moon-source@c5-cose-moon-core-source-merge) (Android (on r584948) clang version 22.0.0, LLD 22.0.0 (r584948-release 2d65e4108)) #0 SMP PREEMPT Thu Feb 20 00:00:00 CST 2025\n",
+  "config_offset": 27472416,
+  "config_bytes": 181983,
+  "config_sha256": "af94c6617b42394cce7978ee307306aa880a38f4bf45472cd0826fb86641f13d",
+  "symbols": {
+    "symbol_count": 140592,
+    "num_syms_offset": 28074456,
+    "relative_base": "0xffffffc008000000",
+    "offsets_offset": 27512080,
+    "names_offset": 28074464,
+    "names_end": 30099936,
+    "markers_offset": 30099936,
+    "marker_count": 550,
+    "token_table": 30102136,
+    "token_index": 30103088
+  },
+  "symbols_sha256": "4b49954e0c7be2d71166e7c8652f2be6ef48f68af2f9e5b0fc011e580eadebda",
+  "kernel_build_id": "76cc81c2a436243ca099b361b84defb940552ea2",
+  "kernel_notes": [
+    {
+      "file_offset": 33643288,
+      "name": "Linux",
+      "type": 256,
+      "descriptor_hex": "00"
+    },
+    {
+      "file_offset": 33643312,
+      "name": "GNU",
+      "type": 3,
+      "descriptor_hex": "76cc81c2a436243ca099b361b84defb940552ea2"
+    }
+  ],
+  "kernel_notes_bounds": {
+    "start": 33643288,
+    "end": 33643348
+  },
+  "decoder_sha256": "3f868183097dccec4c33318e2ae0850007d353c6f2df342bc72a6f7fd4bb9eac",
+  "limitations": [
+    "Hash-pinned backup artifact; no live device state observed",
+    "GNU build-id scoped by __start_notes/__stop_notes, not arbitrary string scan",
+    "Symbol names at distinct addresses are retained; no duplicate-name collapse",
+    "Kallsyms decode does not recover original source or establish runtime behavior"
+  ]
+}

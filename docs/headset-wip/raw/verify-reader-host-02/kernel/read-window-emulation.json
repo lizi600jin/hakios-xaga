@@ -1,0 +1,178 @@
+{
+  "status": "PASS",
+  "image_sha256": "12d255cdd09fb5b9fb5cf9608e6b060a5b2dabc109fd4344b071a3dbdc0cf391",
+  "symbols_sha256": "4b49954e0c7be2d71166e7c8652f2be6ef48f68af2f9e5b0fc011e580eadebda",
+  "runner_sha256": "29d120cbd1679e552151c17274bcff88b89ccbf93772c75db959a801a290b724",
+  "function": "regmap_read_debugfs",
+  "address": "0xffffffc008c46fd8",
+  "cases": [
+    {
+      "name": "cold exact two-byte window",
+      "offset": 86526,
+      "count": 18,
+      "returned": 18,
+      "payload": "258e: a5\n258f: 5a\n",
+      "next_offset": 86544,
+      "read_registers": [
+        9614,
+        9615
+      ]
+    },
+    {
+      "name": "warm exact window",
+      "offset": 86526,
+      "count": 18,
+      "returned": 18,
+      "payload": "258e: a5\n258f: 5a\n",
+      "next_offset": 86544,
+      "read_registers": [
+        9614,
+        9615
+      ]
+    },
+    {
+      "name": "one complete line",
+      "offset": 86526,
+      "count": 9,
+      "returned": 9,
+      "payload": "258e: a5\n",
+      "next_offset": 86535,
+      "read_registers": [
+        9614
+      ]
+    },
+    {
+      "name": "less than one line",
+      "offset": 86526,
+      "count": 8,
+      "returned": 0,
+      "payload": "",
+      "next_offset": 86526,
+      "read_registers": []
+    },
+    {
+      "name": "not enough for two lines",
+      "offset": 86526,
+      "count": 17,
+      "returned": 9,
+      "payload": "258e: a5\n",
+      "next_offset": 86535,
+      "read_registers": [
+        9614
+      ]
+    },
+    {
+      "name": "zero count",
+      "offset": 86526,
+      "count": 0,
+      "returned": -22,
+      "payload": "",
+      "next_offset": 86526,
+      "read_registers": []
+    },
+    {
+      "name": "negative offset",
+      "offset": -1,
+      "count": 18,
+      "returned": -22,
+      "payload": "",
+      "next_offset": 18446744073709551615,
+      "read_registers": []
+    },
+    {
+      "name": "left read error",
+      "offset": 86526,
+      "count": 18,
+      "returned": 18,
+      "payload": "258e: XX\n258f: 5a\n",
+      "next_offset": 86544,
+      "read_registers": [
+        9614,
+        9615
+      ]
+    },
+    {
+      "name": "right read error",
+      "offset": 86526,
+      "count": 18,
+      "returned": 18,
+      "payload": "258e: a5\n258f: XX\n",
+      "next_offset": 86544,
+      "read_registers": [
+        9614,
+        9615
+      ]
+    },
+    {
+      "name": "both read errors",
+      "offset": 86526,
+      "count": 18,
+      "returned": 18,
+      "payload": "258e: XX\n258f: XX\n",
+      "next_offset": 86544,
+      "read_registers": [
+        9614,
+        9615
+      ]
+    },
+    {
+      "name": "user copy fault retains offset",
+      "offset": 86526,
+      "count": 18,
+      "returned": -14,
+      "payload": "",
+      "next_offset": 86526,
+      "read_registers": [
+        9614,
+        9615
+      ]
+    },
+    {
+      "name": "allocation failure",
+      "offset": 86526,
+      "count": 18,
+      "returned": -12,
+      "payload": "",
+      "next_offset": 86526,
+      "read_registers": []
+    },
+    {
+      "name": "zero and ff are valid bytes",
+      "offset": 86526,
+      "count": 18,
+      "returned": 18,
+      "payload": "258e: 00\n258f: ff\n",
+      "next_offset": 86544,
+      "read_registers": [
+        9614,
+        9615
+      ]
+    },
+    {
+      "name": "misaligned seek skips partial line",
+      "offset": 86527,
+      "count": 18,
+      "returned": 18,
+      "payload": "258f: ff\n2590: 90\n",
+      "next_offset": 86545,
+      "read_registers": [
+        9615,
+        9616
+      ]
+    },
+    {
+      "name": "cold range metadata does not read registers",
+      "returned": 7,
+      "payload": "0-ffff\n",
+      "next_offset": 7,
+      "read_registers": []
+    }
+  ],
+  "metadata_predicate_calls": 131110,
+  "assumptions": [
+    "map: max_register=ffff, stride=1, val_bytes=1, full printable range",
+    "Metadata predicates, allocator, locks, formatting, copy and _regmap_read modeled",
+    "Actual backup kernel instructions execute; no controller or device execution",
+    "Results do not establish the live map configuration or calibration quality"
+  ]
+}

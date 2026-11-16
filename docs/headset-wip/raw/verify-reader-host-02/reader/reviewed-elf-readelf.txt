@@ -1,0 +1,61 @@
+ELF 头：
+  Magic：   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
+  类别:                              ELF64
+  数据:                              2 补码，小端序 (little endian)
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI 版本:                          0
+  类型:                              EXEC (可执行文件)
+  系统架构:                          AArch64
+  版本:                              0x1
+  入口点地址：               0x2109fc
+  程序头起点：          64 (bytes into file)
+  Start of section headers:          3784 (bytes into file)
+  标志：             0x0
+  Size of this header:               64 (bytes)
+  Size of program headers:           56 (bytes)
+  Number of program headers:         4
+  Size of section headers:           64 (bytes)
+  Number of section headers:         7
+  Section header string table index: 5
+
+程序头：
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  PHDR           0x000040 0x0000000000200040 0x0000000000200040 0x0000e0 0x0000e0 R   0x8
+  LOAD           0x000000 0x0000000000200000 0x0000000000200000 0x000598 0x000598 R   0x10000
+  LOAD           0x000598 0x0000000000210598 0x0000000000210598 0x0005ec 0x0005ec R E 0x10000
+  GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x000000 RW  0
+
+ Section to Segment mapping:
+  段节...
+   00     
+   01     .rodata 
+   02     .text 
+   03     
+
+Symbol table '.symtab' contains 22 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS reader_core.c
+     2: 0000000000210598     0 NOTYPE  LOCAL  DEFAULT    2 $x
+     3: 0000000000200128     0 NOTYPE  LOCAL  DEFAULT    1 $d
+     4: 00000000002108b4   328 FUNC    LOCAL  DEFAULT    2 window_format_ok
+     5: 00000000002003ec     0 NOTYPE  LOCAL  DEFAULT    1 $d
+     6: 00000000002004c8     0 NOTYPE  LOCAL  DEFAULT    1 $d
+     7: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT    3 $d
+     8: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS reader_start.c
+     9: 00000000002109fc     0 NOTYPE  LOCAL  DEFAULT    2 $x
+    10: 0000000000200570    40 OBJECT  LOCAL  DEFAULT    1 real_ops
+    11: 0000000000210adc    92 FUNC    LOCAL  DEFAULT    2 sys_write_all
+    12: 0000000000210b38    28 FUNC    LOCAL  DEFAULT    2 sys_open_ro
+    13: 0000000000210b54    16 FUNC    LOCAL  DEFAULT    2 sys_read_once
+    14: 0000000000210b64    16 FUNC    LOCAL  DEFAULT    2 sys_pread_once
+    15: 0000000000210b74    16 FUNC    LOCAL  DEFAULT    2 sys_close
+    16: 0000000000200570     0 NOTYPE  LOCAL  DEFAULT    1 $d
+    17: 000000000020038c     0 NOTYPE  LOCAL  DEFAULT    1 $d
+    18: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT    3 $d
+    19: 0000000000210598    36 FUNC    GLOBAL DEFAULT    2 reader_reason_name
+    20: 00000000002105bc   760 FUNC    GLOBAL DEFAULT    2 reader_run
+    21: 00000000002109fc   224 FUNC    GLOBAL DEFAULT    2 _start
+
+There is no dynamic section in this file.

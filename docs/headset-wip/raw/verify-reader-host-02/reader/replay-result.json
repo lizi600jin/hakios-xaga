@@ -1,0 +1,72 @@
+{
+  "status": "PASS",
+  "inputs": {
+    "reader_core.h": "9caa46d2c31d2269c5e2a4bb4d2308842243c599359b64abc2df446bea914b67",
+    "reader_core.c": "eb7b9a09dcece6e57112fefed1bb3fdcc8f93e243ecc629b1c7daf034dc10169",
+    "reader_start.c": "14f6b0a3edf8602e9c85ceeae465d90d12e84a1134427e0d8ef79017510fc1d7",
+    "test_reader.c": "490cd8cfc12415c1136f73eef9ff836978e618275ffe7141df71da6ac129e0ea",
+    "test-reader-elf.py": "f70a54c1dc225b772f9556feeaa8403066b4d7abca48839d47b8423712a219a1",
+    "replay-checks.py": "4c86a11caaeab4b65f049fe7674fa4eaf5673e18df1d5b44d8a5a5e1b5fdbd47"
+  },
+  "commands": [
+    {
+      "argv": [
+        "clang",
+        "-std=c11",
+        "-O1",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "reader_core.c",
+        "test_reader.c",
+        "-o",
+        "test_reader"
+      ],
+      "rc": 0
+    },
+    {
+      "argv": [
+        "clang",
+        "--target=aarch64-linux-gnu",
+        "-std=c11",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-ffreestanding",
+        "-nostdlib",
+        "-static",
+        "-fno-stack-protector",
+        "-fno-pic",
+        "-Wl,-e,_start",
+        "-Wl,--build-id=none",
+        "-fuse-ld=lld",
+        "reader_core.c",
+        "reader_start.c",
+        "-o",
+        "regmap-reader.aarch64"
+      ],
+      "rc": 0
+    },
+    {
+      "argv": [
+        "/home/lizi/IOS/hakios-mtk/logs/verify-reader-host-02-20261116-164256/reader/test_reader"
+      ],
+      "rc": 0
+    },
+    {
+      "argv": [
+        "python3",
+        "test-reader-elf.py"
+      ],
+      "rc": 0
+    }
+  ],
+  "host_summary": "48 cases; 287 assertions passed, 0 failed",
+  "elf_summary": "PASS 60 ARM64 ELF syscall cases; 0 failed",
+  "reader_bytes": 4232,
+  "reader_sha256": "63688efccd5728b0155a782eb299db979d6150b2096b4dacbc1e083429aa30e1"
+}
