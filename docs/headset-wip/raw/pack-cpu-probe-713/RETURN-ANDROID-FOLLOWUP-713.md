@@ -58,3 +58,20 @@ settle the next hardware baseline or release it for unattended execution.
 Host work may continue on driver semantics, models, packaging and evidence.
 No renewed user confirmation is being requested here; this is the selected host-only scope
 after the actual recovery incident.
+
+## Further trace correction: loader cleanup exists
+
+A subsequent focused read found xnu_returned at approximately line2584 explicitly calls
+mali_power_down under BOARD_MALI_POWER, before chain_android. That macro was1 in713.
+The implementation at approximately line6885 attempts domain shutdown and AOC isolation.
+The kernel lacks a named Mali610 quiesce hook, but this does not establish absence of cleanup
+across the complete handover path. The earlier findings must be read with this addition.
+
+Whether that cleanup completed every hardware transition correctly remains unverified.
+Do not attribute713's observed stall to a missing cleanup sequence merely from the kernel hook list.
+
+For a later storage diagnostic, a host-only715 alternative will disable both runtime Mali
+startup (mali=0) and the loader's compiled GPU power/prepower/early/return/stop branches.
+The existing714 image is retained as the prior-parameter comparison, never flashed.
+This intentionally changes the experimental baseline. It reduces GPU test activity but does
+not prove the warm-return problem fixed. Neither artifact is released for a device run here.

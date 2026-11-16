@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "python3",
+    "mtk/tools/chainboot.py",
+    "/home/lizi/IOS/hakios-mtk/backup/boot_a_stock_real.img",
+    "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/loader.bin",
+    "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/boot.img",
+    "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/payload.bin",
+    "--partition-size",
+    "64M"
+  ],
+  "rc": 0,
+  "stdout": "/home/lizi/IOS/hakios-mtk/logs/ufs-probe-20261117/trial715/boot.img: 22994944 bytes (program 46504, Image 42201364, payload 19515784, kernel gz 21113163)\n",
+  "stderr": ""
+}
