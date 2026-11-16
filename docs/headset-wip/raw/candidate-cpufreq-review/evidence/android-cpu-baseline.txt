@@ -1,0 +1,57 @@
+[host] 2026-11-16T20:44:22.305555
+=== 设备身份 ===
+  serial     GAJZ4HIN99AQ69Y9
+  boot_id    686cb45c-3f54-481f-ba0c-5e9945f95449
+  slot       _a
+
+=== online / present ===
+  online     0-7
+  present    0-7
+  possible   0-7
+
+=== 各 policy 详情 ===
+
+  --- policy0 ---
+    scaling_driver               mtk-cpufreq-hw
+    related_cpus                 0 1 2 3
+    affected_cpus                0 1 2 3
+    cpuinfo_cur_freq             2000000
+    scaling_min_freq             450000
+    scaling_max_freq             2000000
+    cpuinfo_min_freq             450000
+    cpuinfo_max_freq             2000000
+    scaling_governor             sugov_ext
+    scaling_available_governors  sugov_ext conservative powersave performance schedutil
+    cpuinfo_transition_latency   1000
+    scaling_available_frequencies 25 个: 2000000..450000
+      (全部)                       [2000000, 1900000, 1800000, 1700000, 1600000, 1500000, 1400000, 1300000, 1250000, 1200000, 1150000, 1100000, 1050000, 1000000, 950000, 900000, 850000, 800000, 750000, 700000, 650000, 600000, 550000, 500000, 450000]
+
+  --- policy4 ---
+    scaling_driver               mtk-cpufreq-hw
+    related_cpus                 4 5 6
+    affected_cpus                4 5 6
+    cpuinfo_cur_freq             500000
+    scaling_min_freq             200000
+    scaling_max_freq             2850000
+    cpuinfo_min_freq             200000
+    cpuinfo_max_freq             2850000
+    scaling_governor             sugov_ext
+    scaling_available_governors  sugov_ext conservative powersave performance schedutil
+    cpuinfo_transition_latency   1000
+    scaling_available_frequencies 32 个: 2850000..200000
+      (全部)                       [2850000, 2750000, 2650000, 2550000, 2450000, 2400000, 2350000, 2300000, 2250000, 2200000, 2150000, 2100000, 2050000, 2000000, 1900000, 1800000, 1700000, 1600000, 1500000, 1400000, 1300000, 1200000, 1100000, 1000000, 900000, 800000, 700000, 600000, 500000, 400000, 300000, 200000]
+
+  --- policy7 ---
+    scaling_driver               mtk-cpufreq-hw
+    related_cpus                 7
+    affected_cpus                7
+    cpuinfo_cur_freq             1500000
+    scaling_min_freq             500000
+    scaling_max_freq             2850000
+    cpuinfo_min_freq             500000
+    cpuinfo_max_freq             2850000
+    scaling_governor             sugov_ext
+    scaling_available_governors  sugov_ext conservative powersave performance schedutil
+    cpuinfo_transition_latency   1000
+    scaling_available_frequencies 29 个: 2850000..500000
+      (全部)                       [2850000, 2750000, 2650000, 2550000, 2450000, 2400000, 2350000, 2300000, 2250000, 2200000, 2150000, 2100000, 2050000, 2000000, 1900000, 1800000, 1700000, 1600000, 1500000, 1400000, 1300000, 1200000, 1100000, 1000000, 900000, 800000, 700000, 600000, 500000]
