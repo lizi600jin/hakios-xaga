@@ -1,0 +1,30 @@
+=== 1) Android header ===
+  magic b'ANDROID!'  kernel_size 21112803  总长 22994944 <64MiB True
+  前4096与stock差异 4 字节  位置 [8, 9, 10, 11]
+
+=== 2) stock boot 其他组件未动 ===
+  kernel_size  21112803 vs 15311555  (CHANGED 预期)
+  ramdisk_size 1867873 vs 1867873  (same ✅)
+  header[24:40] 相同: True
+  cmdline 44..1580 相同: True
+  v4 signature_size 1580..1584 相同: True
+
+=== 3) 解压链 ===
+  blob 61979240 B
+  loader 段差异 10 字节: ['0x12', '0x13', '0x28', '0x29', '0x2a', '0x2b', '0x30', '0x31', '0x32', '0x33']
+  填充区全零: True
+  stock Image 逐字节相同: True  sha256 12d255cdd09fb5b9fb5cf9608e6b060a5b2dabc109fd4344b071a3dbdc0cf391
+  payload @ 42463520 逐字节相同: True
+
+=== 4) 嵌套 XNUP ===
+  magic=0x50554e58 body_len=19515712 一致=True
+  [0] kernel       15321256   sha256=24df55bfaf7fdd665b575730b2012b0de9dac5ed71e59543133244adcfd7fa4f
+  [1] ramdisk      4194304    sha256=78985f67583b4d4666e4612681b879720259d83b309530e2b82c1246d5ed5bce
+  [2] kernel.ver   48         sha256=363b5257dc819017ddb1f97c15be0d3c542f023ef8052c3c4801eb4463dd06f6
+  [终止] pos=19515696 24B 全零 ✅
+  exact EOF: True
+
+=== 5) loader header 补丁 ===
+  0x10 image_size = 0x3c00000
+  0x28 res2 = 42201364  (期望 42201364)
+  0x30 res3 = 0x287f120  (期望 0x287f120)
