@@ -1,0 +1,7 @@
+  ramdisk         4194304 B -> logs/profile4-device-20261116/trial710/revision2/ref-ramdisk.bin
+    sha256 78985f67583b4d4666e4612681b879720259d83b309530e2b82c1246d5ed5bce
+  kernel.ver           48 B -> logs/profile4-device-20261116/trial710/revision2/ref-kernel.ver.bin
+    sha256 363b5257dc819017ddb1f97c15be0d3c542f023ef8052c3c4801eb4463dd06f6
+
+注意：kernel.ver 原始 48 字节含末尾 NUL；mkpayload 会给它再加一个 NUL
+参考 payload 里 kernel.ver 的 48 字节 = 47 字符 + 1 NUL

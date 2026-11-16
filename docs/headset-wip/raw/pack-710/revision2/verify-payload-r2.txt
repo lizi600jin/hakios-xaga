@@ -1,0 +1,21 @@
+== revision2 payload 结构 ==
+  magic=0x50554e58 body_len=19515616 总长=19515624  8+body=19515624 一致=True
+
+  [0] kernel       size=15321160   sha256=cac498da96406cc4f660e2cc717dbcf93b259ae1d864de6f30a9e920ed03401d
+  [1] ramdisk      size=4194304    sha256=78985f67583b4d4666e4612681b879720259d83b309530e2b82c1246d5ed5bce
+  [2] kernel.ver   size=47         sha256=ed58a1727dc71621f56e60c6ba40ca2acb542349cadbb9abc2273dfcbf58756e
+  [终止] pos=19515600  24 字节全零
+  解析结束 pos=19515624  剩余 0  完整=True
+
+== 与参考逐项对比 ==
+  参考: 4 条  新: 4 条
+    [0] kernel     15320872   -> kernel     15321160    CHANGED
+         ref sha256=c17cf881745511a3c2aa0225ca7a28f3e7b65e853688e13839319d8e6515010d
+         new sha256=cac498da96406cc4f660e2cc717dbcf93b259ae1d864de6f30a9e920ed03401d
+    [1] ramdisk    4194304    -> ramdisk    4194304     SAME
+    [2] kernel.ver 48         -> kernel.ver 47          CHANGED
+         ref sha256=363b5257dc819017ddb1f97c15be0d3c542f023ef8052c3c4801eb4463dd06f6
+         new sha256=ed58a1727dc71621f56e60c6ba40ca2acb542349cadbb9abc2273dfcbf58756e
+    [3] <TERM>     0          -> <TERM>     0           SAME
+
+  sha256: 98dc1119524c468441d909a0f638769ef8a5b021fded42e14e3d4a3dacc15860

@@ -1,0 +1,25 @@
+# loader 中内嵌的完整参数串（NUL 结尾）
+# offset: 40880 (0x9fb0)
+# 长度: 512 字节（不含 NUL）
+# 含 NUL: 513
+# BOOT_LINE_LENGTH=608，余量 95 字节
+
+rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=5 mali_cold=1 mali_preas0=0 mali_low=0 mali_trace=1 mali_witness=0 mali_ptvendor=1 mali_scclk=1 mali_scupd=1 mali_sc26=0 mali_cacheflush=0 mali_resetonly=0 mali_cohnone=0 mali_hwissues=0 mali_stackpwron=0 mali_mcuwin=0 mali_mcuseq=0 mali_doorbell=0 mali_pdcsettle=0 mali_statussem=0 mali_assorder=1 mali_trial=710 mali_nopdc=1 headset=4 hp_trim_l=3 hp_trim_r=17 hp_fine_l=0 hp_fine_r=3 loader_return_after=150
+
+# 关键参数检查
+  mali_trial=710               YES
+  headset=4                    YES
+  hp_trim_l=3                  YES
+  hp_trim_r=17                 YES
+  hp_fine_l=0                  YES
+  hp_fine_r=3                  YES
+  loader_return_after=150      YES
+  mali_nopdc=1                 YES
+
+# 禁止项（必须全 NO）
+  mali_trial=709               NO
+  headset=3                    NO
+  headset=1                    NO
+  mali_trial=695               NO
+  gpueb                        NO
+  GPUEB                        NO
