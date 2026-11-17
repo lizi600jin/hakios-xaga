@@ -161,24 +161,56 @@ fffffff007963b80 S _hakios_mt6895_ufs_capacity_quiesce
 
 ---
 
-## 6. 🔴 关于 judge
+## 6. Judge（🔴 我先前调用错了，此处更正）
 
-**CMD 给的是 `KERNEL=X/BUILD/.../mach.development.bcm2837` 供 judge。
-但 `xnu-build.sh` **没有 judge 子命令** —— 我执行 `./xnu-build.sh judge` 得到
-`make: *** 没有规则可制作目标“judge”`，rc=2。**
+### 6.1 我先前的错误调用
 
-**719 的 `judge native rc=0` 实际是**人工判定**：
-「`the log shows a built kernel; only the kext symbol-set checks failed`」。**
+**我执行了 `./xnu-build.sh judge`，得到：**
 
-**→ 我按同样口径判定：**
+```
+make: *** 没有规则可制作目标“judge”。 停止。
+```
+
+**rc=2。这是**我调用错了**，不是构建问题。**
+**原始失败已改名保留为 `judge-WRONG-INVOCATION-*`，内容未删。**
+
+### 6.2 正确的调用
+
+**`tools/make-kernel.sh`（3547 B / `95247bb0`）的接口是：**
+
+```
+tools/make-kernel.sh --judge LOG   # 判断一份已有的构建日志，不构建
+```
+
+**→ 它判断的是**日志**，不是内核文件；`KERNEL=` 只是环境变量。**
+
+**我按用户指出的正确用法重跑：**
+
+```
+env KERNEL=X/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837 \
+    tools/make-kernel.sh --judge combined.log
+```
+
+**结果：**
 
 | 项 | 值 |
 |---|---|
-| **make native rc** | **2** |
-| **判定** | **构建内核成功，仅 kext symbol-set 检查失败** |
-| **内核产物** | **存在且被 sha256 记录** |
+| **judge rc** | **0** ✅ |
+| stdout | 82 B |
+| stderr | **0 B** |
+| 输出 | `make-kernel: the log shows a built kernel; only the kext symbol-set checks failed` |
 
-**🔴 我不声称 make 成功 —— rc=2 如实记录为 2。**
+**合并日志 `combined.log` 200367 B（stdout 124342 + stderr 76025）。**
+
+### 6.3 两条 rc 分开报告
+
+| 项 | 值 |
+|---|---|
+| **make native rc** | **2**（config 阶段 `Private.symbolset` 的 `_uat_get_desc`）|
+| **judge rc** | **0** |
+| **内核** | **15338680 B / `179efc781d17b41721a2d9cd5e83fb23d9b279f44c253aff27ddc00604bca19f`** |
+
+**🔴 我不声称 make 成功 —— rc 如实为 2。judge 0 的含义是「日志显示内核已构建，只有 kext 符号集检查失败」。**
 
 ---
 

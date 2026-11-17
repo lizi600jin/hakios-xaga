@@ -1,0 +1,2430 @@
+make[1]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src”
+make[2]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/san”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/bsd”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/config”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/san/memory”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/san/coverage”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/setsegname”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/kextsymboltool”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/config”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/bsd/sys”
+             CC externs.o
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/san/coverage”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/san/memory”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/setsegname”
+       GENERATE kasan-blacklist-x86_64
+             CC setsegname.o
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/decomment”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/replacecontents”
+       GENERATE kcov-blacklist-x86_64
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/kextsymboltool”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/bsd/sys”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/installfile”
+             CC kextsymboltool.o
+       GENERATE bsd/sys/_posix_availability.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/decomment”
+             CC decomment.o
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/installfile”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/replacecontents”
+             CC installfile.o
+             CC replacecontents.o
+       GENERATE kasan-blacklist-arm64
+       GENERATE bsd/sys/_symbol_aliasing.h
+       GENERATE kcov-blacklist-arm64
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/san/memory”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/san/memory”
+          BISON parser.c
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/san/coverage”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/san/coverage”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/san”
+             CC openp.o
+             CC searchp.o
+             LD replacecontents
+             LD decomment
+             LD installfile
+             LD setsegname
+             LD kextsymboltool
+             CC main.o
+       CODESIGN installfile
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/installfile”
+       CODESIGN setsegname
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/installfile”
+             CC mkheaders.o
+       CODESIGN decomment
+             CC mkioconf.o
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/setsegname”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/setsegname”
+             CC mkmakefile.o
+           FLEX lexer.yy.c
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/decomment”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/decomment”
+             CC parser.o
+       CODESIGN replacecontents
+             CC lexer.yy.o
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/replacecontents”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/replacecontents”
+       CODESIGN kextsymboltool
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/kextsymboltool”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/kextsymboltool”
+             LD config
+       CODESIGN config
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/config”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP/config”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/SETUP”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/bsd/sys”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/bsd/sys”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/bsd”
+make[2]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj”
+make[2]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+make[2]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/arm”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/bsm”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/arm”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/bsm”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/machine”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/bsm”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/bsm”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/machine”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/atm”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/machine”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/nvram”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/atm”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/machine”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/nvram”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/crypto/entropy”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/atm”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/os”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/atm”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/machine”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/machine”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/nvram”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/crypto/entropy”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/nvram”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/machine”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/os”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/arm”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/machine”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/corpses”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/arm”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/machine”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/machine”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/platform”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/corpses”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev/random”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/platform”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/corpses”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/c++”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/corpses”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev/random”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm64”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/c++”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/machine”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/machine”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm64”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev/random”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/platform”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev/random”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/platform”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/libkern”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm64”
+            MIG clock.h
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach/arm64”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/libkern”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/dev”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/os”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/power”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/os”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/power”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/libkern”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/libkern”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/machine”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/power”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/power”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/machine”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm64”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/firehose”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit/crypto”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/firehose”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm64”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit/crypto”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/pwr_mgt”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/pwr_mgt”
+            IIG IOBufferMemoryDescriptor.h
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/firehose”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/firehose”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/pwr_mgt”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/pwr_mgt”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm64”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm64”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/rtc”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/machine”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/machine”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/rtc”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/arm”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm”
+            IIG IODataQueueDispatchSource.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/system_management”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/c++”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/c++”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/rtc”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/rtc”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/system_management”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/arm”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/bank”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/devfs”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/system_management”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/bank”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/arm”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/system_management”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/crypto”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/devfs”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/crypto”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/arm”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/bank”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/bank”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/arm”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+            IIG IODispatchQueue.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/skywalk”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/devfs”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/devfs”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm64”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/skywalk”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm64”
+            MIG clock_priv.h
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/skywalk”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/net”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit/skywalk”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/fifofs”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/memory”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/net”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit”
+            IIG IODispatchSource.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/memory”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/fifofs”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/crypto”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/crypto”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/fifofs”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/fifofs”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/img4”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coretrust”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/memory”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/memory”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm64”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert/arm64”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/img4”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coretrust”
+            IIG IODMACommand.h
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/pexpert”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/coverage”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coretrust”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coretrust”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/routefs”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/img4”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/img4”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/coverage”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet”
+            IIG IOEventLink.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/apple_encrypted_archive”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/routefs”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/apple_encrypted_archive”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/coverage”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/apple_encrypted_archive”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/apple_encrypted_archive”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/coverage”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/specfs”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/net”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/net”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+            MIG host_priv.h
+            IIG IOInterruptDispatchSource.h
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/specfs”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/amfi”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/voucher”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/amfi”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/specfs”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/specfs”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/voucher”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/voucher”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/amfi”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/voucher”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/amfi”
+            MIG host_security.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/union”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san”
+            IIG IOMemoryDescriptor.h
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/union”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coreanalytics”
+make[2]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/union”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/union”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coreanalytics”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet”
+            IIG IOMemoryMap.h
+            MIG ktrace_background.h
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet6”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coreanalytics”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/coreanalytics”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet6”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/nullfs”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/nullfs”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/device”
+            IIG IOService.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/compression”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/device”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/bindfs”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/compression”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet6”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs/bindfs”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netinet6”
+            IIG IOServiceNotificationDispatchSource.h
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/compression”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/device”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern/compression”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/miscfs”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/device”
+            MIG mach_host.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern”
+       GENERATE libkern/version.h from /home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/libkern/libkern/version.h.template
+            IIG IOServiceStateNotificationDispatchSource.h
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netkey”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netkey”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/IOKit”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netkey”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/netkey”
+            IIG IOUserClient.h
+            MIG mach_port.h
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/default_pager”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security/audit”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/default_pager”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security/audit”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/default_pager”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/default_pager”
+            IIG IOUserServer.h
+            IIG IOWorkGroup.h
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security/audit”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security/audit”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/security”
+            MIG mach_vm.h
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach_debug”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach_debug”
+            MIG mach_voucher.h
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk”
+            IIG OSAction.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/core”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kern”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/core”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/core”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/core”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kern”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach_debug”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach_debug”
+            MIG mach_voucher_attr_control.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/channel”
+            IIG OSObject.h
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/libkern”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/channel”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern”
+            MIG memory_entry.h
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/channel”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/channel”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/pthread”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/pthread”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/mem”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/mem”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/pthread”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/pthread”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/nexus”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/nexus”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/nexus”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/nexus”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys/_types”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/packet”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kdp”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kdp”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/packet”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys/_types”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/packet”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/packet”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/ipc”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kdp”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kdp”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/ipc”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/namespace”
+            MIG processor.h
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/ipc”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk/namespace”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/ipc”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DriverKit”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/uuid”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vfs”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/uuid”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vfs”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vm”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/uuid”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/uuid”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vm”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/skywalk”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vfs”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vfs”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vm”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/vm”
+            MIG processor_set.h
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/machine”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kextd”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/gssd”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/UserNotification”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/machine”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kextd”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/UserNotification”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/lockd”
+            MIG kextd_mach.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/lockd”
+            MIG lockd_mach.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/gssd”
+            MIG gssd_mach.h
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/UserNotification”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/UserNotification”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/vm”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/machine”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/vm”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/machine”
+            MIG task.h
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kern”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kern”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/libsa”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/libsa”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/vm”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/vm”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/console”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/libsa”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/libsa”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/console”
+            MIG task_access.h
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/console”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/console”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kperf”
+            MIG thread_act.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kperf”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/prng”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/prng”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/prng”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/prng”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kperf”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kperf”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/lockd”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys/_types”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys/_types”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/lockd”
+            MIG upl.h
+            MIG vm_map.h
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/gssd”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/gssd”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/tests”
+            MIG vfs_nspace.h
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys”
+       GENERATE bsd.syscalls.master from /home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/bsd/kern/syscalls.master
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kextd”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/kextd”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/tests”
+            MIG audit_triggers_server.h
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/tests”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/tests”
+            MIG clock_reply_server.h
+            MIG coalition_notification_server.h
+       GENERATE bsd/sys/sysproto.h from bsd.syscalls.master
+            MIG exc_server.h
+            MIG fairplayd_notification_server.h
+            MIG memory_error_notification_server.h
+            MIG arcade_upcall_server.h
+            MIG mach_exc_server.h
+            MIG notify_server.h
+            MIG task_access_server.h
+            MIG telemetry_notification_server.h
+            MIG sysdiagnose_notification_server.h
+            MIG iocompressionstats_notification_server.h
+            MIG vfs_nspace_server.h
+       GENERATE bsd/sys/syscall.h from bsd.syscalls.master
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/mach”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/sys”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd”
+make[2]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+make[2]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/conf”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/conf”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/conf”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/conf”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/conf”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/conf”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/conf”
+       GENERATE System.kext/Info.plist
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/conf”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/conf”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/conf”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/conf”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/conf”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/conf”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/conf”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/conf”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/conf”
+       GENERATE System.kext/PlugIns/Kasan.kext/Info.plist
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/DEVELOPMENT”
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/DEVELOPMENT”
+            C++ bootstrap.cpo
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/DEVELOPMENT”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT”
+       GENERATE System.kext/PlugIns/Kcov.kext/Info.plist
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/DEVELOPMENT”
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/DEVELOPMENT”
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/DEVELOPMENT”
+             CC mac_audit.o
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/atm”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/DEVELOPMENT”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT”
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/atm”
+             CC device_tree.o
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT”
+make[6]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/DEVELOPMENT”
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/DEVELOPMENT”
+       GENERATE bsd.syscalls.master from /home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/bsd/kern/syscalls.master
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/DEVELOPMENT”
+             CC OSRuntimeSupport.o
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/DriverKit”
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/default_pager”
+             CC ubsan_minimal.o
+       GENERATE System.kext/PlugIns/AppleNMI.kext/Info.plist
+             CC randomdev.o
+make[8]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/DriverKit”
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/default_pager”
+            IIG IOBufferMemoryDescriptor.h
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/device”
+make[8]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/device”
+            MIG device_server.h
+       GENERATE System.kext/PlugIns/ApplePlatformFamily.kext/Info.plist
+            IIG IODataQueueDispatchSource.h
+            C++ OSSerialize.cpo
+            IIG IODispatchQueue.h
+       GENERATE System.kext/PlugIns/IONVRAMFamily.kext/Info.plist
+            IIG IODispatchSource.h
+     LDFILELIST san
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/DEVELOPMENT”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/DEVELOPMENT”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/conf”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san/conf”
+             CC bootargs.o
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/san”
+            IIG IODMACommand.h
+       GENERATE System.kext/PlugIns/IOSystemManagement.kext/Info.plist
+             CC mac_base.o
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/mach”
+make[8]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/mach”
+            IIG IOEventLink.h
+            MIG audit_triggers_user.c
+       GENERATE System.kext/PlugIns/BSDKernel.kext/Info.plist
+            IIG IOInterruptDispatchSource.h
+            MIG device_server.c
+            IIG IOMemoryDescriptor.h
+       GENERATE System.kext/PlugIns/IOKit.kext/Info.plist
+             CC memdev.o
+            IIG IOMemoryMap.h
+            IIG IOService.h
+             CC pe_gen.o
+       GENERATE System.kext/PlugIns/Libkern.kext/Info.plist
+            IIG IOServiceNotificationDispatchSource.h
+       GENERATE System.kext/PlugIns/Mach.kext/Info.plist
+            IIG IOServiceStateNotificationDispatchSource.h
+     LDFILELIST libsa
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/DEVELOPMENT”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/DEVELOPMENT”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/conf”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa/conf”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libsa”
+             CC mem.o
+       GENERATE System.kext/PlugIns/MACFramework.kext/Info.plist
+            IIG IOUserClient.h
+            MIG clock_reply_user.c
+       GENERATE System.kext/PlugIns/Unsupported.kext/Info.plist
+make[8]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/device”
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/device”
+             CC munge.o
+            C++ OSSet.cpo
+             CC kcformat.o
+            IIG IOUserServer.h
+       GENERATE System.kext/PlugIns/Private.kext/Info.plist
+            IIG IOWorkGroup.h
+    SYMSETPLIST BSDKernel (arm64)
+            IIG OSAction.h
+            C++ OSString.cpo
+             CC mac_data.o
+    SYMSETPLIST IOKit (arm64)
+            IIG OSObject.h
+             CC unix_startup.o
+    SYMSETPLIST Libkern (arm64)
+make[8]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/DriverKit”
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/DriverKit”
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT”
+            MIG coalition_notification_user.c
+            C++ IOUserServer.cpo
+    SYMSETPLIST Mach (arm64)
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/UserNotification”
+make[8]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/UserNotification”
+            MIG UNDRequest.c
+             CC pe_bootargs.o
+    SYMSETPLIST MACFramework (arm64)
+             CC hakios.audio.o
+    SYMSETPLIST Unsupported (arm64)
+            C++ OSSymbol.cpo
+    SYMSETPLIST Private (arm64)
+             CC pe_consistent_debug.o
+            MIG exc_user.c
+             CC mac_label.o
+    SYMSETPLIST Kasan (arm64)
+    SYMSETPLIST Kcov (arm64)
+            MIG UNDReplyServer.c
+             CC pe_fiq.o
+             CC hakios.version.o
+            MIG fairplayd_notification_user.c
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/gssd”
+make[8]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/gssd”
+            MIG gssd_mach.c
+             CC mac_necp.o
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+            MIG gssd_mach.h
+             CC pe_identify_machine.o
+            C++ OSUnserialize.cpo
+make[8]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/UserNotification”
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/UserNotification”
+            C++ OSUnserializeXML.cpo
+             CC hakios.platform.o
+             CC mac_process.o
+            MIG arcade_upcall_user.c
+            C++ OSSerializeBinary.cpo
+make[8]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/gssd”
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/gssd”
+             CC pe_init.o
+            C++ KernelConfigTables.cpo
+             CC hakios.stubs.o
+            MIG host_notify_reply_user.c
+             CC mac_vfs.o
+             CC hakios.input.o
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/kextd”
+make[8]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/kextd”
+            MIG kextd_mach.c
+            MIG ktrace_background_user.c
+             CC hakios.net.o
+             CC pe_kprintf.o
+            C++ IOKitBSDInit.cpo
+            MIG kextd_mach.h
+             CC pe_serial.o
+            C++ OSValueObject.cpo
+             CC hakios.image.o
+            MIG memory_error_notification_user.c
+             CC mac_vfs_subr.o
+make[8]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/kextd”
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/kextd”
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/lockd”
+make[8]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/lockd”
+            MIG lockd_mach.c
+     LDFILELIST pexpert
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/DEVELOPMENT”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/DEVELOPMENT”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/conf”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert/conf”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/pexpert”
+             CC hakios.sparse.o
+            C++ priority_queue.cpo
+            MIG mach_exc_user.c
+            MIG mach_notify_user.c
+            MIG lockd_mach.h
+            C++ DINetBootHook.cpo
+            C++ RootDomainUserClient.cpo
+            C++ coreanalytics_shim.cpo
+            C++ OSKextLib.cpo
+             CC hakios.apfs_check.o
+            MIG mach_test_upcall_user.c
+             CC mac_skywalk.o
+make[8]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/lockd”
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/lockd”
+            MIG resource_notify_user.c
+             CC hakios.mt6895_headset.o
+             CC mac_system.o
+            C++ IOPowerConnection.cpo
+            MIG task_access_user.c
+             CC hakios.mt6895_pmif.o
+            C++ IOWatchDogTimer.cpo
+             CC mkext.o
+            MIG telemetry_notification_user.c
+            C++ IOPerfControl.cpo
+             CC OSKextVersion.o
+             CC mac_sysv_sem.o
+            C++ IOWorkloadConfig.cpo
+            MIG iocompressionstats_notification_user.c
+            C++ IOSkywalkSupport.cpo
+             CC inet_aton.o
+             CC inet_ntoa.o
+             CC hakios.mali610.o
+            C++ IONVRAMController.cpo
+             CC mac_sysv_shm.o
+            MIG upl_user.c
+             CC hakios.mt6895_keys.o
+             CC inet_ntop.o
+            C++ IOPMrootDomain.cpo
+             CC mac_sysv_msg.o
+             CC mac_posix_sem.o
+            MIG vfs_nspace_user.c
+             CC inet_pton.o
+             CC mac_posix_shm.o
+             CC hakios.nvt.o
+            MIG vm_map_user.c
+             CC scanf.o
+             CC mac_socket.o
+             CC mac_pipe.o
+             CC mac_iokit.o
+             CC hakios.mt6895_usb.o
+            MIG sysdiagnose_notification_user.c
+             CC uuid.o
+             CC crc32.o
+             CC mac_file.o
+             CC random.o
+             CC log.o
+            C++ AppleARMSMP.cpo
+            MIG arcade_register_server.c
+             CC log_encode.o
+             CC scanc.o
+            MIG clock_server.c
+            C++ OSObject.iig.cpo
+             CC strsep.o
+            MIG mach_eventlink_server.c
+             CC mac_priv.o
+            C++ OSAction.iig.cpo
+            MIG exc_server.c
+             CC log_mem.o
+            MIG host_priv_server.c
+             CC bcd.o
+             CC log_queue.o
+             CC memchr.o
+            MIG host_security_server.c
+             CC url_encode.o
+             CC mac_pty.o
+             CC mac_kext.o
+            C++ IOService.iig.cpo
+             CC vfs_attrlist.o
+             CC object.o
+             CC vfs_bio.o
+            C++ IOUserClient.iig.cpo
+             CC mac_mach.o
+             CC internal.o
+            MIG mach_exc_server.c
+             CC vfs_cache.o
+            MIG mach_host_server.c
+             CC vfs_cluster.o
+             CC refcnt.o
+             CC vfs_conf.o
+            MIG mach_notify_server.c
+     LDFILELIST security
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/DEVELOPMENT”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/DEVELOPMENT”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/conf”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security/conf”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/security”
+            C++ IOMemoryDescriptor.iig.cpo
+            C++ IOBufferMemoryDescriptor.iig.cpo
+             CC system_event_log.o
+             CC vfs_fslog.o
+            MIG mach_port_server.c
+             CC vfs_init.o
+             CC kernel_mach_header.o
+            C++ IOMemoryMap.iig.cpo
+            MIG mach_vm_server.c
+            C++ IODispatchSource.iig.cpo
+            MIG mach_voucher_server.c
+             CC adler32.o
+             CC vfs_lookup.o
+            C++ IODispatchQueue.iig.cpo
+             CC vfs_subr.o
+             CC compress.o
+            C++ IOInterruptDispatchSource.iig.cpo
+             CC vfs_syscalls.o
+            C++ IODataQueueDispatchSource.iig.cpo
+            C++ IOServiceNotificationDispatchSource.iig.cpo
+             CC z_crc32.o
+            MIG memory_entry_server.c
+             CC vfs_support.o
+            C++ IOServiceStateNotificationDispatchSource.iig.cpo
+             CC deflate.o
+            MIG processor_server.c
+            C++ IOEventLink.iig.cpo
+            MIG processor_set_server.c
+             CC infback.o
+            C++ IOWorkGroup.iig.cpo
+            MIG restartable_server.c
+            C++ IOUserServer.iig.cpo
+             CC inffast.o
+            MIG task_server.c
+             CC inflate.o
+            C++ IODMACommand.iig.cpo
+            C++ IOLib.cpo
+             CC vfs_utfconv.o
+            C++ IOLocks.cpo
+            MIG thread_act_server.c
+             CC inftrees.o
+            MIG upl_server.c
+             CC vfs_unicode.o
+            MIG vm_map_server.c
+            C++ IOConditionLock.cpo
+            C++ IOStartIOKit.cpo
+            MIG vm32_map_server.c
+             CC trees.o
+            C++ IODeviceTreeSupport.cpo
+            C++ IORegistryEntry.cpo
+             CC vfs_vnops.o
+            C++ IOService.cpo
+make[8]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/mach”
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT/mach”
+make[7]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT”
+       GENASSYM /home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/osfmk/arm64/genassym.c
+             CC vfs_xattr.o
+             CC uncompr.o
+            C++ IOServicePM.cpo
+             CC zutil.o
+             CC register_crypto.o
+             CC caches.o
+            C++ IOPMinformee.cpo
+             CC copyio.o
+             CC corecrypto_sha2.o
+             CC cpu.o
+             CC corecrypto_sha1.o
+             CC vnode_if.o
+            C++ IOPMinformeeList.cpo
+            C++ IOPMPowerStateQueue.cpo
+             CC cpu_common.o
+             CC corecrypto_md5.o
+            C++ IOCatalogue.cpo
+             CC cpuid.o
+             CC kpi_vfs.o
+             CC vfs_fsevents.o
+             CC corecrypto_des.o
+             CC vfs_cprotect.o
+             CC dbgwrap.o
+             CC corecrypto_aes.o
+             CC corecrypto_aesxts.o
+            C++ IOPMPowerSource.cpo
+             CC corecrypto_rand.o
+             CC doc_tombstone.o
+             CC corecrypto_rsa.o
+             CC arm_timer.o
+             CC arm_init.o
+             CC corecrypto_chacha20poly1305.o
+             CC coretrust.o
+             CC vfs_disk_conditioner.o
+             CC apple_encrypted_archive.o
+            C++ IOPMPowerSourceList.cpo
+            C++ IOPMGR.cpo
+             CC arm_vm_init.o
+             CC dead_vnops.o
+             CC interface.o
+            C++ IOPolledInterface.cpo
+             CC amfi.o
+            C++ IOWorkLoop.cpo
+             CC devfs_fdesc_support.o
+             CC arm64_hypercall.o
+             CC miniamfi.o
+             CC fifo_vnops.o
+            C++ IOEventSource.cpo
+             CC spec_vnops.o
+             CC io_map.o
+            C++ miniamfi_entitlements.cpo
+             CC devfs_tree.o
+             CC devfs_vnops.o
+            C++ IOInterruptEventSource.cpo
+             CC loose_ends.o
+             CC devfs_vfsops.o
+             CC locks_arm.o
+             CC stack_protector.o
+             CC mockfs_fsnode.o
+             CC iofilter.o
+             CC ptrauth_utils.o
+             CC mockfs_vfsops.o
+            C++ runtime.cpo
+             CC lowmem_vectors.o
+             CC libclosuredata.o
+            C++ IOCommandGate.cpo
+             CC mockfs_vnops.o
+            C++ IOCommand.cpo
+             CC sleh.o
+             CC apfs_deflate.o
+            C++ IOCommandPool.cpo
+             CC compression.o
+            C++ IOCommandQueue.cpo
+             CC apfs_zbitmap.o
+             CC machine_cpuid.o
+             CC OSAtomicOperations.o
+             CC apfs_lib.o
+             CC apfs_write.o
+             CC machine_routines_common.o
+             CC OSSpinLock.o
+            C++ OSDebug.cpo
+             CC apfs_store.o
+             CC apfs_vfsops.o
+             CC apfs_vnops.o
+            C++ IODMAEventSource.cpo
+            C++ IOFilterInterruptEventSource.cpo
+            C++ OSMetaClass.cpo
+            C++ IOTimerEventSource.cpo
+             CC machine_routines.o
+             CC ramfs.o
+            C++ IOBufferMemoryDescriptor.cpo
+            C++ IODMACommand.cpo
+            C++ IODeviceMemory.cpo
+             CC machine_task.o
+            C++ OSObject.cpo
+            C++ IOInterleavedMemoryDescriptor.cpo
+             CC BTree.o
+            C++ IOMapper.cpo
+            C++ IOMemoryCursor.cpo
+             CC machine_routines_apple.o
+            C++ OSArray.cpo
+            C++ IOMemoryDescriptor.cpo
+            C++ OSBoolean.cpo
+            C++ IOMultiMemoryDescriptor.cpo
+             CC BTreeAllocate.o
+             CC pal_routines.o
+            C++ IORangeAllocator.cpo
+            C++ OSCollection.cpo
+             CC model_dep.o
+             CC pcb.o
+             CC rtclock.o
+            C++ OSCollectionIterator.cpo
+             CC BTreeMiscOps.o
+            C++ IOSubMemoryDescriptor.cpo
+             CC status.o
+            C++ OSData.cpo
+             CC BTreeNodeOps.o
+            C++ IOGuardPageMemoryDescriptor.cpo
+            C++ OSDictionary.cpo
+             CC BTreeNodeReserve.o
+            C++ OSIterator.cpo
+            C++ IOPlatformExpert.cpo
+            C++ OSKext.cpo
+             CC status_shared.o
+            C++ GenericARMPE.cpo
+            C++ MiniIOSurface.cpo
+             CC BTreeScanner.o
+            C++ MiniIOMobileFramebuffer.cpo
+             CC commpage.o
+             CC kdp_machdep.o
+             CC BTreeTreeOps.o
+            C++ hakios.stubs.cpo
+            C++ OSNumber.cpo
+             CC kdp_vm.o
+            C++ MiniAppleKeyStore.cpo
+             CC BTreeWrapper.o
+            C++ OSOrderedSet.cpo
+            C++ OSRuntime.cpo
+             CC kpc.o
+            C++ MiniIONetworkStack.cpo
+             CC CatalogUtilities.o
+             CC FileExtentMapping.o
+            C++ IOPlatformIO.cpo
+             CC platform_tests.o
+             CC FileIDsServices.o
+             CC alternate_debugger.o
+             CC machine_remote_time.o
+             CC MacOSStubs.o
+            C++ IOCPU.cpo
+             CC counter.o
+            C++ IOPlatformActions.cpo
+             CC UnicodeWrappers.o
+             CC generic_arm64_support.o
+             CC VolumeAllocation.o
+            C++ IONVRAM.cpo
+             CC hfs_attrlist.o
+            C++ IODMAController.cpo
+             CC loader_return.o
+             CC user_exception_trace.o
+            C++ IOInterruptController.cpo
+            C++ PassthruInterruptController.cpo
+             CC hfs_btreeio.o
+             CC gic_v3_irq.o
+            C++ IOUserClient.cpo
+             CC psci_smp.o
+            C++ IOKitDebug.cpo
+     LDFILELIST libkern
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/DEVELOPMENT”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/DEVELOPMENT”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/conf”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern/conf”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/libkern”
+             CC gssd_mach.o
+            C++ IODataQueue.cpo
+             CC hfs_builtin.o
+             CC hfs_catalog.o
+            C++ IOSharedDataQueue.cpo
+             CC hfs_chash.o
+            C++ Tests.cpo
+             CC lockd_mach.o
+            C++ TestIOMemoryDescriptor.cpo
+             CC hfs_cnode.o
+             CC KUNCUserNotifications.o
+             CC kdp.o
+            C++ TestIOConnectMapMemoryPortLeak45265408.cpo
+             CC hfs_cprotect.o
+             CC hfs_endian.o
+             CC kern_stackshot.o
+             CC hfs_extents.o
+             CC hfs_fsinfo.o
+             CC kdp_common.o
+             CC kdp_udp.o
+            C++ TestIODeviceMemoryRosetta.cpo
+             CC hfs_hotfiles.o
+             CC kdp_core.o
+            C++ TestIOUserClient2022Entitlements.cpo
+            C++ TestIOServiceUserNotification.cpo
+             CC user_core.o
+            C++ IOStatistics.cpo
+            C++ IOInterruptAccounting.cpo
+             CC out_buffer.o
+             CC out_disk.o
+             CC out_lz4.o
+             CC hfs_journal.o
+             CC out_net.o
+             CC out_progress_notify.o
+            C++ IOReporter.cpo
+             CC hfs_link.o
+            C++ IOSimpleReporter.cpo
+            C++ IOStateReporter.cpo
+             CC hfs_lookup.o
+            C++ IOHistogramReporter.cpo
+             CC out_shmem.o
+             CC hfs_notification.o
+            C++ IOReportLegend.cpo
+             CC hfs_quota.o
+            C++ IORTC.cpo
+             CC IOStringFuncs.o
+             CC hfs_readwrite.o
+             CC hfs_resize.o
+             CC out_zlib.o
+             CC out_memory_backing_aware_buffer.o
+             CC hfs_search.o
+             CC hfs_vfsops.o
+             CC processor_core.o
+     LDFILELIST iokit
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/conf”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit/conf”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/iokit”
+             CC hfs_vfsutils.o
+             CC kdp_serial.o
+             CC ipc_entry.o
+             CC hfs_vnops.o
+             CC hfs_xattr.o
+             CC ipc_eventlink.o
+             CC rangelist.o
+             CC ipc_hash.o
+             CC ipc_importance.o
+             CC ipc_init.o
+             CC ipc_kmsg.o
+             CC routefs_ops.o
+             CC ipc_mqueue.o
+             CC decmpfs.o
+             CC net_stubs.o
+             CC ipc_notify.o
+             CC ipc_object.o
+             CC bpf.o
+             CC ipc_port.o
+             CC ipc_pset.o
+             CC bpf_filter.o
+             CC ipc_right.o
+             CC ipc_space.o
+             CC ipc_service_port.o
+             CC ipc_voucher.o
+             CC mach_debug.o
+             CC if_bridge.o
+             CC if.o
+             CC init.o
+             CC dlil.o
+             CC mach_kernelrpc.o
+             CC mach_msg.o
+             CC ether_if_module.o
+             CC mach_port.o
+             CC ether_inet_pr_module.o
+             CC affinity.o
+             CC ast.o
+             CC ether_inet6_pr_module.o
+             CC backtrace.o
+             CC if_loop.o
+             CC if_mib.o
+             CC if_fake.o
+             CC if_headless.o
+             CC btlog.o
+             CC build_config.o
+             CC clock.o
+             CC clock_oldops.o
+             CC multicast_list.o
+             CC coalition.o
+             CC ndrv.o
+             CC compact_id.o
+             CC core_analytics.o
+             CC counter_common.o
+             CC cpu_quiesce.o
+             CC debug.o
+             CC radix.o
+             CC raw_cb.o
+             CC ecc_logging.o
+             CC energy_perf.o
+             CC exception.o
+             CC raw_usrreq.o
+             CC extmod_statistics.o
+             CC host.o
+             CC host_notify.o
+             CC ipc_clock.o
+             CC route.o
+             CC rtsock.o
+             CC ipc_host.o
+             CC ntstat.o
+             CC netsrc.o
+             CC net_perf.o
+             CC if_ports_used.o
+             CC if_low_power_mode.o
+             CC kpi_interface.o
+             CC ipc_kobject.o
+             CC ipc_mig.o
+             CC ipc_misc.o
+             CC kpi_protocol.o
+             CC ipc_tt.o
+             CC kpi_interfacefilter.o
+             CC kalloc.o
+             CC net_str_id.o
+             CC kern_apfs_reflock.o
+             CC if_utun.o
+             CC if_ipsec.o
+             CC necp.o
+             CC ktrace_background_notify.o
+             CC ledger.o
+             CC necp_client.o
+             CC lock_group.o
+             CC network_agent.o
+             CC bloom_filter.o
+             CC lock_mtx.o
+             CC lock_ptr.o
+             CC lock_rw.o
+             CC nat464_utils.o
+             CC lock_ticket.o
+             CC pf.o
+             CC pf_if.o
+             CC locks.o
+             CC mach_node.o
+             CC pf_ioctl.o
+             CC machine.o
+             CC mk_sp.o
+             CC mk_timer.o
+             CC pf_norm.o
+             CC pf_osfp.o
+             CC mpsc_queue.o
+             CC pf_pbuf.o
+             CC page_decrypt.o
+             CC printf.o
+             CC pf_ruleset.o
+             CC pf_table.o
+             CC priority.o
+             CC processor.o
+             CC recount.o
+             CC iptap.o
+             CC restartable.o
+             CC sched_average.o
+             CC sched_amp.o
+             CC pktap.o
+             CC if_llreach.o
+             CC flowhash.o
+             CC sched_amp_common.o
+             CC sched_dualq.o
+             CC sched_clutch.o
+             CC sched_prim.o
+             CC sched_traditional.o
+             CC flowadv.o
+             CC sched_multiq.o
+             CC content_filter.o
+             CC content_filter_crypto.o
+             CC sfi.o
+             CC packet_mangler.o
+             CC if_llatbl.o
+             CC nwk_wq.o
+             CC smr.o
+             CC skmem_sysctl.o
+             CC restricted_in_port.o
+             CC stack.o
+             CC startup.o
+             CC sync_sema.o
+             CC syscall_subr.o
+             CC classq.o
+             CC syscall_sw.o
+             CC sysdiagnose.o
+             CC task.o
+             CC task_policy.o
+             CC classq_subr.o
+             CC classq_util.o
+             CC task_ref.o
+             CC test_lock.o
+             CC test_mpsc_queue.o
+             CC thread.o
+             CC thread_act.o
+             CC thread_call.o
+             CC thread_group.o
+             CC classq_fq_codel.o
+             CC thread_policy.o
+             CC timer.o
+             CC timer_call.o
+             CC pktsched.o
+             CC turnstile.o
+             CC pktsched_fq_codel.o
+             CC ux_handler.o
+             CC pktsched_netem.o
+             CC waitq.o
+             CC work_interval.o
+             CC workload_config.o
+             CC cpu_in_cksum_gen.o
+             CC in_cksum.o
+             CC zalloc.o
+             CC igmp.o
+             CC in.o
+             CC dhcp_options.o
+             CC zalloc_bounds.o
+             CC in_arp.o
+             CC remote_time.o
+             CC bsd_kern.o
+             CC in_mcast.o
+             CC memset_s.o
+             CC task_ident.o
+             CC socd_client.o
+             CC iotrace.o
+             CC clock_server.o
+             CC in_pcb.o
+             CC clock_reply_user.o
+             CC in_pcblist.o
+             CC exc_user.o
+             CC in_proto.o
+             CC exc_server.o
+             CC mach_eventlink_server.o
+             CC host_priv_server.o
+             CC ktrace_background_user.o
+             CC in_rmx.o
+             CC in_stat.o
+             CC mach_exc_user.o
+             CC in_tclass.o
+             CC mach_exc_server.o
+             CC mach_host_server.o
+             CC mach_notify_user.o
+             CC mach_port_server.o
+             CC mach_vm_server.o
+             CC mach_voucher_server.o
+             CC memory_entry_server.o
+             CC ip_dummynet.o
+             CC ip_icmp.o
+             CC ip_id.o
+             CC resource_notify_user.o
+             CC ip_input.o
+             CC ip_output.o
+             CC restartable_server.o
+             CC raw_ip.o
+             CC upl_server.o
+             CC tcp_cache.o
+             CC tcp_input.o
+             CC tcp_output.o
+             CC audit_triggers_user.o
+             CC tcp_sack.o
+             CC tcp_subr.o
+             CC task_access_user.o
+             CC corpse.o
+             CC kern_cdata.o
+             CC kernel_tests.o
+             CC tcp_timer.o
+             CC ktest.o
+             CC tcp_usrreq.o
+             CC ktest_accessor.o
+             CC tcp_cc.o
+             CC tcp_newreno.o
+             CC ktest_emit.o
+             CC tcp_cubic.o
+             CC cbrtf.o
+             CC ktest_global.o
+             CC tcp_ledbat.o
+             CC pmap_tests.o
+             CC tcp_rledbat.o
+             CC tcp_log.o
+             CC ptrauth_data_tests.o
+             CC tcp_sysctls.o
+             CC bitmap_test.o
+             CC tcp_ccdbg.o
+             CC test_thread_call.o
+             CC vfp_state_test.o
+             CC udp_usrreq.o
+             CC ip_ecn.o
+             CC ip_encap.o
+             CC kpi_ipfilter.o
+             CC flow_divert.o
+             CC mp_proto.o
+             CC mp_pcb.o
+             CC telemetry_notification_user.o
+             CC mptcp.o
+             CC mptcp_subr.o
+             CC bank.o
+             CC atm.o
+             CC coalition_notification_user.o
+             CC sysdiagnose_notification_user.o
+             CC vfs_nspace_user.o
+             CC mptcp_usrreq.o
+             CC memory_error_notification_user.o
+             CC processor_server.o
+             CC mptcp_opt.o
+             CC mptcp_timer.o
+             CC ah_core.o
+             CC processor_set_server.o
+             CC ah_input.o
+             CC ah_output.o
+             CC task_server.o
+             CC thread_act_server.o
+             CC vm32_map_server.o
+             CC esp_core.o
+             CC mach_test_upcall_user.o
+             CC analytics.o
+             CC bsd_vm.o
+             CC esp_input.o
+             CC esp_output.o
+             CC vm_compressor.o
+             CC esp_rijndael.o
+             CC vm_compressor_pager.o
+             CC esp_chachapoly.o
+             CC ipsec.o
+             CC dest6.o
+             CC vm_compressor_backing_store.o
+             CC frag6.o
+             CC icmp6.o
+             CC vm_compressor_algorithms.o
+             CC lz4.o
+             CC in6.o
+             CC vm_phantom_cache.o
+             CC device_vm.o
+             CC memory_object.o
+             CC in6_cga.o
+             CC vm_debug.o
+             CC in6_cksum.o
+             CC vm_fault.o
+             CC ip6_forward.o
+             CC in6_ifattach.o
+             CC ip6_input.o
+             CC vm_init.o
+             CC ip6_output.o
+             CC vm_kern.o
+             CC vm_map.o
+             CC vm_map_store.o
+             CC in6_src.o
+             CC in6_mcast.o
+             CC in6_pcb.o
+             CC vm_map_store_ll.o
+             CC vm_map_store_rb.o
+             CC in6_proto.o
+             CC vm_object.o
+             CC vm_pageout.o
+             CC vm_purgeable.o
+             CC in6_rmx.o
+             CC vm_resident.o
+             CC mld6.o
+             CC nd6.o
+             CC nd6_nbr.o
+             CC nd6_prproxy.o
+             CC vm_shared_region.o
+             CC nd6_rtr.o
+             CC nd6_rti.o
+             CC nd6_send.o
+             CC raw_ip6.o
+             CC vm_shared_region_pager.o
+             CC vm_dyld_pager.o
+             CC vm_swapfile_pager.o
+             CC vm_tests.o
+             CC route6.o
+             CC scope6.o
+             CC vm_user.o
+             CC udp6_output.o
+             CC udp6_usrreq.o
+             CC vm32_user.o
+             CC iokit_rpc.o
+             CC ip6_id.o
+             CC key.o
+             CC device_server.o
+             CC device_init.o
+             CC key_debug.o
+             CC kext_alloc.o
+             CC kmod.o
+             CC subrs.o
+             CC kperf.o
+             CC action.o
+             CC callstack.o
+             CC keysock.o
+             CC pet.o
+             CC thread_samplers.o
+             CC task_samplers.o
+             CC meminfo.o
+             CC keydb.o
+             CC multi_layer_pkt_log.o
+             CC kptimer.o
+             CC entropy_sysctl.o
+             CC kperf_kpc.o
+             CC kdebug_trigger.o
+             CC audit_session.o
+             CC audit_syscalls.o
+             CC pthread_shims.o
+             CC pthread_kext_static.o
+             CC lazy.o
+             CC pthread_priority.o
+             CC pthread_workqueue.o
+             CC kpc_thread.o
+             CC bsd_init.o
+       GENERATE init_sysent.c from bsd.syscalls.master
+             CC kpc_common.o
+             CC serial_general.o
+             CC serial_console.o
+             CC kdebug_common.o
+             CC video_scroll.o
+             CC video_console.o
+             CC kdebug_triage.o
+             CC telemetry.o
+             CC kdebug.o
+             CC cc_clear.o
+             CC cc_cmp_safe.o
+             CC kern_acct.o
+             CC cc_abort.o
+             CC kern_aio.o
+             CC kern_authorization.o
+             CC kern_backtrace.o
+             CC cc_try_abort.o
+             CC ccdrbg_nisthmac.o
+             CC ccdigest_init.o
+             CC kern_clock.o
+             CC kern_core.o
+             CC kern_credential.o
+             CC ccdigest_update.o
+             CC kern_crossarch.o
+             CC cchmac.o
+             CC cchmac_init.o
+             CC cchmac_update.o
+             CC cchmac_final.o
+             CC kern_cs.o
+             CC kern_debug.o
+             CC kern_symfile.o
+             CC ccdigest_final_64be.o
+             CC ccsha256_di.o
+             CC kern_descrip.o
+             CC ccsha256_initial_state.o
+             CC ccsha256_K.o
+             CC kern_guarded.o
+             CC ccsha256_ltc_compress.o
+             CC ccsha256_ltc_di.o
+             CC kern_minimac.o
+             CC kern_event.o
+             CC kern_control.o
+             CC prng_random.o
+             CC entropy.o
+             CC kern_exec.o
+             CC kern_exit.o
+             CC mc_digests.o
+             CC mc_provider.o
+             CC mc_aes.o
+             CC kern_ktrace.o
+             CC kern_lockf.o
+             CC kern_fork.o
+             CC vm_apple_protect.o
+             CC vm_fourk_pager.o
+             CC pmap.o
+             CC pmap_cs.o
+             CC pmap_data.o
+             CC kern_asl.o
+             CC kern_malloc.o
+             CC kern_mman.o
+             CC pmap_iommu.o
+             CC pmap_misc.o
+             CC pmap_ppl_interface.o
+             CC bsd_arm64.o
+             CC machdep_call.o
+             CC kern_persona.o
+             CC kern_physio.o
+             AS WKdmDecompress_16k.o
+             AS WKdmCompress_16k.o
+             AS WKdmDecompress_4k.o
+             CC kern_priv.o
+             AS WKdmCompress_4k.o
+             AS WKdmData.o
+             AS lz4_decode_arm64.o
+             AS lz4_encode_arm64.o
+             CC kern_proc.o
+             CC kern_prot.o
+             CC kern_resource.o
+             AS bcopy.o
+             AS bzero.o
+             AS caches_asm.o
+             AS data.o
+             AS locore.o
+             CC kern_shutdown.o
+             AS iofilter_asm.o
+             AS gxf_exceptions.o
+             CC kern_sig.o
+             AS start.o
+             AS pinst.o
+             AS cswitch.o
+             AS machine_routines_asm.o
+             AS memcmp_zero.o
+             AS strnlen.o
+             CC kern_subr.o
+             CC kern_synch.o
+             CC kern_sysctl.o
+             CC kern_newsysctl.o
+             AS strncmp.o
+             AS platform_tests_asm.o
+             AS alternate_debugger_asm.o
+             AS sha256_compress_arm64.o
+             CC kern_memorystatus.o
+             CC kern_memorystatus_freeze.o
+             CC kern_memorystatus_notify.o
+             CC kern_memorystatus_policy.o
+             CC kern_mib.o
+             CC kpi_mbuf.o
+             CC kern_sfi.o
+             CC kern_time.o
+             CC kern_trustcache.o
+             CC kern_codesigning.o
+     LDFILELIST osfmk
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/DEVELOPMENT”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/conf”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk/conf”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/osfmk”
+             CC ppl.o
+             CC xnu.o
+             CC kern_xxx.o
+             CC mach_process.o
+             CC mcache.o
+             CC stackshot.o
+             CC subr_log.o
+             CC subr_log_stream.o
+             CC subr_prf.o
+             CC subr_sbuf.o
+             CC subr_xxx.o
+             CC counter_test.o
+             CC sys_eventlink.o
+             CC sys_generic.o
+             CC sys_pipe.o
+             CC sys_record_event.o
+             CC sys_socket.o
+             CC sys_domain.o
+             CC sys_coalition.o
+             CC sys_persona.o
+             CC sys_ulock.o
+             CC sys_work_interval.o
+       GENERATE syscalls.c from bsd.syscalls.master
+             CC tty.o
+             CC tty_compat.o
+             CC tty_conf.o
+             CC tty_dev.o
+             CC tty_ptmx.o
+             CC tty_pty.o
+             CC tty_subr.o
+             CC tty_tty.o
+             CC ubc_subr.o
+             CC uipc_domain.o
+             CC uipc_mbuf.o
+             CC uipc_mbuf2.o
+             CC uipc_proto.o
+             CC uipc_socket.o
+             CC uipc_socket2.o
+             CC uipc_syscalls.o
+             CC uipc_usrreq.o
+             CC vsock_domain.o
+             CC sysv_ipc.o
+             CC sysv_shm.o
+             CC sysv_sem.o
+             CC sysv_msg.o
+             CC mach_fat.o
+             CC mach_loader.o
+             CC posix_sem.o
+             CC posix_shm.o
+             CC qsort.o
+             CC kpi_socket.o
+             CC kpi_socketfilter.o
+             CC proc_info.o
+             CC process_policy.o
+             CC kern_overrides.o
+             CC socket_info.o
+             CC subr_eventhandler.o
+             CC sys_reason.o
+             CC sys_recount.o
+             CC tracker.o
+             CC socket_flows.o
+             CC hvg_sysctl.o
+             CC vnode_pager.o
+             CC vm_unix.o
+             CC dp_backing_file.o
+             CC vm_compressor_backing_file.o
+             CC kern_ecc.o
+             CC kern_ntptime.o
+             CC ux_exception.o
+             CC param.o
+             CC ioconf.o
+             CC imageboot.o
+             CC kperfbsd.o
+             CC kern_kpc.o
+             CC proc_uuid_policy.o
+             CC profile_runtime_data.o
+             CC bind_subr.o
+             CC bind_vfsops.o
+             CC bind_vnops.o
+             CC bsd_tests.o
+             CC copyio_tests.o
+             CC pmap_test_sysctl.o
+             CC ptrauth_data_tests_sysctl.o
+             CC stack_chk_tests_sysctl.o
+             CC readonly_proc_tests_sysctl.o
+             CC skywalk_stubs.o
+             CC netns.o
+             CC protons.o
+             CC flowidns.o
+             CC skywalk.o
+             CC skywalk_proc_info.o
+             CC skywalk_sysctl.o
+             CC channel.o
+             CC channel_kern.o
+             CC channel_ring.o
+             CC kern_channel_event.o
+             CC channel_syscalls.o
+             CC cuckoo_hashtable.o
+             CC cuckoo_hashtable_test.o
+             CC net_filter_event.o
+             CC skmem.o
+             CC skmem_arena.o
+             CC skmem_cache.o
+             CC skmem_region.o
+             CC skmem_test.o
+             CC nexus.o
+             CC nexus_adapter.o
+             CC nexus_ioctl.o
+             CC nexus_kern.o
+             CC nexus_mbq.o
+             CC nexus_syscalls.o
+             CC nexus_pktq.o
+             CC nexus_traffic_rule.o
+             CC nx_flowswitch.o
+             CC fsw.o
+             CC fsw_vp.o
+             CC fsw_dp.o
+             CC fsw_ip.o
+             CC fsw_ip_frag.o
+             CC fsw_cellular.o
+             CC fsw_ethernet.o
+             CC fsw_flow.o
+             CC fsw_netagent.o
+             CC fsw_classq.o
+             CC fsw_qos.o
+             CC flow.o
+             CC flow_classifier.o
+             CC flow_entry.o
+             CC flow_manager.o
+             CC flow_namespace.o
+             CC flow_owner.o
+             CC flow_route.o
+             CC flow_stats.o
+             CC flow_track.o
+             CC flow_agg.o
+             CC nx_monitor.o
+             CC nx_netif.o
+             CC nx_netif_compat.o
+             CC nx_netif_host.o
+             CC nx_netif_mit.o
+             CC nx_netif_netagent.o
+             CC nx_netif_filter.o
+             CC nx_netif_filter_compat.o
+             CC nx_netif_filter_native.o
+             CC nx_netif_filter_vp.o
+             CC nx_netif_flow.o
+             CC nx_netif_vp.o
+             CC nx_netif_util.o
+             CC nx_netif_poll.o
+             CC nx_netif_gso.o
+             CC nx_netif_llink.o
+             CC nx_user_pipe.o
+             CC nx_kernel_pipe.o
+             CC packet_copy.o
+             CC nx_kpipe_loopback.o
+             CC packet_kern.o
+             CC pbufpool.o
+             CC pbufpool_kern.o
+             CC cpu_copy_in_cksum_gen.o
+             CC hakios.mt6895_ufs_capacity.o
+             CC conf.o
+             CC cons.o
+             CC km.o
+             CC kern_machdep.o
+             CC stubs.o
+             CC systemcalls.o
+             CC sysctl.o
+             CC unix_signal.o
+             CC ctrr_test_sysctl.o
+             CC dtrace_isa.o
+             CC dtrace_subr_arm.o
+             CC fbt_arm.o
+             CC fasttrap_isa.o
+             CC disassembler.o
+             CC bsd_stubs.o
+             CC sdt_arm.o
+             CC nfs_syscalls.o
+             CC nfs_gss.o
+             CC nfs_serv.o
+             CC nfs_socket.o
+             CC nfs_srvcache.o
+             CC nfs_subs.o
+             CC nfs_upcall.o
+             CC gss_krb5_mech.o
+             CC ccrypto.o
+             CC netboot.o
+             CC lockprof.o
+             CC dtrace.o
+             CC lockstat.o
+             CC dtrace_ptss.o
+             CC dtrace_subr.o
+             CC dtrace_glue.o
+             CC dtrace_xoroshiro128_plus.o
+             CC blist.o
+             CC fbt.o
+             CC fbt_blacklist.o
+             CC sdt.o
+             CC sdt_subr.o
+             CC systrace.o
+             CC profile_prvd.o
+             CC fasttrap.o
+       GENERATE systrace_args.c from bsd.syscalls.master
+             CC init_sysent.o
+             CC syscalls.o
+             AS cpu_in_cksum.o
+             AS cpu_copy_in_cksum.o
+             AS cpu_memcmp_mask.o
+             CC systrace_args.o
+     LDFILELIST bsd
+make[7]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT”
+make[6]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/DEVELOPMENT”
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/conf”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd/conf”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/bsd”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+             CC lastkerneldataconst.o
+             CC lastkernelconstructor.o
+             CC nonlto.o
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+             CC version.o
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+             LD mach.development.bcm2837.unstripped
+       DSYMUTIL mach.development.bcm2837.dSYM
+        LIBTOOL mach.development.bcm2837.a
+          STRIP mach.development.bcm2837
+built kernel at /home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837//mach.development.bcm2837
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+make[2]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+make[2]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools”
+make[3]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+  SUPPORTED_KPI arm64
+  SUPPORTED_KPI all
+make[4]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools/lldbmacros”
+make[5]: 进入目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools/lldbmacros”
+      INSTALLPY mach_development.py
+      INSTALLPY usertaskdebugging/__init__.py
+      INSTALLPY usertaskdebugging/gdbserver.py
+      INSTALLPY usertaskdebugging/interface.py
+      INSTALLPY usertaskdebugging/rsprotocol.py
+      INSTALLPY usertaskdebugging/target.py
+      INSTALLPY usertaskdebugging/userprocess.py
+      INSTALLPY core/__init__.py
+         SYMSET BSDKernel (arm64)
+         SYMSET IOKit (arm64)
+         SYMSET Libkern (arm64)
+      INSTALLPY core/caching.py
+         SYMSET Mach (arm64)
+      INSTALLPY core/collections.py
+      INSTALLPY core/compat.py
+         SYMSET MACFramework (arm64)
+      INSTALLPY core/configuration.py
+         SYMSET Unsupported (arm64)
+         SYMSET Private (arm64)
+      INSTALLPY core/cvalue.py
+      INSTALLPY core/io.py
+      INSTALLPY core/kernelcore.py
+      INSTALLPY core/lazytarget.py
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config”
+      INSTALLPY core/lldbwrap.py
+      INSTALLPY core/pointer.py
+      INSTALLPY core/operating_system.py
+      INSTALLPY core/standard.py
+      INSTALLPY core/xnu_lldb_init.py
+      INSTALLPY kmemory/__init__.py
+      INSTALLPY kmemory/kmem.py
+      INSTALLPY kmemory/btlog.py
+      INSTALLPY kmemory/vm.py
+      INSTALLPY kmemory/whatis.py
+      INSTALLPY kmemory/zone.py
+      INSTALLPY plugins/__init__.py
+      INSTALLPY plugins/zprint_perf_log.py
+      INSTALLPY sysregdoc/AArch64-esr_el1.xml
+      INSTALLPY bank.py
+      INSTALLPY turnstile.py
+      INSTALLPY kevent.py
+      INSTALLPY workqueue.py
+      INSTALLPY ulock.py
+      INSTALLPY xnu.py
+      INSTALLPY xnudefines.py
+      INSTALLPY ktrace.py
+      INSTALLPY macho.py
+      INSTALLPY mbufdefines.py
+      INSTALLPY netdefines.py
+      INSTALLPY ntstat.py
+      INSTALLPY routedefines.py
+      INSTALLPY ipc.py
+      INSTALLPY ipcimportancedetail.py
+      INSTALLPY kcdata.py
+      INSTALLPY scheduler.py
+      INSTALLPY memory.py
+      INSTALLPY pmap.py
+      INSTALLPY structanalyze.py
+      INSTALLPY mbufs.py
+      INSTALLPY net.py
+      INSTALLPY skywalk.py
+      INSTALLPY ioreg.py
+      INSTALLPY utils.py
+      INSTALLPY kdp.py
+      INSTALLPY process.py
+      INSTALLPY userspace.py
+      INSTALLPY pci.py
+      INSTALLPY misc.py
+      INSTALLPY apic.py
+      INSTALLPY kasan.py
+      INSTALLPY usertaskgdbserver.py
+      INSTALLPY kauth.py
+      INSTALLPY waitq.py
+      INSTALLPY xnutriage.py
+      INSTALLPY kmtriage.py
+      INSTALLPY zonetriage.py
+      INSTALLPY recount.py
+      INSTALLPY sysreg.py
+      INSTALLPY counter.py
+      INSTALLPY refgrp.py
+      INSTALLPY workload.py
+      INSTALLPY log.py
+      INSTALLPY kext.py
+      INSTALLPY plugins/iosspeedtracer.py
+      INSTALLPY plugins/iosspeedtracer.sh
+      INSTALLPY usertaskdebugging/__init__.py
+      INSTALLPY usertaskdebugging/interface.py
+      INSTALLPY usertaskdebugging/gdbserver.py
+      INSTALLPY usertaskdebugging/rsprotocol.py
+      INSTALLPY usertaskdebugging/target.py
+      INSTALLPY usertaskdebugging/userprocess.py
+      INSTALLPY core/__init__.py
+      INSTALLPY core/caching.py
+      INSTALLPY core/collections.py
+      INSTALLPY core/compat.py
+      INSTALLPY core/configuration.py
+      INSTALLPY core/cvalue.py
+      INSTALLPY core/io.py
+      INSTALLPY core/kernelcore.py
+      INSTALLPY core/lazytarget.py
+      INSTALLPY core/lldbwrap.py
+      INSTALLPY core/operating_system.py
+      INSTALLPY core/pointer.py
+      INSTALLPY core/standard.py
+      INSTALLPY core/xnu_lldb_init.py
+      INSTALLPY kmemory/__init__.py
+      INSTALLPY kmemory/btlog.py
+      INSTALLPY kmemory/kmem.py
+      INSTALLPY kmemory/vm.py
+      INSTALLPY kmemory/whatis.py
+      INSTALLPY kmemory/zone.py
+      INSTALLPY plugins/__init__.py
+      INSTALLPY plugins/zprint_perf_log.py
+      INSTALLPY sysregdoc/AArch64-esr_el1.xml
+      INSTALLPY bank.py
+      INSTALLPY turnstile.py
+      INSTALLPY kevent.py
+      INSTALLPY workqueue.py
+      INSTALLPY ulock.py
+      INSTALLPY xnu.py
+      INSTALLPY xnudefines.py
+      INSTALLPY ktrace.py
+      INSTALLPY macho.py
+      INSTALLPY mbufdefines.py
+      INSTALLPY netdefines.py
+      INSTALLPY ntstat.py
+      INSTALLPY routedefines.py
+      INSTALLPY ipc.py
+      INSTALLPY ipcimportancedetail.py
+      INSTALLPY kcdata.py
+      INSTALLPY scheduler.py
+      INSTALLPY structanalyze.py
+      INSTALLPY memory.py
+      INSTALLPY pmap.py
+      INSTALLPY mbufs.py
+      INSTALLPY net.py
+      INSTALLPY skywalk.py
+      INSTALLPY ioreg.py
+      INSTALLPY utils.py
+      INSTALLPY kdp.py
+      INSTALLPY process.py
+      INSTALLPY userspace.py
+      INSTALLPY pci.py
+      INSTALLPY misc.py
+      INSTALLPY apic.py
+      INSTALLPY kasan.py
+      INSTALLPY kauth.py
+      INSTALLPY usertaskgdbserver.py
+      INSTALLPY waitq.py
+      INSTALLPY xnutriage.py
+      INSTALLPY kmtriage.py
+      INSTALLPY zonetriage.py
+      INSTALLPY recount.py
+      INSTALLPY sysreg.py
+      INSTALLPY counter.py
+      INSTALLPY refgrp.py
+      INSTALLPY workload.py
+      INSTALLPY log.py
+      INSTALLPY kext.py
+      INSTALLPY plugins/iosspeedtracer.py
+      INSTALLPY plugins/iosspeedtracer.sh
+      INSTALLPY mach_development.py
+make[5]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools/lldbmacros”
+make[4]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools/lldbmacros”
+make[3]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/tools”
+make[2]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837”
+make[1]: 离开目录“/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src”
+make[1]: 警告: 子 make 中强制 -j9: 重置 jobserver 模式。
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/SETUP/config/mkmakefile.c:625:6: warning: variable 'lpos' set but not used [-Wunused-but-set-variable]
+  625 |         int lpos, len = 0; /* dvw: init to 0 */
+      |             ^
+1 warning generated.
+awk: 命令行:446: 警告： 转义序列“\*”被当作单纯的“*”
+awk: 命令行:539: 警告： 转义序列“\(”被当作单纯的“(”
+awk: 命令行:539: 警告： 转义序列“\)”被当作单纯的“)”
+awk: 命令行:446: 警告： 转义序列“\*”被当作单纯的“*”
+awk: 命令行:539: 警告： 转义序列“\(”被当作单纯的“(”
+awk: 命令行:539: 警告： 转义序列“\)”被当作单纯的“)”
+awk: 命令行:446: 警告： 转义序列“\*”被当作单纯的“*”
+awk: 命令行:539: 警告： 转义序列“\(”被当作单纯的“(”
+awk: 命令行:539: 警告： 转义序列“\)”被当作单纯的“)”
+awk: 命令行:446: 警告： 转义序列“\*”被当作单纯的“*”
+awk: 命令行:539: 警告： 转义序列“\(”被当作单纯的“(”
+awk: 命令行:539: 警告： 转义序列“\)”被当作单纯的“)”
+awk: 命令行:446: 警告： 转义序列“\*”被当作单纯的“*”
+awk: 命令行:539: 警告： 转义序列“\(”被当作单纯的“(”
+awk: 命令行:539: 警告： 转义序列“\)”被当作单纯的“)”
+[cctools-port]: generating fake signature for '/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837//mach.development.bcm2837'
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+exported name not in import list: IOMemoryMap::_CopyState(_IOMemoryMapPrivateState*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryMap::_CopyState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, _IOMemoryMapPrivateState*))
+exported name not in import list: IODMACommand::PrepareForDMA(unsigned long long, IOMemoryDescriptor*, unsigned long long, unsigned long long, unsigned long long*, unsigned int*, IOAddressSegment*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODMACommand::GetPreparation(unsigned long long*, unsigned long long*, IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODMACommand::PerformOperation(unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryDescriptor*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserClient::AsyncCompletion(OSAction*, int, unsigned long long const*, unsigned int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserClient::AsyncCompletion_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, int, unsigned long long const*, unsigned int))
+exported name not in import list: IOUserClient::AsyncCompletion_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, int, unsigned long long const*, unsigned int), OSMetaClass const*)
+exported name not in import list: IOUserClient::_ExternalMethod_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long const*, unsigned int, OSData*, IOMemoryDescriptor*, unsigned long long*, unsigned int*, unsigned long long, OSData**, IOMemoryDescriptor*, OSAction*))
+exported name not in import list: IOUserClient::CopyClientMemoryForType_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long*, IOMemoryDescriptor**))
+exported name not in import list: IOUserClient::CreateMemoryDescriptorFromClient(unsigned long long, unsigned int, IOAddressSegment const*, IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserServer::Exit_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IOUserServer::Create_Invoke(IORPC, int (*)(char const*, unsigned long long, unsigned long long, OSString*, IOUserServer**))
+exported name not in import list: IOUserServer::LoadModule_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IODispatchQueue::Create_Invoke(IORPC, int (*)(char const*, unsigned long long, unsigned long long, IODispatchQueue**))
+exported name not in import list: IODispatchQueue::SetPort_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, ipc_port*))
+exported name not in import list: IODispatchQueue::SetPort(ipc_port*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::CheckForWork(bool, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::Cancel_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, void ( block_pointer)()))
+exported name not in import list: IODispatchSource::SetEnable_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, bool))
+exported name not in import list: IODispatchSource::CheckForWork_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IORPC, bool))
+exported name not in import list: IODispatchSource::SetEnableWithCompletion_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, bool, void ( block_pointer)()))
+exported name not in import list: IODispatchSource::Cancel(void ( block_pointer)(), int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::SetEnable(bool, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::_CopyState(_IOMDPrivateState*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::CreateMapping(unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryMap**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::_CopyState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, _IOMDPrivateState*))
+exported name not in import list: IOMemoryDescriptor::CreateMapping_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryMap**))
+exported name not in import list: IOBufferMemoryDescriptor::Create_Invoke(IORPC, int (*)(unsigned long long, unsigned long long, unsigned long long, IOBufferMemoryDescriptor**))
+exported name not in import list: IOBufferMemoryDescriptor::SetLength_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long))
+exported name not in import list: IOBufferMemoryDescriptor::SetLength(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::CopyMemory(IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::Create_Invoke(IORPC, int (*)(unsigned long long, IODispatchQueue*, IODataQueueDispatchSource**))
+exported name not in import list: IODataQueueDispatchSource::CopyMemory_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOMemoryDescriptor**))
+exported name not in import list: IODataQueueDispatchSource::DataServiced_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::DataServiced_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*), OSMetaClass const*)
+exported name not in import list: IODataQueueDispatchSource::DataAvailable_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::DataAvailable_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*), OSMetaClass const*)
+exported name not in import list: IODataQueueDispatchSource::SetDataServicedHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::SetDataAvailableHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::SetDataServicedHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::CopyDataServicedHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction**))
+exported name not in import list: IODataQueueDispatchSource::SetDataAvailableHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::CopyDataAvailableHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction**))
+exported name not in import list: IODataQueueDispatchSource::_Dispatch(IODataQueueDispatchSource*, IORPC)
+exported name not in import list: IOInterruptDispatchSource::Create_Invoke(IORPC, int (*)(IOService*, unsigned int, IODispatchQueue*, IOInterruptDispatchSource**))
+exported name not in import list: IOInterruptDispatchSource::SetHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IOInterruptDispatchSource::InterruptOccurred_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, unsigned long long, unsigned long long))
+exported name not in import list: IOInterruptDispatchSource::InterruptOccurred_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, unsigned long long, unsigned long long), OSMetaClass const*)
+exported name not in import list: IOServiceNotificationDispatchSource::SetHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOServiceNotificationDispatchSource::CopyNextNotification(unsigned long long*, IOService**, unsigned long long*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: OSAction::Create_Invoke(IORPC, int (*)(OSObject*, unsigned long long, unsigned long long, unsigned long, OSAction**))
+exported name not in import list: OSAction::_Dispatch(OSAction*, IORPC)
+exported name not in import list: OSObject::SetDispatchQueue(char const*, IODispatchQueue*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: OSObject::SetDispatchQueue_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, IODispatchQueue*))
+exported name not in import list: OSObject::CopyDispatchQueue_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, IODispatchQueue**))
+exported name not in import list: OSObject::_Dispatch(OSObject*, IORPC)
+exported name not in import list: IOService::AdjustBusy(int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Stop_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*))
+exported name not in import list: IOService::GetBusyState(unsigned int*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Start_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*))
+exported name not in import list: IOService::Create_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*, char const*, IOService**))
+exported name not in import list: IOService::NewUserClient(unsigned int, IOUserClient**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetProperties(OSDictionary*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CopyProperties(OSDictionary**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RemoveProperty(OSString*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SearchProperty(char const*, char const*, unsigned long long, OSObject**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetName_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IOService::RegisterService(int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::ChangePowerState(unsigned int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::StringFromReturn(int, OSString**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::GetRegistryEntryID(unsigned long long*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RequireMaxBusStall(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::ClientCrashed_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*, unsigned long long))
+exported name not in import list: IOService::NewUserClient_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int, IOUserClient**))
+exported name not in import list: IOService::SetPowerState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int))
+exported name not in import list: IOService::SetProperties_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSDictionary*))
+exported name not in import list: IOService::CopyProperties_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSDictionary**))
+exported name not in import list: IOService::RemoveProperty_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSString*))
+exported name not in import list: IOService::SearchProperty_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, char const*, unsigned long long, OSObject**))
+exported name not in import list: IOService::CopyProviderProperties(OSArray*, OSArray**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CoreAnalyticsSendEvent(unsigned long long, OSString*, OSDictionary*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RegisterService_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*))
+exported name not in import list: IOService::ChangePowerState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int))
+exported name not in import list: IOService::GetRegistryEntryID_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long*))
+exported name not in import list: IOService::CopySystemStateNotificationService(IOService**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Create(IOService*, char const*, IOService**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetName(char const*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CopyName(OSString**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Terminate(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::_Dispatch(IOService*, IORPC)
+make[4]: *** [/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/config/Makefile:121：check_all_exports] 错误 1
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+exported name not in import list: IOMemoryMap::_CopyState(_IOMemoryMapPrivateState*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryMap::_CopyState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, _IOMemoryMapPrivateState*))
+exported name not in import list: IODMACommand::PrepareForDMA(unsigned long long, IOMemoryDescriptor*, unsigned long long, unsigned long long, unsigned long long*, unsigned int*, IOAddressSegment*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODMACommand::GetPreparation(unsigned long long*, unsigned long long*, IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODMACommand::PerformOperation(unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryDescriptor*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserClient::AsyncCompletion(OSAction*, int, unsigned long long const*, unsigned int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserClient::AsyncCompletion_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, int, unsigned long long const*, unsigned int))
+exported name not in import list: IOUserClient::AsyncCompletion_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, int, unsigned long long const*, unsigned int), OSMetaClass const*)
+exported name not in import list: IOUserClient::_ExternalMethod_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long const*, unsigned int, OSData*, IOMemoryDescriptor*, unsigned long long*, unsigned int*, unsigned long long, OSData**, IOMemoryDescriptor*, OSAction*))
+exported name not in import list: IOUserClient::CopyClientMemoryForType_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long*, IOMemoryDescriptor**))
+exported name not in import list: IOUserClient::CreateMemoryDescriptorFromClient(unsigned long long, unsigned int, IOAddressSegment const*, IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOUserServer::Exit_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IOUserServer::Create_Invoke(IORPC, int (*)(char const*, unsigned long long, unsigned long long, OSString*, IOUserServer**))
+exported name not in import list: IOUserServer::LoadModule_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IODispatchQueue::Create_Invoke(IORPC, int (*)(char const*, unsigned long long, unsigned long long, IODispatchQueue**))
+exported name not in import list: IODispatchQueue::SetPort_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, ipc_port*))
+exported name not in import list: IODispatchQueue::SetPort(ipc_port*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::CheckForWork(bool, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::Cancel_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, void ( block_pointer)()))
+exported name not in import list: IODispatchSource::SetEnable_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, bool))
+exported name not in import list: IODispatchSource::CheckForWork_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IORPC, bool))
+exported name not in import list: IODispatchSource::SetEnableWithCompletion_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, bool, void ( block_pointer)()))
+exported name not in import list: IODispatchSource::Cancel(void ( block_pointer)(), int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODispatchSource::SetEnable(bool, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::_CopyState(_IOMDPrivateState*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::CreateMapping(unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryMap**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOMemoryDescriptor::_CopyState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, _IOMDPrivateState*))
+exported name not in import list: IOMemoryDescriptor::CreateMapping_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long, IOMemoryMap**))
+exported name not in import list: IOBufferMemoryDescriptor::Create_Invoke(IORPC, int (*)(unsigned long long, unsigned long long, unsigned long long, IOBufferMemoryDescriptor**))
+exported name not in import list: IOBufferMemoryDescriptor::SetLength_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long))
+exported name not in import list: IOBufferMemoryDescriptor::SetLength(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::CopyMemory(IOMemoryDescriptor**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::Create_Invoke(IORPC, int (*)(unsigned long long, IODispatchQueue*, IODataQueueDispatchSource**))
+exported name not in import list: IODataQueueDispatchSource::CopyMemory_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOMemoryDescriptor**))
+exported name not in import list: IODataQueueDispatchSource::DataServiced_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::DataServiced_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*), OSMetaClass const*)
+exported name not in import list: IODataQueueDispatchSource::DataAvailable_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::DataAvailable_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*), OSMetaClass const*)
+exported name not in import list: IODataQueueDispatchSource::SetDataServicedHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::SetDataAvailableHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IODataQueueDispatchSource::SetDataServicedHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::CopyDataServicedHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction**))
+exported name not in import list: IODataQueueDispatchSource::SetDataAvailableHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IODataQueueDispatchSource::CopyDataAvailableHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction**))
+exported name not in import list: IODataQueueDispatchSource::_Dispatch(IODataQueueDispatchSource*, IORPC)
+exported name not in import list: IOInterruptDispatchSource::Create_Invoke(IORPC, int (*)(IOService*, unsigned int, IODispatchQueue*, IOInterruptDispatchSource**))
+exported name not in import list: IOInterruptDispatchSource::SetHandler_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSAction*))
+exported name not in import list: IOInterruptDispatchSource::InterruptOccurred_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, unsigned long long, unsigned long long))
+exported name not in import list: IOInterruptDispatchSource::InterruptOccurred_Invoke(IORPC, OSMetaClassBase*, void (*)(OSMetaClassBase*, OSAction*, unsigned long long, unsigned long long), OSMetaClass const*)
+exported name not in import list: IOServiceNotificationDispatchSource::SetHandler(OSAction*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOServiceNotificationDispatchSource::CopyNextNotification(unsigned long long*, IOService**, unsigned long long*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: OSAction::Create_Invoke(IORPC, int (*)(OSObject*, unsigned long long, unsigned long long, unsigned long, OSAction**))
+exported name not in import list: OSAction::_Dispatch(OSAction*, IORPC)
+exported name not in import list: OSObject::SetDispatchQueue(char const*, IODispatchQueue*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: OSObject::SetDispatchQueue_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, IODispatchQueue*))
+exported name not in import list: OSObject::CopyDispatchQueue_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, IODispatchQueue**))
+exported name not in import list: IOService::AdjustBusy(int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Stop_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*))
+exported name not in import list: IOService::GetBusyState(unsigned int*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Start_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*))
+exported name not in import list: IOService::Create_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*, char const*, IOService**))
+exported name not in import list: IOService::NewUserClient(unsigned int, IOUserClient**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetProperties(OSDictionary*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CopyProperties(OSDictionary**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RemoveProperty(OSString*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SearchProperty(char const*, char const*, unsigned long long, OSObject**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetName_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*))
+exported name not in import list: IOService::RegisterService(int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::ChangePowerState(unsigned int, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::StringFromReturn(int, OSString**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::GetRegistryEntryID(unsigned long long*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RequireMaxBusStall(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::ClientCrashed_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, IOService*, unsigned long long))
+exported name not in import list: IOService::NewUserClient_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int, IOUserClient**))
+exported name not in import list: IOService::SetPowerState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int))
+exported name not in import list: IOService::SetProperties_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSDictionary*))
+exported name not in import list: IOService::CopyProperties_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSDictionary**))
+exported name not in import list: IOService::RemoveProperty_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, OSString*))
+exported name not in import list: IOService::SearchProperty_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, char const*, char const*, unsigned long long, OSObject**))
+exported name not in import list: IOService::CopyProviderProperties(OSArray*, OSArray**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CoreAnalyticsSendEvent(unsigned long long, OSString*, OSDictionary*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::RegisterService_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*))
+exported name not in import list: IOService::ChangePowerState_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned int))
+exported name not in import list: IOService::GetRegistryEntryID_Invoke(IORPC, OSMetaClassBase*, int (*)(OSMetaClassBase*, unsigned long long*))
+exported name not in import list: IOService::CopySystemStateNotificationService(IOService**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Create(IOService*, char const*, IOService**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::SetName(char const*, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::CopyName(OSString**, int (*)(OSMetaClassBase*, IORPC))
+exported name not in import list: IOService::Terminate(unsigned long long, int (*)(OSMetaClassBase*, IORPC))
+make[4]: *** [/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/config/Makefile:108：/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config/IOKit.symbolset] 错误 1
+exported name not in import list: OSObject::_Dispatch(OSObject*, IORPC)
+exported name not in import list: IOService::_Dispatch(IOService*, IORPC)
+make[4]: *** [/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/config/Makefile:108：/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config/Libkern.symbolset] 错误 1
+exported name not in import list: IOUnifiedAddressTranslator::gMetaClass
+exported name not in import list: IOUnifiedAddressTranslator::superClass
+exported name not in import list: IOUnifiedAddressTranslator::commitUnmaps()
+exported name not in import list: IOUnifiedAddressTranslator::prepareFWUnmap(unsigned long long, unsigned long long)
+exported name not in import list: IOUnifiedAddressTranslator::getPageTableEntry(unsigned long long)
+exported name not in import list: IOUnifiedAddressTranslator::setClientContextID(unsigned int, bool)
+exported name not in import list: IOUnifiedAddressTranslator::isPageFaultExpected(unsigned long long, unsigned int)
+exported name not in import list: IOUnifiedAddressTranslator::removeClientContextID()
+exported name not in import list: IOUnifiedAddressTranslator::registerTaskForService(task*, IOService*)
+exported name not in import list: IOUnifiedAddressTranslator::createMappingInAperture(unsigned int, IOMemoryDescriptor*, unsigned int, unsigned long long, unsigned long)
+exported name not in import list: IOUnifiedAddressTranslator::getTotalPageTableMemory()
+exported name not in import list: IOUnifiedAddressTranslator::map(IOMemoryMap*, unsigned int)
+exported name not in import list: IOUnifiedAddressTranslator::doMap(IOMemoryDescriptor*, unsigned long long, unsigned long long, unsigned int)
+exported name not in import list: IOUnifiedAddressTranslator::unmap(IOMemoryMap*)
+exported name not in import list: IOUnifiedAddressTranslator::doUnmap(IOMemoryDescriptor*, unsigned long long, unsigned long long)
+exported name not in import list: IOUnifiedAddressTranslator::taskDied()
+exported name not in import list: OSAction_IOUserClient_KernelCompletion::gMetaClass
+exported name not in import list: OSAction_IOUserClient_KernelCompletion::superClass
+exported name not in import list: vtable for IOUnifiedAddressTranslator
+exported name not in import list: vtable for OSAction_IOUserClient_KernelCompletion
+exported name not in import list: _nvme_ppl_get_desc
+exported name not in import list: _pmap_cs_configuration
+exported name not in import list: _pmap_has_iofilter_protected_write
+exported name not in import list: _pmap_iommu_alloc_contiguous_pages
+exported name not in import list: _pmap_iommu_init
+exported name not in import list: _pmap_iommu_ioctl
+exported name not in import list: _pmap_iommu_iovmalloc
+exported name not in import list: _pmap_iommu_iovmfree
+exported name not in import list: _pmap_iommu_map
+exported name not in import list: _pmap_iommu_unmap
+exported name not in import list: _sart_get_desc
+exported name not in import list: _t6000dart_get_desc
+exported name not in import list: _t6000dart_vo_tte
+exported name not in import list: _t8020dart_get_desc
+exported name not in import list: _t8020dart_vo_tte
+exported name not in import list: _t8110dart_get_desc
+exported name not in import list: _t8110dart_max_translation_levels
+exported name not in import list: _t8110dart_vo_tt_index
+exported name not in import list: _t8110dart_vo_tte
+exported name not in import list: _uat_get_desc
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+make[4]: *** [/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/config/Makefile:108：/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/config/Private.symbolset] 错误 1
+make[4]: 由于错误目标“do_config_all”并未重新制作。
+make[3]: *** [/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/makedefs/MakeInc.dir:89：config_all] 错误 2
+make[2]: *** [/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/makedefs/MakeInc.dir:90：config_all_recurse_into_config] 错误 2
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./sdpydir/xnu.py.unifdef.382702.py:1085: SyntaxWarning: "\[" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\["? A raw string is also an option.
+  debugger.HandleCommand('type summary add --regex --summary-string "${var%s}" -C yes -p -v "char *\[[0-9]*\]"')
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./sdpydir/scheduler.py.unifdef.382807.py:135: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  target_info=re.search('target =\s+(.*)',object_info)
+./sdpydir/scheduler.py.unifdef.382807.py:141: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  owner_info= re.search('owner =\s+(.*)',vector_info)
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./sdpydir/utils.py.unifdef.382874.py:552: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  keyvalue_extract_re = re.compile("<key>(.*?)</key>\s*<string>(.*?)</string>",re.IGNORECASE|re.MULTILINE|re.DOTALL)
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./sdpydir/userspace.py.unifdef.382894.py:275: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  user_lib_rex = re.compile("([0-9a-fx]+)\s-\s([0-9a-fx]+)\s+(.*?)\s", re.IGNORECASE|re.MULTILINE)
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./sdpydir/zonetriage.py.unifdef.382999.py:31: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  zone_map_exhausted = ".*zalloc: zone map exhausted while allocating from zone .+, likely due to memory leak in zone (?P<zone>.+) \(([0-9]*)? total bytes, ([0-9]*)? elements allocated\).*"
+./sdpydir/xnutriage.py.unifdef.382967.py:94: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  srch_string = "lr:\s+0x[a-fA-F0-9]+\s"
+./sdpydir/xnutriage.py.unifdef.382967.py:115: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  srch_string = "lr:\s+0x[a-fA-F0-9]+\s"
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./pydir/xnu.py.unifdef.383396.py:1085: SyntaxWarning: "\[" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\["? A raw string is also an option.
+  debugger.HandleCommand('type summary add --regex --summary-string "${var%s}" -C yes -p -v "char *\[[0-9]*\]"')
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./pydir/scheduler.py.unifdef.383484.py:135: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  target_info=re.search('target =\s+(.*)',object_info)
+./pydir/scheduler.py.unifdef.383484.py:141: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  owner_info= re.search('owner =\s+(.*)',vector_info)
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./pydir/utils.py.unifdef.383564.py:552: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  keyvalue_extract_re = re.compile("<key>(.*?)</key>\s*<string>(.*?)</string>",re.IGNORECASE|re.MULTILINE|re.DOTALL)
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./pydir/userspace.py.unifdef.383589.py:275: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  user_lib_rex = re.compile("([0-9a-fx]+)\s-\s([0-9a-fx]+)\s+(.*?)\s", re.IGNORECASE|re.MULTILINE)
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./pydir/xnutriage.py.unifdef.383670.py:94: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  srch_string = "lr:\s+0x[a-fA-F0-9]+\s"
+./pydir/xnutriage.py.unifdef.383670.py:115: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+  srch_string = "lr:\s+0x[a-fA-F0-9]+\s"
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+./pydir/zonetriage.py.unifdef.383675.py:31: SyntaxWarning: "\(" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\("? A raw string is also an option.
+  zone_map_exhausted = ".*zalloc: zone map exhausted while allocating from zone .+, likely due to memory leak in zone (?P<zone>.+) \(([0-9]*)? total bytes, ([0-9]*)? elements allocated\).*"
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/tools/lldbmacros//core/syntax_checker.py:21: SyntaxWarning: "\s" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\s"? A raw string is also an option.
+make[2]: 由于错误目标“config_all”并未重新制作。
+make[1]: *** [/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/kernel-src/makedefs/MakeInc.top:538：config_all_bootstrap_DEVELOPMENT^ARM64^BCM2837] 错误 2
+make[1]: 由于错误目标“all”并未重新制作。
+make: *** [Makefile:239：all] 错误 2
+make: 由于错误目标“default”并未重新制作。
