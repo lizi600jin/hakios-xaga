@@ -1,0 +1,240 @@
+{
+  "status": "FROZEN_FOR_HOST_REVIEW",
+  "files": {
+    "candidate/hakios.mt6895_ufs_service.c": {
+      "bytes": 17785,
+      "sha256": "e0cb051b5877ef296e2e5faa09fec720e61e8673cd63822878c64ace1c322f87"
+    },
+    "candidate/service-arm64.c": {
+      "bytes": 368,
+      "sha256": "0a3926f79c8adafe7372dd18ce6a221837912687c7bb58404550833d5db57b57"
+    },
+    "candidate/test-ufs-read-engine.c": {
+      "bytes": 13821,
+      "sha256": "9773627a26f215f18f100200e1b3386ab63b7c9deb892e9f36a86c56a5bded00"
+    },
+    "candidate/test-ufs-return-audit.c": {
+      "bytes": 2399,
+      "sha256": "c1e15f7a71a560444a5f639e1e611911356f4b338c45cff5ec12e6c95403ece5"
+    },
+    "candidate/test-ufs-service-front.c": {
+      "bytes": 1344,
+      "sha256": "91ec82d4e768746887389c01c9f95f5d731b72e92610a151fabd43f1d5b706d6"
+    },
+    "candidate/test-ufs-service-platform.c": {
+      "bytes": 10134,
+      "sha256": "b66874cb06c99b4f1f91849ded85cc95f793da3e651377370455cc988caadf40"
+    },
+    "candidate/test-ufs-service-race.c": {
+      "bytes": 3960,
+      "sha256": "0fab989c7febb14d7cd23798104b1b5c7123af7520c8b7f6308ee37db1894fe6"
+    },
+    "candidate/test-ufs-service.c": {
+      "bytes": 10730,
+      "sha256": "a0fcb383e3056b010febf2d7755e31d3bf039a22c5b05a8358cf8f6d36c3dc87"
+    },
+    "candidate/ufs_loader_guard.h": {
+      "bytes": 1965,
+      "sha256": "517c9bc0eea2af3d681ca6c754cc7ec891089f175a37307700190cdf563af1ce"
+    },
+    "candidate/ufs_read_contract.h": {
+      "bytes": 4684,
+      "sha256": "01050e1a69ded8de20b62dec8941133a7a8a4c432ae90fd5f82197640044d8e1"
+    },
+    "candidate/ufs_read_engine.h": {
+      "bytes": 11027,
+      "sha256": "81aeee096c339fbbf61aa23bf248b1fa24aa3b38e4c5ce26d642d35cd3afc7df"
+    },
+    "candidate/ufs_return_audit.h": {
+      "bytes": 1535,
+      "sha256": "a53531a259b72026d7dd9496b7dd8012102c68c65ae79d35a7b995e4dfba9141"
+    },
+    "candidate/ufs_service_engine.h": {
+      "bytes": 2511,
+      "sha256": "08d3bcc94dcfff807e3e6c04c4094339b1ba7924947f6df01f2517213392241c"
+    },
+    "candidate/ufs_service_frontend.h": {
+      "bytes": 692,
+      "sha256": "cab5b889ad055c923a4ab9df588be203817228a0b1ff2db8cfaea5fbf5d704ea"
+    },
+    "candidate/ufs_service_lease.h": {
+      "bytes": 3236,
+      "sha256": "05432b2c8c295157ca0cfc21a9ae7069ee030814ea398a3bbaaab960d5d9a0bd"
+    },
+    "candidate/ufs_service_model.h": {
+      "bytes": 6628,
+      "sha256": "48e34e8395ec946a9899bc8a7cdbf02925db9bddd855845ad8383bbec479c68e"
+    },
+    "candidate/ufs_service_test_env.h": {
+      "bytes": 3105,
+      "sha256": "ddbff417271c664b861a6224027006c31e0d802efd64a2694cf0f2161e6c60e0"
+    },
+    "loader-candidate/loader-src/mtk/loader/build.sh": {
+      "bytes": 3007,
+      "sha256": "f82e1f6fd0ad0f1153889daf752e1a66ebc8d64fa066e87b7811e67a0427dc7d"
+    },
+    "loader-candidate/loader-src/mtk/loader/build_fbdiag.sh": {
+      "bytes": 712,
+      "sha256": "8e0c65dec58b4cffd7b083dea17ac0a7e85ddd7c2095b50deb0b6d8427932162"
+    },
+    "loader-candidate/loader-src/mtk/loader/build_flashed.py": {
+      "bytes": 991,
+      "sha256": "856ce4eaf0e4d34003719702587cbf354a878441d8ca63a04d4e423cf017289d"
+    },
+    "loader-candidate/loader-src/mtk/loader/diag.c": {
+      "bytes": 7427,
+      "sha256": "623db0e0c345be1bde0f494a3510232d5e60c416415736267c72bdce0e841cad"
+    },
+    "loader-candidate/loader-src/mtk/loader/diag_start.S": {
+      "bytes": 2310,
+      "sha256": "bfd2365dfe7d55a11b546f9d67c57ff91463a48cec1f18e8e1b1d726bccc03ca"
+    },
+    "loader-candidate/loader-src/mtk/loader/fbdiag.c": {
+      "bytes": 8913,
+      "sha256": "c99156d06b19f60b25146f5f84c41ce38ebe649ad6cbedcf00ab6b6a0eebe065"
+    },
+    "loader-candidate/loader-src/mtk/loader/fbdiag.o": {
+      "bytes": 23104,
+      "sha256": "45b59d2453300e905202e1ac6a1aed31b59e6fdb0fd32408d96ae764c678c94a"
+    },
+    "loader-candidate/loader-src/mtk/loader/fbdiag_start.S": {
+      "bytes": 4739,
+      "sha256": "805173bd16e6ef6c177c2fdc11605c44067cd98e57318a1ccd5c5ad90e411eaf"
+    },
+    "loader-candidate/loader-src/mtk/loader/fbdiag_start.o": {
+      "bytes": 7152,
+      "sha256": "a15ba5d0ffdba6431150a49495375679ecf5a51ee6062d1ecbcdcc7c4ea266c3"
+    },
+    "loader-candidate/loader-src/mtk/loader/font8x16.h": {
+      "bytes": 9379,
+      "sha256": "e341d00926d86596bc3614b70462ec1c340d667fb41fc121568515e162d15d7b"
+    },
+    "loader-candidate/loader-src/mtk/loader/link.ld": {
+      "bytes": 770,
+      "sha256": "0936f28bac65f27657651a16102459c25dc7c0839b052cc351b51b552fd73fe4"
+    },
+    "loader-candidate/loader-src/mtk/loader/loop.S": {
+      "bytes": 359,
+      "sha256": "82f4312f364f7c886aa8e92243f3b4df362464246fbf7d9978bf7c29edaee5d9"
+    },
+    "loader-candidate/loader-src/mtk/loader/msdc.h": {
+      "bytes": 5928,
+      "sha256": "7da35d1c739e1cbd9aefb1a2c2e2aaa8adc2118a119c40b4c32da2654ef35623"
+    },
+    "loader-candidate/loader-src/mtk/loader/mtkconnsys.h": {
+      "bytes": 6881,
+      "sha256": "a0739d338823e0ee0496811bc396919eca4612423a9a587af84545711b8f24d3"
+    },
+    "loader-candidate/loader-src/mtk/loader/mtkdbg.h": {
+      "bytes": 14460,
+      "sha256": "4d9951f9ad89cb90aa1eba71c4ddc4e0f419c85cefffa7bb538b3bf8c082f146"
+    },
+    "loader-candidate/loader-src/mtk/loader/mtkloader.bin": {
+      "bytes": 59720,
+      "sha256": "0346f11b0145a59aa883209ce8135d0564f524255340b5b33506b407185a2010"
+    },
+    "loader-candidate/loader-src/mtk/loader/mtkloader.c": {
+      "bytes": 266839,
+      "sha256": "09325ff206ceb5e5781015260fe8d935680acd3896d5bce5a806406538ccb7b5"
+    },
+    "loader-candidate/loader-src/mtk/loader/mtkloader.o": {
+      "bytes": 112880,
+      "sha256": "b191a2e99390fdbabcdd636f46b55bff24d159613159a4e0b548d6c2b82eb5ee"
+    },
+    "loader-candidate/loader-src/mtk/loader/mtkmali.h": {
+      "bytes": 9524,
+      "sha256": "879dfc32b718e399f3e2a75866b7fa72b9b207e5cda9647f96937d1d8f91addd"
+    },
+    "loader-candidate/loader-src/mtk/loader/mtkpwrap.h": {
+      "bytes": 2705,
+      "sha256": "d6b1a2220d1ef036e384971cbfe07f21b5c5c39a2e526d20e8e1e1df249a3bdb"
+    },
+    "loader-candidate/loader-src/mtk/loader/mtkspi.h": {
+      "bytes": 10167,
+      "sha256": "cae87a6074c66f14a11b5c328f0fd31ed5cb851ebc8b4c23f447f4b3dd5fae13"
+    },
+    "loader-candidate/loader-src/mtk/loader/start.S": {
+      "bytes": 16953,
+      "sha256": "8d27dfa271a4c5f5be540dad0ac7a124a46ba911c5a109c455a100e9ffa385cd"
+    },
+    "loader-candidate/loader-src/mtk/loader/start.o": {
+      "bytes": 8648,
+      "sha256": "e42598afd6c57632fa396ff21ef6961a9feb73b21bc560110add8e4fa84000e3"
+    },
+    "loader-candidate/loader-src/mtk/loader/tcm.h": {
+      "bytes": 10536,
+      "sha256": "22bc4cf88b9577c13caae677d64279e730581040168b8928e090a937d60216ac"
+    },
+    "loader-candidate/loader-src/mtk/loader/touchfw.h": {
+      "bytes": 1151,
+      "sha256": "12fa52c17f66de6efbbe81bbc0d6ebcc1413cd80a73ad1a959552beb6804460b"
+    },
+    "loader-candidate/loader-src/mtk/loader/ufs.h": {
+      "bytes": 141239,
+      "sha256": "ef61ba81e8cbac4b5fbb0412c95211056f6f9c00296a134a2066d3298404586c"
+    },
+    "loader-candidate/loader-src/mtk/loader/ufs_loader_guard.h": {
+      "bytes": 1965,
+      "sha256": "517c9bc0eea2af3d681ca6c754cc7ec891089f175a37307700190cdf563af1ce"
+    },
+    "loader-candidate/loader-src/mtk/loader/ufs_read_contract.h": {
+      "bytes": 4684,
+      "sha256": "01050e1a69ded8de20b62dec8941133a7a8a4c432ae90fd5f82197640044d8e1"
+    },
+    "loader-candidate/loader-src/mtk/loader/ufs_return_audit.h": {
+      "bytes": 1535,
+      "sha256": "a53531a259b72026d7dd9496b7dd8012102c68c65ae79d35a7b995e4dfba9141"
+    },
+    "loader-candidate/loader-src/mtk/mt6895/loader/board.h": {
+      "bytes": 48016,
+      "sha256": "5b2cf1392c2262a800ab270846b5dc8b895b966098166e2677261d1432dee5aa"
+    },
+    "loader-candidate/loader-src/xnuloader/build.sh": {
+      "bytes": 757,
+      "sha256": "7d5cd24a8a153dde804ba8d139ec5c60405f476e3233870c2768e1e0c31296f7"
+    },
+    "loader-candidate/loader-src/xnuloader/efi.h": {
+      "bytes": 13179,
+      "sha256": "30e8e0173fc131876410c724597d1c3ba773c4d609a7cd326ff6061c65c6a105"
+    },
+    "loader-candidate/loader-src/xnuloader/identity.h": {
+      "bytes": 8271,
+      "sha256": "41d05bd8afe2edf00179a067d9be91b938e68899e3eb3c2467c22bb65507d010"
+    },
+    "loader-candidate/loader-src/xnuloader/im4p.py": {
+      "bytes": 1670,
+      "sha256": "70b18b18b21a16a2383674cb10faed3691d0fcc0b3d9aee6856551c632fba250"
+    },
+    "loader-candidate/loader-src/xnuloader/loader.c": {
+      "bytes": 170064,
+      "sha256": "8796088683fcd6f2a28232e1623e4915cb2e1fe1ab10c6ce78a3a613c8440099"
+    },
+    "loader-candidate/loader-src/xnuloader/loader.efi": {
+      "bytes": 70656,
+      "sha256": "bf33117dcfbae9ca960282c62979a508c2bfbceac7b85d25f8c1db694c7fdf09"
+    },
+    "loader-candidate/loader-src/xnuloader/loader.obj": {
+      "bytes": 161964,
+      "sha256": "e03f244a5b4bd6a1544f9e71cc54280a8f2a7359b4af107b97c1568e1ed9bad5"
+    },
+    "loader-candidate/loader-src/xnuloader/mkidentity.py": {
+      "bytes": 5266,
+      "sha256": "ae6cebdcfa22994661211e0bc35fd14770484173f951ceef6a65e9b84ad3ff99"
+    },
+    "loader-candidate/loader-src/xnuloader/mkidentity.sh": {
+      "bytes": 3525,
+      "sha256": "21fc34281d7063d90844028e200dd755b26319ddd6d6db81fe28bd84dae9bd3a"
+    },
+    "loader-candidate/loader-src/xnuloader/mkpayload.py": {
+      "bytes": 2915,
+      "sha256": "936d9f0ddb3215b34026f348146e750fb19a11888423e1fd58ded94589510518"
+    }
+  },
+  "kernel_manifest_sha256": "8fbd125a1b8a535e5eaea1e1daa65cc151043991102034a6de337960b7be0e43",
+  "kernel_input_files": 5214,
+  "loader_mirror_files": 40,
+  "limits": [
+    "No image or device released",
+    "Source changes require new manifest/review; core8 remains sealed v1"
+  ]
+}
