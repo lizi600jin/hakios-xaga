@@ -1,0 +1,36 @@
+=== 1 stock header 差异（应只 kernel_size 8..11）===
+  差异 4 字节 位置 [8, 9, 10, 11]
+
+=== 2 v4 signature_size @1580 ===
+  stock 4096  717 4096
+  签名 magic b'AVB0'  sha256 692c87adcc6ad5fcf0592878a6fe56f13e0da9dfade792f1e8aa1f03e34623c5
+  与 stock 逐字节相同: True
+
+=== 3 Android Image 与 ramdisk 未变 ===
+  stock Image 42201364 B  sha 12d255cdd09fb5b9fb5cf960
+  717 内嵌相同: True
+
+=== 4 loader 段仅 header 补丁 ===
+  差异 10 字节 ['0x12', '0x13', '0x28', '0x29', '0x2a', '0x2b', '0x30', '0x31', '0x32', '0x33']
+
+=== 5 填充全零 ===
+  loader 后到 0x40000: True
+
+=== 6 XNUP 三条目 + 24B 终止 + exact EOF ===
+  magic 0x50554e58 body 19533312 一致 True
+  [kernel] 15338864 B sha=07b016feb866c4347d72a391
+  [ramdisk] 4194304 B sha=78985f67583b4d4666e46126
+  [kernel.ver] 48 B sha=363b5257dc819017ddb1f97c
+  [终止] pos=19533296 24B 全零
+  exact EOF: True
+
+=== 7 参数本体唯一性（从实际 loader 体）===
+  base 168 字节
+  [1] offset 0x9376 后随 00 NUL 本体
+  [2] offset 0x9923 后随 0a printf 片段
+  [3] offset 0x9d3d 后随 0a printf 片段
+  NUL 本体数: 1  逐字节匹配: True
+
+=== 8 sealed716 未被改动 ===
+  boot.img                     4ca5834f555300c6  ✅
+  mach.development.bcm2837     c7f2f3222f314b82  ✅
