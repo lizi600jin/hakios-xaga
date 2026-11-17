@@ -1,0 +1,75 @@
+{
+  "status": "FROZEN_HOST_ONLY_QUERY_ENGINE_V2",
+  "files": {
+    "candidate/ufs_capacity_codec.h": {
+      "bytes": 4343,
+      "sha256": "3f95d344d7d186bad7c4a95893cdc94f9cbf9c0cc3a115532aff1e533e4f4cd9"
+    },
+    "candidate/test-ufs-capacity-codec.c": {
+      "bytes": 4764,
+      "sha256": "6b918386307b6bc22c9c5d8c4f205916fbc84747e09a2829840b46533f7d87ec"
+    },
+    "candidate/capacity-arm64.c": {
+      "bytes": 440,
+      "sha256": "d6edf3db94215792d81f20b7972069bf914dd7ba84cc474bf8e946b52b9f62ba"
+    },
+    "DESIGN-CAPACITY720.md": {
+      "bytes": 3368,
+      "sha256": "ae8292e5dc41504fb3f657b079c9ac0928ddd36d970a8c80059ff4d0a73b9a70"
+    },
+    "REVIEW-SURVEY-720.md": {
+      "bytes": 2288,
+      "sha256": "2db340b0d6f82be17b67bfe40f97e8385d684fb4fa79508eaf9d771bb6eedca3"
+    },
+    "run-codec-checks-720.py": {
+      "bytes": 1908,
+      "sha256": "1253fdb3fa8c2309a8735348d83a86c339acc5d1f9d400cd345b4d2116825283"
+    },
+    "host-checks/codec-v1/result.json": {
+      "bytes": 2941,
+      "sha256": "2a99c8a3125c3c0f1e37a061c2d45ea3e2806606e14b62d4bc326d4f5024d180"
+    },
+    "MANIFEST-CODEC720.json": {
+      "bytes": 1126,
+      "sha256": "8859cad13da418b07f87d77c877cd27c4815c0f4ac71f6e2b19341e503cda599"
+    },
+    "candidate/ufs_capacity_engine.h": {
+      "bytes": 6640,
+      "sha256": "b33c9ae0783dbd54a3dd7dd4c0752c1bba8bfd36c98711b899874d34e170a97a"
+    },
+    "candidate/test-ufs-capacity-engine.c": {
+      "bytes": 8004,
+      "sha256": "ebee475303911c5f342cfd35ea7f1df9417e20a2a0edea61cdf7d412c0075b49"
+    },
+    "candidate/capacity-engine-arm64.c": {
+      "bytes": 183,
+      "sha256": "c66eb16631c8ca0166e923d024ea39c6b9a215c773b5566d70b7a33bbee986f5"
+    },
+    "support/ufs_read_contract.h": {
+      "bytes": 4684,
+      "sha256": "01050e1a69ded8de20b62dec8941133a7a8a4c432ae90fd5f82197640044d8e1"
+    },
+    "support/ufs_read_engine.h": {
+      "bytes": 11027,
+      "sha256": "81aeee096c339fbbf61aa23bf248b1fa24aa3b38e4c5ce26d642d35cd3afc7df"
+    },
+    "support/ufs_service_model.h": {
+      "bytes": 6628,
+      "sha256": "48e34e8395ec946a9899bc8a7cdbf02925db9bddd855845ad8383bbec479c68e"
+    },
+    "DESIGN-ENGINE720.md": {
+      "bytes": 3120,
+      "sha256": "c7d2db927018de2b74d46e9ccb4a472f603dbf2b821d37fda53183b06a3f003b"
+    },
+    "run-engine-checks-720-v2.py": {
+      "bytes": 1919,
+      "sha256": "836262dee7370d0a9657537110b20e5ead1dfbd1888742a2960c46f7c1270a4f"
+    },
+    "host-checks/engine-v2/result.json": {
+      "bytes": 3517,
+      "sha256": "a7d6e3d006490af5b698bc5288e4a88b8197f6255e5867e43ca789fc0f610e0d"
+    }
+  },
+  "kernel_integrated": false,
+  "device_authorized": false
+}

@@ -1,0 +1,119 @@
+{
+  "status": "PASS",
+  "records": [
+    {
+      "stage": "asan build",
+      "argv": [
+        "clang",
+        "-std=c11",
+        "-O1",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-fno-omit-frame-pointer",
+        "-fsanitize=address,undefined",
+        "/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/candidate/test-ufs-capacity-engine.c",
+        "-o",
+        "/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/host-checks/engine-v2/engine-asan"
+      ],
+      "rc": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "stage": "asan run",
+      "argv": [
+        "/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/host-checks/engine-v2/engine-asan"
+      ],
+      "rc": 0,
+      "stdout": "PASS 65955732 capacity-engine checks; reads=6554 regs=49 writes=2908 partial=13/2/1022; model only\n",
+      "stderr": ""
+    },
+    {
+      "stage": "msan build",
+      "argv": [
+        "clang",
+        "-std=c11",
+        "-O1",
+        "-g",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-fno-omit-frame-pointer",
+        "-fsanitize=memory",
+        "-fPIE",
+        "-pie",
+        "/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/candidate/test-ufs-capacity-engine.c",
+        "-o",
+        "/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/host-checks/engine-v2/engine-msan"
+      ],
+      "rc": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "stage": "msan run",
+      "argv": [
+        "/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/host-checks/engine-v2/engine-msan"
+      ],
+      "rc": 0,
+      "stdout": "PASS 65955732 capacity-engine checks; reads=6554 regs=49 writes=2908 partial=13/2/1022; model only\n",
+      "stderr": ""
+    },
+    {
+      "stage": "freestanding ARM64",
+      "argv": [
+        "clang",
+        "--target=aarch64-linux-gnu",
+        "-std=c11",
+        "-ffreestanding",
+        "-fno-builtin",
+        "-mno-outline-atomics",
+        "-mgeneral-regs-only",
+        "-mstrict-align",
+        "-O2",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-c",
+        "/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/candidate/capacity-engine-arm64.c",
+        "-o",
+        "/home/lizi/IOS/hakios-mtk/logs/ufs-capacity-20261117/host-checks/engine-v2/capacity-engine-arm64.o"
+      ],
+      "rc": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "files": {
+    "candidate/capacity-arm64.c": {
+      "bytes": 440,
+      "sha256": "d6edf3db94215792d81f20b7972069bf914dd7ba84cc474bf8e946b52b9f62ba"
+    },
+    "candidate/capacity-engine-arm64.c": {
+      "bytes": 183,
+      "sha256": "c66eb16631c8ca0166e923d024ea39c6b9a215c773b5566d70b7a33bbee986f5"
+    },
+    "candidate/test-ufs-capacity-codec.c": {
+      "bytes": 4764,
+      "sha256": "6b918386307b6bc22c9c5d8c4f205916fbc84747e09a2829840b46533f7d87ec"
+    },
+    "candidate/test-ufs-capacity-engine.c": {
+      "bytes": 8004,
+      "sha256": "ebee475303911c5f342cfd35ea7f1df9417e20a2a0edea61cdf7d412c0075b49"
+    },
+    "candidate/ufs_capacity_codec.h": {
+      "bytes": 4343,
+      "sha256": "3f95d344d7d186bad7c4a95893cdc94f9cbf9c0cc3a115532aff1e533e4f4cd9"
+    },
+    "candidate/ufs_capacity_engine.h": {
+      "bytes": 6640,
+      "sha256": "b33c9ae0783dbd54a3dd7dd4c0752c1bba8bfd36c98711b899874d34e170a97a"
+    }
+  },
+  "limits": [
+    "Synthetic transaction/fault model only; no real MMIO/DMA/provider/VFS evidence",
+    "Freestanding ARM64 compilation is not a real XNU-header or kernel build"
+  ]
+}
