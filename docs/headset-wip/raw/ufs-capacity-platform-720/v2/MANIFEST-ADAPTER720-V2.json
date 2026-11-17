@@ -1,0 +1,151 @@
+{
+ "status": "ADAPTER_CANDIDATE_720_V2_PENDING_ROOT_REVIEW",
+ "version": 2,
+ "supersedes": {
+  "path": "../adapter-candidate",
+  "driver_sha256": "2fd792c2ccba66c15757f609c30bc957698287c9a6ce27af6fce7f1de3db798b",
+  "retained": true
+ },
+ "hardware_integrated": false,
+ "manifest_excludes_itself": true,
+ "scenarios": [
+  "absent",
+  "zero",
+  "invalid",
+  "max",
+  "compete",
+  "compete_read",
+  "compete_probe",
+  "pmap",
+  "mapfail",
+  "stale",
+  "badflags",
+  "pestop",
+  "reference",
+  "geometry512",
+  "saturated",
+  "zeroblock",
+  "unchanged",
+  "partial_data",
+  "tail",
+  "rejected",
+  "partial_response",
+  "reserved_ocs",
+  "stop_at_ring",
+  "stop_at_drain"
+ ],
+ "files": {
+  "DESIGN-ADAPTER720-V2.md": {
+   "path": "DESIGN-ADAPTER720-V2.md",
+   "bytes": 2442,
+   "sha256": "7ea0974992ac48cc171ba1636495a4cefc937ea641902948d16c6b506e6e4287"
+  },
+  "DESIGN-ADAPTER720.md": {
+   "path": "DESIGN-ADAPTER720.md",
+   "bytes": 3012,
+   "sha256": "37b1cf2748a753027769f904a69b33b06e20e299879255d4daf0b07c95278fad"
+  },
+  "MANIFEST-ADAPTER720.json": {
+   "path": "MANIFEST-ADAPTER720.json",
+   "bytes": 3774,
+   "sha256": "f249152a411772d88a1c7e4492cde522dd3389cc897a3687b682cb966aaebbbe"
+  },
+  "capacity-platform-arm64.c": {
+   "path": "capacity-platform-arm64.c",
+   "bytes": 238,
+   "sha256": "2dd0d9095908b4c19ccd80241b932cf9d5ac1fda13681d435611448388329be7"
+  },
+  "hakios.mt6895_ufs_capacity.c": {
+   "path": "hakios.mt6895_ufs_capacity.c",
+   "bytes": 12500,
+   "sha256": "03d08064ed65290cdb34f78438cae07722427bea7e935f82a65a0710b675102d"
+  },
+  "test-ufs-capacity-platform.c": {
+   "path": "test-ufs-capacity-platform.c",
+   "bytes": 17466,
+   "sha256": "86d57d1bc89ae7ad419bfa479245a4429e11e651bf7356f84a5c030d32d9bec7"
+  },
+  "ufs_capacity_test_env.h": {
+   "path": "ufs_capacity_test_env.h",
+   "bytes": 1973,
+   "sha256": "87da9b5104f98df0576f8c92c21c6d860c485cc632651503f7fa22ea20af180f"
+  },
+  "ufs_capacity/ufs_capacity_codec.h": {
+   "path": "ufs_capacity/ufs_capacity_codec.h",
+   "bytes": 4343,
+   "sha256": "3f95d344d7d186bad7c4a95893cdc94f9cbf9c0cc3a115532aff1e533e4f4cd9"
+  },
+  "ufs_capacity/ufs_capacity_engine.h": {
+   "path": "ufs_capacity/ufs_capacity_engine.h",
+   "bytes": 6640,
+   "sha256": "b33c9ae0783dbd54a3dd7dd4c0752c1bba8bfd36c98711b899874d34e170a97a"
+  },
+  "support/ufs_read_contract.h": {
+   "path": "support/ufs_read_contract.h",
+   "bytes": 4684,
+   "sha256": "f88c8cfcc573553da8d8965d3661de07704c5993a74025f32a84c4daf77b6a4c"
+  },
+  "support/ufs_read_engine.h": {
+   "path": "support/ufs_read_engine.h",
+   "bytes": 11027,
+   "sha256": "81aeee096c339fbbf61aa23bf248b1fa24aa3b38e4c5ce26d642d35cd3afc7df"
+  },
+  "support/ufs_service_lease.h": {
+   "path": "support/ufs_service_lease.h",
+   "bytes": 3236,
+   "sha256": "05432b2c8c295157ca0cfc21a9ae7069ee030814ea398a3bbaaab960d5d9a0bd"
+  },
+  "host-checks/MANIFEST-V1-INVALID.json": {
+   "path": "host-checks/MANIFEST-V1-INVALID.json",
+   "bytes": 3774,
+   "sha256": "f249152a411772d88a1c7e4492cde522dd3389cc897a3687b682cb966aaebbbe"
+  },
+  "host-checks/arm64-argv.json": {
+   "path": "host-checks/arm64-argv.json",
+   "bytes": 6393,
+   "sha256": "36bf5e07e21a0806b6e911c86892f5d4c196681717d17f074bc57e1870ad3594"
+  },
+  "host-checks/arm64-build.log": {
+   "path": "host-checks/arm64-build.log",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "host-checks/asan-build.log": {
+   "path": "host-checks/asan-build.log",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "host-checks/asan-run.log": {
+   "path": "host-checks/asan-run.log",
+   "bytes": 1539,
+   "sha256": "a04e3bf2a5ec448d24060b87d61939e71bc41b4f9190c77731868d41c9e46746"
+  },
+  "host-checks/asan-stderr.log": {
+   "path": "host-checks/asan-stderr.log",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "host-checks/msan-build.log": {
+   "path": "host-checks/msan-build.log",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "host-checks/msan-run.log": {
+   "path": "host-checks/msan-run.log",
+   "bytes": 1539,
+   "sha256": "a04e3bf2a5ec448d24060b87d61939e71bc41b4f9190c77731868d41c9e46746"
+  },
+  "host-checks/msan-stderr.log": {
+   "path": "host-checks/msan-stderr.log",
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+ },
+ "arm64_object": {
+  "path": "host-checks/capacity-platform-arm64.o",
+  "bytes": 64536,
+  "sha256": "e98899fe48810d83ecea30375a83297bd4224c551fe7ac9daed62d3aef00ba9d",
+  "reused_argv_from": "R19/host-checks/platform-v4/result.json stage \"real XNU ARM64\"",
+  "note": "194 elements, only source/output replaced; cwd taken from that record"
+ }
+}
