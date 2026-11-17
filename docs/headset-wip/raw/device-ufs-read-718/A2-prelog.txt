@@ -1,0 +1,8 @@
+[host] 2026-11-17T14:50:13.965809
+  xnusys 2685370368  OK
+  -8MiB = 0x9f8f8000  期望 0x9f8f8000  OK
+  dd rc=0  8388608 B  精确=True
+  sha256 30c14202385ff633857c0a20753e60b8f0a2ad8802970f89a936c0cc9c4ff440
+  HLOG len=496731 reason=0x0
+  旧记录 mali_trial=717
+  含 718 证据: False  ✅ 可试验
