@@ -1,0 +1,93 @@
+{
+  "raw_bytes": 4198400,
+  "raw_sha256": "b68599bcff24d894144c5fed6191b83d97bf5d04e6dc34d4fa50969982c4d117",
+  "body_bytes": 497300,
+  "body_sha256": "cba560ba20e5c41da5940ef937fe8abb3165fe9fb7cf27ff5642f653f81580fc",
+  "reason": 0,
+  "code": 0,
+  "full_sum": 40839762,
+  "full_sum_verified": true,
+  "NORMAL_RETURN": "PASS",
+  "QUERY_CAPTURE": "PASS",
+  "QUERY_DATA_ACCEPTED": "PASS",
+  "CAPACITY_OBSERVATION": "PASS",
+  "LEASE_RETURN": "PASS",
+  "IDLE_RETURN_RELEASE": "PASS",
+  "limits": [
+    "One fixed RC10/LUN2 query only; no whole-disk block device or filesystem",
+    "Android block-layer capacity is a separate comparison, not a substitute for query data",
+    "0xffffffff is unresolved/saturated, not proof of absent medium; no automatic RC16",
+    "Tail canary is a bounded observation, not a proof against all DMA corruption",
+    "Image identity and stock recovery require separate evidence",
+    "Body includes a loader-generated audit after kernel text"
+  ],
+  "ANDROID_COMPARISON": "MATCH",
+  "LEASE_HELD_UNTIL_IDLE": "PASS",
+  "return_gate": {
+    "magic": 1431065413,
+    "version": 1,
+    "trial": 720,
+    "state": 2,
+    "allowed": 1
+  },
+  "outcome": {
+    "result_code": 5,
+    "claimed": 1,
+    "issued": 1,
+    "memory_restored": 1,
+    "query_valid": 1,
+    "polls": 279,
+    "final_control": 2,
+    "final_shared": 1,
+    "idle_close_deferred": 1,
+    "sampled_ocs": 0,
+    "response_evaluated": true,
+    "response_failures": 0,
+    "response_words": [
+      131105,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "response_fields": {
+      "transaction_type": 33,
+      "lun": 2,
+      "tag": 0,
+      "response": 0,
+      "status": 0,
+      "segment": 0,
+      "residual": 0,
+      "sense": 0,
+      "ehs": 0
+    },
+    "raw_valid": 3,
+    "raw_attempted": 3,
+    "raw_changed": 3,
+    "raw_words": [
+      4289715201,
+      1048576
+    ],
+    "tail_complete": 1,
+    "tail_ok": 1,
+    "tail_checked_words": 1022,
+    "tail_first_bad": 4294967295,
+    "geometry": {
+      "last_lba": 31240191,
+      "logical_block_bytes": 4096,
+      "blocks": 31240192,
+      "capacity_bytes": 127959826432
+    },
+    "decode": 0
+  },
+  "error_context": [],
+  "status": "PASS"
+}

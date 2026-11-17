@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "checks": {
+    "slot_a": true,
+    "boot_completed": true,
+    "selinux": true,
+    "partition_bytes": true,
+    "stock_md5": true,
+    "surfaceflinger": true
+  },
+  "boot_id": "76b7316c-cf63-4be1-9e44-91de266963bf",
+  "previous_boot_id": "61d07dda-534d-4dfb-b1a8-6cd07de3c272",
+  "stock_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+  "partition_bytes": 67108864,
+  "recovery_mode": "automatic",
+  "native_recovery_rcs": [
+    0,
+    0,
+    0
+  ],
+  "evidence_sha256": {
+    "A-preflight.txt": "1831552a2df044faacf1aeb879f033350433b34add30aff59ca7f2a9df4fd33c",
+    "B-flash.txt": "72741b9254a8ab4a53185ac24b7750d316d454b40b1803f3bfe3b7e0cb3ed9ac",
+    "D-recovery.txt": "eaa5d0cc15877280c1c2acfe542d95e7cb178e80a39abd2d3491571507fde3f2",
+    "D-verify.txt": "2eec5f0dd53561eb6a91805573e78eead118c04da5142ca9d7433c264e29cd2b"
+  },
+  "limits": [
+    "Independent host review of recorded DSH observations; no direct Codex device query",
+    "Automatic/manual classification must match the recorded recovery path"
+  ]
+}
