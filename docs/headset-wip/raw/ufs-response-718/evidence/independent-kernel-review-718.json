@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "kernel_bytes": 15338864,
+  "kernel_sha256": "60bd6b195c2ab65ab0c5c1cb519fe3cf5af9ad64c351485ccbf59aa899fd7cfe",
+  "kernel_input_files_verified": 5210,
+  "source_changes": 0,
+  "new_or_deleted_source_files": 0,
+  "candidate_loader_files_verified": 51,
+  "make_native_rc": 2,
+  "independent_judge_native_rc": 0,
+  "judge_stdout": "make-kernel: the log shows a built kernel; only the kext symbol-set checks failed\n",
+  "judge_stderr": "",
+  "compiled_quiesce_call_reference": true,
+  "defined_kernel_symbols": {
+    "_gPhysBase": {
+      "type": 15,
+      "section": 8,
+      "value": 18446744005109453056
+    },
+    "_gPhysSize": {
+      "type": 15,
+      "section": 8,
+      "value": 18446744005109453088
+    },
+    "_hakios_mt6895_ufs_read_init": {
+      "type": 15,
+      "section": 14,
+      "value": 18446744005117361976
+    },
+    "_hakios_mt6895_ufs_read_quiesce": {
+      "type": 15,
+      "section": 14,
+      "value": 18446744005117361916
+    }
+  },
+  "device_executed": false,
+  "limits": [
+    "Host build identity and compiled hook only; no hardware IO",
+    "Native make rc is separate from the explicit KERNEL judge rc"
+  ]
+}

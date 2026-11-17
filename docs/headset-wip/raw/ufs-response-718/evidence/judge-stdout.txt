@@ -1,0 +1,1 @@
+make-kernel: the log shows a built kernel; only the kext symbol-set checks failed
