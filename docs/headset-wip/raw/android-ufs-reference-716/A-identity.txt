@@ -1,0 +1,11 @@
+[host] 2026-11-17T13:19:02.038687
+
+== 设备身份 ==
+  boot_id         11aead4e-9595-4574-8e6a-6b229e287480
+  boot_completed  1
+  slot            _a
+  model           xaga
+  期望 boot_id 11aead4e-9595-4574-8e6a-6b229e287480（变了只记录）
+
+== 原厂确认 ==
+  boot_a MD5  a63b2e35a7c2522cb24a6a10332b9bc8  ✅ 原厂
