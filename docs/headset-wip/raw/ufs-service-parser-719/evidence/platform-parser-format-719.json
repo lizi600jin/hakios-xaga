@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "kind": "existing host-shim output plus explicitly SYNTHETIC return audit",
+  "requests": 3,
+  "limits": [
+    "Not hardware evidence; fake VFS and synthetic appended audit"
+  ]
+}
