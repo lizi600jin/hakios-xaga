@@ -68,11 +68,28 @@
 |---|---|
 | 归属 | **LK（bootloader）为 Android 的 UFS 启动建立的传输请求链表** |
 | 地址 | `0x51266400`，`UTRLBAU = 0`（下 4 GiB） |
-| **4 KiB 对齐** | **否**（`mod 4096 = 0x400`）🔴 |
-| 内容（据注释） | 第一个字是 **PRD 表**，**不是 UTRD** |
+| **对齐** | **`0x51266400 mod 1024 = 0`，满足 UFSHCI 的 1 KiB 要求** ✅ |
+| 内容 | **🔴 未知** —— 见下 |
 
-**🔴 「第一个字不是 UTRD」这条我只引用代码注释，没有自己读那块内存验证** ——
-**我没有设备侧读该地址的证据，也没有任何一次 dump。**
+**关于对齐：`0x51266400 mod 4096 = 0x400`，不是 4 KiB 对齐，
+但这**不是缺陷**。**
+
+**`/tmp/mt6895-mainline/drivers/ufs/core/ufshcd.c:4020` 原文：**
+
+> 「**UFSHCI requires 1KB alignment of UTRD**」
+
+**`ufshcd.c:4025` 还断言 `WARN_ON(hba->utrdl_dma_addr & (SZ_1K - 1))` —— 判据就是 1 KiB。**
+
+**32 个 UTRD × 32 B = 1024 B，正好是 1 KiB 块，
+`0x51266400` 恰好落在 1 KiB 边界。**
+
+**🔴 我先前把「非 4 KiB」列为疑点，那是错的，已撤回。**
+
+**关于「第一个字是 PRD 表」：**
+**`ufs.h:267` 那条注释描述的是**更早的观察**（那次读到 `0x0d1600e0`），
+而 `UFS_USE_LK_LIST` 分支（`ufs.h:1995` 附近）之后 **loader 会往那条链表的 slot 0 写自己的 UTRD**。
+所以那条旧注释**不能代表 715 当前链表里的内容**。**
+**🔴 我没有 715 时刻该内存的 dump，内容仍是未知。**
 
 ---
 
@@ -216,7 +233,7 @@ boolean_t pmap_valid_address(pmap_paddr_t addr) { return pa_valid(addr); }
 | 区域 | 基址 | 大小 |
 |---|---|---|
 | **UTRD 链表** | **`0x60100000`** | `32 × 32` = **1 KiB**（第 436 行注释「the list is 1 KB」）|
-| **UCD 数组** | **`0x60101000`** | `32 × UCD_SIZE` |
+| **UCD 数组** | **`0x60101000`** | `32 × 1664` = **53248 B** |
 | **数据缓冲** | `0x60100000 + 0x1000 + 32×UCD_SIZE` | `UFS_SLOT_BUFFER` |
 
 **🔴 三块都在 `0x60100000` 起的同一条上，也都在 §3.1 的 System RAM 内。**
@@ -236,25 +253,100 @@ boolean_t pmap_valid_address(pmap_paddr_t addr) { return pa_valid(addr); }
 
 ---
 
-## 5. 🔴 loader 返回后还能从 HLOG 取回队列吗 —— **不能**
+## 5. loader 返回后**怎样重用队列写 HLOG**（不是从 HLOG 重建）
 
-### 5.1 为什么不能
+**用户指出我答偏了：问题不是「HLOG 能不能重建队列」，而是「loader 拿回控制权后
+怎么用同一条队列把日志写进 flash」。下面追实际调用链。**
 
-| 环节 | 情况 |
+### 5.1 调用链（`mtkloader.c`）
+
+| 步 | 行 | 动作 |
+|---|---|---|
+| **1** | **2554** | **`logbook_kernel_saved = save_log_to_flash(log_pa, len, reason, code, elr, far)`** —— 在 `xnu_returned` 路径里 |
+| **2** | **1919-1925** | `save_log_to_flash` → **`save_log_spans_to_flash(&sp, 1, ...)`** |
+| **3** | **1801** | `save_log_spans_to_flash` 定义 |
+| **4** | **1847 / 1865 / 1878 / 1896** | 内部四处 **`ufs_write(...)`** |
+| **5** | **3120** | `ufs_write(uint64_t lba, uint32_t blocks, const void *src)` |
+| **6** | **2823** | 与 `ufs_read` 共用的 **`ufs_cmd_once(lun, lba, blocks, flags, dw0)`** |
+
+**`ufs_write` 的注释（3111-3119）原文：**
+
+> 「ufs_write(lba, blocks, src): **the same geometry as ufs_read, the other direction**.
+> It exists so that a log taken on a board with no UART, no ramoops and no pstore
+> **has somewhere to go that survives the reset** -- into a partition of our own,
+> which Android never mounts.」
+
+**→ 写 HLOG 与读 flash 走**同一条 UTRD 队列、同一套 UCD/buf**，只是 SCSI 方向相反。**
+
+### 5.2 🔴 `ufs_ready` 已为 1，所以**不重跑 init**
+
+**`ufs.h:1645-1657`：**
+
+```c
+static int ufs_init(void)
+{
+	ufs_last.what = 0;
+	ufs_last.status = 0;
+	uint32_t cap, hcs, nutrs;
+
+	if (ufs_ready) {
+		return 1;          /* ← 已经就绪，直接返回 */
+	}
+	if (ufs_failed) {
+		return 0;
+	}
+	...
+```
+
+**`ufs.h:2314`：初始化成功时置 `ufs_ready = 1`。**
+
+**→ 从 XNU 返回后调 `ufs_init` 会立刻返回 1，**不做 SMC、不写 `0x140`/`0x144`、
+不发 UIC、不重设 UTRLBA。**
+
+**这正是「重用队列」的机制：状态保持在 loader 进程里（`static`），
+XNU 期间该 loader 的另一核仍在运行，返回后直接用。**
+
+### 5.3 没有 kernel 租约握手
+
+**我查了 `save_log_spans_to_flash` 与 `ufs_write`/`ufs_cmd_once` 的调用链，
+没有任何「向 XNU 请求/等待许可」的握手。**
+
+**XNU 返回后 loader 直接进入 `xnu_returned` → 保存日志 → 写 flash。**
+
+**（用户指出的这条我确认：不存在 kernel 租约机制。）**
+
+### 5.4 HLOG 正文是**捕获的 kernel/系统日志**，不是 `out()` 文本
+
+**🔴 我先前写「HLOG 只是 loader 的 `out()` 文本」是错的。**
+
+**`save_log_to_flash(log_pa, len, ...)` 的参数 `log_pa` 指向**内核日志缓冲区**，
+不是 loader 自己的 `out()` 输出。**
+
+**证据：**
+
+| 证据 | 说明 |
 |---|---|
-| HLOG 记的是什么 | **loader 的 `out()` 文本**，不是内存 dump |
-| 队列内容在哪 | **物理内存 `0x51266400`** |
-| HLOG 里有没有该地址的字节 | **没有** —— 没有任何 dump 机制 |
-| XNU 启动后该内存是否还是原值 | **🔴 未知**，可能被 VM 复用 |
+| 715 HLOG body 494290 B，里面有 `[   18.420547]: mt6895-ufs: ...` 这种**内核 timestamp 前缀** | loader 的 `out()` 不会带这种前缀 |
+| body 里有 `com.apple.xpc.launchd` 等**用户态系统日志** | 只能是内核捕获的 |
+| 调用点 `logbook_kernel_saved` 变量名 | 明确是 kernel log |
 
-**→ HLOG 只能告诉我们「UTRLBA 当时是多少」，不能告诉我们链表里现在是什么。**
+**→ HLOG 是**内核与系统日志的捕获**，loader 只是把它写进 flash。**
 
-### 5.2 我在 715 的 HLOG 里实际查过
+### 5.5 所以「能否从 HLOG 取回队列」这个问题本身要重述
 
-**715 HLOG（494290 B）里 `mt6895-ufs` 相关只有 8 条消息 + 9 对 raw，
-全部是寄存器采样值，没有任何内存 dump。**
+**正确的问题不是「HLOG 能不能重建队列」，而是：**
 
----
+| 问题 | 答案 |
+|---|---|
+| loader 返回后**能不能**用同一队列写 flash？ | **能** —— `ufs_ready=1` 跳过 init，`ufs_write` 直接用 |
+| 那条队列在 XNU 期间**有没有被破坏**？ | **🔴 未知** —— 见 §3.3 与 §7 |
+| 写 HLOG 时**有没有重新配置**队列？ | **没有** —— 全部跳过 |
+
+**🔴 关键含义：**
+**715 那次 HLOG 完整写出（`reason=0`、完整 sum 匹配），
+本身**间接证明**了从 XNU 返回后 `ufs_write` 通过那条队列成功工作了！**
+
+**这是一个我之前没意识到的强证据。**
 
 ## 5.1 🔴 loader 的 `ufs_init` **不是只读接管** —— 不能原样搬进内核
 
@@ -332,9 +424,9 @@ SMC / `0x140` / `0x144` / UIC 初始化，头注释不可信。**
 |---|---|---|
 | **1** | `0x51266400` 那块内存**现在**是什么 | **没有任何设备侧 dump** |
 | ~~**2**~~ | ~~XNU 是否真的把这块 RAM 分配出去了~~ | **已由 §3.3 代码排除：`pa_valid` 返回 false，VM 不分配窗口以下的地址** |
-| **3** | LK 链表第一个字是 PRD 表 | **只引用 `ufs.h:267` 的注释**，我没读内存验证 |
+| **3** | LK 链表现在的内容 | **未知**。`ufs.h:267` 的「首字是 PRD 表」是**更早的观察**，而 `UFS_USE_LK_LIST` 分支会往 slot 0 写 loader 自己的 UTRD，**旧注释不能代表 715 当前内容** |
 | **4** | LK 的链表有多大、多少 slot 有效 | 未见 LK 源码里对该链表的构造 |
-| **5** | `0x51266400` 为什么不是 4 KiB 对齐 | **未知** —— `mod 4096 = 0x400`，可能 LK 用了非页对齐的静态分配 |
+| ~~**5**~~ | ~~`0x51266400` 为什么不是 4 KiB 对齐~~ | **已解决：UFSHCI 要求 1 KiB 对齐（`ufshcd.c:4020`），该地址满足；32×32 B 恰好 1 KiB** |
 | **6** | UCD 的 `UCD_SIZE` 确切值 | `UCD_PRDT + 16 * (UFS_SLOT_BUFFER / UFS_PRD_MAX + 1)`，**需算 `UFS_SLOT_BUFFER` 与 `UCD_PRDT` 才能确定** |
 | **7** | 控制器能否 DMA 到 4 GiB 以上 | **`board.h` 说 UFS 主控只读得到的窗口，但没给 DMA 地址宽度** |
 | **8** | `UTRLDBR` 采样为 0 的语义 | 见前一轮更正：**只是采样位全 0**，不推断在途请求 |
@@ -465,3 +557,64 @@ SMC / `0x140` / `0x144` / UIC 初始化，头注释不可信。**
 **→ 这套 `ufs_init` 带硬件副作用，不能整段搬进 XNU。头注释不可信。**
 
 **这条是比我原先列的所有阻塞都更根本的一条。**
+
+---
+
+## 12. 第二轮更正（用户指出，四处）
+
+### 更正 3：§5 问的是「loader 怎样重用队列」，我问成了「能否从 HLOG 重建」❌
+
+**已重写为实际调用链（§5）：**
+
+`xnu_returned`（`mtkloader.c:2554`）→ `save_log_to_flash`（1919）
+→ `save_log_spans_to_flash`（1801）→ **`ufs_write`**（1847/1865/1878/1896，定义 3120）
+→ **`ufs_cmd_once`**（2823），与 `ufs_read` 共用同一条队列。
+
+**关键机制：`ufs.h:1651` 的 `if (ufs_ready) return 1;` ——
+init 不重跑，不 SMC、不写 `0x140`/`0x144`、不发 UIC、不重设 UTRLBA。**
+
+**且没有 kernel 租约握手。**
+
+**🔴 我先前写「HLOG 只是 loader 的 `out()` 文本」也错了：
+`save_log_to_flash(log_pa, ...)` 的 `log_pa` 指向**内核日志缓冲区**。
+715 body 里的 `[   18.420547]:` 内核时间戳与 `com.apple.xpc.launchd` 系统日志都证明这点。**
+
+**副产物认识：715 HLOG 能完整写出（reason=0、完整 sum 匹配），
+**本身就间接证明了从 XNU 返回后 `ufs_write` 通过那条队列成功工作。**
+
+### 更正 4：`UCD_SIZE` / `BUF_OFFSET` 独立重算 —— 与用户值精确一致 ✅
+
+**用 715 实际宏值代入：**
+
+| 项 | 算式 | 结果 |
+|---|---|---|
+| `UFS_SLOT_BUFFER / UFS_PRD_MAX` | `8388608 / 262144` | **32** |
+| `UCD_SIZE_RAW` | `1024 + 16×(32+1)` | **1552** |
+| **`UCD_SIZE`** | `(1552+127) & ~127` | **1664 = `0x680`** ✅ |
+| **`UFS_BUF_OFFSET`** | `0x1000 + 32×1664` | **57344 = `0xe000`** ✅ |
+| `UFS_AREA_SIZE` | `57344 + 8388608` | **8445952 = `0x80e000`** |
+
+**与用户给的 `1664` / `0xe000` 完全一致。**
+
+### 更正 5：`0x51266400` 的 1 KiB 对齐**不是问题** ❌
+
+**我先前把「`mod 4096 = 0x400`，非 4 KiB 对齐」列为疑点 —— 错了。**
+
+**`/tmp/mt6895-mainline/drivers/ufs/core/ufshcd.c:4020` 原文：**
+
+> 「**UFSHCI requires 1KB alignment of UTRD**」
+
+**`ufshcd.c:4025`：`WARN_ON(hba->utrdl_dma_addr & (SZ_1K - 1))` —— 判据就是 1 KiB。**
+
+**`0x51266400 mod 1024 = 0`，满足要求；32 × 32 B = 1024 B 恰好一个 1 KiB 块。**
+
+### 更正 6：「首字是 PRD 表」的旧注释**不能代表 715 当前内容** ❌
+
+**`ufs.h:267` 那条描述的是**更早的观察**（读到 `0x0d1600e0`）。**
+
+**但 `UFS_USE_LK_LIST` 分支（`ufs.h:1995` 附近）之后，
+loader 会往那条链表的 **slot 0 写自己的 UTRD**。**
+
+**→ 旧注释描述的状态已被 loader 覆写，不能当作 715 时刻的链表内容。**
+
+**🔴 715 时刻该内存的真实内容仍然**未知**（我没有 dump），但原因不是「首字是 PRD 表」。**
