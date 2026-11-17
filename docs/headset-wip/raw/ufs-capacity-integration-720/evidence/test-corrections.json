@@ -1,0 +1,10 @@
+{
+  "production_driver_unchanged": true,
+  "original_test_sha256": "86d57d1bc89ae7ad419bfa479245a4429e11e651bf7356f84a5c030d32d9bec7",
+  "corrected_host_test_sha256": "85000799bbcf7c4bfbd6269a05030f9fd57c357bbbd843e9b1de02d6d328ed8c",
+  "corrections": [
+    "Original stop_at_ring only left DBR set and reached timeout; now it actually calls us_stop before completion",
+    "Original partial_response was a full response with nonzero status; renamed SCSI_CHECK_CONDITION and uses status2",
+    "True partial-read behavior remains covered by the separate engine fault model, not claimed for this adapter"
+  ]
+}
