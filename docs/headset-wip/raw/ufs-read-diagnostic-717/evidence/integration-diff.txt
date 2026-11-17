@@ -1,0 +1,3 @@
+文件 logs/ufs-read-path-20261117/kernel-src/bsd/dev/hakios.mt6895_ufs_read.c 和 logs/ufs-read-diag-20261117/kernel-src/bsd/dev/hakios.mt6895_ufs_read.c 不同
+文件 logs/ufs-read-path-20261117/kernel-src/bsd/dev/ufs_read_contract.h 和 logs/ufs-read-diag-20261117/kernel-src/bsd/dev/ufs_read_contract.h 不同
+文件 logs/ufs-read-path-20261117/kernel-src/bsd/dev/ufs_read_engine.h 和 logs/ufs-read-diag-20261117/kernel-src/bsd/dev/ufs_read_engine.h 不同
