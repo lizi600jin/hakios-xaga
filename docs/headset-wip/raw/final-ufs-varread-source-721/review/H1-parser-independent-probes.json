@@ -1,0 +1,26 @@
+{
+  "source_sha256": "37d942ab0ad5aa67a7d6fb1457f931618273a37103ef56bd654bc9fe4d16c5c6",
+  "synthetic_only": true,
+  "cases": [
+    {
+      "case": "wrong_LBA",
+      "actual_verdict": "FORMAT_PASS",
+      "required_verdict": "FAIL"
+    },
+    {
+      "case": "incomplete_response",
+      "actual_verdict": "FORMAT_PASS",
+      "required_verdict": "FAIL"
+    },
+    {
+      "case": "wrong_or_missing_arguments",
+      "actual_verdict": "FORMAT_PASS",
+      "required_verdict": "FAIL"
+    },
+    {
+      "case": "changed_guard",
+      "actual_verdict": "FORMAT_PASS",
+      "required_verdict": "FAIL"
+    }
+  ]
+}

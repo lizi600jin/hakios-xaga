@@ -1,0 +1,223 @@
+{
+  "scope": "Published host-only source and review archive; no device result",
+  "trial": 721,
+  "revision": 2,
+  "self_excluded": [
+    "SOURCE-MANIFEST.json",
+    "SOURCE-MANIFEST.sha256"
+  ],
+  "files": {
+    "README.md": {
+      "bytes": 2137,
+      "sha256": "cd85cfff8f197228c90ddda1df3424acc87e80f1eeb74a3fbd74bc10a554f2aa"
+    },
+    "metadata/DEVICE-PLAN-UNEXECUTED.md": {
+      "bytes": 6224,
+      "sha256": "8e4a8bed479f79ac25afa14a63684aef3294c536b7472adce98643debbe9ee8d"
+    },
+    "metadata/ERRATA-721A-V2.md": {
+      "bytes": 2235,
+      "sha256": "ae0644fb17f6f41eb4d0d85381e2f7686db1f0c22c38826bcc31669b143600c6"
+    },
+    "metadata/LOCAL-R2-FROZEN-MANIFEST.json": {
+      "bytes": 34554,
+      "sha256": "0c928da33c12cbc3065d25c23f9c06cfbf0fa598a39422f14c1ac4a01c31365c"
+    },
+    "metadata/ORIGINAL-FROZEN-INPUTS.json": {
+      "bytes": 1071605,
+      "sha256": "1bd8a1f3e5dad675e87785da5efcf95565485d841657671f6f02762094f67882"
+    },
+    "metadata/arguments721-r2.json": {
+      "bytes": 1641,
+      "sha256": "6db2cf0e54fa0bcd2a83bb72746cbb84f2f6117d8000e579a941f136f80f7049"
+    },
+    "metadata/loader-commands-r2.json": {
+      "bytes": 2842,
+      "sha256": "944c210911f15bda1f9ca3d043df32b0520cc0d3d44fc5fcd8e13aeed53f8761"
+    },
+    "metadata/loader-tool-identity.txt": {
+      "bytes": 390,
+      "sha256": "ff9badfa1405117935bb926589079debf4d755f85eef48f5b0d5f7a6dfda3c4c"
+    },
+    "review/H1-judge-independent-probes.json": {
+      "bytes": 595,
+      "sha256": "b41426efabc816ece625ce5407f450021e5c5a4c5a76c36fad017a6d5049f577"
+    },
+    "review/H1-parser-independent-probes.json": {
+      "bytes": 612,
+      "sha256": "df6667872e3d95819d214b36858e287535aca40238201659b5be8318571ae315"
+    },
+    "review/H1fix2-root-judge-review.json": {
+      "bytes": 2038,
+      "sha256": "592e16d96278c15ca388e8ac1af21a43f7a41474d7b4db49512cdc17c9198cc3"
+    },
+    "review/ROOT-REVIEW-721-R2.json": {
+      "bytes": 937,
+      "sha256": "61023b024ec545c2999166cfff1543cf88cb441cb2ecf536a5ae9d758384a131"
+    },
+    "review/ROOT-REVIEW-721-R2.md": {
+      "bytes": 5699,
+      "sha256": "ee8f6b6bbeb65d495045011c547433b4903c5053c394e9a6268511c4812135d6"
+    },
+    "review/dsh-loader-stage0-argv.json": {
+      "bytes": 1276,
+      "sha256": "ee2292c25dda20a9029d1d1054f2ece8484518a782a793a26d107e20372e45de"
+    },
+    "review/dsh-loader-stage0-result.json": {
+      "bytes": 229,
+      "sha256": "80f72e68ca824f0fad61b8d84578286ff403982da07ab4e8ec92e9bbfabfd9f6"
+    },
+    "review/dsh-loader-stage1-argv.json": {
+      "bytes": 1284,
+      "sha256": "97e6d86b2c06cfb3913b1dcc5f001ffd1555f775e01cefa0c32778bd225cbd67"
+    },
+    "review/dsh-loader-stage1-result.json": {
+      "bytes": 258,
+      "sha256": "6d1c0ac5511b8182c6d3ba2ce2f4086d2839d0ab253a2e561735710814b628bf"
+    },
+    "review/dsh-loader-stage2-argv.json": {
+      "bytes": 552,
+      "sha256": "42d458f094a0ba1f834ec5a7d9b878e35c34fa21b0190e2d66839da5e9c8b32c"
+    },
+    "review/dsh-loader-stage2-result.json": {
+      "bytes": 278,
+      "sha256": "180d16af7522df70669ce4b874a32fff90c27ca1c390dbb9d8e6cda6bceff220"
+    },
+    "review/final-manifest-review.json": {
+      "bytes": 325,
+      "sha256": "24792808263df316f269b07b2f22210acba6d50088fc22b165e21de07ebe97d0"
+    },
+    "review/judge-kernel-log.py": {
+      "bytes": 6049,
+      "sha256": "26c3a8dde91a163f9c0ee9ad7f4c5ba265d22f51c0e1c460a00467994a4ee156"
+    },
+    "review/kernel-review-721-r2.json": {
+      "bytes": 415,
+      "sha256": "774753c3cb69a57b9e22cae74f9b0406261d575d5fe9ad7b8d42e68662ca20d5"
+    },
+    "review/loader-reproduction-review.json": {
+      "bytes": 4139,
+      "sha256": "89d506462aeaebebe54250b2ae5eec4bd9c617454647322a38afd7fad32bbd31"
+    },
+    "review/package-review-721-r2.json": {
+      "bytes": 1759,
+      "sha256": "24e0794ff6e984c16f45d9ae5543145a711311f7554f469a752a6f695ed6aafb"
+    },
+    "review/review-device-721.py": {
+      "bytes": 8252,
+      "sha256": "556f22477394e058d5fb72895d7df7e6266a4174567c382d22de63c0726b92c2"
+    },
+    "review/review-package-independent.py": {
+      "bytes": 8648,
+      "sha256": "e0535bf89224c9e871a5cbec2261bc06ecc6f48219d2157d318b5ea7ee4437f2"
+    },
+    "review/review-package-r2.py": {
+      "bytes": 5165,
+      "sha256": "b12968622351cedda6c56cef454c59afafc8b2be2a8ca03c89b940c8a9ac2c57"
+    },
+    "review/synthetic-marked-root-review.json": {
+      "bytes": 3344,
+      "sha256": "bb8d287ebd7a504aa988475198fe47034808b216a236079ea8daeb10d6069261"
+    },
+    "source/kernel-integration/bsd/conf/files": {
+      "bytes": 29879,
+      "sha256": "3eab17da7663d7bd06805462fb77546db3f0ff8ff8dbea08b30bc62c0a1e46c9"
+    },
+    "source/kernel-integration/bsd/dev/hakios.input.c": {
+      "bytes": 7267,
+      "sha256": "40c2267176abb103432f2cb09b0cf853132796c492b82dd33ebc7fcf7e6f08d8"
+    },
+    "source/kernel-integration/osfmk/arm64/loader_return.c": {
+      "bytes": 22852,
+      "sha256": "669f47207984d40b688f230506c1d93599dbd6b7aa09f002e731a7340995f20f"
+    },
+    "source/kernel-integration/r20-to-721.patch": {
+      "bytes": 65722,
+      "sha256": "e7ac7b3ff03b0790b0a0fd9628e4ae7bd232e9cf9b8b0c4b34d36c4d8cc2d094"
+    },
+    "source/loader/board.h": {
+      "bytes": 48016,
+      "sha256": "5b2cf1392c2262a800ab270846b5dc8b895b966098166e2677261d1432dee5aa"
+    },
+    "source/loader/link.ld": {
+      "bytes": 770,
+      "sha256": "0936f28bac65f27657651a16102459c25dc7c0839b052cc351b51b552fd73fe4"
+    },
+    "source/loader/mtkloader.c": {
+      "bytes": 266839,
+      "sha256": "d17c9e2518f523ec960be9499e7f4a1cc3c23e5c5a3ed20ca6252ea29220fc3b"
+    },
+    "source/loader/return-audit-r2.patch": {
+      "bytes": 538,
+      "sha256": "118491a4e9cf15760243ad881554f02b48150f6a6e068e38534961a92d917225"
+    },
+    "source/loader/start.S": {
+      "bytes": 16953,
+      "sha256": "8d27dfa271a4c5f5be540dad0ac7a124a46ba911c5a109c455a100e9ffa385cd"
+    },
+    "source/loader/ufs_loader_guard.h": {
+      "bytes": 1965,
+      "sha256": "517c9bc0eea2af3d681ca6c754cc7ec891089f175a37307700190cdf563af1ce"
+    },
+    "source/loader/ufs_read_contract.h": {
+      "bytes": 4684,
+      "sha256": "bb65cba5586eca6b530f2f442b01b3f9983855a546a811cf44152d23847c7246"
+    },
+    "source/loader/ufs_return_audit.h": {
+      "bytes": 1535,
+      "sha256": "f9d2f854aab8fe988f02d2c50a2b47baf09673917a7b469620aa30210675c560"
+    },
+    "source/runtime/hakios.mt6895_ufs_varread.c": {
+      "bytes": 18609,
+      "sha256": "ec7ed55749da6c8e0d035967d7a8dc2ebb4c45062192fa16693dd2110ad61a5f"
+    },
+    "source/runtime/metadata/ufs_varread_reference.h": {
+      "bytes": 1236,
+      "sha256": "5a3e78e85373ac94b12591be43f0396b7184a7650180378188b431940d825449"
+    },
+    "source/runtime/support/ufs_read_contract.h": {
+      "bytes": 4684,
+      "sha256": "bb65cba5586eca6b530f2f442b01b3f9983855a546a811cf44152d23847c7246"
+    },
+    "source/runtime/support/ufs_read_engine.h": {
+      "bytes": 11027,
+      "sha256": "81aeee096c339fbbf61aa23bf248b1fa24aa3b38e4c5ce26d642d35cd3afc7df"
+    },
+    "source/runtime/support/ufs_service_lease.h": {
+      "bytes": 3236,
+      "sha256": "05432b2c8c295157ca0cfc21a9ae7069ee030814ea398a3bbaaab960d5d9a0bd"
+    },
+    "source/runtime/ufs_variable_read_codec.h": {
+      "bytes": 6546,
+      "sha256": "6c7e531ec4b52f90a7a75a454fbb614263ed9b88b6ac74d4f783cdccb83d8098"
+    },
+    "source/runtime/ufs_variable_read_engine.h": {
+      "bytes": 16510,
+      "sha256": "19c2b8d0204693ed7181dafa6a4b64683fceaae7b682477cef1b2b4aa5fc79e1"
+    },
+    "tests/SYNTHETIC-HLOG-FIXTURE.txt": {
+      "bytes": 1680,
+      "sha256": "85525ddde20bd05de95cb4ec268819affa8cf323eafcef180932d3ef46dd7b80"
+    },
+    "tests/test-guard-format.c": {
+      "bytes": 1455,
+      "sha256": "e74d46881320c6049869acfdc7da14879566c4fd5f951aacbf9c537bb4864b2c"
+    },
+    "tests/test-ufs-variable-read-codec.c": {
+      "bytes": 8878,
+      "sha256": "f70af3ebaee75e5e4a77a2a2193e836deaf5a945e1f63503bbb68a41b04a385e"
+    },
+    "tests/test-ufs-variable-read-engine.c": {
+      "bytes": 22205,
+      "sha256": "e1f7511e2851146b69e153bd0801b77f779c9b83adcbc5380a3c90776b7b1fd4"
+    },
+    "tests/test-ufs-varread-platform.c": {
+      "bytes": 22175,
+      "sha256": "59053bdb7277026eb7b1226da160af9fa33d53bd533883cce4e5eebac952f139"
+    },
+    "tests/ufs_varread_test_env.h": {
+      "bytes": 1088,
+      "sha256": "f99b447cf3f22ce5b7d9f4d52ff0fef45be4c4f651f4dfcd503c69ae12d573fb"
+    }
+  }
+}

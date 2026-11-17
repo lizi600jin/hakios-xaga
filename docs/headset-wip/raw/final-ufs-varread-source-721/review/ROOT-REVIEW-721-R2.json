@@ -1,0 +1,25 @@
+{
+  "status": "HOST_REVIEW_PASS",
+  "device_execution_authorized": false,
+  "hardware_result": "NONE",
+  "kernel_sha256": "784500d791bf2a623d24ad81ed460b4c0cdf25143f8beade8a2d4729eed342cb",
+  "boot_sha256": "498a99a40094c1f941ce598e061b1eb599690acf531eca25e402b270acf6472e",
+  "loader_sha256": "04b36c195f25781ca9265a5ee0ecf56f1706d6f11524619fb61b5f35a0fd9b31",
+  "payload_sha256": "9d8880fe1b134dda8412568047ba1816535b92f61e2fa8783eaf10ac05e747b7",
+  "make_native_rc": 2,
+  "original_judge0_valid": false,
+  "original_judge_real_log_rc": 1,
+  "private_judge_rc": 0,
+  "loader_reproduction_rcs": [
+    0,
+    0,
+    0
+  ],
+  "loader_reproduction_byte_equal": true,
+  "package_script_rc": 0,
+  "package_pass_checks": 50,
+  "synthetic_parser_status": "FORMAT_PASS_ONLY",
+  "synthetic_parser_cli_rc": 1,
+  "local_manifest_sha256": "0c928da33c12cbc3065d25c23f9c06cfbf0fa598a39422f14c1ac4a01c31365c",
+  "local_manifest_files_verified": 181
+}

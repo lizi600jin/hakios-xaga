@@ -1,0 +1,37 @@
+{
+  "trial": 721,
+  "base_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=721 headset=0 mtk_ufs_varread=1 mtk_ufs_probe=0 mtk_ufs_read=0 mtk_ufs_service=0 mtk_ufs_capacity=0 loader_return_after=150",
+  "extra_arguments": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=721 headset=0 mtk_ufs_varread=1 mtk_ufs_probe=0 mtk_ufs_read=0 mtk_ufs_service=0 mtk_ufs_capacity=0",
+  "full_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=721 headset=0 mtk_ufs_varread=1 mtk_ufs_probe=0 mtk_ufs_read=0 mtk_ufs_service=0 mtk_ufs_capacity=0 loader_return_after=150 hakios_kver=2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty",
+  "base_bytes": 239,
+  "full_bytes": 299,
+  "nul_inclusive_bytes": 300,
+  "boot_line_limit": 608,
+  "headroom_bytes": 308,
+  "kernel_ver_bytes": 48,
+  "kernel_ver_sha256": "363b5257dc819017ddb1f97c15be0d3c542f023ef8052c3c4801eb4463dd06f6",
+  "loader_macro_overrides": {
+    "BOARD_MALI_POWER": 0,
+    "BOARD_MALI_PREPOWER": 0,
+    "BOARD_MALI_EARLY": 0,
+    "BOARD_MALI_RETURN": 0,
+    "BOARD_MALI_STOP": 0,
+    "BOARD_UFS_READ_LEASE": 1
+  },
+  "device_execution_authorized": false,
+  "scope": "Isolated721 host build review; separate explicit device release still required",
+  "expected_reads": {
+    "lun": 2,
+    "lba_sequence": [
+      1,
+      2,
+      15,
+      1
+    ],
+    "blocks_each": 1,
+    "block_bytes": 4096,
+    "maximum_kernel_commands": 4,
+    "retry": false
+  },
+  "suite": "revision2"
+}

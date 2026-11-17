@@ -1,0 +1,8 @@
+clang_version=Ubuntu clang version 21.1.8 (6ubuntu1)
+clang_path=/usr/bin/clang
+clang_sha256=412bbe8c60571a1eb06f48fde89635033621caeb01a9b4ee76d46711bae8e932
+ldlld_version=Ubuntu LLD 21.1.8 (compatible with GNU linkers)
+ldlld_path=/usr/bin/ld.lld
+ldlld_sha256=6a65863a9eba1af6b6e8969f8e96a5ad4df0e8b705f98491a28b1790ce35718c
+host=Linux 7.0.0-43-generic x86_64
+date=2026-11-18T00:47:39+08:00

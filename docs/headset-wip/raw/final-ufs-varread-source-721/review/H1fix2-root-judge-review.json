@@ -1,0 +1,95 @@
+{
+  "status": "PASS",
+  "scope": "Exact frozen build evidence only; native make rc remains 2",
+  "tool_sha256": "26c3a8dde91a163f9c0ee9ad7f4c5ba265d22f51c0e1c460a00467994a4ee156",
+  "positive": {
+    "verdict": "PASS",
+    "checks": {
+      "stderr bytes": {
+        "ok": true,
+        "detail": "58564"
+      },
+      "stderr sha256": {
+        "ok": true,
+        "detail": "e924424b23fd4e7e"
+      },
+      "stdout bytes": {
+        "ok": true,
+        "detail": "98196"
+      },
+      "stdout sha256": {
+        "ok": true,
+        "detail": "3b81ec7fe89f6fd2"
+      },
+      "rc file is the integer 2": {
+        "ok": true,
+        "detail": "2"
+      },
+      "kernel bytes": {
+        "ok": true,
+        "detail": "15339856"
+      },
+      "kernel sha256": {
+        "ok": true,
+        "detail": "784500d791bf2a62"
+      },
+      "tolerated leaf present": {
+        "ok": true,
+        "detail": ""
+      },
+      "no rejected lines": {
+        "ok": true,
+        "detail": ""
+      }
+    },
+    "failures": [
+      "check_all_exports",
+      "config_all",
+      "config_all_recurse_into_config",
+      "config_all_bootstrap_DEVELOPMENT^ARM64^BCM2837"
+    ],
+    "rejected": [],
+    "notices": 3,
+    "reason": "frozen build; only check_all_exports and its propagation failed"
+  },
+  "negative_cases": [
+    {
+      "case": "truncated_after_leaf",
+      "verdict": "FAIL"
+    },
+    {
+      "case": "inject_raw_compiler_error",
+      "verdict": "FAIL"
+    },
+    {
+      "case": "inject_raw_linker_error",
+      "verdict": "FAIL"
+    },
+    {
+      "case": "waiting_with_extra_error",
+      "verdict": "FAIL"
+    },
+    {
+      "case": "missing_stderr",
+      "verdict": "FAIL"
+    },
+    {
+      "case": "missing_stdout",
+      "verdict": "FAIL"
+    },
+    {
+      "case": "empty_stdout",
+      "verdict": "FAIL"
+    },
+    {
+      "case": "wrong_rc",
+      "verdict": "FAIL"
+    },
+    {
+      "case": "wrong_kernel",
+      "verdict": "FAIL"
+    }
+  ],
+  "original_judge0_valid": false,
+  "original_script_real_log_rc": 1
+}

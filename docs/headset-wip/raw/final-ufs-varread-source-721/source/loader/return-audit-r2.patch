@@ -1,0 +1,11 @@
+--- a/ufs_return_audit.h
++++ b/ufs_return_audit.h
+@@ -18,7 +18,7 @@
+ {
+     char text[192];size_t n=0;
+     if (!out || !ur_loader_may_use_storage(r)) return 0;
+-    if (!ur_audit_text(text,sizeof(text),&n,"\nmt6895-ufs-capacity: return-gate magic=0x") ||
++    if (!ur_audit_text(text,sizeof(text),&n,"\nmt6895-ufs-varread: return-gate magic=0x") ||
+         !ur_audit_u32(text,sizeof(text),&n,r->magic,true) ||
+         !ur_audit_text(text,sizeof(text),&n," version=") ||
+         !ur_audit_u32(text,sizeof(text),&n,r->version,false) ||

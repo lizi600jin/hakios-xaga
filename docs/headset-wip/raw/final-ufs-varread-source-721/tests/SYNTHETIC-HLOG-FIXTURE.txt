@@ -1,0 +1,11 @@
+boot-args = rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=721 headset=0 mtk_ufs_varread=1 mtk_ufs_probe=0 mtk_ufs_read=0 mtk_ufs_service=0 mtk_ufs_capacity=0 loader_return_after=150 hakios_kver=2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty
+SYNTHETIC TRIAL721 HOST FORMAT FIXTURE
+mt6895-ufs-varread: bounded variable READ10 lun2 lba0..15 bytes4096 budget4; guarded handoff required
+mt6895-ufs-varread: guard magic=0x554c5345 version=1 trial=721 state=0
+mt6895-ufs-varread: opened control=0x2 shared=1
+mt6895-ufs-varread: request=1 lba=1 admitted=1 readback_ok=1 issued=1 response_valid=0x1fff failures=0 ocs=0x0 data_words=1024/1024 restored=1 copied=1 reference_present=1 crc=0x28a2836c reference_crc=0x28a2836c match=1 control=0x4 shared=1
+mt6895-ufs-varread: request=2 lba=2 admitted=1 readback_ok=1 issued=1 response_valid=0x1fff failures=0 ocs=0x0 data_words=1024/1024 restored=1 copied=1 reference_present=1 crc=0x0d024e0c reference_crc=0x0d024e0c match=1 control=0x4 shared=1
+mt6895-ufs-varread: request=3 lba=15 admitted=1 readback_ok=1 issued=1 response_valid=0x1fff failures=0 ocs=0x0 data_words=1024/1024 restored=1 copied=1 reference_present=1 crc=0xc71c0011 reference_crc=0xc71c0011 match=1 control=0x4 shared=1
+mt6895-ufs-varread: request=4 lba=1 admitted=1 readback_ok=1 issued=1 response_valid=0x1fff failures=0 ocs=0x0 data_words=1024/1024 restored=1 copied=1 reference_present=1 crc=0x28a2836c reference_crc=0x28a2836c match=1 control=0x4 shared=1
+mt6895-ufs-varread: final control=0x2 shared=1 failed=0
+mt6895-ufs-varread: return-gate magic=0x554c5345 version=1 trial=721 state=2 allowed=1
