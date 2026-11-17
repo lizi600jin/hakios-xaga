@@ -1,0 +1,22 @@
+[
+  [
+    "python3",
+    "xnuloader/mkpayload.py",
+    "-o",
+    "/home/lizi/IOS/hakios-mtk/logs/ufs-response-20261117/trial718/payload.bin",
+    "--no-version",
+    "kernel=/home/lizi/IOS/hakios-mtk/logs/ufs-response-20261117/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837",
+    "ramdisk=/home/lizi/IOS/hakios-mtk/logs/profile4-device-20261116/trial710/revision2/ref-ramdisk.bin",
+    "kernel.ver=/home/lizi/IOS/hakios-mtk/logs/profile4-device-20261116/trial710/revision2/ref-kernel.ver.bin"
+  ],
+  [
+    "python3",
+    "mtk/tools/chainboot.py",
+    "/home/lizi/IOS/hakios-mtk/backup/boot_a_stock_real.img",
+    "/home/lizi/IOS/hakios-mtk/logs/ufs-response-20261117/trial718/loader.bin",
+    "/home/lizi/IOS/hakios-mtk/logs/ufs-response-20261117/trial718/boot.img",
+    "/home/lizi/IOS/hakios-mtk/logs/ufs-response-20261117/trial718/payload.bin",
+    "--partition-size",
+    "64M"
+  ]
+]

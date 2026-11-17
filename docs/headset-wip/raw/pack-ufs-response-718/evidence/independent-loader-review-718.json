@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "loader_bytes": 47264,
+  "loader_sha256": "dc1d273481eeab99086726e90762c4dca4a30e7d631fddab31990349ce6e4b25",
+  "changed_source_files": 2,
+  "no_gate_or_storage_behavior_change": true,
+  "compile_rcs": [
+    0,
+    0,
+    0
+  ],
+  "limits": [
+    "Source equivalence modulo trial labels/cookie and native compile identity only; no hardware result"
+  ]
+}

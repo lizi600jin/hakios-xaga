@@ -1,0 +1,39 @@
+=== 1 stock header 差异 ===
+  4 字节 位置 [8, 9, 10, 11]  ✅ 只 kernel_size
+
+=== 2 signature_size @1580 与逐字节保留 ===
+  stock 4096  718 4096
+  magic b'AVB0'  sha256 692c87adcc6ad5fcf0592878a6fe56f13e0da9dfade792f1e8aa1f03e34623c5
+  与 stock 相同: True
+
+=== 3 Android Image / ramdisk 未变 ===
+  Image 42201364 B 内嵌相同: True
+
+=== 4 loader 段差异 ===
+  10 字节 ['0x12', '0x13', '0x28', '0x29', '0x2a', '0x2b', '0x30', '0x31', '0x32', '0x33']
+  预期 10 字节 header: True
+
+=== 5 填充全零 ===
+  True
+
+=== 6 XNUP ===
+  magic 0x50554e58 body 19533312 一致 True
+  [kernel] 15338864 B 60bd6b195c2ab65ab0c5c1cb
+  [ramdisk] 4194304 B 78985f67583b4d4666e46126
+  [kernel.ver] 48 B 363b5257dc819017ddb1f97c
+  [终止] pos=19533296 24B 全零
+  exact EOF: True
+
+=== 7 参数本体唯一性 ===
+  base 168 字节
+  [1] 0x9752 后随 00 NUL 本体
+  [2] 0x98a3 后随 0a printf
+  [3] 0xa3b5 后随 0a printf
+  NUL 本体 1 个  匹配 True
+  关键项: {'mali_trial=718': 1, 'mtk_ufs_read=1': 1, 'mali=0': 1, 'headset=0': 1, 'cpus=4': 1, 'loader_return_after=150': 1}
+
+=== 8 sealed 716/717 未动 ===
+  boot.img                         4ca5834f555300c6 ✅
+  mach.development.bcm2837         c7f2f3222f314b82 ✅
+  boot.img                         c275625ff431ee93 ✅
+  mach.development.bcm2837         07b016feb866c434 ✅
