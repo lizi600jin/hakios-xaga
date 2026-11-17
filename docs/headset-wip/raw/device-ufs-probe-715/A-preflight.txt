@@ -1,0 +1,19 @@
+[host] 2026-11-17T12:57:38.803242
+== A1 设备状态 ==
+  slot            _a                                         OK
+  boot_completed  1                                          OK
+  SELinux         Enforcing                                  OK
+  boot_id         c8acf0e0-ec30-4b5a-906b-fe29e1a74a9d       OK
+  boot_a size     67108864  OK
+  boot_a MD5 计算中...
+  boot_a MD5      a63b2e35a7c2522cb24a6a10332b9bc8  /dev/block/by-name/boot_a
+    期望 a63b2e35a7c2522cb24a6a10332b9bc8  ✅ 原厂
+
+== A 镜像身份复查 ==
+  boot.img       22994944 B  65bd797dce99a4f29d898c7055a25fcc...  ✅
+  loader.bin        46504 B  c3d9c30a0c14c3e6c644fbf499fc1898...  ✅
+  payload.bin    19515784 B  c7d73935a1338a3e75cba6d01da536e7...  ✅
+
+  stock          67108864 B  sha256 c5f8e7bde8e9f1d824d0c7915f7d701a...
+               md5 a63b2e35a7c2522cb24a6a10332b9bc8
+               ✅

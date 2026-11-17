@@ -1,0 +1,16 @@
+[host] 2026-11-17T12:57:58.831859
+== B4 adb reboot bootloader（有界 10s）==
+  native rc=0  timed_out=False  @12:57:58
+
+== 等 fastboot（最多 30s，每 3s 查一次）==
+  ✅ fastboot 出现 @ +3s  < waiting for <SERIAL>>
+product:
+
+== B5 TRIAL715 FLASH ==
+  native rc=0  timed_out=False  elapsed=0.88s
+  Sending 'boot_a' (22456 KB)                        OKAY [  0.598s]
+Writing 'boot_a'                                   OKAY [  0.075s]
+Finished. Total time: 0.760s
+
+== B6 REBOOT（一次）==
+  native rc=0  timed_out=False  @2026-11-17T12:58:15.735208

@@ -1,0 +1,12 @@
+[host] 2026-11-17T13:03:00.962423
+
+== STOCK_RECOVERY 全项核验 ==
+  slot            _a               OK
+  boot_completed  1                OK
+  SELinux         Enforcing        OK
+  boot_a size     67108864  OK
+  boot_a 全分区 MD5 计算中（64 MiB，需数十秒）...
+  boot_a MD5      a63b2e35a7c2522cb24a6a10332b9bc8
+    期望 a63b2e35a7c2522cb24a6a10332b9bc8  ✅ 已恢复原厂
+  boot_id         11aead4e-9595-4574-8e6a-6b229e287480  （新 id）
+  SurfaceFlinger  Build configuration: [sf PRESENT_TIME_OFFSET=0 FORCE_HWC_FOR_RBG_T
