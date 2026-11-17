@@ -1,0 +1,27 @@
+{
+  "extra_arguments": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=720 headset=0 mtk_ufs_capacity=1",
+  "base_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=720 headset=0 mtk_ufs_capacity=1 loader_return_after=150",
+  "full_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=720 headset=0 mtk_ufs_capacity=1 loader_return_after=150 hakios_kver=2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty",
+  "base_bytes": 172,
+  "full_bytes": 232,
+  "nul_inclusive_bytes": 233,
+  "loader_macro_overrides": {
+    "BOARD_MALI_POWER": 0,
+    "BOARD_MALI_PREPOWER": 0,
+    "BOARD_MALI_EARLY": 0,
+    "BOARD_MALI_RETURN": 0,
+    "BOARD_MALI_STOP": 0,
+    "BOARD_UFS_READ_LEASE": 1
+  },
+  "device_execution_authorized": false,
+  "scope": "Isolated720 host build review; separate explicit device release still required",
+  "expected_query": {
+    "lun": 2,
+    "opcode": 37,
+    "bytes": 8,
+    "maximum_kernel_commands": 1,
+    "android_block_layer_bytes": 127959826432,
+    "android_block_layer_logical_bytes": 4096,
+    "reference_comparison_is_separate_from_query_completion": true
+  }
+}
