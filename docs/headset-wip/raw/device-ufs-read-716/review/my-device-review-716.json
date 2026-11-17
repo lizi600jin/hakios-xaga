@@ -1,0 +1,55 @@
+{
+  "raw_bytes": 4198400,
+  "raw_sha256": "f8b7b52dd29f19e81a65a096989d723a088e31d8cbb700251b6fe9fcf7a9b1ea",
+  "body_bytes": 497672,
+  "body_sha256": "1f2a34cbde7db4433aaca5a30ae3ed8bd78460501457bd383d3c036d7efd57ea",
+  "reason": 0,
+  "code": 0,
+  "full_sum": 40861388,
+  "full_sum_verified": true,
+  "NORMAL_RETURN": "PASS",
+  "READ_EXPERIMENT_CAPTURE": "PASS",
+  "READ_BLOCK_COMPARE": "NOT_PROVEN",
+  "LEASE_RETURN": "PASS",
+  "result": "COMPLETED_ERROR",
+  "result_code": 3,
+  "claimed": 1,
+  "issued": 1,
+  "restored": 1,
+  "data_valid": 0,
+  "polls": 117,
+  "inherited_words": {
+    "utrd": [
+      335544320,
+      0,
+      0,
+      0,
+      1611665408,
+      0,
+      8388736,
+      16777217
+    ],
+    "upiu": [
+      147457,
+      0,
+      0,
+      1048576,
+      40,
+      256,
+      1,
+      0
+    ]
+  },
+  "inherited_predecessor_matches": true,
+  "sampled_ocs": 0,
+  "block_crc32": null,
+  "final_shared_state": 2,
+  "loader_io_allowed": 1,
+  "status": "DIAGNOSTIC_ONLY",
+  "error_context": [],
+  "limits": [
+    "CRC32 agreement only, not full SHA256 or mathematical byte equality",
+    "No persistent block device/filesystem/throughput or713 fix established",
+    "Image identity and stock recovery require separate evidence"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "logical_block_bytes": 4096,
+  "current_lba": 1,
+  "backup_lba_not_read": 31240191,
+  "header_bytes": 92,
+  "header_crc32": "0x7fdb9634",
+  "array_crc32": "0xce39daa8",
+  "lba1_sha256": "f94a6807b4afbc7899d3621f570108eec4ffb5504a332198d0e05293f029449c",
+  "lba1_crc32": "0x28a2836c",
+  "capture_sha256": "03628d70602e4f21e36ace76f5c4e27ed1b10e50ae690704035799ea34e4e82b",
+  "limits": [
+    "Primary GPT only; backup GPT not read",
+    "LUN mapping/geometry independently read from DSH sysfs/command transcripts",
+    "Raw GPT kept local; no disk GUID exposed here"
+  ]
+}
