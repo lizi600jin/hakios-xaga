@@ -1,0 +1,31 @@
+{
+  "status": "PASS",
+  "checks": {
+    "slot_a": true,
+    "boot_completed": true,
+    "selinux": true,
+    "partition_bytes": true,
+    "stock_md5": true,
+    "surfaceflinger": true
+  },
+  "boot_id": "77b01ffe-6fc8-4c84-b0e8-0782fc8d6243",
+  "previous_boot_id": "396b9126-ffbd-4892-a201-2b559ebad0a0",
+  "stock_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+  "partition_bytes": 67108864,
+  "recovery_mode": "automatic",
+  "native_recovery_rcs": [
+    0,
+    0,
+    0
+  ],
+  "evidence_sha256": {
+    "A-preflight.txt": "eb4e837de899beb2ba61b89af60bdc7aba93781719e49a585e5c00e85574914a",
+    "B-flash.txt": "b9db033a36fb9bf7e9c16397bee37e160850a81a58f46dacbcbe2c77b7470e11",
+    "D-recovery.txt": "96c44085aa827a146564f5c5d9e22a9f9a410d841794fc9601f47d8519cb8f74",
+    "D-verify.txt": "32327cbe37d3a9308e2c7a396984cf8f8e0df55e71bdac919f4af4fc0b309906"
+  },
+  "limits": [
+    "Independent host review of DSH command/verification records; no direct Codex device query",
+    "No manual fallback was reported or requested for717"
+  ]
+}

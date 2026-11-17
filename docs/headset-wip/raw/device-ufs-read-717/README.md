@@ -81,7 +81,7 @@
 | bytes | 4096 |
 | **`accepted`** | **0** |
 
-**🔴 诊断 CRC 与 Android 参考**精确一致**，但 `accepted=0`。**
+**🔴 诊断 CRC 与 Android 参考**的 CRC32 相同**，但 `accepted=0`。**
 
 **按 CMD 明确：CRC 相同但 accepted 0 仍**不是** READ_BLOCK_COMPARE PASS。**
 
@@ -100,8 +100,12 @@
 
 ### 3.1 🔴 这里有一个必须说清的关系
 
-**诊断 CRC（`0x28a2836c`）与期望**精确相同**，说明**数据本身是对的** ——
-**读到了正确的 LBA1 内容。**
+**诊断 CRC（`0x28a2836c`）与期望的 **CRC32 相同**。**
+
+**🔴 这不等于「内容是对的」** —— **CRC32 一致**只是 32 位校验和的碰撞级等价，
+**不是逐字节比较，也不是 SHA256**。
+
+**准确表述：那 4096 字节的 CRC32 与 Android 参考一致；其**完整内容未被逐字节验证**。**
 
 **但结果仍不是 READ_OK，因为**响应谓词**拒绝了该包（bit5）。**
 
@@ -212,6 +216,34 @@
 只是响应包的 bit5 字段不符合 716 的谓词。**
 
 **这个组合（数据对 + 响应被拒）是很有价值的信息，但**仍不足以**称存储读成功。**
+
+---
+
+## 9.4 🔴 与协议参考的对照（718 前的线索）
+
+**`PROTOCOL-REFERENCE-PRE717.md` 已归档在本目录。**
+
+**按 EDK2 `UTP_RESPONSE_UPIU` 定义（对 UFS 4.0 Table 10.15）：**
+
+| 字节 | 字段 |
+|---|---|
+| 0..3 | transaction type / flags / LUN / tag |
+| 6 / 7 | response / status |
+| **10..11** | **data segment length** |
+| 12..15 | residual |
+| 16..31 | reserved |
+| **32 起** | **sense-data length 与 sense data** |
+
+**→ 717 采到的 `byte11 = 0x14`（20）在 **DataSeg length** 字段里，
+表示 32 字节 header **之后**还有 20 字节数据。**
+
+**🔴 那 20 字节 717 **没有采集** —— 探针只读 32 字节 response header。**
+
+**这不构成结论，只是 718 的输入：若要判断这 20 字节是什么，
+需要新的候选扩大观测宽度，并经过新的审查与编号试验。**
+
+**按协议参考的明确要求：「Any change to interpretation or observation width needs
+new candidate/tests/review and a new numbered trial.」**
 
 ---
 
