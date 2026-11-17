@@ -254,7 +254,70 @@ if ((old & UR_PHASE_MASK) == UR_CLAIMED)
 
 **→ 需要使用者保证「只有 claim 者能改 phase」。这是使用契约，不是代码缺陷。**
 
-### 4.5 我进一步核实的结果
+### 4.5 🔴 撤回：这条「缺口」不成立（用户指出，我核实后确认）
+
+**我原来写「CAS 失败路径既未 poison 也未覆盖」，错了。三点核实：**
+
+#### ① 状态图无回退 `UR_UNUSED` 的 writer
+
+**全文件只有 4 处写 `phase`：**
+
+| 行 | 操作 | 写入值 |
+|---|---|---|
+| 21 | `__atomic_fetch_or` | `STOP_BIT | POISONED` |
+| 28 | `compare_exchange_n` | `UNUSED → CLAIMED` |
+| 41 | `compare_exchange_n` | `CLAIMED → RESTORED` |
+| 55 | `__atomic_fetch_or` | `STOP_BIT` |
+
+**`UR_UNUSED` 只出现在第 27 行的 `expected` 初值里 —— **没有任何 writer 写回它**。**
+
+**→ 状态图是 `0 → CLAIMED → RESTORED/POISON` 加 OR STOP，**无回退路径**。**
+**我假设的「CAS 失败因状态被改回 `UR_UNUSED`」在这套代码里**不可能发生**。**
+
+**且 `hakios.mt6895_ufs_read.c` 注释明确：**
+
+> 「Do not reset this cached software phase in init: quiesce may already have set STOP.」
+
+**→ 平台 init 也不重置 phase。**
+
+#### ② `ur_run` 里 `finish(true)` 失败会 `goto poison` → 再 `finish(false)`
+
+```c
+clean:
+    if (!ur_restore(io, saved)) goto poison;
+    if (!io->finish(io->context, true)) goto poison;   /* ← 失败即跳 poison */
+    ...
+poison:
+    (void)io->finish(io->context, false);              /* ← 再调一次，传 false → poison */
+```
+
+**→ 即使 `finish(true)` 的 CAS 失败，紧接着 `finish(false)` 会走 `ur_atomic_poison`。**
+
+#### ③ 40 例里 `claim→stop→finish(true)` **实际执行的就是 CAS 失败路径**
+
+```c
+init(&m); CHECK(ur_atomic_claim(&m.phase));
+ur_atomic_stop(&m.phase);
+CHECK(!ur_atomic_finish(&m.phase, true));
+```
+
+**实际状态追踪：**
+
+| 步 | phase 值 | 说明 |
+|---|---|---|
+| `init` | `0` | UNUSED |
+| `claim` | `1` | CAS 成功 → CLAIMED |
+| `stop` | **`0x101`** | `fetch_or(0x100)`，旧值 `1`(CLAIMED) → `publish(POISONED)` |
+| `finish(true)` | — | `expected = 1`，实际 `0x101` → **CAS 失败** |
+
+**🔴 这条用例**确实执行了 CAS 失败分支**，且是在 phase 含 `STOP_BIT` 时。
+我用 grep 找 `finish.*CAS` 零命中就断言「未覆盖」，是**方法错误** —— 覆盖不等于关键词命中。**
+
+**→ 「缺口」这条**撤回**。该路径**有测试覆盖**，整体行为安全。**
+
+---
+
+### 4.6 我先前核实过的内容（保留）
 
 **① `ur_loader_may_use_storage`（contract.h:34-37）对 `UR_UNUSED` 返回 true：**
 
@@ -293,3 +356,116 @@ return ur_lease_valid(r) && (r->state == UR_UNUSED || r->state == UR_RESTORED);
 ## 8. 边界
 
 **仅主机私有目录复跑。未改候选/生产、未碰设备、未构建内核、未刷写。**
+
+---
+
+## 9. 平台 adapter 与 loader guard（本轮追加审查）
+
+### 9.1 `candidate/hakios.mt6895_ufs_read.c`
+
+| 项 | 值 |
+|---|---|
+| 大小 | **8858 B / 227 行** |
+| SHA256 | **`bbec3f6d00500c535b6be2c118342197614c63a550a7d1aab400a72b297bc450`** |
+
+**真实 XNU 头 ARM64 编译（我独立复跑，194 元素 argv 只改输出路径）：**
+
+| 项 | 值 |
+|---|---|
+| native rc | **0** |
+| stdout / stderr | **0 B / 0 B** |
+| 产物 | **55440 B** / `526528606edc9dc3c00912582a9d9659…` |
+| scope 原文 | 「Real XNU headers, standalone candidate compile; **not linked or installed**」|
+
+### 9.2 四个安全属性
+
+| # | 属性 | 证据 |
+|---|---|---|
+| 1 | **双重地址检查后才映射** | `ur_outside_vm` 四段 + `pmap_valid_address` 四处（含 `UR_LIST_PA`、`+31`、`UR_LEASE_PA`、`UR_DATA_PA+4095`）|
+| 2 | **scratch 用 `ml_io_map_unmappable` + `VM_WIMG_WCOMB`** | 不当作普通可缓存内存 |
+| 3 | **`platform_write_word` 检查 `phase == UR_CLAIMED`** | 未持租约时任何写入返回 false |
+| 4 | **`platform_ring_once` 双条件** | `phase == CLAIMED` **且** `shared->state == CLAIMED` 才写门铃；**这是全文件唯一控制器 store** |
+
+**`platform_claim` 既检查 shared DRAM 的 `state == UNUSED` 又走原子 CAS；**
+**init 里 shared 不是新鲜 `UNUSED` 就直接返回不发请求 —— fail-closed。**
+
+### 9.3 `candidate/ufs_loader_guard.h` 与测试
+
+| 文件 | 大小 | SHA256 |
+|---|---|---|
+| `ufs_loader_guard.h` | **1635 B** | **`dbd626a8c2cc53ab352b5a079f19c7b34cc77862663c7bfd18fdff8ab004c445`** |
+| `test-ufs-loader-guard.c` | **2184 B** | **`64b98360afa60c6e9694ba3ab95e187e265694507587f86b2fa2527e057681e1`** |
+
+**🔴 我第一次读到的是 1103 B / 2046 B 的版本，复查时已是上述尺寸。
+说明 Codex 期间改过。本文件审的是**当前**版本。**
+
+**发布顺序正确：**
+
+```c
+r->magic = 0;              /* 先清 magic */
+r->version = UR_VERSION;
+r->trial = UR_TRIAL;
+r->state = UR_UNUSED;
+barrier(context);
+r->magic = UR_MAGIC;       /* 最后写 magic —— 半写状态不会被当成有效 */
+barrier(context);
+```
+
+**`ur_guard_allows_storage` 是双读比对（两次快照全等才通过）—— 能检出撕裂。**
+
+**约束（注释原文）：**
+
+> 「New-boot initialization only, after loader reads and before handing control to XNU.
+> **Never call this to clear an outstanding/poisoned lease during return or recovery.**」
+
+### 9.4 🔴 `logbook_boot_note` 跳转前写 flash —— 我核实了
+
+**`logbook_boot_note()`（`mtkloader.c:1937`）在第 **2054** 行调用：**
+
+```c
+(void)save_log_to_flash((uint64_t)(uintptr_t)buf, n, 0xfeedfaceull, 0, 0, 0);
+```
+
+**调用点（第 3777 行）就在 `jump_to_kernel` **之前**：**
+
+```c
+STEP_BAND(14, 0xff00a0ffu);   /* 14: the panel is cleared, jumping to XNU */
+logbook_boot_note();
+out("Jumping to XNU...\n");
+jump_to_kernel(kva_to_pa(entry_va), ba_pa);
+```
+
+**→ 跳转前**确实有一次 WRITE(10)**，`reason = 0xfeedface`。**
+
+**该写走 `ufs_write` → `ufs_cmd_once` → `ufs_init()`，
+而 `ufs_init` 首行 `if (ufs_ready) return 1;` —— 此时 `ufs_ready` 已为 1，不重跑初始化。**
+
+#### 我的判断
+
+| 项 | 判断 |
+|---|---|
+| 这次 WRITE 是否违反 guard | **不违反** —— 它是 loader 自己的写，发生在把控制权交给 XNU 之前 |
+| 但它带来的风险 | **XNU 进入时 `UTRLDBR` / OCS 可能带这次写的残留**，而 `ur_idle()` 要求 `UTRLDBR == 0` |
+
+**🔴 建议你重点核对：那次 `0xfeedface` 写完成后，门铃是否确定回到 0。**
+
+**715 实测 `UTRLDBR = 0`，说明**无 guard 的配置下**那次写之后门铃是清的；
+**加 guard 后要重新确认** —— 否则 `ur_idle()` 会直接失败，探针连 `prepare` 都进不去。**
+
+---
+
+## 10. 本轮完整复现汇总
+
+| 项 | 结果 |
+|---|---|
+| engine ASan+UBSan / MSan | **25502 / 5525 / 49 / 2908** |
+| atomic ASan+UBSan / MSan | **40 项** |
+| contract ASan+UBSan | **983 项** |
+| **adapter 真实 XNU 头 ARM64** | **rc=0，55440 B** |
+| engine/contract/atomic ARM64 codec | 4712 / 1560 / 1184 B，全 rc=0 |
+
+---
+
+## 11. 边界
+
+**仅主机。未改 v3、未改候选、未碰设备、未构建内核、未刷写。**
