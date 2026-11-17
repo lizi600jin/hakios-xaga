@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "service_checks": 34121,
+  "read_fault_positions": 5530,
+  "register_fault_positions": 49,
+  "write_fault_positions": 2908,
+  "service_report": "host-checks/core-v1/result.json",
+  "race_report": "host-checks/race-v2/result.json",
+  "race_schedules_each": 2500,
+  "original_race_version_preserved": "host-checks/core-v1/source/test-ufs-service-race.c",
+  "limits": [
+    "ASan+UBSan/MSan and ARM64 host evidence only",
+    "No hardware IO or actual caller interface proven"
+  ]
+}
