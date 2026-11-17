@@ -6,7 +6,7 @@
 
 ## 结论
 
-**720 用**恰好一条**内核 `READ CAPACITY(10)` 取到了这个 LUN 的真实几何，
+**720 用**恰好一条**内核 `READ CAPACITY(10)` 取到了 **LUN 报告的逻辑几何**，
 与 Android 块层历史记录**吻合**，租约干净归还，设备自动恢复原厂。**
 
 **🔴 范围有限**：单条固定命令、8 字节数据、固定 LUN2。
@@ -29,13 +29,24 @@ mt6895-ufs-capacity: final control=0x2 shared=1 idle_close_deferred=1
 mt6895-ufs-capacity: return-gate magic=0x554c5345 version=1 trial=720 state=2 allowed=1
 ```
 
-### 🔴 恰好一次
+### 🔴 恰好一次的依据
 
-`issued=1`、`polls=279` —— **没有第二次查询，没有重试，没有 RC16。**
+**这个结论来自**源码结构**，不是只凭 `issued=1` 这个布尔值推次数：**
+
+| 约束 | 位置 |
+|---|---|
+| **`init` 只跑一次** | 每次 `init` 前检查 `us_control(&lease) != US_NEW` 即 **直接返回**，无 IO |
+| **每次 `init` 至多一次 `ring`** | `uc_run` 内只有**一处** `io->ring_once` 调用 |
+| **只有一条结果行** | HLOG 里 `result=` 恰好出现 **1 次** |
+| **没有任何重试路径** | 引擎无 retry / RC16 / fallback 分支 |
+
+**HLOG 侧证：`issued=1`、`polls=279`，且全文只有一条 `result=` 行。**
+
+**→ 所以是「一条命令、一条结果」，而不是「某个布尔说 1 所以我信」。**
 
 ---
 
-## 几何（从 raw 8 字节直接解码）
+## LUN 报告的逻辑几何（从 raw 8 字节直接解码）
 
 | 项 | 值 |
 |---|---|
