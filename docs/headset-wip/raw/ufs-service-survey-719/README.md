@@ -363,3 +363,136 @@ static LCK_MTX_DECLARE(touch_lock, &touch_lck_grp);
 **当前 stock ID `f745b1c6-ee43-4abc-8ed2-06ee9629bf27` 是历史记录，不是本次观测。**
 
 **🔴 本文所有 `file:line` 均来自 718 的隔离树，未验证运行时行为。**
+
+---
+
+## 8. 🔴 追加更正（用户指出三点，我核实后确认）
+
+**以下三条是我上一节里的**错误或过度推论**，原文保留在上，此处更正。**
+
+### 更正 A：源码里有 API 调用 ≠ 本设备运行成功注册
+
+**我写过：**
+
+> ~~「`hakios.input.c:223` 已成功 `cdevsw_add`」~~
+> ~~「这是本树里**唯一**完整可工作的块设备注册模式」~~
+
+**两处都不准确：**
+
+| 我写的 | 问题 |
+|---|---|
+| 「**已成功** cdevsw_add」 | **源码里有调用不证明运行时成功**。`cdevsw_add` 返回负值时走 `printf` 分支，我**没有** `/dev/hakios-touch` 实际存在的证据 |
+| 「**唯一**完整可工作范例」 | 我**没有**穷举全树，也没有任何 `virtio_blk` 在本设备**实际工作**的证据（它注释里写的是 QEMU）|
+
+**准确表述：**
+
+- `hakios.input.c:223` **有** `cdevsw_add` 调用，且**同一函数**里有 `devfs_make_node` 调用
+- `hakios.virtio_blk.c:429/549` 是**本树内**的 `bdevsw` 注册**代码范例**（注释显示面向 QEMU）
+- **两者在本设备的运行时成功均未被验证** —— 本轮是纯源码调查，没有任何设备观测
+
+**→ 「能注册设备」这个结论只能降到：「源码路径上存在完整调用，运行时成功未验证」。**
+
+### 更正 B：未编入 native UFS **只排除该已知竞争者**，不证明全局独占
+
+**我写过：**
+
+> ~~「→ 当前没有竞争者」~~
+
+**问题：我只检查了 `hakios.ufs.c` / `hakios.ufshc.c` 两条路径未编入。
+这不等于全树没有任何其他存储访问。**
+
+**准确表述：**
+
+| 事实 | 边界 |
+|---|---|
+| `CONFIG_HAKIOS_UFS` 未开，`hakios.ufs.c`/`ufshc.c` 未编入 | **✅ 排除了这两条已知路径** |
+| 全树是否还有别的 UFS/存储访问者 | **🔴 我没有穷举验证** |
+| 「独占所有权」 | **🔴 完全没有证据** |
+
+**→ 上一节 §2.3 与 §5.4 说的「absence 而非 exclusive ownership」方向是对的，
+但我写「当前没有竞争者」仍然越界 —— 应改为「排除了这两个已知竞争者」。**
+
+### 更正 C：🔴 `loader_log_putc` **不能**用来记录 lease 快照
+
+**我建议过：**
+
+> ~~「在 quiesce 末尾用 `loader_log_putc` 逐字符写一行 lease 快照是最小侵入方案」~~
+
+**我当时的理由是「有界重试保证不死锁」。** 重读实现后，这个理由**不成立**：
+
+```c
+for (uint32_t tries = 0; !locked && tries < 10000000; tries++) {
+    locked = os_atomic_cmpxchg(&loader_log_lock, 0, 1, acquire);
+}
+loader_log_put_locked(c);          /* ← 无条件调用，不看 locked */
+if (locked) {
+    os_atomic_store(&loader_log_lock, 0, release);
+}
+```
+
+**🔴 关键缺陷（我漏了）：**
+
+| 情形 | 实际行为 |
+|---|---|
+| 拿到锁 | 正常写，然后释放 |
+| **一千万次仍未拿到锁** | **`locked == false`，但 `loader_log_put_locked(c)` 照样执行** |
+| 后果 | **无锁写，与其他 CPU 的写并发交错，不保证不撕裂** |
+
+**→ 「有界」只保证**不会永远自旋**，**不保证**写入的原子性。**
+
+**按用户指示：quiesce 继续**只用原子操作 / 对齐 shared-DRAM 发布**，**不用 `loader_log_putc`**。
+
+### 更正 C 的替代方案（用户的建议，我核对后认为可行）
+
+**用户提出：`save_log_spans_to_flash` 已支持多 span，
+可在 loader 严格 gate 通过后，把**实际 lease 快照**作为**第二个 span**随既有 HLOG 一起写。**
+
+**我核对了签名与实现（`mtkloader.c:1801`）：**
+
+```c
+static int save_log_spans_to_flash(const struct span *sp, int nsp, uint64_t reason,
+                                   uint64_t code, uint64_t elr, uint64_t far)
+{
+    ...
+    for (int i = 0; i < nsp; i++) {
+        if ((!sp[i].p && sp[i].n) || sp[i].n > ~0ull - total) return 0;
+        total += sp[i].n;
+    }
+    ...
+    for (int i = 0; i < nsp; i++) { ... }   /* 逐 span 写入 */
+```
+
+**→ `nsp` 是**显式参数**，循环处理任意个 span，**方案可行**。**
+
+**为什么这个方案比我的更好：**
+
+| 维度 | `loader_log_putc`（我的） | **多 span（用户的）** |
+|---|---|---|
+| 内核侧并发安全 | ❌ 锁失败仍写 | **✅ 内核完全不参与** |
+| 存储写次数 | 1 次（HLOG）| **1 次（同一 HLOG）** |
+| 数据来源 | 内核内存缓冲区 | **loader 直接读 shared DRAM** |
+| guard 影响 | 无 | **无（gate 通过后才写）** |
+
+**→ 内核只需把快照**发布到 shared DRAM**（原子/aligned store），
+**loader 在 gate 通过后自己读走并作为第二 span 写入**。
+
+**这条路把「记录证据」的责任从内核移到 loader，避开了内核侧并发问题。**
+
+---
+
+## 9. 更正后的问题 3 结论
+
+| 项 | 更正前 | **更正后** |
+|---|---|---|
+| quiesce 动作 | 提议用 `loader_log_putc` 写日志 | **只做原子 STOP + shared DRAM 发布** |
+| 快照记录方式 | 内核写日志 | **loader 在 gate 通过后作为第二 span 写** |
+| 是否需要内核 printf | 否 | **否** |
+| 是否需要额外存储写 | 否 | **否（复用同一 HLOG 写入）** |
+
+**剩余未验证项：**
+
+- `save_log_spans_to_flash` 的 `XNU_LOGBOOK_MAX` 是否容得下两个 span（我**未算**）
+- 第二 span 的**来源地址**如何传给 loader（可能需 loader 侧新增 argv 或约定固定地址）
+- lease 快照在 shared DRAM 的**具体布局**（16 字节结构已有，但发布时机需与 gate 对齐）
+
+**这些都需要你在新候选里定义，我只做源码调查。**
