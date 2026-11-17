@@ -1,0 +1,38 @@
+=== 1 stock header 差异 ===
+  4 字节 [8, 9, 10, 11]  ✅ 只 8..11
+
+=== 2 signature_size @1580 + 逐字节保留 ===
+  stock 4096  719 4096
+  magic b'AVB0'  sha256 692c87adcc6ad5fcf0592878a6fe56f13e0da9dfade792f1e8aa1f03e34623c5
+  与 stock 相同: True  （保留 ≠ 密码学验证）
+
+=== 3 Android Image / ramdisk 未变 ===
+  Image 42201364 B 内嵌相同: True
+
+=== 4 loader 段差异 ===
+  10 字节 ['0x12', '0x13', '0x28', '0x29', '0x2a', '0x2b', '0x30', '0x31', '0x32', '0x33']
+  预期 10 字节: True
+
+=== 5 填充全零 ===
+  True
+
+=== 6 XNUP ===
+  magic 0x50554e58 body 19534224 一致 True
+  [kernel] 15339768 B 5a85ac7fed4392b1a87a9cb4
+  [ramdisk] 4194304 B 78985f67583b4d4666e46126
+  [kernel.ver] 48 B 363b5257dc819017ddb1f97c
+  [终止] pos=19534208 24B 全零
+  exact EOF: True
+
+=== 7 参数本体唯一性（171 字节）===
+  base 171  full 231  +NUL 232
+  [1] 0x9baa 后随 0a printf
+  [2] 0xa996 后随 0a printf
+  [3] 0xaae2 后随 00 NUL 本体
+  NUL 本体 1 个  逐字节匹配 True
+  关键项: {'mtk_ufs_service=1': 1, 'mali_trial=719': 1, 'headset=0': 1, 'mali=0': 1, 'cpus=4': 1, 'loader_return_after=150': 1}
+  禁止项: {'mtk_ufs_read': 0, 'mtk_ufs_probe': 0, 'mtk_cpu_probe': 0, 'tone': 0, 'gpueb': 0}
+
+=== 8 sealed 718 未动 ===
+  boot.img                       3a3ceb1d77c9a61f ✅
+  mach.development.bcm2837       60bd6b195c2ab65a ✅
