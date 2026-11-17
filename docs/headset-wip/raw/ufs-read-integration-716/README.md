@@ -126,15 +126,24 @@ hakios_mt6895_ufs_read_quiesce(); /* software STOP/shared lease only; no control
 | quiesce 用 `fetch_or(STOP_BIT)` 且可 publish POISONED | ✅ 原子操作，无等待 |
 | `finish(true)` 的 CAS 要求 STOP 缺席 | ✅ 若 quiesce 先到，CAS 必失败 |
 
-**我的判断：即使其他 CPU 未全停，这套顺序是**安全的**：**
+### 🔴 更正：不能用「核都停了」解释 STOP 的 load/store 竞态
 
-1. **quiesce 从不等待**（无自旋、无锁）—— 不存在「等一个已停 CPU」的死锁
-2. **`fetch_or` 是 RMW，对并发 CAS 天然互斥** —— 两方竞争只有一个赢
-3. **quiesce 赢 → phase 带 STOP → `finish(true)` 的 CAS 失败 → 走 poison**（v3 审已核实这条有测试覆盖）
-4. **`finish(true)` 赢 → phase 变 RESTORED → quiesce 的 fetch_or 只加 STOP_BIT，不改 phase**
-5. **晚到的 shared CLAIMED 写只会导致保守 halt，不会给 loader 许可**
+**CMD 明确指出：其他 CPU **可能没有全部停止**，所以**不能**用这个假设来免除竞态。**
 
-**→ 没有发现语义漏洞。**
+**正确的 fail-closed 理由是另外两条：**
+
+| # | 理由 |
+|---|---|
+| **1** | **STOP 阻止 clean CAS** —— STOP_BIT 一旦置位，`finish(true)` 的 `CLAMED → RESTORED` CAS **必然失败**，phase 永远无法变成 RESTORED |
+| **2** | **loader gate 拒绝交接** —— `ur_loader_may_use_storage` 只在 `UNUSED` 或 `RESTORED` 时放行；STOP 后的状态是 CLAIMED+STOP 或 POISONED，**两者都不放行**，loader 拿不到存储与 Android 交接权 |
+
+**→ 安全性**不依赖**「其他 CPU 已停」，而是依赖「**即使 STOP 后还有晚到的 load/store 生效，
+最终状态也无法变成 RESTORED，loader 仍被拒绝**」。**
+
+**这与我上面写的第 1、2、5 条并不冲突，但**把结论的支点放错了位置** ——
+支点应当是「CAS 赢不了 + gate 不放行」，不是「核停了所以没有并发」。**
+
+**没有发现语义漏洞，但解释已按此更正。**
 
 ---
 

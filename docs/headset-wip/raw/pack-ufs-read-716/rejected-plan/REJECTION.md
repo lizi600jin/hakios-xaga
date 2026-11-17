@@ -1,0 +1,1 @@
+Host packaging preflight rejected: chainboot argv length was incorrectly expected9; actual recorded argv has8 elements. No packaging subprocess ran. Only the verified loader copy existed here; no boot.img/payload and no old artifacts changed. Preserve this rejected stage; corrected script validates plans before creating its final output directory.

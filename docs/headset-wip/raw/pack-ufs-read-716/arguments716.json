@@ -1,0 +1,26 @@
+{
+  "extra_arguments": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=716 headset=0 mtk_ufs_read=1",
+  "base_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=716 headset=0 mtk_ufs_read=1 loader_return_after=150",
+  "full_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=716 headset=0 mtk_ufs_read=1 loader_return_after=150 hakios_kver=2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty",
+  "base_bytes": 168,
+  "full_bytes": 228,
+  "nul_inclusive_bytes": 229,
+  "loader_macro_overrides": {
+    "BOARD_MALI_POWER": 0,
+    "BOARD_MALI_PREPOWER": 0,
+    "BOARD_MALI_EARLY": 0,
+    "BOARD_MALI_RETURN": 0,
+    "BOARD_MALI_STOP": 0,
+    "BOARD_UFS_READ_LEASE": 1
+  },
+  "expected_read": {
+    "lun": 2,
+    "lba": 1,
+    "blocks": 1,
+    "bytes": 4096,
+    "crc32": "0x28a2836c",
+    "sha256": "f94a6807b4afbc7899d3621f570108eec4ffb5504a332198d0e05293f029449c"
+  },
+  "device_execution_authorized": false,
+  "scope": "Host review/build only until separate DEVICE716 command"
+}

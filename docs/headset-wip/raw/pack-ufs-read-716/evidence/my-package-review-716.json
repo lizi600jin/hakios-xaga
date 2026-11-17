@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "image": "/home/lizi/IOS/hakios-mtk/logs/ufs-read-path-20261117/trial716/boot.img",
+  "image_bytes": 22999040,
+  "image_sha256": "4ca5834f555300c6616245e265923ac1897ef9d8d6d12c57638fa870afc9c057",
+  "image_md5": "3abcb40dfe056bb152eee1fbbef9af57",
+  "loader_bytes": 47264,
+  "loader_sha256": "ca0112e2d6659c37a469fe60881f9a14d8de5e87008ee50cce8007572b800a13",
+  "payload_bytes": 19533288,
+  "payload_sha256": "c13981d45c8d46d9336a119420a8b8490c1d8fb3801a66b65c4bf0f0ca9bba0a",
+  "kernel_sha256": "c7f2f3222f314b82885b0567975e3af759c9b172ececd6fbefe437b65ddff6aa",
+  "entries": {
+    "kernel": {
+      "bytes": 15338824,
+      "sha256": "c7f2f3222f314b82885b0567975e3af759c9b172ececd6fbefe437b65ddff6aa"
+    },
+    "ramdisk": {
+      "bytes": 4194304,
+      "sha256": "78985f67583b4d4666e4612681b879720259d83b309530e2b82c1246d5ed5bce"
+    },
+    "kernel.ver": {
+      "bytes": 48,
+      "sha256": "363b5257dc819017ddb1f97c15be0d3c542f023ef8052c3c4801eb4463dd06f6"
+    }
+  },
+  "base_args_bytes": 168,
+  "full_args_bytes": 228,
+  "full_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=716 headset=0 mtk_ufs_read=1 loader_return_after=150 hakios_kver=2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty",
+  "chain_blob_bytes": 61996808,
+  "limitations": [
+    "Host structural/provenance checks only; no hardware or electrical result"
+  ]
+}
