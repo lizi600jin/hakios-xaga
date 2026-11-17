@@ -1,0 +1,20 @@
+[host] 2026-11-17T14:34:48.484086
+== adb reboot bootloader（10s）==
+  rc=0 timed_out=False @14:34:48
+
+== 等 fastboot（30s）==
+  [+3s] rc=None
+  ✅ transport 可用 @ +6s  输出='product: xaga\nFinished. Total time: '
+
+== stock 身份复查 ==
+  67108864 B  md5 a63b2e35a7c2522cb24a6a10332b9bc8
+  ✅
+
+== 刷回 stock ==
+  rc=0 timed_out=False 2.14s
+  Sending 'boot_a' (65536 KB)                        OKAY [  1.713s]
+Writing 'boot_a'                                   OKAY [  0.246s]
+Finished. Total time: 2.019s
+
+== reboot ==
+  rc=0 timed_out=False @2026-11-17T14:35:12.158347
