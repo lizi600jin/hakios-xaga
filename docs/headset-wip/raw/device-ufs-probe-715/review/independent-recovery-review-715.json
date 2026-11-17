@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "STOCK_RECOVERY": "PASS",
+  "recovery_mode": "adb reboot bootloader then stock flash; no manual fastboot required",
+  "boot_id": "11aead4e-9595-4574-8e6a-6b229e287480",
+  "preflight_boot_id": "c8acf0e0-ec30-4b5a-906b-fe29e1a74a9d",
+  "slot": "_a",
+  "boot_completed": "1",
+  "SELinux": "Enforcing",
+  "boot_a_bytes": 67108864,
+  "boot_a_md5": "a63b2e35a7c2522cb24a6a10332b9bc8",
+  "SurfaceFlinger_response_present": true,
+  "native_recovery_rc_count": 3,
+  "evidence": {
+    "A-preflight.txt": {
+      "bytes": 885,
+      "sha256": "7ecbafa6f6b3fc48cb0949d15104fbab4711ede2ed14bff59acd3b96ce6f5ab0"
+    },
+    "B-flash.txt": {
+      "bytes": 570,
+      "sha256": "e218157b715808bd03a2f54ca9c5562a3ebba664d7e9db44eae4f954368c65a4"
+    },
+    "C-capture.txt": {
+      "bytes": 389,
+      "sha256": "cb5262dcff6e19fc127d242441c414e37a266941cd53798a62fada7e5f81fd74"
+    },
+    "D-recovery.txt": {
+      "bytes": 624,
+      "sha256": "2215ac27bec55940eb34be8c2627cd60f426e42bcdabe398471925262357036e"
+    },
+    "D-verify.txt": {
+      "bytes": 547,
+      "sha256": "503f5193e5630c84c83782ae697d597ce4161aa17690d4def6ce539ba6a57277"
+    }
+  },
+  "limitations": [
+    "Independent host inspection of DSH command transcripts; Codex ran no direct device command",
+    "One observed automatic recovery does not establish the cause of or a fix for713"
+  ]
+}

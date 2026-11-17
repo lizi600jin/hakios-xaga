@@ -186,6 +186,46 @@
 
 ---
 
+## 6.1 归档的独立复核与结果文件
+
+| 文件 | 大小 | 内容 |
+|---|---|---|
+| **`RESULT-TRIAL715.md`** | **5990 B** / `2e6e3ce455ac824b…` | **Codex 的完整结果复核** |
+| **`review/independent-recovery-review-715.json`** | **1373 B** / `67a9e362c2d34c96…` | **原厂恢复独立复核** |
+| `review/review-device-715.py` | 7646 B | HLOG 审计解析器 |
+| `review/test-review-device-715.py` | 6112 B | 解析器测试 |
+| `review/device-parser-tests-715.json` | 1085 B | **35 项仅主机合成证据解析测试** |
+| `review/independent-review-715-output.json` | 1974 B | Codex 解析器输出的独立结果 |
+| **`reboot.meta`** | **53 B** | **B6 reboot 的真实时刻** |
+
+**🔴 35 例是**仅主机**的解析测试，不是设备测试。**
+
+### 6.2 🔴 时间线：轮询起点 **不是** reboot 起点
+
+**`reboot.meta` 原文：**
+
+```
+rc=0
+timed_out=False
+time=2026-11-17T12:58:15.735208
+```
+
+**我核算的时间差：**
+
+| 区间 | 时长 |
+|---|---|
+| reboot → 抓 HLOG | **206.6 s** |
+| reboot → 开始恢复 | **214.4 s** |
+| **抓 HLOG → 开始恢复** | **7.8 s** |
+
+**轮询在我 B6 reboot 命令返回后立即启动，所以 `+195.3s` 是「轮询起点 → adb 可用」的观测值。**
+
+**轮询起点晚于 `reboot.meta` 记录的时刻（差值为 host 侧 setup 时间）。**
+
+**→ `+195.3s` **不能**当作 reboot → adb 的精确耗时，只能作为轮询观测记录。**
+
+---
+
 ## 7. 原始件与哈希
 
 | 文件 | 大小 | SHA256 |
