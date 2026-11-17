@@ -1,0 +1,11 @@
+[host] 2026-11-17T19:35:33.126629
+  dd rc=0 timed_out=False  4198400 B 精确=True
+  sha256 70c459167ba308d0fd28e0400292ec25029f8e9156299ca56810b7fa6403d9bb
+  HLOG magic=0x474f4c48 len=496764 reason=0x0
+  reason: 0 = 正常返回
+  body 496764 B sha256 db4e7caf86a3a1452139d3406db062a246e6d533de7368ecfec412cd6d85e568
+  sum(body)=0x26e4525 header=0x26e4525 相等=True
+  含 mt6895-ufs-service     27
+  含 mtk_ufs_service        1
+  含 return-gate            1
+  含 selftest               1
