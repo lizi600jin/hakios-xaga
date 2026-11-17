@@ -19,7 +19,7 @@ stock 自动恢复。
 
 | 轮次 | 结果 | 能断言 | **不能**断言 |
 |---|---|---|---|
-| **716** | `COMPLETED_ERROR(3)` | 传输完成、OCS 0、租约归还、正常返回 | **具体被拒字段未知** —— 716 **没有采到任何响应词** |
+| **716** | `COMPLETED_ERROR(3)` | **控制器报告完成**、OCS 0、租约归还、正常返回 | **具体被拒字段未知** —— 716 **没有采到任何响应词**；数据**未**经任何比对验证 |
 | **717** | `COMPLETED_ERROR(3)` | **717 自身** `failures=0x20` = bit5，段长 20 | 不能代表 716 |
 | **718** | **`READ_OK(5)`** | 修订后的有界解析器接受（段长 0/20、sense ≤18、EHS 0） | 不能回溯改变 716/717 |
 
@@ -71,13 +71,26 @@ stock 自动恢复。
 | **make native rc** | **2**（既有 kext symbol-set 允许项）|
 | **judge native rc** | **0**（显式 `KERNEL=`）|
 
-**🔴 两者分开记录，不合并。make rc=2 不是构建失败。**
+**🔴 两者分开记录，不合并。**
+
+**native make 返回非零 2；内核产物已生成，显式 judge 只豁免既有 symbol-set 并返回 0。**
 
 ---
 
 ## 源码入口
 
-**`docs/headset-wip/raw/final-ufs-source-718/source/`**
+**目录：[`raw/final-ufs-source-718/source/`](raw/final-ufs-source-718/source/)**
+
+**直接入口：**
+
+| 内容 | 链接 |
+|---|---|
+| **源快照说明与复现命令** | [`source/README.md`](raw/final-ufs-source-718/source/README.md) |
+| **23 项清单（JSON）** | [`source/SOURCE-MANIFEST.json`](raw/final-ufs-source-718/source/SOURCE-MANIFEST.json) |
+| **23 项校验值** | [`source/SOURCE-MANIFEST.sha256`](raw/final-ufs-source-718/source/SOURCE-MANIFEST.sha256) |
+| **718 试验结果** | [`device-ufs-read-718/RESULT-TRIAL718.md`](raw/device-ufs-read-718/RESULT-TRIAL718.md) |
+| **718 设备记录全文** | [`device-ufs-read-718/README.md`](raw/device-ufs-read-718/README.md) |
+| **源码改动集** | `raw/final-ufs-source-718/source/` |
 
 | 类 | 数 |
 |---|---|
