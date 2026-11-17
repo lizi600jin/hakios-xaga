@@ -245,31 +245,31 @@ LUN 2、状态 0、长度、tag）里**至少一项不符**，于是 `goto clean
 **Codex 的 `review-device-716.py`（8491 B）+ `test-review-device-716.py`（5978 B）+
 `device-parser-tests-716.json`（1223 B，39 项解析测试）。**
 
-**我独立运行到新路径 {c('device716/my-review/')}，未覆盖 Codex 结果：**
+**我独立运行到新路径 `device716/my-review/`，未覆盖 Codex 结果：**
 
 | 标签 | 解析器输出 | 我的判断 |
 |---|---|---|
-| {c('NORMAL_RETURN')} | **PASS** | 一致 |
-| {c('READ_EXPERIMENT_CAPTURE')} | **PASS** | 一致 |
-| **{c('READ_BLOCK_COMPARE')}** | **NOT_PROVEN** | **一致** |
-| {c('LEASE_RETURN')} | **PASS** | 一致 |
-| {c('status')} | **DIAGNOSTIC_ONLY** | 一致 |
+| `NORMAL_RETURN` | **PASS** | 一致 |
+| `READ_EXPERIMENT_CAPTURE` | **PASS** | 一致 |
+| **`READ_BLOCK_COMPARE`** | **NOT_PROVEN** | **一致** |
+| `LEASE_RETURN` | **PASS** | 一致 |
+| `status` | **DIAGNOSTIC_ONLY** | 一致 |
 
-**数值全部一致**：{c('result_code=3')}、{c('claimed/issued/restored=1')}、
-{c('data_valid=0')}、{c('polls=117')}、{c('reason=0')}、{c('full_sum_verified=true')}。
+**数值全部一致**：`result_code=3`、`claimed/issued/restored=1`、
+`data_valid=0`、`polls=117`、`reason=0`、`full_sum_verified=true`。
 
 ### 🔴 关于解析器返回 rc=1
 
 **脚本末尾是：**
 
-{F}c
+```c
 raise SystemExit(0 if result['status'] == 'PASS' else 1)
-{F}
+```
 
-**本轮 {c('status = DIAGNOSTIC_ONLY')}（因为 {c('READ_BLOCK_COMPARE = NOT_PROVEN')}），
+**本轮 `status = DIAGNOSTIC_ONLY`（因为 `READ_BLOCK_COMPARE = NOT_PROVEN`），
 所以 **rc=1 是设计如此，不是解析失败**。
 
-**判据：{c("status = 'PASS' if reason==0 and READ_BLOCK_COMPARE=='PASS' else 'DIAGNOSTIC_ONLY'")}。**
+**判据：`status = PASS if reason==0 and READ_BLOCK_COMPARE==PASS else DIAGNOSTIC_ONLY`。**
 
 ---
 
