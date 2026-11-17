@@ -1,0 +1,8 @@
+文件 logs/ufs-probe-20261117/kernel-src/bsd/conf/files 和 logs/ufs-read-path-20261117/kernel-src/bsd/conf/files 不同
+文件 logs/ufs-probe-20261117/kernel-src/bsd/dev/hakios.input.c 和 logs/ufs-read-path-20261117/kernel-src/bsd/dev/hakios.input.c 不同
+只在 logs/ufs-read-path-20261117/kernel-src/bsd/dev 中存在：hakios.mt6895_ufs_read.c
+只在 logs/ufs-read-path-20261117/kernel-src/bsd/dev 中存在：ufs_atomic_lease.h
+只在 logs/ufs-read-path-20261117/kernel-src/bsd/dev 中存在：ufs_read_contract.h
+只在 logs/ufs-read-path-20261117/kernel-src/bsd/dev 中存在：ufs_read_engine.h
+文件 logs/ufs-probe-20261117/kernel-src/bsd/sys/hakios.input.h 和 logs/ufs-read-path-20261117/kernel-src/bsd/sys/hakios.input.h 不同
+文件 logs/ufs-probe-20261117/kernel-src/osfmk/arm64/loader_return.c 和 logs/ufs-read-path-20261117/kernel-src/osfmk/arm64/loader_return.c 不同
