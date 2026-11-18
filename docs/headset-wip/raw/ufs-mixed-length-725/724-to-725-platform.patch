@@ -1,0 +1,278 @@
+diff --git a/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c b/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
+index 45fe998..04c4889 100644
+--- a/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
++++ b/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
+@@ -1,4 +1,4 @@
+-/* Trial724 platform for one bounded READ(10) under the inherited loader lease. */
++/* Trial725 platform for bounded READ(10) requests under the inherited loader lease. */
+ #ifdef US_HOST_TEST
+ #include "ufs_twoblock_test_env.h"
+ #else
+@@ -261,7 +261,7 @@ twoblock_fail(const char *reason)
+ }
+ 
+ static bool
+-twoblock_run(const struct vr_request *pinned, const struct vr_limits *limits)
++twoblock_run(const struct vr_request *pinned, const struct vr_limits *limits, uint32_t ordinal)
+ {
+ 	struct vrq_io io = twoblock_io();
+ 	const struct vrq_outcome *outcome = &twoblock_outcome;
+@@ -275,6 +275,7 @@ twoblock_run(const struct vr_request *pinned, const struct vr_limits *limits)
+ 		return false;
+ 	}
+ 
++	platform.data_bytes = transfer_bytes;
+ 	vrq_run(&io, pinned, limits, &twoblock_workspace, &twoblock_outcome,
+ 	    &twoblock_counters, false, 0);
+ 	if (outcome->result != VRQ_DELIVERED || !outcome->restored ||
+@@ -328,10 +329,10 @@ twoblock_run(const struct vr_request *pinned, const struct vr_limits *limits)
+ 		return false;
+ 	}
+ 
+-	printf("mt6895-ufs-twoblock: request=1 lba=%u blocks=%u bytes=%u admitted=%u "
++	printf("mt6895-ufs-twoblock: request=%u lba=%u blocks=%u bytes=%u admitted=%u "
+ 	       "readback_ok=%u issued=%u rings=%u response_valid=%#x failures=%#x ocs=%#x "
+ 	       "data_words=%u/%u restored=%u copied=1 control=%#x shared=%u\n",
+-	       pinned->lba, pinned->blocks, transfer_bytes,
++	       ordinal, pinned->lba, pinned->blocks, transfer_bytes,
+ 	       outcome->claimed ? 1u : 0u, outcome->readback_ok ? 1u : 0u, outcome->issued ? 1u : 0u,
+ 	       twoblock_counters.ring, outcome->response_valid, outcome->response_failures, outcome->ocs,
+ 	       outcome->data_words_valid, outcome->data_words_attempted, outcome->restored ? 1u : 0u,
+@@ -406,27 +407,32 @@ hakios_mt6895_ufs_twoblock_init(void)
+ 	};
+ 	const struct vr_limits limits = vr_runtime_limits();
+ 
+-	/* Refuse before any command: every block must sit inside the geometry, and every block
+-	 * must have a frozen reference to check against. */
+-	if (start > limits.lba_max_exclusive ||
+-	    limits.lba_max_exclusive - start < pinned.blocks) {
+-		printf("mt6895-ufs-twoblock: start lba %u outside geometry; no request\n", start);
+-		return;
++	/* The three-request experiment is opt-in and pins the first and last reads to LBA 3. */
++	char mixed_arg[3] = {0};
++	bool mixed = false;
++	if (PE_parse_boot_arg_str("mtk_ufs_mixed", mixed_arg, sizeof(mixed_arg))) {
++		if (mixed_arg[1] != '\0' || (mixed_arg[0] != '0' && mixed_arg[0] != '1')) return;
++		mixed = mixed_arg[0] == '1';
+ 	}
+-	for (uint32_t block = 0; block < pinned.blocks; block++) {
+-		if (!varread_reference_is_known(start + block)) {
+-			printf("mt6895-ufs-twoblock: lba %u has no frozen reference; no request\n",
+-			    start + block);
+-			return;
++	if (mixed && (start != 3u || blocks != 1u)) return;
++	const struct vr_request requests[] = { pinned, { VR_LUN, 2u, 2u, VR_BLOCK_BYTES }, pinned };
++	const uint32_t count = mixed ? sizeof(requests) / sizeof(requests[0]) : 1u;
++	for (uint32_t i = 0; i < count; ++i) {
++		const struct vr_request *r = &requests[i];
++		struct vr_command encoded;
++		if (!vrq_make_read(r, &limits, &encoded)) return;
++		for (uint32_t block = 0; block < r->blocks; ++block) {
++			if (!varread_reference_is_known(r->lba + block)) {
++				printf("mt6895-ufs-twoblock: lba %u has no frozen reference; no request\n",
++				    r->lba + block);
++				return;
++			}
+ 		}
+ 	}
+ 
+-	struct vr_command encoded;
+-	if (!vrq_make_read(&pinned, &limits, &encoded)) return;
+-
+ 	printf("mt6895-ufs-twoblock: bounded READ10 lun2 lba%u blocks%u bytes%u "
+-	       "budget1; guarded handoff required\n",
+-	       pinned.lba, pinned.blocks, pinned.blocks * VR_BLOCK_BYTES);
++	       "budget%u; guarded handoff required\n",
++	       pinned.lba, pinned.blocks, pinned.blocks * VR_BLOCK_BYTES, count);
+ 
+ #ifdef US_HOST_TEST
+ 	if (twoblock_host_bad_managed()) {
+@@ -470,7 +476,10 @@ hakios_mt6895_ufs_twoblock_init(void)
+ 	printf("mt6895-ufs-twoblock: opened control=%#x shared=%u\n",
+ 	       us_control(&twoblock_lease), shared_snapshot(&platform).state);
+ 
+-	bool success = twoblock_run(&pinned, &limits);
++	uint32_t completed = 0;
++	while (completed < count && twoblock_run(&requests[completed], &limits, completed + 1u)) {
++		++completed;
++	}
+ 	printf("mt6895-ufs-twoblock: final control=%#x shared=%u failed=%u\n",
+-	       us_control(&twoblock_lease), shared_snapshot(&platform).state, success ? 0u : 1u);
++	       us_control(&twoblock_lease), shared_snapshot(&platform).state, completed == count ? 0u : 1u);
+ }
+diff --git a/source/ufs_twoblock/support/ufs_read_contract.h b/source/ufs_twoblock/support/ufs_read_contract.h
+index 8ca40df..4574f0c 100644
+--- a/source/ufs_twoblock/support/ufs_read_contract.h
++++ b/source/ufs_twoblock/support/ufs_read_contract.h
+@@ -8,7 +8,7 @@
+ #include <stdbool.h>
+ #include <stddef.h>
+ 
+-#define UR_TRIAL 724u
++#define UR_TRIAL 725u
+ #define UR_MAGIC 0x554c5345u
+ #define UR_VERSION 1u
+ #define UR_LIST_PA UINT64_C(0x51266400)
+diff --git a/tests/test-ufs-twoblock-platform.c b/tests/test-ufs-twoblock-platform.c
+index 9fd6f79..49fde2e 100644
+--- a/tests/test-ufs-twoblock-platform.c
++++ b/tests/test-ufs-twoblock-platform.c
+@@ -30,6 +30,10 @@ static struct {
+ /* The expectation comes from the test case, independently of the placed descriptor. */
+ static uint32_t want_blocks;
+ static const char *block_arg;
++static const char *mixed_arg;
++static unsigned fault_request, stop_request, verified_copies;
++static uint8_t initial_data[VR2_TRANSFER_BYTES], previous_copy[VR2_TRANSFER_BYTES];
++static struct ur_workspace initial_desc;
+ 
+ /* Every case states its start LBA here; the stub reads these fields. */
+ static void
+@@ -90,9 +94,15 @@ PE_parse_boot_argn(const char *name, void *out, size_t size)
+ 
+ bool PE_parse_boot_arg_str(const char *name, char *out, int size)
+ {
+-	assert(strcmp(name, "mtk_ufs_blocks") == 0 && size > 0);
+-	if (!block_arg) return false;
+-	snprintf(out, (size_t)size, "%s", block_arg);
++	assert(size > 0);
++	const char *value;
++	if (strcmp(name, "mtk_ufs_blocks") == 0) value = block_arg;
++	else {
++		assert(strcmp(name, "mtk_ufs_mixed") == 0);
++		value = mixed_arg;
++	}
++	if (!value) return false;
++	snprintf(out, (size_t)size, "%s", value);
+ 	return true;
+ }
+ 
+@@ -144,7 +154,7 @@ model_complete(void)
+ 			data()[VRQ_BLOCK_WORDS + i] = t;
+ 		}
+ 	}
+-	if (model.corrupt_last) data()[bytes / 4u - 1u] ^= 1u;
++	if (model.corrupt_last && (!fault_request || model.rings == fault_request)) data()[bytes / 4u - 1u] ^= 1u;
+ 
+ 	ucd()[512 / 4] = 0x00020021u;
+ 	table()[2] = 0;
+@@ -162,7 +172,7 @@ bool vr_host_reg_hook(uint16_t offset)
+ 
+ bool vr_host_ring_hook(void)
+ {
+-	assert(regs[0x58 / 4] == 1 && model.rings == 0);
++	assert(regs[0x58 / 4] == 1 && model.rings < (mixed_arg ? 3u : 1u));
+ 	model.rings++;
+ 	model.pending = true;
+ 	return true;
+@@ -202,7 +212,22 @@ uint64_t vr_host_now_us(void) { return model.time_us++; }
+ 
+ void twoblock_host_stop_point(int which)
+ {
+-	if (model.stop_at == (uint32_t)which) hakios_mt6895_ufs_twoblock_quiesce();
++	if (model.stop_at == (uint32_t)which && (!stop_request || stop_request == model.rings))
++		hakios_mt6895_ufs_twoblock_quiesce();
++	if (which == 3 && mixed_arg && strcmp(mixed_arg, "1") == 0) {
++		const uint32_t bytes = want_blocks * VR_BLOCK_BYTES;
++		assert(model.rings == verified_copies + 1);
++		assert(memcmp(table(), initial_desc.table, sizeof(initial_desc.table)) == 0);
++		assert(memcmp(ucd(), initial_desc.ucd, sizeof(initial_desc.ucd)) == 0);
++		assert(memcmp(data(), initial_data, sizeof(initial_data)) == 0);
++		assert(memcmp(twoblock_copy, ref_window + model.want_lba * VR_BLOCK_BYTES, bytes) == 0);
++		assert(memcmp(twoblock_copy + bytes, previous_copy + bytes, sizeof(previous_copy) - bytes) == 0);
++		memcpy(previous_copy, twoblock_copy, sizeof(previous_copy));
++		verified_copies++;
++		model.completed = false;
++		want_blocks = model.rings == 1u ? 2u : 1u;
++		model.want_lba = model.rings == 1u ? 2u : 3u;
++	}
+ }
+ 
+ static void
+@@ -212,6 +237,8 @@ reset(void)
+ 	clear_start();
+ 	want_blocks = VR2_BLOCKS;
+ 	block_arg = NULL;
++	mixed_arg = NULL;
++	fault_request = stop_request = verified_copies = 0;
+ 	memset(twoblock_copy, 0xa5, sizeof(twoblock_copy));
+ 	memset(&platform, 0, sizeof(platform));
+ 	memset(&twoblock_outcome, 0, sizeof(twoblock_outcome));
+@@ -288,6 +315,52 @@ static void request(uint32_t start, uint32_t blocks)
+ 	block_arg = blocks == 1u ? "1" : "2";
+ }
+ 
++static void mixed_request(void)
++{
++	request(3, 1);
++	mixed_arg = "1";
++	memcpy(initial_data, data(), sizeof(initial_data));
++	memcpy(initial_desc.table, table(), sizeof(initial_desc.table));
++	memcpy(initial_desc.ucd, ucd(), sizeof(initial_desc.ucd));
++	memcpy(previous_copy, twoblock_copy, sizeof(previous_copy));
++}
++
++static void test_sequence(void)
++{
++	mixed_request();
++	puts("BEGIN mixed 725");
++	hakios_mt6895_ufs_twoblock_init();
++	puts("END mixed 725");
++	assert(model.maps == 3 && model.rings == 3 && verified_copies == 3);
++	assert(model.restore_writes == 4096 && us_control(&twoblock_lease) == US_IDLE);
++	assert(lease_record()->state == UR_CLAIMED);
++	hakios_mt6895_ufs_twoblock_init();
++	hakios_mt6895_ufs_twoblock_quiesce();
++	assert(model.rings == 3 && lease_record()->state == UR_RESTORED);
++
++	for (unsigned n = 1; n <= 3; n++) {
++		mixed_request();
++		model.corrupt_last = true;
++		fault_request = n;
++		hakios_mt6895_ufs_twoblock_init();
++		assert(model.rings == n && verified_copies == n - 1 && lease_record()->state == UR_POISONED);
++		mixed_request();
++		model.stop_at = 3;
++		stop_request = n;
++		hakios_mt6895_ufs_twoblock_init();
++		assert(model.rings == n && lease_record()->state == UR_RESTORED);
++	}
++	request(2, 1);
++	mixed_arg = "1";
++	test_refused();
++	request(3, 2);
++	mixed_arg = "1";
++	test_refused();
++	request(3, 1);
++	mixed_arg = "10";
++	test_refused();
++}
++
+ int main(int argc, char **argv)
+ {
+ 	assert(argc == 2);
+@@ -356,7 +429,7 @@ int main(int argc, char **argv)
+ 	hakios_mt6895_ufs_twoblock_init();
+ 	assert(model.rings == 1 && lease_record()->state == UR_POISONED);
+ 	reset();
+-	model.trial = 723;
++	model.trial = 724;
+ 	test_refused();
+ 	reset();
+ 	model.other = 1;
+@@ -365,12 +438,13 @@ int main(int argc, char **argv)
+ 	model.bad_end = true;
+ 	test_refused();
+ 	reset();
+-	lease_record()->trial = 723;
++	lease_record()->trial = 724;
+ 	hakios_mt6895_ufs_twoblock_init();
+ 	assert(model.maps == 1 && model.reg_reads == 0 && model.rings == 0);
+ 
++	test_sequence();
+ 	free(ref_window);
+ 	assert(munmap(scratch, VR_SCRATCH_BYTES + PAGE_SIZE) == 0);
+-	puts("Trial724 platform PASS");
++	puts("Trial725 platform PASS");
+ 	return 0;
+ }

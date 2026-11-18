@@ -1,0 +1,12 @@
+[   19.060365]: mt6895-ufs-twoblock: bounded READ10 lun2 lba3 blocks1 bytes4096 budget3; guarded handoff required
+[   19.060526]: mt6895-ufs-twoblock: guard magic=0x554c5345 version=1 trial=725 state=0
+[   19.061111]: mt6895-ufs-twoblock: opened control=0x2 shared=1
+[   19.062843]: mt6895-ufs-twoblock: request=1 lba=3 blocks=1 bytes=4096 admitted=1 readback_ok=1 issued=1 rings=1 response_valid=0x1fff failures=0 ocs=0 data_words=1024/1024 restored=1 copied=1 control=0x4 shared=1
+[   19.063057]: mt6895-ufs-twoblock: block=1 lba=3 reference_present=1 crc=0x58f10429 reference_crc=0x58f10429 match=1
+[   19.065762]: mt6895-ufs-twoblock: request=2 lba=2 blocks=2 bytes=8192 admitted=1 readback_ok=1 issued=1 rings=1 response_valid=0x1fff failures=0 ocs=0 data_words=2048/2048 restored=1 copied=1 control=0x4 shared=1
+[   19.065972]: mt6895-ufs-twoblock: block=1 lba=2 reference_present=1 crc=0xd024e0c reference_crc=0xd024e0c match=1
+[   19.066182]: mt6895-ufs-twoblock: block=2 lba=3 reference_present=1 crc=0x58f10429 reference_crc=0x58f10429 match=1
+[   19.067924]: mt6895-ufs-twoblock: request=3 lba=3 blocks=1 bytes=4096 admitted=1 readback_ok=1 issued=1 rings=1 response_valid=0x1fff failures=0 ocs=0 data_words=1024/1024 restored=1 copied=1 control=0x4 shared=1
+[   19.068139]: mt6895-ufs-twoblock: block=1 lba=3 reference_present=1 crc=0x58f10429 reference_crc=0x58f10429 match=1
+[   19.068259]: mt6895-ufs-twoblock: final control=0x2 shared=1 failed=0
+mt6895-ufs-twoblock: return-gate magic=0x554c5345 version=1 trial=725 state=2 allowed=1

@@ -1,0 +1,51 @@
+{
+  "trial": 725,
+  "verification": "offline package PASS",
+  "hardware_tested": false,
+  "requests": [
+    {
+      "lba": 3,
+      "blocks": 1
+    },
+    {
+      "lba": 2,
+      "blocks": 2
+    },
+    {
+      "lba": 3,
+      "blocks": 1
+    }
+  ],
+  "stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+  "boot_argument_bytes_with_nul": 372,
+  "files": {
+    "boot.img": {
+      "bytes": 23011328,
+      "sha256": "99bd31c154076567aca05267fbd88effcfc2152122e1afd3efc51d3399aaa4d3"
+    },
+    "payload.bin": {
+      "bytes": 19551816,
+      "sha256": "a3a5113499293afa4f7b9e5717f9105e70617048f1710d2b74a7f017731ed805"
+    },
+    "loader.bin": {
+      "bytes": 48376,
+      "sha256": "30dc7c91ac84be3eb0ec2a9e8219fb359d7fc2717fb43e79b75b6eda10a56610"
+    },
+    "kernel": {
+      "bytes": 15357360,
+      "sha256": "527b41a6132f64952817113b19fea6f0d49ea289ab89cefd20cbb48f91aab01f"
+    },
+    "ramdisk": {
+      "bytes": 4194304,
+      "sha256": "78985f67583b4d4666e4612681b879720259d83b309530e2b82c1246d5ed5bce"
+    },
+    "kernel.ver": {
+      "bytes": 48,
+      "sha256": "9eef8494e321f004ef3d80d3969dee540d10f03dd1e8616482b50d3641553c6c"
+    },
+    "arguments725.json": {
+      "bytes": 1368,
+      "sha256": "c42fa0096af01c5013d5c21eee91bc3fdead44c8406dd757aade97bf508b85a1"
+    }
+  }
+}

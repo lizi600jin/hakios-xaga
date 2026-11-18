@@ -1,0 +1,44 @@
+diff --git a/mtk/loader/mtkloader.c b/mtk/loader/mtkloader.c
+index fc74be8..66ac0b7 100644
+--- a/mtk/loader/mtkloader.c
++++ b/mtk/loader/mtkloader.c
+@@ -2490,7 +2490,7 @@ static void read_screen(void)
+  * linearized and written back to RAM by XNU. Save it, show its end, then reset into Android.
+  */
+ 
+-/* Trial724 only. No UFS access is allowed on return before this guard. */
++/* Trial725 only. No UFS access is allowed on return before this guard. */
+ static void ufs_read_guard_barrier(void *unused)
+ {
+     (void)unused;
+@@ -2509,7 +2509,7 @@ static void ufs_read_guard_start(void)
+     _Static_assert(2u * UR_BLOCK_BYTES <= UFS_PRD_MAX, "two blocks fit a single PRD");
+     _Static_assert(2u * UR_BLOCK_BYTES == 8192u, "two blocks are 8192 bytes");
+ #if !defined(UFS_USE_LK_LIST) || UFS_USE_LK_LIST != 1
+-#error Trial724 requires the existing LK transfer list
++#error Trial725 requires the existing LK transfer list
+ #endif
+     volatile struct ur_lease *r = (volatile struct ur_lease *)(uintptr_t)UR_LEASE_PA;
+     r->magic = 0;
+@@ -2525,7 +2525,7 @@ static void ufs_read_guard_start(void)
+         for (;;) { __asm__ volatile("wfe"); }
+     }
+     ur_guard_initialize(r, ufs_read_guard_barrier, 0);
+-    out("ufs-read guard: fresh trial724 lease; predecessor READ verified\n");
++    out("ufs-read guard: fresh trial725 lease; predecessor READ verified\n");
+ #endif
+ }
+ 
+diff --git a/mtk/loader/ufs_read_contract.h b/mtk/loader/ufs_read_contract.h
+index 8ca40df..4574f0c 100644
+--- a/mtk/loader/ufs_read_contract.h
++++ b/mtk/loader/ufs_read_contract.h
+@@ -8,7 +8,7 @@
+ #include <stdbool.h>
+ #include <stddef.h>
+ 
+-#define UR_TRIAL 724u
++#define UR_TRIAL 725u
+ #define UR_MAGIC 0x554c5345u
+ #define UR_VERSION 1u
+ #define UR_LIST_PA UINT64_C(0x51266400)
