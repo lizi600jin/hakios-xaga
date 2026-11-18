@@ -1,0 +1,74 @@
+{
+  "trial": 724,
+  "hardware_verdict": "PASS",
+  "scope": "One device run of the frozen single-block READ(10) request.",
+  "flash_experiment": {
+    "at": "2026-11-18T19:16:54+08:00",
+    "partition": "boot_a",
+    "image_bytes": 23011328,
+    "image_sha256": "af8bcf06781403104eefd74519c07c7ee2400e91465349125c038538047fb687",
+    "rc": 0,
+    "sending": "OKAY",
+    "writing": "OKAY"
+  },
+  "flash_stock": {
+    "at": "2026-11-18T19:21:12+08:00",
+    "partition": "boot_a",
+    "image_bytes": 67108864,
+    "image_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+    "rc": 0,
+    "sending": "OKAY",
+    "writing": "OKAY"
+  },
+  "pre_record_sha256": "8f63096b244915a9fa09e14d49f0c97a70dddc789705176a1fff72d8e37bd3a8",
+  "post_record_sha256": "981661160493cdb1d41e37d01e6a3f32cf5283c3acd54288198c66d971e981ff",
+  "post_window_bytes": 4198400,
+  "post_window_sha256": "b06d398e199b1c38975df9e26f86732ba47d05f4a68e8df13b9a4b6821a627aa",
+  "body_bytes": 491139,
+  "body_sha256": "85cf69f75edc0df9126f33acfa2ec07a4abb393ae7ca5397e5cf081b11506c68",
+  "header_reason": 0,
+  "header_code": 0,
+  "baseline_window_equals_previous_723_capture": true,
+  "boot_args_equal_frozen": true,
+  "driver_lines": [
+    "bounded READ10 lun2 lba3 blocks1 bytes4096 budget1; guarded handoff required",
+    "guard magic=0x554c5345 version=1 trial=724 state=0",
+    "opened control=0x2 shared=1",
+    "request=1 lba=3 blocks=1 bytes=4096 admitted=1 readback_ok=1 issued=1 rings=1 response_valid=0x1fff failures=0 ocs=0 data_words=1024/1024 restored=1 copied=1 control=0x4 shared=1",
+    "block=1 lba=3 reference_present=1 crc=0x58f10429 reference_crc=0x58f10429 match=1",
+    "final control=0x2 shared=1 failed=0",
+    "return-gate magic=0x554c5345 version=1 trial=724 state=2 allowed=1"
+  ],
+  "host_parser_status": "FORMAT_PASS_ONLY",
+  "kernel_final": {
+    "control": "0x2",
+    "shared": 1,
+    "failed": 0,
+    "ok": true
+  },
+  "loader_gate": {
+    "trial": 724,
+    "state": 2,
+    "allowed": 1,
+    "ok": true
+  },
+  "restoration": {
+    "at": "2026-11-18T19:22:25+08:00",
+    "product": "xaga",
+    "slot": "_a",
+    "boot_completed": "1",
+    "selinux": "Enforcing",
+    "boot_id_changed": true,
+    "bytes": 67108864,
+    "sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+    "byte_equal_to_stock": true
+  },
+  "pre_restore_observations": {
+    "experiment_prefix_bytes": 23011328,
+    "experiment_prefix_sha256": "af8bcf06781403104eefd74519c07c7ee2400e91465349125c038538047fb687",
+    "prefix_equals_experiment": true,
+    "hlog_record_sha256": "981661160493cdb1d41e37d01e6a3f32cf5283c3acd54288198c66d971e981ff",
+    "hlog_body_bytes": 491139
+  },
+  "pre_restore_record_equals_final_capture": true
+}

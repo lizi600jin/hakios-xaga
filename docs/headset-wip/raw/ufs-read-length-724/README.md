@@ -2,6 +2,16 @@
 
 Trial723 已在 xaga 上从 LUN 2 的 LBA 2 读回两块。Trial724 在主机控制器模型上验证，同一个引擎能按每次请求选择 4096 或 8192 字节。输入仍限于 LUN 2、4096 字节逻辑块和 LBA 0 至 15。引擎补丁以提交 `60f2a7e` 中的 723 归档为基线。[723 实机交付](../../UFS-VARSTART-DELIVERY-20261118.md) · [724 补丁](723-to-724.patch)
 
+## xaga 实机结果
+
+Trial724 在 xaga 上从 LUN 2 的 LBA 3 发出一条单块 READ(10)。驱动记录一次门铃，返回 4096 字节，数据覆盖为 1024/1024 个词。块 CRC32 为 `0x58f10429`，与同一 LBA 的冻结参考及 Trial723 双块读取中的第二块一致。内核报告 `failed=0`，loader 报告 `trial=724 state=2 allowed=1`。本次实机覆盖 LBA 3 单块请求，31 种几何组合的覆盖来自主机模型。[七条原始驱动日志](device-724-ufs.txt) · [实机核验记录](device-724.json)
+
+刷前采集的 HLOG 窗口与 Trial723 末次采集逐字节一致。实验启动返回 Android 后，读回的 `boot_a` 前 23,011,328 字节与 724 镜像逐字节相同；此时已保存新的 HLOG。写回原厂件并重启后，再次采集的 4,198,400 字节窗口与恢复前完全相同，正文为 491,139 字节。完整启动参数与冻结值逐字相符，头部原因和状态码均为 0。[实机核验记录](device-724.json)
+
+最终 Android 已完成启动，槽位为 `_a`，SELinux 为 `Enforcing`。从设备读回 `boot_a` 全部 67,108,864 字节，与原厂文件及刷前副本逐字节一致，SHA-256 为 `c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc`。[恢复记录](device-724.json)
+
+## 主机引擎验证
+
 事务开始时固定请求并生成命令，回读的描述符必须与这条命令的全部 80 字节一致。两次快照、预填与核验、采样、恢复与回读都按本次请求词数访问数据缓冲区，整次传输的 CRC32 也只覆盖有效载荷。成功路径只触发一次门铃。
 
 | 主机模型覆盖 | 实测 |
@@ -32,7 +42,7 @@ python3 -B docs/headset-wip/raw/ufs-read-length-724/check-host.py
 
 724 内核和 loader 使用同一份租约契约。内核从不含 BUILD 的 723 源码副本执行 `XNU_SRC=<724 内核目录> MACHINE=BCM2837 xnu-build.sh -j4 build`，编译、链接和 strip 完成，退出码为 0。初次尝试默认的 `all` 目标时，额外的 IOKit/Libkern 符号集导出检查失败。正式候选来自重新建目录后执行的内核 `build` 目标。复原补丁后的平台源码、引擎和契约均与该次构建输入逐字节相同。loader 补丁应用于 723 loader 源码根目录，沿用 723 的编译选项，将 `XNU_EXTRA_ARGS` 替换为冻结的 `extra_arguments`。[loader 补丁](724-loader.patch) · [冻结参数](arguments724.json)
 
-离线镜像选择从 LUN 2 的 LBA 3 读一块，预期 CRC32 为 `0x58f10429`。这个起点单块有参考，双块会因 LBA 4 缺参考而被拒绝。最终 boot.img 为 23,011,328 字节。独立拆包比对了带三个回填字段的 loader、原厂 Android 内核、XNUP、构建产出的 XNU 内核、ramdisk 以及包含 NUL 的 356 字节启动参数。镜像保存在本机，实机执行待验证。[打包件大小与 SHA-256](package-724.json) · [拆包核验脚本](verify-package.py)
+离线镜像选择从 LUN 2 的 LBA 3 读一块，预期 CRC32 为 `0x58f10429`。这个起点单块有参考，双块会因 LBA 4 缺参考而被拒绝。最终 boot.img 为 23,011,328 字节。独立拆包比对了带三个回填字段的 loader、原厂 Android 内核、XNUP、构建产出的 XNU 内核、ramdisk 以及包含 NUL 的 356 字节启动参数。镜像保存在本机。本次实机使用的候选与离线清单 SHA-256 一致。[打包件大小与 SHA-256](package-724.json) · [拆包核验脚本](verify-package.py)
 
 ## 平台与日志复测
 
