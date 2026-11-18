@@ -1,0 +1,844 @@
+diff --git a/source/ufs_twoblock/codec/ufs_byte_range_codec.h b/source/ufs_twoblock/codec/ufs_byte_range_codec.h
+new file mode 100644
+index 0000000..b8e794a
+--- /dev/null
++++ b/source/ufs_twoblock/codec/ufs_byte_range_codec.h
+@@ -0,0 +1,102 @@
++#ifndef MT6895_UFS_BYTE_RANGE_CODEC_H
++#define MT6895_UFS_BYTE_RANGE_CODEC_H
++
++/* Trial726: map a byte range onto one or two whole 4096-byte blocks.
++ *
++ * The caller asks for bytes, the controller only moves whole blocks. This header decides which
++ * blocks cover the request, refuses anything unbounded, and says which slice of the delivered
++ * bytes the caller actually asked for.
++ */
++#include <stdbool.h>
++#include <stdint.h>
++
++#include "ufs_two_block_codec.h"
++#include "../../ufs_varread/metadata/ufs_varread_reference.h"
++
++#define VRB_BLOCK_BYTES   VR_BLOCK_BYTES
++#define VRB_MAX_BLOCKS    2u
++#define VRB_WINDOW_BYTES  (VRB_MAX_BLOCKS * VRB_BLOCK_BYTES)
++
++/* Where a byte range lands, once it has been accepted. */
++struct vrb_window {
++    uint32_t first_lba;        /* LBA of the first covering block */
++    uint32_t blocks;           /* 1 or 2 */
++    uint32_t in_block_offset;  /* offset of the first requested byte inside that block */
++    uint32_t first_bytes;      /* bytes taken from the first block */
++    uint32_t second_bytes;     /* bytes taken from the second block, 0 when blocks == 1 */
++};
++
++/* Reasons a range is refused. Kept explicit so a test can name the path. */
++enum vrb_reject {
++    VRB_OK = 0,
++    VRB_ERR_NULL,          /* argument pointer was NULL */
++    VRB_ERR_ZERO_LENGTH,   /* length == 0 */
++    VRB_ERR_OVERFLOW,      /* offset + length does not fit in the address space */
++    VRB_ERR_TOO_LONG,      /* the range spans more than two blocks */
++    VRB_ERR_OUT_TOO_SMALL, /* the caller's buffer cannot hold the range */
++    VRB_ERR_NO_REFERENCE,  /* a covering LBA has no frozen reference */
++    VRB_ERR_LBA_RANGE      /* a covering LBA is outside the runtime geometry */
++};
++
++/* Refuse before any command is built. Pure arithmetic plus the frozen reference table. */
++static inline enum vrb_reject
++vrb_plan(uint32_t byte_offset, uint32_t byte_length, uint32_t out_capacity,
++    const struct vr_limits *limits, struct vrb_window *out)
++{
++    if (!limits || !out) return VRB_ERR_NULL;
++
++    /* Zero first: a zero-length request covering nothing must not be turned into a block read. */
++    if (byte_length == 0u) return VRB_ERR_ZERO_LENGTH;
++
++    /* Check the sum before dividing, so a wrapped offset cannot look in-range. */
++    if (byte_offset > UINT32_MAX - byte_length) return VRB_ERR_OVERFLOW;
++
++    /* The caller must be able to hold exactly what it asked for. */
++    if (out_capacity < byte_length) return VRB_ERR_OUT_TOO_SMALL;
++
++    const uint32_t first_lba   = byte_offset / VRB_BLOCK_BYTES;
++    const uint32_t in_offset   = byte_offset % VRB_BLOCK_BYTES;
++    const uint32_t first_bytes = (byte_length < VRB_BLOCK_BYTES - in_offset)
++        ? byte_length
++        : VRB_BLOCK_BYTES - in_offset;
++    const uint32_t second_bytes = byte_length - first_bytes;
++    const uint32_t blocks = (second_bytes > 0u) ? 2u : 1u;
++
++    if (blocks > VRB_MAX_BLOCKS) return VRB_ERR_TOO_LONG;
++    if (second_bytes > VRB_BLOCK_BYTES) return VRB_ERR_TOO_LONG;
++
++    /* Geometry: every covering block must be inside the runtime limit and have a reference. */
++    if (first_lba > limits->lba_max_exclusive ||
++        limits->lba_max_exclusive - first_lba < blocks) {
++        return VRB_ERR_LBA_RANGE;
++    }
++    for (uint32_t b = 0; b < blocks; ++b) {
++        if (!varread_reference_is_known(first_lba + b)) return VRB_ERR_NO_REFERENCE;
++    }
++
++    out->first_lba       = first_lba;
++    out->blocks          = blocks;
++    out->in_block_offset = in_offset;
++    out->first_bytes     = first_bytes;
++    out->second_bytes    = second_bytes;
++    return VRB_OK;
++}
++
++/* Copy only the requested bytes out of the verified block image. */
++static inline bool
++vrb_deliver(const uint8_t *verified, const struct vrb_window *w, uint8_t *dst, uint32_t dst_bytes)
++{
++    if (!verified || !w || !dst) return false;
++    if (dst_bytes < w->first_bytes + w->second_bytes) return false;
++    uint32_t at = 0;
++    for (uint32_t i = 0; i < w->first_bytes; ++i)
++        dst[at++] = verified[w->in_block_offset + i];
++    if (w->second_bytes) {
++        const uint8_t *second = verified + VRB_BLOCK_BYTES;
++        for (uint32_t i = 0; i < w->second_bytes; ++i)
++            dst[at++] = second[i];
++    }
++    return at == w->first_bytes + w->second_bytes;
++}
++
++#endif
+diff --git a/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c b/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
+index 04c4889..1ee9ff4 100644
+--- a/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
++++ b/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
+@@ -14,6 +14,7 @@
+ #endif
+ #include "support/ufs_service_lease.h"
+ #include "engine/ufs_two_block_engine.h"
++#include "codec/ufs_byte_range_codec.h"
+ #include "../ufs_varread/metadata/ufs_varread_reference.h"
+ 
+ #ifdef US_HOST_TEST
+@@ -57,6 +58,18 @@ static struct vrq_workspace twoblock_baseline;
+ static struct vrq_outcome twoblock_outcome;
+ static struct vrq_counters twoblock_counters;
+ static uint8_t twoblock_copy[VR2_TRANSFER_BYTES];
++/* Trial726: the caller's slice, filled only after both blocks have been verified. */
++static uint8_t twoblock_slice[VRB_WINDOW_BYTES];
++/* Sealed copy of the verified slice for the call in flight. Never the caller's buffer, and never
++ * the stack: the window is up to 8192 bytes. */
++static uint8_t twoblock_stage[VRB_WINDOW_BYTES];
++#ifdef US_HOST_TEST
++/* The host test supplies the caller buffer, so capacity refusal can be exercised end to end. */
++uint8_t *twoblock_test_dst(void);
++uint32_t twoblock_test_cap(void);
++/* Last byte count the entry point reported delivering; the test reads it back. */
++uint32_t twoblock_test_delivered;
++#endif
+ 
+ 
+ static void twoblock_barrier(void *unused)
+@@ -261,7 +274,8 @@ twoblock_fail(const char *reason)
+ }
+ 
+ static bool
+-twoblock_run(const struct vr_request *pinned, const struct vr_limits *limits, uint32_t ordinal)
++twoblock_run(const struct vr_request *pinned, const struct vr_limits *limits, uint32_t ordinal,
++    const struct vrb_window *slice, uint8_t *dst, uint32_t dst_capacity, uint32_t *out_delivered)
+ {
+ 	struct vrq_io io = twoblock_io();
+ 	const struct vrq_outcome *outcome = &twoblock_outcome;
+@@ -319,6 +333,25 @@ twoblock_run(const struct vr_request *pinned, const struct vr_limits *limits, ui
+ 		}
+ 	}
+ 
++	/* Trial726: while the lease still holds the source, seal the verified slice into a staging
++	 * area owned by this call. The caller's buffer is only written after every later check has
++	 * passed, so a failure leaves it untouched. The source never leaves the lease-protected copy. */
++	uint32_t slice_crc = 0;
++	uint32_t slice_len = 0;
++	if (slice != NULL) {
++		const uint32_t want = slice->first_bytes + slice->second_bytes;
++		if (dst == NULL) {
++			twoblock_fail("slice destination refused");
++			return false;
++		}
++		if (!vrb_deliver(twoblock_copy, slice, twoblock_stage, sizeof(twoblock_stage))) {
++			twoblock_fail("slice staging failed");
++			return false;
++		}
++		slice_len = want;
++		slice_crc = vrq_crc32(twoblock_stage, want);
++	}
++
+ 	const uint32_t control = us_control(&twoblock_lease);
+ 	const uint32_t state = shared_snapshot(&platform).state;
+ #ifdef US_HOST_TEST
+@@ -342,6 +375,24 @@ twoblock_run(const struct vr_request *pinned, const struct vr_limits *limits, ui
+ 		       "crc=%#x reference_crc=%#x match=1\n",
+ 		       block + 1u, pinned->lba + block, crc[block], reference[block]);
+ 	}
++
++	/* Every check has passed: commit the sealed slice to the caller now. */
++	if (slice != NULL) {
++		if (dst_capacity < slice_len) {
++			twoblock_fail("slice destination too small");
++			return false;
++		}
++		for (uint32_t i = 0; i < slice_len; ++i)
++			dst[i] = twoblock_stage[i];
++		*out_delivered = slice_len;
++		printf("mt6895-ufs-twoblock: slice offset=%u blocks=%u bytes=%u first=%u second=%u "
++		       "cap=%u crc=%#x delivered=1\n",
++		       slice->first_lba * VR_BLOCK_BYTES + slice->in_block_offset,
++		       slice->blocks, slice_len, slice->first_bytes, slice->second_bytes,
++		       dst_capacity, slice_crc);
++	} else if (out_delivered != NULL) {
++		*out_delivered = 0u;
++	}
+ 	return true;
+ }
+ 
+@@ -354,6 +405,10 @@ hakios_mt6895_ufs_twoblock_quiesce(void)
+ void
+ hakios_mt6895_ufs_twoblock_init(void)
+ {
++#ifdef US_HOST_TEST
++	/* Cleared before any early return, so a refused call never reports a stale count. */
++	twoblock_test_delivered = 0u;
++#endif
+ 	uint32_t mode = 0;
+ 	uint32_t trial = 0;
+ 	if (!PE_parse_boot_argn("mtk_ufs_twoblock", &mode, sizeof(mode)) || !mode) return;
+@@ -401,11 +456,60 @@ hakios_mt6895_ufs_twoblock_init(void)
+ 		blocks = (uint32_t)(block_arg[0] - '0');
+ 	}
+ 
++	const struct vr_limits limits = vr_runtime_limits();
++
++	/* Trial726: a byte range from the window start. Planned here, before any command is built,
++	 * so a refused range never rings the doorbell. */
++	uint64_t range_off = 0, range_len = 0, range_cap = 0;
++	struct vrb_window slice;
++	enum vrb_reject planned = VRB_OK;
++	/* Both keys or neither. A single key must not silently fall back to the whole-block read:
++	 * that would move data the caller never asked for. */
++	const bool have_off = PE_parse_boot_argn("mtk_ufs_byte_offset", &range_off, sizeof(range_off));
++	const bool have_len = PE_parse_boot_argn("mtk_ufs_byte_length", &range_len, sizeof(range_len));
++	if (have_off != have_len) {
++		printf("mt6895-ufs-twoblock: byte range needs both offset and length; no request\n");
++		return;
++	}
++	const bool range_mode = have_off && have_len;
++	if (range_mode) {
++		if (range_off > UINT32_MAX || range_len > UINT32_MAX) {
++			printf("mt6895-ufs-twoblock: byte range out of range; no request\n");
++			return;
++		}
++		/* The capacity that matters is the buffer we will actually write. The declared value is
++		 * an upper bound from the command line; planning uses whichever is smaller, so a buffer
++		 * smaller than declared is refused before the doorbell instead of after the read. */
++		uint64_t declared = range_len;
++		if (PE_parse_boot_argn("mtk_ufs_byte_capacity", &declared, sizeof(declared)) &&
++		    declared > UINT32_MAX) {
++			printf("mt6895-ufs-twoblock: byte capacity out of range; no request\n");
++			return;
++		}
++		const uint32_t actual_cap =
++#ifdef US_HOST_TEST
++		    twoblock_test_cap();
++#else
++		    (uint32_t)sizeof(twoblock_slice);
++#endif
++		range_cap = (declared < actual_cap) ? declared : actual_cap;
++		if (range_cap > UINT32_MAX) range_cap = UINT32_MAX;
++		planned = vrb_plan((uint32_t)range_off, (uint32_t)range_len,
++		    (uint32_t)range_cap, &limits, &slice);
++		if (planned != VRB_OK) {
++			printf("mt6895-ufs-twoblock: byte range refused reason=%u; no request\n",
++			    (unsigned)planned);
++			return;
++		}
++		/* The covering blocks, not the command-line start, decide where the read goes. */
++		start = slice.first_lba;
++		blocks = slice.blocks;
++	}
++
+ 	/* One local request built here: encoding, per-block verification and the log all use it. */
+ 	const struct vr_request pinned = {
+ 	    VR_LUN, start, blocks, VR_BLOCK_BYTES,
+ 	};
+-	const struct vr_limits limits = vr_runtime_limits();
+ 
+ 	/* The three-request experiment is opt-in and pins the first and last reads to LBA 3. */
+ 	char mixed_arg[3] = {0};
+@@ -414,6 +518,12 @@ hakios_mt6895_ufs_twoblock_init(void)
+ 		if (mixed_arg[1] != '\0' || (mixed_arg[0] != '0' && mixed_arg[0] != '1')) return;
+ 		mixed = mixed_arg[0] == '1';
+ 	}
++	/* Range and the three-request experiment are different trials; together they would issue
++	 * three reads for a request that must cost one. Refuse before any command is built. */
++	if (range_mode && mixed) {
++		printf("mt6895-ufs-twoblock: byte range cannot combine with mixed; no request\n");
++		return;
++	}
+ 	if (mixed && (start != 3u || blocks != 1u)) return;
+ 	const struct vr_request requests[] = { pinned, { VR_LUN, 2u, 2u, VR_BLOCK_BYTES }, pinned };
+ 	const uint32_t count = mixed ? sizeof(requests) / sizeof(requests[0]) : 1u;
+@@ -476,10 +586,39 @@ hakios_mt6895_ufs_twoblock_init(void)
+ 	printf("mt6895-ufs-twoblock: opened control=%#x shared=%u\n",
+ 	       us_control(&twoblock_lease), shared_snapshot(&platform).state);
+ 
++	uint32_t delivered = 0;
+ 	uint32_t completed = 0;
+-	while (completed < count && twoblock_run(&requests[completed], &limits, completed + 1u)) {
++	/* Destination chosen once: the host test supplies the caller's buffer, the kernel uses the
++	 * internal one sized from the frozen window. */
++	uint8_t *const dst = range_mode
++#ifdef US_HOST_TEST
++	    ? twoblock_test_dst()
++#else
++	    ? twoblock_slice
++#endif
++	    : NULL;
++	const uint32_t dst_cap = range_mode
++#ifdef US_HOST_TEST
++	    ? twoblock_test_cap()
++#else
++	    ? range_cap
++#endif
++	    : 0u;
++	while (completed < count &&
++	    twoblock_run(&requests[completed], &limits, completed + 1u,
++	        range_mode ? &slice : NULL, dst, dst_cap, &delivered)) {
+ 		++completed;
+ 	}
+-	printf("mt6895-ufs-twoblock: final control=%#x shared=%u failed=%u\n",
+-	       us_control(&twoblock_lease), shared_snapshot(&platform).state, completed == count ? 0u : 1u);
++	if (range_mode && completed == count && delivered != 0u) {
++		/* Observe the committed caller buffer across the compiler's memory boundary. */
++		__asm__ volatile("" : : "r"(dst) : "memory");
++		printf("mt6895-ufs-twoblock: caller bytes=%u crc=%#x\n", delivered,
++		       vrq_crc32(dst, delivered));
++	}
++#ifdef US_HOST_TEST
++	twoblock_test_delivered = delivered;
++#endif
++	printf("mt6895-ufs-twoblock: final control=%#x shared=%u failed=%u delivered=%u\n",
++	       us_control(&twoblock_lease), shared_snapshot(&platform).state,
++	       completed == count ? 0u : 1u, delivered);
+ }
+diff --git a/source/ufs_twoblock/support/ufs_read_contract.h b/source/ufs_twoblock/support/ufs_read_contract.h
+index 4574f0c..157f9de 100644
+--- a/source/ufs_twoblock/support/ufs_read_contract.h
++++ b/source/ufs_twoblock/support/ufs_read_contract.h
+@@ -8,7 +8,7 @@
+ #include <stdbool.h>
+ #include <stddef.h>
+ 
+-#define UR_TRIAL 725u
++#define UR_TRIAL 726u
+ #define UR_MAGIC 0x554c5345u
+ #define UR_VERSION 1u
+ #define UR_LIST_PA UINT64_C(0x51266400)
+diff --git a/tests/test-byte-range-codec.c b/tests/test-byte-range-codec.c
+new file mode 100644
+index 0000000..0cf002a
+--- /dev/null
++++ b/tests/test-byte-range-codec.c
+@@ -0,0 +1,113 @@
++/* Host test for the Trial726 byte-range planner and delivery.
++ *
++ * Every refusal is checked both for its reason and for the fact that no window was produced, so a
++ * rejected range cannot be mistaken for an accepted one.
++ */
++#define _GNU_SOURCE
++#define US_HOST_TEST 1
++
++#include <assert.h>
++#include <stdio.h>
++#include <string.h>
++
++#include "ufs_byte_range_codec.h"
++
++static unsigned failures;
++
++static void
++ok(const char *name, bool cond)
++{
++    printf("  %-46s %s\n", name, cond ? "PASS" : "FAIL");
++    if (!cond) failures++;
++}
++
++static enum vrb_reject
++plan(uint32_t off, uint32_t len, uint32_t cap, struct vrb_window *w, const struct vr_limits *lim)
++{
++    struct vrb_window scratch;
++    memset(&scratch, 0xA5, sizeof(scratch));
++    enum vrb_reject r = vrb_plan(off, len, cap, lim, &scratch);
++    if (r == VRB_OK) { if (w) *w = scratch; }
++    else if (w) { *w = scratch; }
++    return r;
++}
++
++int main(void)
++{
++    const struct vr_limits lim = vr_runtime_limits();
++    struct vrb_window w;
++
++    puts("Trial726 byte-range planner");
++
++    /* --- the designated device case --- */
++    memset(&w, 0, sizeof(w));
++    enum vrb_reject r = plan(12031u, 770u, 770u, &w, &lim);
++    ok("offset 12031 len 770 accepted", r == VRB_OK);
++    ok("  first_lba == 2", w.first_lba == 2u);
++    ok("  blocks == 2", w.blocks == 2u);
++    ok("  in_block_offset == 3839", w.in_block_offset == 3839u);
++    ok("  first_bytes == 257", w.first_bytes == 257u);
++    ok("  second_bytes == 513", w.second_bytes == 513u);
++
++    /* --- single block boundary cases --- */
++    r = plan(8192u, 4096u, 4096u, &w, &lim);
++    ok("whole block at LBA2 -> 1 block", r == VRB_OK && w.blocks == 1u &&
++        w.first_bytes == 4096u && w.second_bytes == 0u);
++    r = plan(8192u, 1u, 1u, &w, &lim);
++    ok("one byte at LBA2 start -> 1 block", r == VRB_OK && w.blocks == 1u);
++    r = plan(8192u + 4095u, 1u, 1u, &w, &lim);
++    ok("last byte of LBA2 -> 1 block, offset 4095", r == VRB_OK && w.blocks == 1u &&
++        w.in_block_offset == 4095u);
++    r = plan(8192u + 4095u, 2u, 2u, &w, &lim);
++    ok("straddle by one byte -> 2 blocks", r == VRB_OK && w.blocks == 2u &&
++        w.first_bytes == 1u && w.second_bytes == 1u);
++
++    /* --- refusals: each must leave no usable window --- */
++    r = plan(12031u, 0u, 770u, &w, &lim);
++    ok("zero length refused", r == VRB_ERR_ZERO_LENGTH);
++    r = plan(12031u, 770u, 769u, &w, &lim);
++    ok("output too small refused", r == VRB_ERR_OUT_TOO_SMALL);
++    r = plan(0xFFFFFFF0u, 0x20u, 0x20u, &w, &lim);
++    ok("offset+length overflow refused", r == VRB_ERR_OVERFLOW);
++    r = plan(8192u, 4096u * 2u + 1u, 4096u * 2u + 1u, &w, &lim);
++    ok("more than two blocks refused", r == VRB_ERR_TOO_LONG);
++    r = plan(8192u, 4096u * 3u, 4096u * 3u, &w, &lim);
++    ok("exactly three blocks refused", r == VRB_ERR_TOO_LONG);
++    r = plan(8192u * 20u, 10u, 10u, &w, &lim);
++    ok("beyond geometry refused", r == VRB_ERR_LBA_RANGE);
++    r = vrb_plan(12031u, 770u, 770u, NULL, &w) == VRB_ERR_NULL ? VRB_ERR_NULL : VRB_OK;
++    ok("null limits refused", r == VRB_ERR_NULL);
++    r = vrb_plan(12031u, 770u, 770u, &lim, NULL) == VRB_ERR_NULL ? VRB_ERR_NULL : VRB_OK;
++    ok("null window refused", r == VRB_ERR_NULL);
++    /* offsets 0..3 map to LBA 0, which has no frozen reference in the 723+ table */
++    r = plan(0u, 10u, 10u, &w, &lim);
++    ok("LBA0 without reference refused", r == VRB_ERR_NO_REFERENCE);
++
++    /* --- delivery copies exactly the requested bytes --- */
++    {
++        uint8_t blocks[2 * VRB_BLOCK_BYTES];
++        for (unsigned i = 0; i < sizeof(blocks); ++i) blocks[i] = (uint8_t)(i * 7u + 3u);
++        uint8_t out[770 + 2];
++        out[0] = 0x5A; out[771] = 0x5A;               /* sentinels either side */
++        memset(&w, 0, sizeof(w));
++        r = plan(12031u, 770u, 770u, &w, &lim);
++        bool copied = vrb_deliver(blocks, &w, out + 1, 770u);
++        ok("delivery succeeded", r == VRB_OK && copied);
++        ok("  first byte from block0[3839]", out[1] == blocks[3839]);
++        ok("  byte 257 from block1[0]", out[1 + 257] == blocks[4096]);
++        ok("  last byte from block1[512]", out[1 + 769] == blocks[4096 + 512]);
++        ok("  sentinel before unchanged", out[0] == 0x5A);
++        ok("  sentinel after unchanged", out[771] == 0x5A);
++        bool whole = true;
++        for (unsigned i = 0; i < 257; ++i)
++            if (out[1 + i] != blocks[3839 + i]) whole = false;
++        for (unsigned i = 0; i < 513; ++i)
++            if (out[1 + 257 + i] != blocks[4096 + i]) whole = false;
++        ok("  all 770 bytes byte-for-byte", whole);
++        ok("delivery into too-small buffer refused",
++           !vrb_deliver(blocks, &w, out + 1, 769u));
++    }
++
++    printf("%s %u failure(s)\n", failures ? "FAILED" : "PASS", failures);
++    return failures ? 1 : 0;
++}
+diff --git a/tests/test-byte-range-sweep.c b/tests/test-byte-range-sweep.c
+new file mode 100644
+index 0000000..51774d5
+--- /dev/null
++++ b/tests/test-byte-range-sweep.c
+@@ -0,0 +1,82 @@
++/* Exhaustive-ish sweep: every accepted window must satisfy the invariants the device path relies
++ * on, and nothing may be accepted that the caller could not hold or the controller could not read.
++ */
++#define _GNU_SOURCE
++#define US_HOST_TEST 1
++
++#include <stdio.h>
++#include <string.h>
++
++#include "ufs_byte_range_codec.h"
++
++static unsigned failures;
++
++static void
++bad(const char *what, uint32_t off, uint32_t len, uint64_t extra)
++{
++    if (failures < 12)
++        printf("  FAIL %s off=%u len=%u (%llu)\n", what, off, len,
++            (unsigned long long)extra);
++    failures++;
++}
++
++int main(void)
++{
++    const struct vr_limits lim = vr_runtime_limits();
++    struct vrb_window w;
++    uint64_t checked = 0, accepted = 0, refused = 0;
++
++    const uint32_t offsets[] = {
++        0u, 1u, 3839u, 4095u, 4096u, 8191u, 8192u, 12031u, 12287u, 12288u,
++        16383u, 16384u, 32767u, 32768u, 65535u, 65536u,
++        0x7FFFFFFFu, 0xFFFFF000u, 0xFFFFFFF0u, 0xFFFFFFFEu, 0xFFFFFFFFu,
++    };
++    const uint32_t lengths[] = {
++        0u, 1u, 2u, 769u, 770u, 257u, 513u, 4095u, 4096u, 4097u,
++        8191u, 8192u, 8193u, 0x7FFFFFFFu, 0xFFFFFFFFu,
++    };
++
++    for (size_t i = 0; i < sizeof(offsets) / sizeof(offsets[0]); ++i) {
++        for (size_t j = 0; j < sizeof(lengths) / sizeof(lengths[0]); ++j) {
++            const uint32_t off = offsets[i], len = lengths[j];
++            /* capacity given exactly, so only the range itself can be at fault */
++            enum vrb_reject r = vrb_plan(off, len, len, &lim, &w);
++            ++checked;
++            if (r == VRB_OK) {
++                ++accepted;
++                if (w.blocks < 1u || w.blocks > 2u) bad("blocks out of 1..2", off, len, w.blocks);
++                if (w.first_bytes + w.second_bytes != len)
++                    bad("segments do not sum to length", off, len,
++                        (uint64_t)w.first_bytes + w.second_bytes);
++                if (w.first_bytes == 0u || w.first_bytes > 4096u)
++                    bad("first segment size", off, len, w.first_bytes);
++                if (w.second_bytes > 4096u) bad("second segment size", off, len, w.second_bytes);
++                if (w.in_block_offset + w.first_bytes > 4096u)
++                    bad("first segment runs past block", off, len,
++                        (uint64_t)w.in_block_offset + w.first_bytes);
++                if (w.first_lba + w.blocks - 1u >= lim.lba_max_exclusive)
++                    bad("window past geometry", off, len, w.first_lba);
++                if (off + (uint64_t)len > (uint64_t)lim.lba_max_exclusive * 4096u)
++                    bad("range past geometry but accepted", off, len, 0);
++            } else {
++                ++refused;
++                if (len != 0u && off + (uint64_t)len <= (uint64_t)UINT32_MAX &&
++                    r == VRB_ERR_OVERFLOW)
++                    bad("overflow claimed without overflow", off, len, 0);
++            }
++        }
++    }
++
++    /* A range the caller cannot hold must never be accepted, whatever it covers. */
++    for (uint32_t len = 1; len <= 4200u; len += 137u) {
++        if (vrb_plan(12031u, len, len - 1u, &lim, &w) == VRB_OK)
++            bad("accepted with capacity below length", 12031u, len, 0);
++        ++checked;
++    }
++
++    printf("  combos %llu  accepted %llu  refused %llu  failures %u\n",
++        (unsigned long long)checked, (unsigned long long)accepted,
++        (unsigned long long)refused, failures);
++    printf("%s\n", failures ? "FAILED" : "PASS");
++    return failures ? 1 : 0;
++}
+diff --git a/tests/test-ufs-twoblock-platform.c b/tests/test-ufs-twoblock-platform.c
+index 49fde2e..53659fb 100644
+--- a/tests/test-ufs-twoblock-platform.c
++++ b/tests/test-ufs-twoblock-platform.c
+@@ -16,6 +16,7 @@ static uint32_t regs[VR_REG_BYTES / 4u];
+ static uint32_t table_page[PAGE_SIZE / 4u];
+ static uint8_t *scratch;
+ static uint8_t *ref_window;   /* local reference blocks, never printed */
++static unsigned failures;     /* Trial726 cases count their own failures */
+ static struct {
+ 	uint32_t mode, trial, other, stop_at;
+ 	unsigned maps, reg_reads, rings, data_writes, restore_writes;
+@@ -25,6 +26,9 @@ static struct {
+ 	uint32_t want_lba, cdb_lba, cdb_blocks;
+ 	bool start_lba_present;      /* absent and explicit 0 must be distinguishable */
+ 	uint64_t start_lba_raw;      /* full width, so 2^32+2 cannot wrap to 2 */
++	/* Trial726 byte range; absent means the whole-block 725 path. */
++	bool range_present, off_only, len_only, cap_present;
++	uint64_t range_offset, range_length, range_capacity;
+ } model;
+ 
+ /* The expectation comes from the test case, independently of the placed descriptor. */
+@@ -83,6 +87,24 @@ PE_parse_boot_argn(const char *name, void *out, size_t size)
+ 		memcpy(out, &model.start_lba_raw, size);
+ 		return true;
+ 	}
++	if (strcmp(name, "mtk_ufs_byte_capacity") == 0) {
++		assert(size == sizeof(uint64_t));
++		if (!model.range_present || !model.cap_present) return false;
++		const uint64_t c = model.range_capacity;
++		memcpy(out, &c, size);
++		return true;
++	}
++	if (strcmp(name, "mtk_ufs_byte_offset") == 0 ||
++	    strcmp(name, "mtk_ufs_byte_length") == 0) {
++		/* Also full width, so a value above 32 bits is refused rather than wrapped. */
++		assert(size == sizeof(uint64_t));
++		const bool is_off = strcmp(name, "mtk_ufs_byte_offset") == 0;
++		if (is_off && !(model.range_present || model.off_only)) return false;
++		if (!is_off && !(model.range_present || model.len_only)) return false;
++		const uint64_t v = is_off ? model.range_offset : model.range_length;
++		memcpy(out, &v, size);
++		return true;
++	}
+ 	assert(size == sizeof(uint32_t));
+ 	if (strcmp(name, "mtk_ufs_twoblock") == 0) value = model.mode;
+ 	else if (strcmp(name, "mali_trial") == 0) value = model.trial;
+@@ -361,6 +383,232 @@ static void test_sequence(void)
+ 	test_refused();
+ }
+ 
++
++/* ---------------- Trial726: byte range ---------------- */
++
++/* The caller's own buffer, with sentinels either side so a write past the range is visible. */
++#define CALLER_PAD 8u
++static uint8_t caller_buf[VRB_WINDOW_BYTES + 2 * CALLER_PAD];
++static uint32_t caller_cap;
++/* Taken from the entry point's own report, which names the byte count it actually handed over. */
++static uint32_t delivered;
++
++/* The adapter exports the count it reported; the test never assumes it equals the request. */
++extern uint32_t twoblock_test_delivered;
++/* The adapter takes its destination from here, so the caller buffer is the test's own. */
++uint8_t *twoblock_test_dst(void) { return caller_buf + CALLER_PAD; }
++uint32_t twoblock_test_cap(void) { return caller_cap; }
++
++static void
++caller_reset(void)
++{
++	memset(caller_buf, 0x5A, sizeof(caller_buf));
++	delivered = 0;
++}
++
++static void
++range_settings(uint64_t off, uint64_t len, uint32_t cap)
++{
++	reset();
++	model.range_present = true;
++	model.range_offset = off;
++	model.range_length = len;
++	model.range_capacity = cap;   /* what the command line declares */
++	model.cap_present = true;
++	caller_cap = cap;             /* what the buffer actually has; a case may shrink it */
++	caller_reset();
++	model.want_lba = (uint32_t)(off / VR_BLOCK_BYTES);
++	{
++		const uint32_t in_off = (uint32_t)(off % VR_BLOCK_BYTES);
++		const uint64_t first = (len < VR_BLOCK_BYTES - in_off)
++		    ? len : (uint64_t)(VR_BLOCK_BYTES - in_off);
++		want_blocks = (len > first) ? 2u : 1u;
++	}
++}
++
++/* Positive case: the edge is taken from the caller's buffer, and the CRC is computed over exactly
++ * the number of bytes the entry point reports having delivered. */
++static void
++test_range_success(const char *name, uint64_t off, uint64_t len)
++{
++	range_settings(off, len, (uint32_t)len);
++	const uint32_t first = (uint32_t)(off / VR_BLOCK_BYTES);
++	const uint32_t in_off = (uint32_t)(off % VR_BLOCK_BYTES);
++	const uint32_t first_bytes = (uint32_t)((len < VR_BLOCK_BYTES - in_off)
++	    ? len : VR_BLOCK_BYTES - in_off);
++	const uint32_t blocks = (len > first_bytes) ? 2u : 1u;
++	model.cdb_lba = first;
++	model.cdb_blocks = blocks;
++	model.rings = 0;
++	hakios_mt6895_ufs_twoblock_init();
++	delivered = twoblock_test_delivered;
++
++	bool ok = model.rings == 1 && model.cdb_lba == first && model.cdb_blocks == blocks;
++	ok = ok && delivered == len;
++	/* Compare the caller's buffer with the frozen window, byte for byte. */
++	if (ok) {
++		const uint8_t *want = ref_window + off;
++		for (uint64_t i = 0; i < len; ++i) {
++			if (caller_buf[CALLER_PAD + i] != want[i]) { ok = false; break; }
++		}
++	}
++	/* Sentinels must be untouched on both sides. */
++	if (ok) {
++		for (uint32_t i = 0; i < CALLER_PAD; ++i)
++			if (caller_buf[i] != 0x5A) { ok = false; break; }
++		for (uint32_t i = 0; i < CALLER_PAD; ++i)
++			if (caller_buf[CALLER_PAD + len + i] != 0x5A) { ok = false; break; }
++	}
++	const uint32_t crc = ok ? vrq_crc32(caller_buf + CALLER_PAD, delivered) : 0u;
++	if (!ok) failures++;
++	printf("  range %-22s off=%-6llu len=%-5llu blocks=%u rings=%u delivered=%u crc=%#x %s\n",
++	    name, (unsigned long long)off, (unsigned long long)len, blocks, model.rings,
++	    delivered, crc, ok ? "PASS" : "FAIL");
++}
++
++/* Refusal before the doorbell: no ring, no delivery, buffer untouched. */
++static void
++test_range_refused(const char *name, uint64_t off, uint64_t len, uint32_t cap)
++{
++	range_settings(off, len, cap);
++	model.cdb_lba = (uint32_t)(off / VR_BLOCK_BYTES);
++	model.cdb_blocks = 1;
++	model.rings = 0;
++	hakios_mt6895_ufs_twoblock_init();
++	delivered = twoblock_test_delivered;
++	bool untouched = true;
++	for (size_t i = 0; i < sizeof(caller_buf); ++i)
++		if (caller_buf[i] != 0x5A) { untouched = false; break; }
++	bool ok = model.rings == 0 && model.data_writes == 0 && delivered == 0u && untouched;
++	if (!ok) failures++;
++	printf("  range %-22s off=%-6llu len=%-5llu cap=%-5u rings=%u delivered=%u %s\n",
++	    name, (unsigned long long)off, (unsigned long long)len, cap, model.rings,
++	    delivered, ok ? "REFUSED PASS" : "FAIL");
++}
++
++static void
++test_byte_range(void)
++{
++	puts("Trial726 byte range");
++	/* the designated device case: LBA2 last 257 bytes + LBA3 first 513 */
++	test_range_success("12031+770", 12031u, 770u);
++	test_range_success("whole LBA2", 8192u, 4096u);
++	test_range_success("one byte LBA2", 8192u, 1u);
++	test_range_success("last byte LBA2", 8192u + 4095u, 1u);
++	test_range_success("straddle by one", 8192u + 4095u, 2u);
++	test_range_success("LBA3 whole", 12288u, 4096u);
++
++	/* capacity one byte short of the request must be refused before any ring */
++	test_range_refused("cap 769 < len 770", 12031u, 770u, 769u);
++	test_range_refused("zero length", 12031u, 0u, 770u);
++	test_range_refused("three blocks", 8192u, 4096u * 3u, 4096u * 3u);
++	test_range_refused("past geometry", 8192u * 40u, 10u, 10u);
++	test_range_refused("LBA0 no reference", 0u, 10u, 10u);
++	test_range_refused("offset+len overflow", 0xFFFFFFF0ull, 0x20ull, 0x20u);
++	test_range_refused("above 32 bits", 0x100000000ull, 10ull, 10u);
++
++	/* only one of the two keys: must not fall back to a whole-block read */
++	{
++		reset();
++		model.off_only = true;
++		model.range_offset = 12031u;
++		caller_reset();
++		model.rings = 0;
++		hakios_mt6895_ufs_twoblock_init();
++		delivered = twoblock_test_delivered;
++		bool ok = model.rings == 0 && delivered == 0u;
++		if (!ok) failures++;
++		printf("  range %-22s rings=%u delivered=%u %s\n", "offset only", model.rings,
++		    delivered, ok ? "REFUSED PASS" : "FAIL");
++	}
++	{
++		reset();
++		model.len_only = true;
++		model.range_length = 770u;
++		caller_reset();
++		model.rings = 0;
++		hakios_mt6895_ufs_twoblock_init();
++		delivered = twoblock_test_delivered;
++		bool ok = model.rings == 0 && delivered == 0u;
++		if (!ok) failures++;
++		printf("  range %-22s rings=%u delivered=%u %s\n", "length only", model.rings,
++		    delivered, ok ? "REFUSED PASS" : "FAIL");
++	}
++	/* range + mixed would otherwise reach the three-request path */
++	{
++		reset();
++		model.range_present = true;
++		model.range_offset = 12288u;
++		model.range_length = 100u;
++		model.cap_present = true;
++		model.range_capacity = 100u;
++		caller_cap = 100u;
++		caller_reset();
++		mixed_arg = "1";
++		model.rings = 0;
++		hakios_mt6895_ufs_twoblock_init();
++		delivered = twoblock_test_delivered;
++		bool ok = model.rings == 0 && delivered == 0u;
++		if (!ok) failures++;
++		printf("  range %-22s rings=%u delivered=%u %s\n", "range + mixed", model.rings,
++		    delivered, ok ? "REFUSED PASS" : "FAIL");
++	}
++
++	/* The real buffer is smaller than declared: planning must catch it before the doorbell. */
++	{
++		range_settings(12031u, 770u, 770u);
++		caller_cap = 769u;                 /* shrink only the actual buffer */
++		model.cdb_lba = 2u; model.cdb_blocks = 2u; model.rings = 0;
++		hakios_mt6895_ufs_twoblock_init();
++		delivered = twoblock_test_delivered;
++		bool untouched = true;
++		for (size_t i = 0; i < sizeof(caller_buf); ++i)
++			if (caller_buf[i] != 0x5A) { untouched = false; break; }
++		bool ok = model.rings == 0 && delivered == 0u && untouched;
++		if (!ok) failures++;
++		printf("  range %-22s declared=770 actual=769 rings=%u delivered=%u %s\n",
++		    "actual < declared", model.rings, delivered,
++		    ok ? "REFUSED PASS" : "FAIL");
++	}
++	/* A stop after the read must leave the caller's buffer exactly as it was. */
++	{
++		range_settings(12031u, 770u, 770u);
++		model.cdb_lba = 2u; model.cdb_blocks = 2u; model.rings = 0;
++		model.stop_at = 3;
++		hakios_mt6895_ufs_twoblock_init();
++		delivered = twoblock_test_delivered;
++		bool untouched = true;
++		for (size_t i = 0; i < sizeof(caller_buf); ++i)
++			if (caller_buf[i] != 0x5A) { untouched = false; break; }
++		bool ok = untouched && delivered == 0u;
++		if (!ok) failures++;
++		printf("  range %-22s rings=%u untouched=%u delivered=%u %s\n",
++		    "stop at 3", model.rings, untouched ? 1u : 0u, delivered,
++		    ok ? "NO DELIVERY PASS" : "FAIL");
++	}
++
++	/* failures after the doorbell must not hand over a slice */
++	{
++		const char *names[] = { "read corruption", "partial readback", "restore failure" };
++		for (int k = 0; k < 3; ++k) {
++			range_settings(12031u, 770u, 770u);
++			if (k == 0) model.corrupt_last = true;
++			if (k == 1) model.partial_last = true;
++			if (k == 2) model.fail_last_restore = true;
++			hakios_mt6895_ufs_twoblock_init();
++			delivered = twoblock_test_delivered;
++			bool untouched = true;
++			for (size_t i = 0; i < sizeof(caller_buf); ++i)
++				if (caller_buf[i] != 0x5A) { untouched = false; break; }
++			bool ok = untouched && delivered == 0u;
++			if (!ok) failures++;
++			printf("  range %-22s rings=%u untouched=%u delivered=%u %s\n", names[k],
++			    model.rings, untouched ? 1u : 0u, delivered,
++			    ok ? "NO DELIVERY PASS" : "FAIL");
++		}
++	}
++}
++
+ int main(int argc, char **argv)
+ {
+ 	assert(argc == 2);
+@@ -443,8 +691,12 @@ int main(int argc, char **argv)
+ 	assert(model.maps == 1 && model.reg_reads == 0 && model.rings == 0);
+ 
+ 	test_sequence();
++	/* Trial726 cases need both the reference window and the scratch mapping, so they run before
++	 * either is released. */
++	test_byte_range();
+ 	free(ref_window);
+ 	assert(munmap(scratch, VR_SCRATCH_BYTES + PAGE_SIZE) == 0);
+-	puts("Trial725 platform PASS");
+-	return 0;
++
++	puts(failures ? "Trial726 platform FAILED" : "Trial726 platform PASS");
++	return failures ? 1 : 0;
+ }

@@ -1,0 +1,68 @@
+{
+  "trial": 726,
+  "package": {
+    "boot_bytes": 23015424,
+    "boot_sha256": "dc2c256ca5a875194960a19c39949e289abd4f6647c18f4df1204e92c80e0ebc",
+    "payload_sha256": "401f6082a1fb460bad5b2073721db3acae323e8d40ca0d911e3d33a3e57de04a",
+    "kernel_sha256": "ef1c05bf8150ccfdc64885448306853d421e1af99bac572b41c4f7f3f0273794",
+    "loader_bytes": 48440,
+    "loader_sha256": "dd4f8b68a4a6bb366419e1893d1aadba028d687e266769e95e8c82d32203ba5b",
+    "kernel_bytes": 15357480,
+    "loader_backfill_bytes": 10,
+    "loader_backfill_offsets": [
+      18,
+      19,
+      40,
+      41,
+      42,
+      43,
+      48,
+      49,
+      50,
+      51
+    ],
+    "embedded_payload_matches": true,
+    "kernel_matches_payload": true,
+    "within_64M": true,
+    "payload_entries": [
+      "kernel",
+      "ramdisk",
+      "kernel.ver"
+    ]
+  },
+  "arguments": {
+    "base_bytes": 334,
+    "nul_inclusive_bytes": 395,
+    "boot_line_limit": 608,
+    "sha256": "a49df6386d293d10c222e58dcfd49a8913a70fd6172ba1c983542847c4cd9739",
+    "extraction": "byte-exact from the packaged loader, rd=md0 up to NUL"
+  },
+  "restore": {
+    "stock_bytes": 67108864,
+    "stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+    "full_readback_byte_equal": true,
+    "flash_rc": 0,
+    "sending": "OKAY",
+    "writing": "OKAY",
+    "android_booted": true,
+    "slot": "_a",
+    "selinux": "Enforcing",
+    "boot_completed": "1"
+  },
+  "hlog": {
+    "pre_record_sha256": "225956fbae7be91cd4adc73eeabdbece7d315e56cde25e5494e53b1224619d6e",
+    "post_record_sha256": "4c0806b6864fd9f46562895ce923644fb753e61d4d6837325bf31b98391a3dae",
+    "post_window_sha256": "cf28caf4a914803f290a4dbafca0f536a3d62b917153bb2d5bb7c2f6a970a3a2",
+    "body_bytes": 491149,
+    "body_sha256": "99686aed8586809bb287de4f001189319cac9b6c3f6ccccbe9742764028b68ab",
+    "header_reason": 0,
+    "header_code": 0,
+    "boot_args_exact": true,
+    "pre_matches_725": true,
+    "a13_captured_before_restore": true,
+    "post_restore_window_sha256": "cf28caf4a914803f290a4dbafca0f536a3d62b917153bb2d5bb7c2f6a970a3a2",
+    "post_restore_byte_equal": true,
+    "pre_window_sha256": "0c5d7badb3c717bd6c774dcbdbfb2f93b0d7c3c3e3a5d9d4286b14908eb89e73"
+  },
+  "note": "镜像、原始 HLOG、硬件标识与私有参考窗口仅留本机；本目录只含可复核的文本摘要。"
+}

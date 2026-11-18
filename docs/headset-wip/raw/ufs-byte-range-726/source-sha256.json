@@ -1,0 +1,16 @@
+{
+ "source/ufs_twoblock/codec/ufs_byte_range_codec.h": "5161bfabfe92e91b2fe52315574355c29cb89956a837ba2816bcbb99d00318e8",
+ "source/ufs_twoblock/codec/ufs_two_block_codec.h": "4daee22b3e72949d35814d5e74116d6a8d1d856ea55d5d5aed8ae28f717956c0",
+ "source/ufs_twoblock/engine/ufs_two_block_engine.h": "865350b1645eb5b5467145502130b96522eccf28fb56f538b76138f79d4d331f",
+ "source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c": "76459bc65788c5992507bf7b53f0f45ef89f2e54adbbf40ac1899ce7802beb5b",
+ "source/ufs_twoblock/support/ufs_read_contract.h": "b5d8a3ba8dfcf8777c78e3baa9c42e2fd2c9db14f3f651b66b3e05791147135e",
+ "source/ufs_twoblock/support/ufs_read_engine.h": "81aeee096c339fbbf61aa23bf248b1fa24aa3b38e4c5ce26d642d35cd3afc7df",
+ "source/ufs_twoblock/support/ufs_service_lease.h": "05432b2c8c295157ca0cfc21a9ae7069ee030814ea398a3bbaaab960d5d9a0bd",
+ "source/ufs_varread/metadata/ufs_varread_reference.h": "9745771217c402b43b3b291b2c0bb4723a83aec49b2d3f8d9cfc4b528cf8dcae",
+ "source/ufs_varread/ufs_variable_read_codec.h": "6c7e531ec4b52f90a7a75a454fbb614263ed9b88b6ac74d4f783cdccb83d8098",
+ "tests/test-byte-range-codec.c": "a5ff9224cae8cd9941e3b29b15c2f50e5e0309458fc6440132c1988cd35c07ea",
+ "tests/test-byte-range-sweep.c": "ce29c8b486bacad4171a0fedc378e1801b6e768036f1f21eef1d296ee2abfb06",
+ "tests/test-ufs-two-block-engine.c": "67adaa1067502c850d1ba57cfc5a7bf3e8d2a9c684fa64fbe7f694ef8d556f0f",
+ "tests/test-ufs-twoblock-platform.c": "f65ab62f2743e85a3106bf7c048360e234cde6b84deeb5cdd333970a797d75ed",
+ "tests/ufs_twoblock_test_env.h": "b4f6fa7efd1b70db1d1437b6bec52051f6be67015693a700e7e955f3fc335016"
+}
