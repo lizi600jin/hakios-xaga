@@ -1,0 +1,127 @@
+{
+  "trial": 723,
+  "completed_at": "2026-11-18T16:56:46+08:00",
+  "hardware_verdict": "PASS",
+  "scope": "Single bounded LUN 2 READ(10) starting at LBA 2 for two blocks, as evidenced by this device HLOG and the frozen package.",
+  "pre_record_sha256": "6e89635719a9c9a1a8b798134acca0fb10919803c64239782479193a2a70be83",
+  "post_record_sha256": "8f63096b244915a9fa09e14d49f0c97a70dddc789705176a1fff72d8e37bd3a8",
+  "A2_full_sha256": "04a17d5172ac2a03bf21300e4ab1a29a2936d3dfa93ad99ab770bfd0a44f8c66",
+  "A13_window_sha256": "8c28e3fdfd347344350f850dff80832c0b7e95113e8c33774add154a662c8325",
+  "body_bytes": 489763,
+  "HLOG_reason": 0,
+  "HLOG_code": 0,
+  "boot_arguments_match_frozen": true,
+  "verified_driver_lines": [
+    "bounded two-block READ10 lun2 lba2 blocks2 bytes8192 budget1; guarded handoff required",
+    "guard magic=0x554c5345 version=1 trial=723 state=0",
+    "opened control=0x2 shared=1",
+    "request=1 lba=2 blocks=2 bytes=8192 admitted=1 readback_ok=1 issued=1 rings=1 response_valid=0x1fff failures=0 ocs=0 data_words=2048/2048 restored=1 copied=1 control=0x4 shared=1",
+    "block=1 lba=2 reference_present=1 crc=0xd024e0c reference_crc=0xd024e0c match=1",
+    "block=2 lba=3 reference_present=1 crc=0x58f10429 reference_crc=0x58f10429 match=1",
+    "final control=0x2 shared=1 failed=0",
+    "return-gate magic=0x554c5345 version=1 trial=723 state=2 allowed=1"
+  ],
+  "observed_crcs": [
+    "0x0d024e0c",
+    "0x58f10429"
+  ],
+  "kernel_final": {
+    "control": "0x2",
+    "shared": 1,
+    "failed": 0,
+    "ok": true
+  },
+  "loader_gate": {
+    "trial": 723,
+    "state": 2,
+    "allowed": 1,
+    "ok": true
+  },
+  "host_parser_status": "FORMAT_PASS_ONLY",
+  "restoration": {
+    "verdict": "PASS",
+    "slot": "_a",
+    "boot_completed": "1",
+    "selinux": "Enforcing",
+    "boot_id_changed_from_A1": true,
+    "boot_a_bytes": 67108864,
+    "boot_a_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+    "byte_equal_to_stock": true
+  },
+  "limitations": [
+    "A1 did not retain five individual native read return codes.",
+    "A8 recorded adb_seen_at_s=211 and outcome=adb_online but a conflicting final adb=0; the takeover independently verified one booted xaga in adb with the experimental boot_a prefix before recovery.",
+    "Device read evidence consists of request/readback logs and CRC32 values. No bus trace or proof of physical DMA freshness."
+  ],
+  "evidence": {
+    "A1": {
+      "path": "logs/device/A1-identity.txt",
+      "sha256": "92f658f4125d322bc019625435a6021648743c83e79451db01dd0818aeff4504"
+    },
+    "A2": {
+      "path": "logs/device/A2-baseline.txt",
+      "sha256": "baf1b642b9162c74837615222d6c9f17b7df3faa8ae812476cecbcfdd6b017f3"
+    },
+    "A3": {
+      "path": "logs/device/A3-image-verify.txt",
+      "sha256": "9c21570b1754a0e07e83bbaaa82943e91e2cec3b65f0103e2cbc938db8dd6de8"
+    },
+    "A4": {
+      "path": "logs/device/T723-A4-reboot-bootloader.json",
+      "sha256": "6bece6360dad7095506730911976df2426ca6c36ed7661242b1da4e1c4d3e1d8"
+    },
+    "A5": {
+      "path": "logs/device/T723-A5-getvar-current-slot.json",
+      "sha256": "5407e1ee80d006e51f9218bc5171f842fc26418a6d2ccfeaa40decb938be7e90"
+    },
+    "A6": {
+      "path": "logs/device/T723-A6-flash-boot_a.json",
+      "sha256": "7921841659060534081588ea298540d4cd04c9fd560e0c2c5f2159e3fa299e10"
+    },
+    "A7": {
+      "path": "logs/device/T723-A7-reboot.json",
+      "sha256": "846c5225a163c56139db32f2bc0570be6558d2818d3f6708b97ebf579510afc4"
+    },
+    "A8": {
+      "path": "logs/device/A8-observation.txt",
+      "sha256": "d0d9ed24658984d521ea52c5624307e8f911471bc9137437d154ed2789265e01"
+    },
+    "takeover": {
+      "path": "logs/device/T723-takeover-android.json",
+      "sha256": "6db49582cf9f0fc302fe48ab5f4f6d7569a06f0a43885129f42239c4bf96857f"
+    },
+    "A9": {
+      "path": "logs/device/T723-A9-reboot-bootloader.json",
+      "sha256": "e2ff2fa3178397d5518b1c8372274f5cb997c206d22ebcc1e8309c1f12bd8fb1"
+    },
+    "A10_slot": {
+      "path": "logs/device/T723-A10-preflight-slot.json",
+      "sha256": "5699f996af6ef4127a9743a8afd46b7e461a3063cf879adb28797798141e3574"
+    },
+    "A10": {
+      "path": "logs/device/T723-A10-restore-stock.json",
+      "sha256": "134b8b808ee4dd142ec0fce0d5f1704e3ebf340f0cac91886e24445b97b1722a"
+    },
+    "A11": {
+      "path": "logs/device/T723-A11-reboot.json",
+      "sha256": "c68fc8c0d69e83105a2d239209e5f880fdad12e14c1e58ba364bd9af3e013ba3"
+    },
+    "A12": {
+      "path": "logs/device/T723-A12-verdict.json",
+      "sha256": "3e969fe04053b9af509d7785371bc0a084b2a6ea282c42e378d2cbf6c1e50084"
+    },
+    "A13_capture": {
+      "path": "logs/device/T723-A13-capture.json",
+      "sha256": "eb25be28ace43be84f3d0118625209ca3a9559486d21068dc3a54b53cf52ab77"
+    },
+    "A13_parse": {
+      "path": "logs/device/T723-A13-parse-report.json",
+      "sha256": "d2d11e6525cb3c309f83f96c10537662c23b634ce4f83f2781c1a9270a40fd5c"
+    }
+  },
+  "frozen_inputs": {
+    "boot_image_sha256": "b78c7ba55b12373fcebcd4de2720ba54ffc043709cb3de7a781bfdbf9c976ff6",
+    "arguments_sha256": "c7ac172058a80333d5553a1ef4bea7ab912e923c22da4211bea5fd69ab27c54d",
+    "parser_sha256": "955af4ec7b3664d99fac97376ea2e185f60cbfaa4222cd798503fa133dbbf762"
+  }
+}

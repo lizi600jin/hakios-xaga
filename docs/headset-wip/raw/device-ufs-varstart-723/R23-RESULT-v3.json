@@ -1,0 +1,115 @@
+{
+ "trial": 723,
+ "kind": "R23 v3 final",
+ "supersedes": "logs/R23-RESULT.json (old six cases)",
+ "parser": "none; platform-level only",
+ "device_touched": false,
+ "cases": [
+  {
+   "case": "start=1",
+   "cdb": 1,
+   "rings": 1,
+   "verdict": "PASS",
+   "memcmp_8192": "PASS"
+  },
+  {
+   "case": "start=2",
+   "cdb": 2,
+   "rings": 1,
+   "verdict": "PASS",
+   "memcmp_8192": "PASS"
+  },
+  {
+   "case": "start=14",
+   "cdb": 14,
+   "rings": 1,
+   "verdict": "PASS",
+   "memcmp_8192": "PASS"
+  },
+  {
+   "case": "start=15",
+   "rings": 0,
+   "writes": 0,
+   "verdict": "REFUSED",
+   "reason": "outside geometry"
+  },
+  {
+   "case": "UINT32_MAX",
+   "rings": 0,
+   "writes": 0,
+   "verdict": "REFUSED",
+   "reason": "outside geometry"
+  },
+  {
+   "case": "absent",
+   "cdb": 1,
+   "rings": 1,
+   "verdict": "PASS",
+   "reason": "default 1"
+  },
+  {
+   "case": "explicit 0",
+   "rings": 0,
+   "writes": 0,
+   "verdict": "REFUSED",
+   "reason": "lba 0 has no reference"
+  },
+  {
+   "case": "2^32+2",
+   "rings": 0,
+   "writes": 0,
+   "verdict": "REFUSED",
+   "reason": "out of range before narrowing"
+  },
+  {
+   "case": "start=3",
+   "rings": 0,
+   "writes": 0,
+   "verdict": "REFUSED",
+   "reason": "lba 4 has no reference"
+  },
+  {
+   "case": "start=2 swapped",
+   "cdb": 2,
+   "rings": 1,
+   "verdict": "REJECTED",
+   "ctl": "0x304",
+   "state": 3
+  }
+ ],
+ "case_count": 10,
+ "success_starts": [
+  1,
+  2,
+  14
+ ],
+ "memcmp_all_8192": "PASS for all three",
+ "adapter": {
+  "file": "kernel-src/bsd/dev/ufs_twoblock/hakios.mt6895_ufs_twoblock.c",
+  "sha256": "6d5d8c8c0918f89401194434121afff9f4dcdfdfb1c798501982660031fe9e51",
+  "matches_host_copy": true
+ },
+ "reference_table": {
+  "file": "kernel-src/bsd/dev/ufs_varread/metadata/ufs_varread_reference.h",
+  "sha256": "9745771217c402b43b3b291b2c0bb4723a83aec49b2d3f8d9cfc4b528cf8dcae",
+  "known_lbas": [
+   1,
+   2,
+   3,
+   14,
+   15
+  ]
+ },
+ "contract": {
+  "file": "kernel-src/bsd/dev/ufs_twoblock/support/ufs_read_contract.h",
+  "sha256": "0ae2d9f5c38591bc97d95b379d77efbfca39febf71c2d5ef42b3ceb3814ef171",
+  "UR_TRIAL": 723
+ },
+ "kernel_image": {
+  "bytes": 15357360,
+  "sha256": "646e211bf70bafa037994def7c2dc46f860b3e9588030f5e2948cf2a0d1c6c24",
+  "build_rc": 0,
+  "build_log": "logs/kernel-build-v3-final/stdout.log"
+ },
+ "r22_regression": "kernel-build-v2-clean superseded by v3; R22 reference still passes"
+}

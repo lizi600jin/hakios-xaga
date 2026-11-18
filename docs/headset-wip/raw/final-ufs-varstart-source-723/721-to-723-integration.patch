@@ -1,0 +1,99 @@
+--- a/kernel-integration/bsd/conf/files
++++ b/kernel-integration/bsd/conf/files
+@@ -704,3 +704,4 @@
+ 
+ bsd/dev/hakios.mt6895_ufs_capacity.c standard
+ bsd/dev/ufs_varread/hakios.mt6895_ufs_varread.c standard
++bsd/dev/ufs_twoblock/hakios.mt6895_ufs_twoblock.c standard
+--- a/kernel-integration/bsd/dev/hakios.input.c
++++ b/kernel-integration/bsd/dev/hakios.input.c
+@@ -218,6 +218,7 @@
+ };
+ 
+ extern void hakios_mt6895_ufs_varread_init(void);
++extern void hakios_mt6895_ufs_twoblock_init(void);
+ 
+ void
+ hakios_input_init(void)
+@@ -231,6 +232,7 @@
+ 	hakios_cpufreq_init();
+ 	hakios_mt6895_ufs_capacity_init();
+ 	hakios_mt6895_ufs_varread_init();
++	hakios_mt6895_ufs_twoblock_init();
+ 	hakios_virtio_input_init();
+ 	hakios_goodix_init();
+ 	hakios_tcm_init();
+--- a/kernel-integration/osfmk/arm64/loader_return.c
++++ b/kernel-integration/osfmk/arm64/loader_return.c
+@@ -61,6 +61,7 @@
+ extern void hakios_mt6895_headset_quiesce(void);
+ extern void hakios_mt6895_ufs_capacity_quiesce(void);
+ extern void hakios_mt6895_ufs_varread_quiesce(void);
++extern void hakios_mt6895_ufs_twoblock_quiesce(void);
+ extern void hakios_mt6895_headset_stop(void);
+ extern void hakios_ufs_quiesce(void);
+ extern void hakios_var_save_on_return(void);   /* drivers/storage/hakios.ufs.c: the data volume into the flash */
+@@ -377,6 +378,7 @@
+ 	hakios_mt6895_headset_quiesce(); /* software stop only: other CPUs may not all have stopped */
+ 	hakios_mt6895_ufs_capacity_quiesce(); /* software STOP/shared lease only; no controller access */
+ 	hakios_mt6895_ufs_varread_quiesce(); /* software STOP/shared lease only; no controller access */
++	hakios_mt6895_ufs_twoblock_quiesce(); /* software STOP/shared lease only; no controller access */
+ #endif
+ 	hakios_ufs_quiesce();          /* this kernel's requests to the storage done, UEFI's list as it was, for the log */
+ 	hakios_adreno_quiesce();       /* the GPU block, if it was started, has tables in memory that is about to be reused */
+--- a/loader/mtkloader.c
++++ b/loader/mtkloader.c
+@@ -2490,7 +2490,7 @@
+  * linearized and written back to RAM by XNU. Save it, show its end, then reset into Android.
+  */
+ 
+-/* Trial721 only. No UFS access is allowed on return before this guard. */
++/* Trial723 only. No UFS access is allowed on return before this guard. */
+ static void ufs_read_guard_barrier(void *unused)
+ {
+     (void)unused;
+@@ -2504,8 +2504,12 @@
+     _Static_assert(UFS_AREA_PA + UFS_UCD_OFFSET == UR_UCD_PA, "fixed UCD");
+     _Static_assert(UCD_SIZE == UR_UCD_BYTES, "fixed UCD size");
+     _Static_assert(UFS_AREA_PA + UFS_BUF_OFFSET == UR_DATA_PA, "fixed DMA scratch");
++    /* Two logical blocks must fit one request: inside the slot buffer and one PRD. */
++    _Static_assert(2u * UR_BLOCK_BYTES <= UFS_SLOT_BUFFER, "two blocks fit the slot buffer");
++    _Static_assert(2u * UR_BLOCK_BYTES <= UFS_PRD_MAX, "two blocks fit a single PRD");
++    _Static_assert(2u * UR_BLOCK_BYTES == 8192u, "two blocks are 8192 bytes");
+ #if !defined(UFS_USE_LK_LIST) || UFS_USE_LK_LIST != 1
+-#error Trial721 requires the existing LK transfer list
++#error Trial723 requires the existing LK transfer list
+ #endif
+     volatile struct ur_lease *r = (volatile struct ur_lease *)(uintptr_t)UR_LEASE_PA;
+     r->magic = 0;
+@@ -2521,7 +2525,7 @@
+         for (;;) { __asm__ volatile("wfe"); }
+     }
+     ur_guard_initialize(r, ufs_read_guard_barrier, 0);
+-    out("ufs-read guard: fresh trial721 lease; predecessor READ verified\n");
++    out("ufs-read guard: fresh trial723 lease; predecessor READ verified\n");
+ #endif
+ }
+ 
+--- a/loader/ufs_read_contract.h
++++ b/loader/ufs_read_contract.h
+@@ -8,7 +8,7 @@
+ #include <stdbool.h>
+ #include <stddef.h>
+ 
+-#define UR_TRIAL 721u
++#define UR_TRIAL 723u
+ #define UR_MAGIC 0x554c5345u
+ #define UR_VERSION 1u
+ #define UR_LIST_PA UINT64_C(0x51266400)
+--- a/loader/ufs_return_audit.h
++++ b/loader/ufs_return_audit.h
+@@ -18,7 +18,7 @@
+ {
+     char text[192];size_t n=0;
+     if (!out || !ur_loader_may_use_storage(r)) return 0;
+-    if (!ur_audit_text(text,sizeof(text),&n,"\nmt6895-ufs-varread: return-gate magic=0x") ||
++    if (!ur_audit_text(text,sizeof(text),&n,"\nmt6895-ufs-twoblock: return-gate magic=0x") ||
+         !ur_audit_u32(text,sizeof(text),&n,r->magic,true) ||
+         !ur_audit_text(text,sizeof(text),&n," version=") ||
+         !ur_audit_u32(text,sizeof(text),&n,r->version,false) ||

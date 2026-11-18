@@ -1,0 +1,155 @@
+{
+  "trial": 723,
+  "R22": "ufs-multiblock-read-20261118",
+  "R23": "ufs-varstart-read-20261118",
+  "frozen_files": {
+    "raw/final-ufs-varstart-source-723/source/ufs_twoblock/codec/ufs_two_block_codec.h": {
+      "input": "R23/kernel-src/bsd/dev/ufs_twoblock/codec/ufs_two_block_codec.h",
+      "bytes": 1672,
+      "sha256": "4daee22b3e72949d35814d5e74116d6a8d1d856ea55d5d5aed8ae28f717956c0"
+    },
+    "raw/final-ufs-varstart-source-723/source/ufs_twoblock/engine/ufs_two_block_engine.h": {
+      "input": "R23/kernel-src/bsd/dev/ufs_twoblock/engine/ufs_two_block_engine.h",
+      "bytes": 16377,
+      "sha256": "ea88661e1bf6c5b9745dd3b4d2f3b4892183d57f962a0c59288401e17eba05e6"
+    },
+    "raw/final-ufs-varstart-source-723/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c": {
+      "input": "R23/kernel-src/bsd/dev/ufs_twoblock/hakios.mt6895_ufs_twoblock.c",
+      "bytes": 16685,
+      "sha256": "6d5d8c8c0918f89401194434121afff9f4dcdfdfb1c798501982660031fe9e51"
+    },
+    "raw/final-ufs-varstart-source-723/source/ufs_twoblock/support/ufs_read_contract.h": {
+      "input": "R23/kernel-src/bsd/dev/ufs_twoblock/support/ufs_read_contract.h",
+      "bytes": 4684,
+      "sha256": "0ae2d9f5c38591bc97d95b379d77efbfca39febf71c2d5ef42b3ceb3814ef171"
+    },
+    "raw/final-ufs-varstart-source-723/source/ufs_twoblock/support/ufs_read_engine.h": {
+      "input": "R23/kernel-src/bsd/dev/ufs_twoblock/support/ufs_read_engine.h",
+      "bytes": 11027,
+      "sha256": "81aeee096c339fbbf61aa23bf248b1fa24aa3b38e4c5ce26d642d35cd3afc7df"
+    },
+    "raw/final-ufs-varstart-source-723/source/ufs_twoblock/support/ufs_service_lease.h": {
+      "input": "R23/kernel-src/bsd/dev/ufs_twoblock/support/ufs_service_lease.h",
+      "bytes": 3236,
+      "sha256": "05432b2c8c295157ca0cfc21a9ae7069ee030814ea398a3bbaaab960d5d9a0bd"
+    },
+    "raw/final-ufs-varstart-source-723/source/ufs_varread/ufs_variable_read_codec.h": {
+      "input": "R23/kernel-src/bsd/dev/ufs_varread/ufs_variable_read_codec.h",
+      "bytes": 6546,
+      "sha256": "6c7e531ec4b52f90a7a75a454fbb614263ed9b88b6ac74d4f783cdccb83d8098"
+    },
+    "raw/final-ufs-varstart-source-723/source/ufs_varread/metadata/ufs_varread_reference.h": {
+      "input": "R23/kernel-src/bsd/dev/ufs_varread/metadata/ufs_varread_reference.h",
+      "bytes": 1523,
+      "sha256": "9745771217c402b43b3b291b2c0bb4723a83aec49b2d3f8d9cfc4b528cf8dcae"
+    },
+    "raw/final-ufs-varstart-source-723/tests/test-ufs-twoblock-platform.c": {
+      "input": "R23/platform/test-ufs-twoblock-platform.c",
+      "bytes": 14221,
+      "sha256": "6b7de501a4ed37190af67e98eaddb2abf2fbeec19e7c699147152fef67bfdd17"
+    },
+    "raw/final-ufs-varstart-source-723/tests/ufs_twoblock_test_env.h": {
+      "input": "R23/platform/ufs_twoblock_test_env.h",
+      "bytes": 755,
+      "sha256": "785a7853651a94dba043e14d377b8aa06bd0c27c58d1b1657e2fd1cb142884fb"
+    },
+    "raw/final-ufs-varstart-source-723/tests/test-ufs-two-block-codec.c": {
+      "input": "R22/codec/test-ufs-two-block-codec.c",
+      "bytes": 3954,
+      "sha256": "e1c0a54e0bd59f2259ba65df47e940b7e6102ec5f8531265bade0f27a668d38f"
+    },
+    "raw/final-ufs-varstart-source-723/tests/test-ufs-two-block-engine.c": {
+      "input": "R22/engine/test-ufs-two-block-engine.c",
+      "bytes": 24448,
+      "sha256": "ee3e21ded36d7bad32d893dfaa71ea8080b626af86f379ef9043c8e0f15110d6"
+    },
+    "raw/final-ufs-varstart-source-723/host-tools/parse-hlog-723.py": {
+      "input": "R23/host-tools/parse-hlog-723.py",
+      "bytes": 13131,
+      "sha256": "955af4ec7b3664d99fac97376ea2e185f60cbfaa4222cd798503fa133dbbf762"
+    },
+    "raw/final-ufs-varstart-source-723/arguments723.json": {
+      "input": "R23/arguments723.json",
+      "bytes": 1429,
+      "sha256": "c7ac172058a80333d5553a1ef4bea7ab912e923c22da4211bea5fd69ab27c54d"
+    },
+    "raw/device-ufs-varstart-723/R23-RESULT-v3.json": {
+      "input": "R23/logs/R23-RESULT-v3.json",
+      "bytes": 2368,
+      "sha256": "dcb6478de6d1f2532d3c2769d0ec15dd4a8c4022857f5196e09e899057a05f9f"
+    },
+    "raw/device-ufs-varstart-723/package-723.json": {
+      "input": "R23/trial723/package-723.json",
+      "bytes": 1378,
+      "sha256": "18f6a1c903d1b41b86fcdb3098bd2d3e5dde898f958577edda6aa67a8631b687"
+    },
+    "raw/device-ufs-varstart-723/parser-723-acceptance.json": {
+      "input": "R23/logs/parser-723-acceptance.json",
+      "bytes": 4435,
+      "sha256": "02d5bc9143efe614317f843e57ebeb12d21f899479033c975815b501f8813b18"
+    },
+    "raw/device-ufs-varstart-723/R23-FINAL-INDEX.json": {
+      "input": "R23/logs/R23-FINAL-INDEX.json",
+      "bytes": 5249,
+      "sha256": "00edaf4724674537cc076767f65a2d3aaf1bb5888468d66e2cf7e7c924504acf"
+    },
+    "raw/device-ufs-varstart-723/T723-A13-parse-report.json": {
+      "input": "R23/logs/device/T723-A13-parse-report.json",
+      "bytes": 1910,
+      "sha256": "d2d11e6525cb3c309f83f96c10537662c23b634ce4f83f2781c1a9270a40fd5c"
+    },
+    "raw/device-ufs-varstart-723/T723-A12-verdict.json": {
+      "input": "R23/logs/device/T723-A12-verdict.json",
+      "bytes": 528,
+      "sha256": "3e969fe04053b9af509d7785371bc0a084b2a6ea282c42e378d2cbf6c1e50084"
+    },
+    "raw/device-ufs-varstart-723/T722-A13-parse-report.json": {
+      "input": "R22/logs/device/T722-A13-parse-report.json",
+      "bytes": 908,
+      "sha256": "27f77d58f38acbc3c72abe44e1ef46273a714ae9f5db6b2dbbf38e4ef3f55ead"
+    }
+  },
+  "integration_base": "../final-ufs-varread-source-721/source",
+  "integration": {
+    "kernel-integration/bsd/conf/files": {
+      "from_721": "3eab17da7663d7bd06805462fb77546db3f0ff8ff8dbea08b30bc62c0a1e46c9",
+      "to_723": "9697cdef00920605f3f1fa5e236407acdaf1e6d6a32e1e8d7da727767d98c2da"
+    },
+    "kernel-integration/bsd/dev/hakios.input.c": {
+      "from_721": "40c2267176abb103432f2cb09b0cf853132796c492b82dd33ebc7fcf7e6f08d8",
+      "to_723": "f0581fef9942054f04f773937fe3f4a872cd731f17043dffa0a605f279c944c3"
+    },
+    "kernel-integration/osfmk/arm64/loader_return.c": {
+      "from_721": "669f47207984d40b688f230506c1d93599dbd6b7aa09f002e731a7340995f20f",
+      "to_723": "3f43323ab2fdd09d0559b7322a5a74a5a7a706609bcb5ec604f4e53eb61e5ffe"
+    },
+    "loader/mtkloader.c": {
+      "from_721": "d17c9e2518f523ec960be9499e7f4a1cc3c23e5c5a3ed20ca6252ea29220fc3b",
+      "to_723": "2029e02f203f0b9d24199b66a0d9c4e25fc888d93895dae77bfb559c6ba41065"
+    },
+    "loader/ufs_read_contract.h": {
+      "from_721": "bb65cba5586eca6b530f2f442b01b3f9983855a546a811cf44152d23847c7246",
+      "to_723": "0ae2d9f5c38591bc97d95b379d77efbfca39febf71c2d5ef42b3ceb3814ef171"
+    },
+    "loader/ufs_return_audit.h": {
+      "from_721": "f9d2f854aab8fe988f02d2c50a2b47baf09673917a7b469620aa30210675c560",
+      "to_723": "6eb53f75444a1eaf97cd62021ebaa368b75c7987eb7536d91d0a6b2fa419c3b3"
+    },
+    "loader/ufs_loader_guard.h": {
+      "from_721": "517c9bc0eea2af3d681ca6c754cc7ec891089f175a37307700190cdf563af1ce",
+      "to_723": "517c9bc0eea2af3d681ca6c754cc7ec891089f175a37307700190cdf563af1ce"
+    },
+    "loader/start.S": {
+      "from_721": "8d27dfa271a4c5f5be540dad0ac7a124a46ba911c5a109c455a100e9ffa385cd",
+      "to_723": "8d27dfa271a4c5f5be540dad0ac7a124a46ba911c5a109c455a100e9ffa385cd"
+    },
+    "loader/link.ld": {
+      "from_721": "0936f28bac65f27657651a16102459c25dc7c0839b052cc351b51b552fd73fe4",
+      "to_723": "0936f28bac65f27657651a16102459c25dc7c0839b052cc351b51b552fd73fe4"
+    },
+    "loader/board.h": {
+      "from_721": "5b2cf1392c2262a800ab270846b5dc8b895b966098166e2677261d1432dee5aa",
+      "to_723": "5b2cf1392c2262a800ab270846b5dc8b895b966098166e2677261d1432dee5aa"
+    }
+  }
+}

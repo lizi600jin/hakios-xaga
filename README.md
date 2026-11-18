@@ -219,6 +219,8 @@ HAKIOS_SERIAL=$S mtk/tools/xaga-carve.sh --gib 2.5 --write
 
 ### UFS
 
+XNU 内核已在 LUN 2 上完成两次双块 READ(10) 实机验证，起始 LBA 分别为 1 和 2。命令回读、逐块 CRC32 和原厂恢复见 [Trial722–723 交付记录](docs/headset-wip/UFS-VARSTART-DELIVERY-20261118.md)。
+
 | 症状 | 根因 |
 |---|---|
 | `HCS` 恒 `0x0`，写 `HCE` 读不回 1 | 电源域和参考时钟由 TFA 通过 SMC 授予，纯写寄存器无效。`MTK_SIP_UFS_CONTROL = 0xC2000276` |

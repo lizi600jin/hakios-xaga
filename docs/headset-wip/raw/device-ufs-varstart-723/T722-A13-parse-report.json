@@ -1,0 +1,40 @@
+{
+  "parser": "trial722-v2",
+  "verdicts": {
+    "kernel_final": {
+      "failed": 0,
+      "control": "0x2",
+      "shared": 1
+    },
+    "loader_gate": {
+      "trial": 722,
+      "state": 2,
+      "allowed": 1
+    }
+  },
+  "pre_post": {
+    "pre_sha256": "200493054b8250bc625125f522fad47b0eba0c33e6c9012d0ebf3194e103849e",
+    "post_sha256": "ce080078198c54ecda9c188253b1dd550d3a5443637860351544457f56dc9850",
+    "changed": true
+  },
+  "boot_args_match": true,
+  "validated": {
+    "start_lba": 1,
+    "blocks": 2,
+    "bytes": 8192,
+    "response_valid": "0x1fff",
+    "block_crcs": {
+      "1": "0x28a2836c",
+      "2": "0xd024e0c"
+    }
+  },
+  "raw": {
+    "bytes": 4198400,
+    "sha256": "ce080078198c54ecda9c188253b1dd550d3a5443637860351544457f56dc9850"
+  },
+  "body": {
+    "bytes": 497512,
+    "sha256": "6d20a83ac818c9994166eca5ba197f9de7207d46d58a8ffa82f20f2201605134"
+  },
+  "status": "PASS"
+}
