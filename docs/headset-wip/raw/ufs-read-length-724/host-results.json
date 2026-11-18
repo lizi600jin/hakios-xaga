@@ -1,0 +1,94 @@
+{
+  "trial": 724,
+  "scope": "host model, cross-build and offline package verification",
+  "compiler": "Ubuntu clang version 21.1.8 (6ubuntu1)",
+  "engine": {
+    "checks_per_build": 748,
+    "scenarios": 27,
+    "fault_injection_points": 23
+  },
+  "platform": {
+    "builds": [
+      "strict",
+      "ASan/UBSan"
+    ],
+    "fixtures": [
+      "synthetic",
+      "frozen 64 KiB reference window"
+    ],
+    "single_block_start_lbas": [
+      1,
+      2,
+      3,
+      14,
+      15
+    ],
+    "two_block_start_lbas": [
+      1,
+      2,
+      14
+    ],
+    "in_geometry_without_references_rejected_before_mapping": 23,
+    "absent_args": {
+      "start_lba": 1,
+      "blocks": 2
+    }
+  },
+  "kernel": {
+    "target": "xnu-build.sh -j4 build",
+    "rc": 0,
+    "clean_build": true,
+    "adapter_compiled": true,
+    "kernel_linked": true
+  },
+  "loader": {
+    "stages": [
+      "clang start.S",
+      "clang mtkloader.c",
+      "ld.lld"
+    ],
+    "return_formatter_cases": 8
+  },
+  "parser": {
+    "cases": 57,
+    "case_exit_codes": {
+      "0": 4,
+      "1": 51,
+      "2": 2
+    },
+    "sha256": "99574cfdcc16d62b2122a488adaf9ee6ee418f2ef7b9851bfcf4f63db31e571e",
+    "adapter_output_plus_loader_formatter": "FORMAT_PASS_ONLY",
+    "observed_host_request": {
+      "start_lba": 3,
+      "blocks": 1,
+      "bytes": 4096,
+      "block_crcs": {
+        "3": "0x58f10429"
+      },
+      "response_valid": "0x1fff",
+      "kernel_final": {
+        "failed": 0,
+        "control": "0x2",
+        "shared": 1
+      },
+      "loader_gate": {
+        "trial": 724,
+        "state": 2,
+        "allowed": 1
+      }
+    },
+    "archived_723_capture": "INCOMPLETE_OR_REJECTED"
+  },
+  "source_sha256": {
+    "source/ufs_varread/ufs_variable_read_codec.h": "6c7e531ec4b52f90a7a75a454fbb614263ed9b88b6ac74d4f783cdccb83d8098",
+    "source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c": "585f4372ebf94c8b3f12b8d728aa4a4dc300032a20b306020a21c891266a1e00",
+    "source/ufs_twoblock/engine/ufs_two_block_engine.h": "865350b1645eb5b5467145502130b96522eccf28fb56f538b76138f79d4d331f",
+    "source/ufs_twoblock/support/ufs_read_engine.h": "81aeee096c339fbbf61aa23bf248b1fa24aa3b38e4c5ce26d642d35cd3afc7df",
+    "source/ufs_twoblock/support/ufs_read_contract.h": "851a999b6b9cb94aab9b068e237d8b22d75f54ab83ab3f0d45e1ec17cc9c607e",
+    "source/ufs_twoblock/support/ufs_service_lease.h": "05432b2c8c295157ca0cfc21a9ae7069ee030814ea398a3bbaaab960d5d9a0bd",
+    "source/ufs_twoblock/codec/ufs_two_block_codec.h": "4daee22b3e72949d35814d5e74116d6a8d1d856ea55d5d5aed8ae28f717956c0",
+    "source/ufs_varread/metadata/ufs_varread_reference.h": "9745771217c402b43b3b291b2c0bb4723a83aec49b2d3f8d9cfc4b528cf8dcae",
+    "loader-src/mtk/loader/mtkloader.c": "f8c4ae91af77938fa558757f2b849cfffdeb6dbc65b4ab4470210717ccf79452",
+    "loader-src/mtk/loader/ufs_read_contract.h": "851a999b6b9cb94aab9b068e237d8b22d75f54ab83ab3f0d45e1ec17cc9c607e"
+  }
+}

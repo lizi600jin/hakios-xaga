@@ -1,0 +1,21 @@
+{
+  "trial": 724,
+  "base_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=724 headset=0 mtk_ufs_twoblock=1 mtk_ufs_start_lba=3 mtk_ufs_blocks=1 mtk_ufs_varread=0 mtk_ufs_probe=0 mtk_ufs_read=0 mtk_ufs_service=0 mtk_ufs_capacity=0 loader_return_after=150",
+  "extra_arguments": "cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=724 headset=0 mtk_ufs_twoblock=1 mtk_ufs_start_lba=3 mtk_ufs_blocks=1 mtk_ufs_varread=0 mtk_ufs_probe=0 mtk_ufs_read=0 mtk_ufs_service=0 mtk_ufs_capacity=0",
+  "full_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=724 headset=0 mtk_ufs_twoblock=1 mtk_ufs_start_lba=3 mtk_ufs_blocks=1 mtk_ufs_varread=0 mtk_ufs_probe=0 mtk_ufs_read=0 mtk_ufs_service=0 mtk_ufs_capacity=0 loader_return_after=150 hakios_kver=2.1.13-hakios-darwin22.5-mt6895-g6a51ef21-dirty",
+  "base_bytes": 295,
+  "full_bytes": 355,
+  "nul_inclusive_bytes": 356,
+  "boot_line_limit": 608,
+  "headroom_bytes": 252,
+  "kernel_ver_bytes": 48,
+  "kernel_ver_sha256": "9eef8494e321f004ef3d80d3969dee540d10f03dd1e8616482b50d3641553c6c",
+  "expected_start_lba": 3,
+  "expected_blocks": 1,
+  "expected_lbas": [
+    3
+  ],
+  "expected_crcs": {
+    "lba3": "0x58f10429"
+  }
+}
