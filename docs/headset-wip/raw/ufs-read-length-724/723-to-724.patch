@@ -1,0 +1,508 @@
+--- a/source/ufs_twoblock/engine/ufs_two_block_engine.h
++++ b/source/ufs_twoblock/engine/ufs_two_block_engine.h
+@@ -1,5 +1,5 @@
+-/* Host transaction candidate for a two-block READ(10), derived from the frozen 721 engine.
+- * Covers both logical blocks during snapshot, prefill, sampling, and restoration.
++/* Trial724 host model for one READ(10) of one or two blocks.
++ * All shared data accesses are bounded by the validated command length.
+  * The controller and memory accesses are supplied by callbacks.
+  */
+ #ifndef MT6895_UFS_TWO_BLOCK_ENGINE_H
+@@ -41,7 +41,7 @@
+     uint32_t data_words_attempted, data_words_valid;   /* exact counts, 0..2048 */
+     uint32_t lba, blocks, block_bytes;      /* decoded, VRQ_DELIVERED only */
+     uint32_t response[VRQ_RESP_WORDS];      /* raw response words, kept for the parser */
+-    uint8_t  data[VR2_TRANSFER_BYTES];       /* delivered payload */
++    uint8_t  data[VR2_TRANSFER_BYTES];       /* capacity; delivered length is blocks * block_bytes */
+     uint32_t data_crc32, reference_crc32;
+     bool reference_present;
+     enum vrq_data_match data_match;
+@@ -125,8 +125,19 @@
+            w[4] == (uint32_t)UR_LIST_PA && w[5] == 0 && w[6] == 0 && (w[7] & 1);
+ }
+ 
++/* The host candidate admits the same 16-LBA trial window for both lengths. */
++static inline bool vrq_make_read(const struct vr_request *request, const struct vr_limits *limits,
++                                 struct vr_command *command)
++{
++    if (!request || !limits || limits->lba_max_exclusive > vr_runtime_limits().lba_max_exclusive)
++        return false;
++    if (request->blocks == VR_BLOCKS)
++        return vr_make_read(request, limits, command);
++    return vr2_make_read(request, limits, command);
++}
++
+ static inline bool vrq_prepare(struct vrq_counters *ctr, const struct vrq_io *io,
+-                               const struct vr_command *c)
++                               const struct vr_command *c, uint32_t data_words)
+ {
+     /* Clear the WHOLE UCD first, exactly as the sealed 719 engine does. Writing only the
+      * eight UPIU words left a stale response descriptor intact, and it reached the ring.
+@@ -148,7 +159,7 @@
+         vrq_note(ctr,2);
+         if (!io->write_word(io->context, VRQ_UCD, 1024 + i*4, c->prd[i])) return false;
+     }
+-    for (unsigned i=0;i<VRQ_DATA_WORDS;i++) {
++    for (unsigned i=0;i<data_words;i++) {
+         vrq_note(ctr,2);
+         if (!io->write_word(io->context, VRQ_DATA, i*4, 0xa5a5a5a5u)) return false;
+     }
+@@ -157,7 +168,7 @@
+ 
+ /* Readback compares the whole descriptor, including the request length, LBA and PRD. */
+ static inline bool vrq_readback(struct vrq_counters *ctr, const struct vrq_io *io,
+-                                const struct vr_request *r, const struct vr_limits *lim)
++                                const struct vr_command *expected)
+ {
+     struct vr_command back;
+     uint32_t w;
+@@ -174,14 +185,15 @@
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_UCD, 1024 + i*4, &back.prd[i])) return false;
+     }
+-    return vr2_command_allowed(&back, r, lim);
+-}
+-
+-/* Verify the prefill over the entire 8 KiB span before issuing the request. */
+-static inline bool vrq_prefill_ok(struct vrq_counters *ctr, const struct vrq_io *io)
++    return memcmp(&back, expected, sizeof(back)) == 0;
++}
++
++/* Verify the prefill over the requested data span before issuing the request. */
++static inline bool vrq_prefill_ok(struct vrq_counters *ctr, const struct vrq_io *io,
++                                  uint32_t data_words)
+ {
+     uint32_t w;
+-    for (unsigned i=0;i<VRQ_DATA_WORDS;i++) {
++    for (unsigned i=0;i<data_words;i++) {
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_DATA, i*4, &w)) return false;
+         if (w != 0xa5a5a5a5u) return false;
+@@ -198,7 +210,7 @@
+ }
+ 
+ static inline bool vrq_restore(struct vrq_counters *ctr, const struct vrq_io *io,
+-                               struct vrq_workspace *saved)
++                               struct vrq_workspace *saved, uint32_t data_words)
+ {
+     uint32_t w;
+     if (!vrq_idle(ctr, io)) return false;
+@@ -206,7 +218,7 @@
+         vrq_note(ctr,2);
+         if (!io->write_word(io->context, VRQ_UCD, i*4, saved->baseline.ucd[i])) return false;
+     }
+-    for (unsigned i=0;i<VRQ_DATA_WORDS;i++) {
++    for (unsigned i=0;i<data_words;i++) {
+         vrq_note(ctr,2);
+         if (!io->write_word(io->context, VRQ_DATA, i*4, *vrq_saved_word(saved, i))) return false;
+     }
+@@ -220,7 +232,7 @@
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_UCD, i*4, &w) || w != saved->baseline.ucd[i]) return false;
+     }
+-    for (unsigned i=0;i<VRQ_DATA_WORDS;i++) {
++    for (unsigned i=0;i<data_words;i++) {
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_DATA, i*4, &w) || w != *vrq_saved_word(saved, i)) return false;
+     }
+@@ -236,10 +248,10 @@
+  * Safety steps preserved from the frozen 719 transaction: verify idle, snapshot, confirm the
+  * inherited baseline with ur_previous_read, sample table/UCD/data TWICE to prove nothing moved,
+  * then claim; prepare clears the whole UCD (including stale response bytes) and prefills the
+- * whole 8 KiB; readback must match this request exactly AND the prefill; every completion path
++ * requested data span; readback must match this request exactly AND the prefill; every completion path
+  * restores, compares and re-checks idle before finish is called.
+  *
+- * The completed READ(10) has 8192 bytes of payload. The host observes CPU sampling coverage.
++ * The completed READ(10) has 4096 or 8192 bytes of payload. The host observes CPU sampling coverage.
+  */
+ static inline bool vrq_stopped(struct vrq_counters *ctr, const struct vrq_io *io)
+ {
+@@ -270,7 +282,9 @@
+         !io->stopped || !io->ring || !io->barrier || !io->now_us) return;
+     const struct vr_request request = *r;
+     const struct vr_limits limits = *lim;
+-    if (!vr2_make_read(&request, &limits, &cmd)) return;
++    if (!vrq_make_read(&request, &limits, &cmd)) return;
++    const uint32_t data_words = request.blocks * VRQ_BLOCK_WORDS;
++    const uint32_t transfer_bytes = request.blocks * VR_BLOCK_BYTES;
+ 
+     /* 2. Idle, snapshot, inherited-baseline check, then a second sample proving stillness. */
+     if (vrq_stopped(ctr,io) || !vrq_idle(ctr,io)) return;
+@@ -283,11 +297,11 @@
+         if (!io->read_word(io->context, VRQ_UCD, i * 4, &saved->baseline.ucd[i])) return;
+     }
+     if (!ur_previous_read(&saved->baseline)) return;
+-    for (i = 0; i < VRQ_DATA_WORDS; i++) {
++    for (i = 0; i < data_words; i++) {
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_DATA, i * 4, vrq_saved_word(saved, i))) return;
+     }
+-    /* Confirm the table, command and both data blocks are stable before claiming. */
++    /* Confirm the table, command and the requested data words are stable before claiming. */
+     for (i = 0; i < 8; i++) {
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_TABLE, i * 4, &w) || w != saved->baseline.table[i]) return;
+@@ -296,7 +310,7 @@
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_UCD, i * 4, &w) || w != saved->baseline.ucd[i]) return;
+     }
+-    for (i = 0; i < VRQ_DATA_WORDS; i++) {
++    for (i = 0; i < data_words; i++) {
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_DATA, i * 4, &w) || w != *vrq_saved_word(saved, i)) return;
+     }
+@@ -309,12 +323,12 @@
+ 
+     /* 4. Place the validated request and verify both the command and the prefill. */
+     out->lba = request.lba; out->blocks = request.blocks; out->block_bytes = request.logical_block_bytes;
+-    if (!vrq_prepare(ctr, io, &cmd)) { out->result = VRQ_PREPARE_FAILED; goto clean; }
++    if (!vrq_prepare(ctr, io, &cmd, data_words)) { out->result = VRQ_PREPARE_FAILED; goto clean; }
+     out->prepared = true;
+     vrq_note(ctr,6); io->barrier(io->context);
+-    if (!vrq_readback(ctr, io, &request, &limits)) { out->result = VRQ_READBACK_FAILED; goto clean; }
++    if (!vrq_readback(ctr, io, &cmd)) { out->result = VRQ_READBACK_FAILED; goto clean; }
+     out->readback_ok = true;
+-    if (!vrq_prefill_ok(ctr, io)) { out->result = VRQ_READBACK_FAILED; goto clean; }
++    if (!vrq_prefill_ok(ctr, io, data_words)) { out->result = VRQ_READBACK_FAILED; goto clean; }
+     if (vrq_stopped(ctr,io) || !vrq_idle(ctr,io)) goto poison;
+ 
+     /* 5. Ring exactly once. */
+@@ -359,8 +373,8 @@
+         out->response_failures = ur_response_failures(image); }
+     if (out->ocs != 0u || out->response_failures != 0u) { out->result = VRQ_REJECTED; goto clean; }
+ 
+-    /* 8. Sample both blocks in order. */
+-    for (i=0;i<VRQ_DATA_WORDS;i++) {
++    /* 8. Sample the requested blocks in order. */
++    for (i=0;i<data_words;i++) {
+         out->data_words_attempted++;
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_DATA, i*4, &w)) {
+@@ -372,21 +386,22 @@
+     out->data_complete = true;
+     out->result = VRQ_DELIVERED;
+ clean:
+-    if (!vrq_restore(ctr, io, saved)) goto poison;
++    if (!vrq_restore(ctr, io, saved, data_words)) goto poison;
+     out->restored = true;
+     vrq_note(ctr,4);
+     if (!io->finish(io->context, true)) goto poison;
+     out->readback_restored = true;
+-    out->data_crc32 = vrq_crc32(out->data, VR2_TRANSFER_BYTES);
++    if (out->result == VRQ_DELIVERED && out->data_complete)
++        out->data_crc32 = vrq_crc32(out->data, transfer_bytes);
+     out->reference_crc32 = reference_crc32;
+     out->reference_present = reference_present;
+     /* Acceptance, reference-CRC agreement and byte comparison are three separate reports.
+-     * A checksum comparison is only meaningful for a FULL, accepted 8192-byte read, and only
++     * A checksum comparison is only meaningful for a full, accepted read, and only
+      * when a reference was actually supplied. A partial or rejected outcome never gets a
+      * complete-transfer reference label, and 0 is not silently treated as "no reference".
+      */
+     if (!reference_present)            out->data_match = VRQ_DATA_UNKNOWN;
+-    else if (out->result != VRQ_DELIVERED || !out->data_complete || out->data_words_valid != VRQ_DATA_WORDS)
++    else if (out->result != VRQ_DELIVERED || !out->data_complete || out->data_words_valid != data_words)
+                                        out->data_match = VRQ_DATA_UNKNOWN;
+     else if (out->data_crc32 == reference_crc32) out->data_match = VRQ_DATA_SAME_CHECKSUM;
+     else                               out->data_match = VRQ_DATA_DIFFERENT;
+--- a/tests/test-ufs-two-block-engine.c
++++ b/tests/test-ufs-two-block-engine.c
+@@ -1,4 +1,4 @@
+-/* Host-only test of the two-block engine candidate against a synthetic controller model.
++/* Host-only test of the one- or two-block engine candidate against a synthetic controller model.
+  * The model NEVER receives an expected LBA: it decodes the address from the command the
+  * engine actually placed in memory. That is the point of this harness.
+  */
+@@ -27,6 +27,7 @@
+     bool partial_response;
+     unsigned partial_data_after, data_reads_seen, response_reads_seen;
+     bool restore_fails, finish_fails, claim_fails;
++    uint32_t restore_fault_offset, corrupt_length_offset;
+     bool corrupt_second_prefill, corrupt_second_restore_readback;
+     unsigned restore_data_writes;
+     bool dbr_never_clears;
+@@ -44,6 +45,7 @@
+     bool saw_command, rung;
+     unsigned polls_seen;
+     uint32_t decoded_lba, decoded_blocks, decoded_opcode;
++    uint32_t accessible_words;  /* test guard independent of the placed descriptor */
+ };
+ static struct model M;
+ 
+@@ -55,6 +57,8 @@
+     M.regs[0x50/4] = (uint32_t)UR_LIST_PA; M.regs[0x54/4] = 0;
+     M.regs[0x58/4] = 0; M.regs[0x60/4] = 1u;
+     M.clock_step_us = 1;
++    M.accessible_words = DATA_WORDS;
++    M.restore_fault_offset = VR_BLOCK_BYTES;
+     for (uint32_t i = 0; i < DATA_WORDS; i++) M.data[i] = 0x13428c00u ^ i;
+     /* Inherited READ(10) baseline the sealed predicate requires to still hold. */
+     M.table[0] = 0x14000000u; M.table[2] = 0u; M.table[4] = (uint32_t)UR_UCD_PA;
+@@ -82,7 +86,8 @@
+                     ((uint32_t)upiu[20]<<8)|(uint32_t)upiu[21];
+     M.decoded_blocks = ((uint32_t)upiu[23]<<8)|(uint32_t)upiu[24];
+     const uint32_t bytes = ur_be32(upiu + 12);
+-    CHECK(M.decoded_blocks == 2 && bytes == 8192);
++    CHECK(M.decoded_blocks == 1 || M.decoded_blocks == 2);
++    CHECK(bytes == M.decoded_blocks * 4096u && bytes / 4u <= M.accessible_words);
+     CHECK(M.ucd[1024/4] == (uint32_t)UR_DATA_PA && M.ucd[1024/4+3] == bytes - 1);
+     CHECK((M.table[7] & 0xffffu) == 1u);
+     /* Response header: transaction type, LUN2, response0, status0, EHS0, segment0. */
+@@ -91,7 +96,7 @@
+     for (uint32_t i=0;i<13u;i++)
+         M.ucd[512/4 + i] = (uint32_t)resp[i*4] | ((uint32_t)resp[i*4+1]<<8) |
+                            ((uint32_t)resp[i*4+2]<<16) | ((uint32_t)resp[i*4+3]<<24);
+-    /* READ(10) moves 8192 bytes of payload: every byte is data and may legitimately change.
++    /* The CDB selects the payload length: every byte is data and may legitimately change.
+      * The model fills all of it from the address it decoded, never from a test argument.
+      * Partial coverage is NOT modelled by writing fewer words; it is injected by making the
+      * n-th sampling callback return false (see cb_read_word), so coverage is real.
+@@ -103,7 +108,7 @@
+             M.data[block * VRQ_BLOCK_WORDS + word] = seed;
+         }
+     }
+-    memcpy(M.answered, M.data, sizeof(M.answered));
++    memcpy(M.answered, M.data, bytes);
+     M.table[2] = 0;                 /* OCS 0: success */
+     M.regs[0x58/4] = 0;             /* doorbell cleared */
+ }
+@@ -133,6 +138,10 @@
+ static bool cb_read_word(void *c, int region, uint32_t off, uint32_t *out)
+ {
+     (void)c;
++    if (region == VRQ_DATA && (off % 4u != 0 || off / 4u >= M.accessible_words)) {
++        fprintf(stderr, "data callback outside the test window: offset %u\n", off);
++        exit(1);
++    }
+     /* Only after the command has completed: before that, the engine is still reading back
+      * the command it placed, and failing there is a different (earlier) failure mode.
+      */
+@@ -152,6 +161,14 @@
+         M.data_reads_seen++;
+     }
+     uint32_t i = off/4;
++    if (region == VRQ_UCD && M.corrupt_length_offset && off == M.corrupt_length_offset &&
++        !M.rung && M.data[0] == 0xa5a5a5a5u) {
++        /* Place the error on descriptor readback, after both snapshots and prefill. */
++        M.corrupt_length_offset = 0;
++        *out = M.ucd[i] ^ (off == 12u ? 0x00010000u : 1u);
++        INJECT("descriptor length readback");
++        return true;
++    }
+     if (region == VRQ_DATA && off == VR_BLOCK_BYTES) {
+         if (M.corrupt_second_prefill && !M.rung && M.data[i] == 0xa5a5a5a5u) {
+             M.corrupt_second_prefill = false;
+@@ -186,10 +203,14 @@
+ static bool cb_write_word(void *c, int region, uint32_t off, uint32_t v)
+ {
+     (void)c;
++    if (region == VRQ_DATA && (off % 4u != 0 || off / 4u >= M.accessible_words)) {
++        fprintf(stderr, "data callback outside the test window: offset %u\n", off);
++        exit(1);
++    }
+     if (M.fail_kind=='W' && ++M.call_ordinal==M.fail_at) { INJECT("write_word"); M.fail_kind=0; return false; }
+-    /* A one-shot write failure at the second block, after the model completed the command. */
+-    if (M.restore_fails && M.saw_command && region==VRQ_DATA && off==VR_BLOCK_BYTES) {
+-        M.restore_fails=false; INJECT("second-block restore write"); return false;
++    /* Fail one selected restore write after controller completion. */
++    if (M.restore_fails && M.saw_command && region==VRQ_DATA && off==M.restore_fault_offset) {
++        M.restore_fails=false; INJECT("data restore write"); return false;
+     }
+     uint32_t i = off/4;
+     if (region==VRQ_TABLE) { if (i>=8) return false; M.table[i]=v; return true; }
+@@ -268,6 +289,156 @@
+ }
+ static bool cb_stopped_real(void *c) { (void)c; return us_stopped(&LEASE); }
+ 
++struct memory_snapshot {
++    uint32_t table[8], ucd[UCD_WORDS], data[DATA_WORDS];
++};
++
++static void snapshot(struct memory_snapshot *before)
++{
++    memcpy(before->table, M.table, sizeof(before->table));
++    memcpy(before->ucd, M.ucd, sizeof(before->ucd));
++    memcpy(before->data, M.data, sizeof(before->data));
++}
++
++static void check_restored(const struct memory_snapshot *before)
++{
++    CHECK(memcmp(before->table, M.table, sizeof(before->table)) == 0);
++    CHECK(memcmp(before->ucd, M.ucd, sizeof(before->ucd)) == 0);
++    CHECK(memcmp(before->data, M.data, sizeof(before->data)) == 0);
++}
++
++static void test_request_lengths(void)
++{
++    const uint8_t zeros[VR_BLOCK_BYTES] = {0};
++    /* Python zlib.crc32 of the model payload ending at LBA 15. */
++    const uint32_t tail_crc[] = {0xeb5d061du, 0xf1647394u};
++    const struct vr_limits rt = vr_runtime_limits();
++    struct memory_snapshot before;
++    unsigned combinations = 0;
++
++    SCENARIO("all 31 permitted LBA and length combinations with guarded data callbacks");
++    for (uint32_t blocks = 1; blocks <= 2; blocks++) {
++        const uint32_t words = blocks * VRQ_BLOCK_WORDS;
++        const uint32_t bytes = blocks * VR_BLOCK_BYTES;
++        for (uint32_t lba = 0; lba <= rt.lba_max_exclusive - blocks; lba++) {
++            const bool tail = lba == rt.lba_max_exclusive - blocks;
++            struct vr_request r = {VR_LUN, lba, blocks, VR_BLOCK_BYTES};
++            struct vrq_io io = make_io();
++            model_reset();
++            M.accessible_words = words;
++            snapshot(&before);
++            memset(OUT.data, 0x55, sizeof(OUT.data));
++            vrq_run(&io, &r, &rt, &WS, &OUT, &CTR, tail, tail_crc[blocks - 1]);
++            CHECK(OUT.result == VRQ_DELIVERED && OUT.data_complete);
++            CHECK(CTR.ring == 1 && M.saw_command && M.decoded_opcode == 0x28u);
++            CHECK(M.decoded_lba == lba && M.decoded_blocks == blocks);
++            CHECK(OUT.lba == lba && OUT.blocks == blocks && OUT.block_bytes == VR_BLOCK_BYTES);
++            CHECK(OUT.data_words_valid == words && OUT.data_words_attempted == words);
++            CHECK(OUT.restored && OUT.readback_restored && M.restore_data_writes == words);
++            CHECK(memcmp(OUT.data, M.answered, bytes) == 0);
++            if (blocks == 1)
++                CHECK(memcmp(OUT.data + bytes, zeros, sizeof(zeros)) == 0);
++            if (tail) {
++                CHECK(OUT.data_crc32 == tail_crc[blocks - 1]);
++                CHECK(OUT.data_match == VRQ_DATA_SAME_CHECKSUM);
++            }
++            check_restored(&before);
++            combinations++;
++        }
++    }
++    CHECK(combinations == 31);
++}
++
++static void test_length_limits(void)
++{
++    const struct vrq_counters idle = {0};
++    const struct {
++        uint32_t lba, blocks, limit;
++    } invalid[] = {
++        {0, 0, 16}, {0, 3, 16}, {0, UINT32_MAX, 16}, {UINT32_MAX, 1, 16},
++        {UINT32_MAX, 2, 16}, {15, 2, 16}, {16, 1, 16}, {0, 1, 0}, {0, 2, 1},
++        {0, 1, 17}, {0, 2, 17}, {0, 1, UINT32_MAX}, {0, 2, UINT32_MAX}
++    };
++
++    SCENARIO("invalid lengths, tails and widened limits are refused before callbacks");
++    for (size_t i = 0; i < sizeof(invalid) / sizeof(invalid[0]); i++) {
++        struct vrq_io io = make_io();
++        struct vr_request r = {VR_LUN, invalid[i].lba, invalid[i].blocks, VR_BLOCK_BYTES};
++        struct vr_limits limit = {invalid[i].limit};
++        model_reset();
++        CHECK(run_one(&io, &r, &limit) == VRQ_REFUSED);
++        CHECK(memcmp(&CTR, &idle, sizeof(idle)) == 0 && M.clock_us == 0);
++    }
++    model_reset();
++    M.accessible_words = VRQ_BLOCK_WORDS;
++    struct vrq_io io = make_io();
++    struct vr_request r = {VR_LUN, 0, 1, VR_BLOCK_BYTES};
++    struct vr_limits limit = {1};
++    CHECK(run_one(&io, &r, &limit) == VRQ_DELIVERED && CTR.ring == 1);
++}
++
++static void test_length_faults(void)
++{
++    const uint32_t length_offsets[] = {12, 24, 1024 + 12};
++    const struct vr_limits rt = vr_runtime_limits();
++    struct memory_snapshot before;
++
++    SCENARIO("CDB count, UPIU byte length and PRD count each gate the doorbell at both sizes");
++    for (uint32_t blocks = 1; blocks <= 2; blocks++) {
++        const struct vr_request r = {VR_LUN, 3, blocks, VR_BLOCK_BYTES};
++        for (size_t k = 0; k < sizeof(length_offsets) / sizeof(length_offsets[0]); k++) {
++            struct vrq_io io = make_io();
++            model_reset();
++            M.accessible_words = blocks * VRQ_BLOCK_WORDS;
++            M.corrupt_length_offset = length_offsets[k];
++            snapshot(&before);
++            vrq_run(&io, &r, &rt, &WS, &OUT, &CTR, false, 0);
++            CHECK(OUT.result == VRQ_READBACK_FAILED && !OUT.readback_ok);
++            CHECK(M.corrupt_length_offset == 0 && CTR.ring == 0 && !OUT.issued);
++            CHECK(OUT.restored && OUT.readback_restored);
++            check_restored(&before);
++        }
++    }
++    SCENARIO("missing the last data word suppresses the CRC verdict for both lengths");
++    for (uint32_t blocks = 1; blocks <= 2; blocks++) {
++        const uint32_t words = blocks * VRQ_BLOCK_WORDS;
++        const struct vr_request r = {VR_LUN, 3, blocks, VR_BLOCK_BYTES};
++        struct vrq_io io = make_io();
++        model_reset();
++        M.accessible_words = words;
++        M.partial_data_after = words - 1;
++        snapshot(&before);
++        vrq_run(&io, &r, &rt, &WS, &OUT, &CTR, true, 0);
++        CHECK(OUT.result == VRQ_PARTIAL && !OUT.data_complete && M.partial_data_after == 0);
++        CHECK(CTR.ring == 1 && OUT.data_words_valid == words - 1 && OUT.data_words_attempted == words);
++        CHECK(OUT.reference_present && OUT.data_match == VRQ_DATA_UNKNOWN && OUT.data_crc32 == 0);
++        CHECK(OUT.readback_restored && M.restore_data_writes == words);
++        check_restored(&before);
++    }
++    SCENARIO("failed restore of the last active word poisons the lease for both lengths");
++    for (uint32_t blocks = 1; blocks <= 2; blocks++) {
++        const uint32_t words = blocks * VRQ_BLOCK_WORDS;
++        const struct vr_request r = {VR_LUN, 3, blocks, VR_BLOCK_BYTES};
++        struct vrq_io io = make_io();
++        model_reset();
++        M.accessible_words = words;
++        M.restore_fault_offset = (words - 1) * 4;
++        M.restore_fails = true;
++        memset(&LEASE, 0, sizeof(LEASE));
++        LEASE.publish = publish;
++        LEASE.context = &PUBLISHED;
++        PUBLISHED = 0;
++        io.claim = cb_claim_real;
++        io.finish = cb_finish_real;
++        io.stopped = cb_stopped_real;
++        CHECK(us_open(&LEASE, true));
++        vrq_run(&io, &r, &rt, &WS, &OUT, &CTR, true, 0);
++        CHECK(OUT.result == VRQ_UNCERTAIN && !OUT.restored && !M.restore_fails);
++        CHECK(CTR.ring == 1 && M.restore_data_writes == words - 1);
++        CHECK(PUBLISHED == UR_POISONED && OUT.data_match == VRQ_DATA_UNKNOWN);
++    }
++}
++
+ int main(void)
+ {
+     struct vr_limits rt = vr_runtime_limits();
+@@ -280,7 +451,7 @@
+       CHECK(run_one(&io,&bad,&rt)==VRQ_REFUSED);
+       CHECK(CTR.read_reg==0 && CTR.read_word==0 && CTR.write_word==0);
+       CHECK(CTR.claim==0 && CTR.ring==0 && CTR.finish==0);
+-      bad=(struct vr_request){VR_LUN,0,1u,4096};
++      bad=(struct vr_request){VR_LUN,0,3u,4096};
+       CHECK(run_one(&io,&bad,&rt)==VRQ_REFUSED && CTR.claim==0);
+       bad=(struct vr_request){VR_LUN,0,2,512u};
+       CHECK(run_one(&io,&bad,&rt)==VRQ_REFUSED && CTR.claim==0);
+@@ -332,13 +503,14 @@
+     { model_reset(); io=make_io();
+       struct vr_request r=req(5), other=req(6);
+       CHECK(run_one(&io,&r,&rt)==VRQ_DELIVERED && M.decoded_lba==5u);
+-      struct vr_command planted; struct vr_limits l=rt;
++      struct vr_command wanted, planted; struct vr_limits l=rt;
++      CHECK(vrq_make_read(&r,&l,&wanted));
+       CHECK(vr2_make_read(&other,&l,&planted));
+       for (unsigned i=0;i<8;i++) M.table[i]=planted.utrd[i];
+       for (unsigned i=0;i<8;i++) M.ucd[i]=vrq_get32le(planted.upiu+i*4);
+       for (unsigned i=0;i<4;i++) M.ucd[1024/4+i]=planted.prd[i];
+-      CHECK(!vrq_readback(&CTR,&io,&r,&l));
+-      CHECK(vrq_readback(&CTR,&io,&other,&l)); }
++      CHECK(!vrq_readback(&CTR,&io,&wanted));
++      CHECK(vrq_readback(&CTR,&io,&planted)); }
+ 
+     /* ---------- whole 8 KiB is payload, byte-for-byte ---------- */
+     SCENARIO("all 8192 bytes are payload and match the model byte-for-byte");
+@@ -522,6 +694,10 @@
+       CHECK(us_control(&LEASE)&US_POISON_BIT);
+       CHECK(PUBLISHED==UR_POISONED); }
+ 
++    test_request_lengths();
++    test_length_limits();
++    test_length_faults();
++
+     printf("PASS %u checks over %u scenarios, %u injection points fired\n",
+            checks, scenarios, inject_hits);
+     return 0;
