@@ -1,0 +1,246 @@
+diff --git a/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c b/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
+index 214fe3f..25af9e6 100644
+--- a/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
++++ b/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
+@@ -542,7 +542,7 @@ hakios_mt6895_ufs_twoblock_init(void)
+ 	}
+ 	uint32_t vfs = 0;
+ 	(void)PE_parse_boot_argn("mtk_ufs_vfs", &vfs, sizeof(vfs));
+-	if (vfs && (vfs != 1u || !range_mode || range_off != RANGE_VFS_OFFSET ||
++	if (vfs && (vfs > 2u || !range_mode || range_off != RANGE_VFS_OFFSET ||
+ 	    range_len != RANGE_VFS_LENGTH || range_cap != RANGE_VFS_LENGTH)) return;
+ 	if (mixed && (start != 3u || blocks != 1u)) return;
+ 	const struct vr_request requests[] = { pinned, { VR_LUN, 2u, 2u, VR_BLOCK_BYTES }, pinned };
+@@ -607,7 +607,7 @@ hakios_mt6895_ufs_twoblock_init(void)
+ 	       us_control(&twoblock_lease), shared_snapshot(&platform).state);
+ 
+ 	if (vfs) {
+-		range_register();
++		range_register(vfs == 2u);
+ 		return;
+ 	}
+ 
+diff --git a/source/ufs_twoblock/support/ufs_read_contract.h b/source/ufs_twoblock/support/ufs_read_contract.h
+index 6dbddb9..9367485 100644
+--- a/source/ufs_twoblock/support/ufs_read_contract.h
++++ b/source/ufs_twoblock/support/ufs_read_contract.h
+@@ -8,7 +8,7 @@
+ #include <stdbool.h>
+ #include <stddef.h>
+ 
+-#define UR_TRIAL 727u
++#define UR_TRIAL 728u
+ #define UR_MAGIC 0x554c5345u
+ #define UR_VERSION 1u
+ #define UR_LIST_PA UINT64_C(0x51266400)
+diff --git a/source/ufs_twoblock/ufs_range_vfs.h b/source/ufs_twoblock/ufs_range_vfs.h
+index 10cf141..bdc720c 100644
+--- a/source/ufs_twoblock/ufs_range_vfs.h
++++ b/source/ufs_twoblock/ufs_range_vfs.h
+@@ -37,6 +37,7 @@ range_read_bytes(int64_t offset, int64_t size, uint8_t *dst, uint32_t capacity,
+ #endif
+ static int range_major = -1;
+ static uint32_t range_ready;
++static bool range_user_only;
+ extern kern_return_t thread_terminate(thread_t);
+ 
+ static uint32_t
+@@ -69,10 +70,18 @@ static int
+ range_dev_read(dev_t dev, struct uio *uio, __unused int flags)
+ {
+ 	if (minor(dev) != 0 || !__atomic_load_n(&range_ready, __ATOMIC_ACQUIRE)) return ENXIO;
++	if (range_user_only && !uio_isuserspace(uio)) return EINVAL;
++	const int64_t offset = uio_offset(uio);
++	const int64_t requested = uio_resid(uio);
+ 	uint8_t copy[RANGE_VFS_LENGTH];
+ 	uint32_t done = 0;
+-	int error = range_read_bytes(uio_offset(uio), uio_resid(uio), copy, sizeof(copy), &done);
++	int error = range_read_bytes(offset, requested, copy, sizeof(copy), &done);
+ 	if (!error && done) error = uiomove((caddr_t)copy, (int)done, uio);
++	if (range_user_only) {
++		printf("mt6895-ufs-twoblock: userspace read pid=%d offset=%lld requested=%lld "
++		    "error=%d residual=%lld rings=%u\n", proc_selfpid(), (long long)offset,
++		    (long long)requested, error, (long long)uio_resid(uio), range_rings());
++	}
+ 	return error;
+ }
+ 
+@@ -133,7 +142,7 @@ done:
+ }
+ 
+ static void
+-range_register(void)
++range_register(bool user_only)
+ {
+ 	range_major = cdevsw_add(-24, &range_cdevsw);
+ 	if (range_major < 0 || !devfs_make_node(makedev(range_major, 0), DEVFS_CHAR, UID_ROOT,
+@@ -143,7 +152,12 @@ range_register(void)
+ 		us_stop(&twoblock_lease);
+ 		return;
+ 	}
++	range_user_only = user_only;
+ 	__atomic_store_n(&range_ready, 1u, __ATOMIC_RELEASE);
++	if (user_only) {
++		printf("mt6895-ufs-twoblock: userspace registered path=" RANGE_PATH " budget=1\n");
++		return;
++	}
+ 	printf("mt6895-ufs-twoblock: vfs registered path=" RANGE_PATH " budget=1\n");
+ 	thread_t thread;
+ 	if (kernel_thread_start(range_selftest, NULL, &thread) != KERN_SUCCESS) {
+diff --git a/tests/test-ufs-twoblock-platform.c b/tests/test-ufs-twoblock-platform.c
+index 059a0a6..57f7cdc 100644
+--- a/tests/test-ufs-twoblock-platform.c
++++ b/tests/test-ufs-twoblock-platform.c
+@@ -720,6 +720,29 @@ int main(int argc, char **argv)
+ 	hakios_mt6895_ufs_twoblock_quiesce();
+ 	assert(lease_record()->state == UR_RESTORED);
+ 	puts("Trial727 vnode callbacks, full-range compare, one-shot budget and restore PASS");
++	range_settings(RANGE_VFS_OFFSET, RANGE_VFS_LENGTH, RANGE_VFS_LENGTH);
++	model.vfs_mode = 2;
++	hakios_mt6895_ufs_twoblock_init();
++	assert(worker == NULL && range_ready && range_rings() == 0);
++	struct uio read_uio = {RANGE_VFS_OFFSET, RANGE_VFS_LENGTH, caller_buf + CALLER_PAD, 0, false};
++	assert(range_dev_read(fake_node.device, &read_uio, 0) == EINVAL && range_rings() == 0);
++	assert(range_dev_open(fake_node.device, FWRITE, 0, NULL) == EROFS && range_rings() == 0);
++	assert(range_dev_open(fake_node.device, FREAD, 0, NULL) == 0);
++	read_uio.user = true;
++	assert(range_dev_read(fake_node.device, &read_uio, 0) == 0 && read_uio.residual == 0);
++	assert(read_uio.moved == RANGE_VFS_LENGTH && model.rings == 1);
++	assert(!memcmp(caller_buf + CALLER_PAD, ref_window + RANGE_VFS_OFFSET, RANGE_VFS_LENGTH));
++	for (size_t i = 0; i < CALLER_PAD; i++) {
++		assert(caller_buf[i] == 0x5a && caller_buf[CALLER_PAD + RANGE_VFS_LENGTH + i] == 0x5a);
++	}
++	uint8_t end_byte = 0xa5;
++	struct uio end_uio = {range_window_size(), 1, &end_byte, 0, true};
++	assert(range_dev_read(fake_node.device, &end_uio, 0) == 0 && end_uio.residual == 1 && end_byte == 0xa5);
++	struct uio repeat = {RANGE_VFS_OFFSET, RANGE_VFS_LENGTH, caller_buf + CALLER_PAD, 0, true};
++	assert(range_dev_read(fake_node.device, &repeat, 0) == EBUSY && repeat.moved == 0 && range_rings() == 1);
++	hakios_mt6895_ufs_twoblock_quiesce();
++	assert(lease_record()->state == UR_RESTORED);
++	puts("Trial728 userspace uio, exact range, EOF and exhausted budget PASS");
+ 	free(ref_window);
+ 	assert(munmap(scratch, VR_SCRATCH_BYTES + PAGE_SIZE) == 0);
+ 
+diff --git a/tests/test-user-range-client.c b/tests/test-user-range-client.c
+new file mode 100644
+index 0000000..f92111a
+--- /dev/null
++++ b/tests/test-user-range-client.c
+@@ -0,0 +1,73 @@
++/* Run the shipped user program on the host with deterministic syscall results. */
++#include <assert.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <string.h>
++
++int range_client(int, char **, char **);
++int range_errno;
++enum fault { CLEAN, WRITE_ALLOWED, OPEN_FAILED, SHORT_READ, WRONG_DATA, OVERWROTE_GUARD, BAD_EOF, REPEAT_ALLOWED, CLOSE_FAILED };
++static enum fault fault;
++static uint8_t reference[770];
++static unsigned reads;
++static int opens, closes;
++
++int range_pid(void) { return 42; }
++int range_open(const char *path, int flags, int mode)
++{
++	assert(strcmp(path, "/dev/mt6895-ufs-range") == 0 && mode == 0);
++	++opens;
++	if (flags == 1) {
++		range_errno = 30;
++		return fault == WRITE_ALLOWED ? 7 : -1;
++	}
++	assert(flags == 0);
++	range_errno = 6;
++	return fault == OPEN_FAILED ? -1 : 7;
++}
++
++long range_pread(int fd, void *dst, size_t n, long long off)
++{
++	assert(fd == 7);
++	if (reads++ == 0) {
++		assert(off == 12031 && n == sizeof(reference));
++		memcpy(dst, reference, n);
++		uint8_t *bytes = dst;
++		if (fault == WRONG_DATA) bytes[0] ^= 1;
++		if (fault == OVERWROTE_GUARD) bytes[n] = 0;
++		return fault == SHORT_READ ? (long)n - 1 : (long)n;
++	}
++	if (reads == 2) {
++		assert(off == 65536 && n == 1);
++		return fault == BAD_EOF ? 1 : 0;
++	}
++	assert(reads == 3 && off == 12031 && n == sizeof(reference));
++	range_errno = 16;
++	return fault == REPEAT_ALLOWED ? (long)n : -1;
++}
++
++int range_close(int fd)
++{
++	assert(fd == 7);
++	closes++;
++	return fault == CLOSE_FAILED ? -1 : 0;
++}
++
++int main(int argc, char **argv)
++{
++	assert(argc == 2);
++	FILE *f = fopen(argv[1], "rb");
++	assert(f && fseek(f, 12031, SEEK_SET) == 0 && fread(reference, 1, sizeof(reference), f) == sizeof(reference));
++	assert(fclose(f) == 0);
++	for (int i = CLEAN; i <= CLOSE_FAILED; ++i) {
++		fault = (enum fault)i;
++		opens = closes = 0;
++		reads = 0;
++		int rc = range_client(0, NULL, NULL);
++		assert((rc == 0) == (fault == CLEAN));
++		assert(opens >= 1 && closes == (fault == OPEN_FAILED ? 0 : 1));
++		if (fault == CLEAN) assert(reads == 3);
++	}
++	puts("Trial728 user client: success accepted; eight faulty syscall cases rejected");
++	return 0;
++}
+diff --git a/tests/ufs_vfs_callbacks.h b/tests/ufs_vfs_callbacks.h
+index 624e039..8f9300b 100644
+--- a/tests/ufs_vfs_callbacks.h
++++ b/tests/ufs_vfs_callbacks.h
+@@ -4,6 +4,8 @@ static struct vnode fake_node;
+ static uint64_t ticks;
+ static unsigned readers, write_opens, terminates;
+ static void (*worker)(void *,wait_result_t);
++int uio_isuserspace(struct uio *u) { return u->user ? 1 : 0; }
++int proc_selfpid(void) { return 42; }
+ int us_eno(void) { return ENODEV; }
+ int64_t uio_offset(struct uio *u) { return u->offset; }
+ int64_t uio_resid(struct uio *u) { return u->residual; }
+@@ -43,7 +45,7 @@ int vn_rdwr(int rw,vnode_t node,caddr_t buf,int len,off_t offset,int seg,int fla
+             void *cred,int *residual,struct proc *proc)
+ {
+     (void)flags;(void)cred;(void)proc;assert(rw==UIO_READ&&seg==UIO_SYSSPACE);
+-    struct uio u={offset,len,(uint8_t *)buf,0};readers++;
++    struct uio u={offset,len,(uint8_t *)buf,0,false};readers++;
+     int error=cdevsw[24].d_read(node->device,&u,0);*residual=(int)u.residual;
+     if (offset == RANGE_VFS_OFFSET && len == (int)RANGE_VFS_LENGTH && !error) {
+         assert(!memcmp(buf, ref_window + RANGE_VFS_OFFSET, RANGE_VFS_LENGTH));
+diff --git a/tests/ufs_vfs_test_env.h b/tests/ufs_vfs_test_env.h
+index 3ee4098..c65c9f8 100644
+--- a/tests/ufs_vfs_test_env.h
++++ b/tests/ufs_vfs_test_env.h
+@@ -6,7 +6,7 @@ typedef int kern_return_t;
+ typedef uintptr_t thread_t;
+ typedef int wait_result_t;
+ struct proc { int unused; };
+-struct uio { int64_t offset, residual; uint8_t *base; size_t moved; };
++struct uio { int64_t offset, residual; uint8_t *base; size_t moved; bool user; };
+ struct vnode { dev_t device; };
+ typedef struct vnode *vnode_t;
+ typedef void *vfs_context_t;
+@@ -46,6 +46,8 @@ int us_eno(void);
+ #define makedev(m,n) (((dev_t)(m)<<8)|(n))
+ int64_t uio_offset(struct uio *);
+ int64_t uio_resid(struct uio *);
++int uio_isuserspace(struct uio *);
++int proc_selfpid(void);
+ int uiomove(caddr_t,int,struct uio *);
+ int cdevsw_add(int,const struct cdevsw *);
+ int cdevsw_remove(int,const struct cdevsw *);

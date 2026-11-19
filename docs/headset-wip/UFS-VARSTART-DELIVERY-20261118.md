@@ -24,3 +24,5 @@ Trial725 在同一次实机启动中复用一份 UFS 租约，依次读取 4096�
 Trial726 在 xaga 实机上按字节偏移 12031 读取 770 字节。一条双块 READ(10) 触发一次门铃，覆盖 LBA 2 末 257 字节与 LBA 3 前 513 字节。调用者缓冲区的 CRC32 为 `0x8f350378`，与切片和独立参考一致。原厂 `boot_a` 已恢复并通过全长读回核验。[726 实机日志与复测](raw/ufs-byte-range-726/README.md)
 
 Trial727 在 xaga 内核中通过 `vn_rdwr` 读取只读字符设备。一次双块读取交付跨块的 770 字节，返回 `error=0 residual=0`，调用者 CRC32 为 `0x8f350378`。写打开和 EOF 均未增加门铃次数。原厂 `boot_a` 已恢复并核对全长。[727 实机记录与复测](raw/ufs-vfs-range-727/README.md)
+
+Trial728 在 xaga 上由 PID 4 的用户进程调用 `pread(2)`。同一进程从偏移 12031 读到 770 字节，CRC32 为 `8f350378`，两侧哨兵保持完整。EOF 返回 0，重复读返回 EBUSY。三次调用共触发一次 UFS 门铃。恢复后的 64 MiB `boot_a` 与原厂件逐字节相同。[728 实机日志与复测](raw/ufs-userspace-range-728/README.md)
