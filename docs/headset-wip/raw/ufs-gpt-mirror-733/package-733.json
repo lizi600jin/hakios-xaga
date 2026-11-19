@@ -1,0 +1,53 @@
+{
+  "arguments_sha256": "88b0a500e4c6ed951a4e06d9be403e3e821152e2edc00db0b663b5cf92ab69a7",
+  "boot_bytes": 23019520,
+  "boot_sha256": "85e08f29dd528b86dc2aeee73e171d1aaa3dfbb591bef4d860beb3e19802ffd1",
+  "client_source_sha256": "ca678e66a42a252fa1b453895a831c1a0052e3df077ce05036d7f9d0b2404493",
+  "hardware": {
+    "baseline_and_recovery_equal_stock": true,
+    "body_bytes": 493689,
+    "body_sha256": "b7c4fe87e8718859194308ea956eaed50d2f1c0aea96ecf182652df7a540c057",
+    "boot_completed": 1,
+    "candidate_prefix_byte_equal": true,
+    "candidate_prefix_bytes": 23019520,
+    "entry_audit": {
+      "after": 0,
+      "before": 1,
+      "consistent": 0,
+      "duplicates": 0,
+      "overlaps": 0,
+      "reversed": 0,
+      "unused": 40,
+      "used": 88,
+      "zero_ids": 0
+    },
+    "post_record_sha256": "325dacb949e17908949ad7ef6f12f3d9f5d38426073f5a4155de04e2faa597e1",
+    "post_window_sha256": "90ec4c697e5866982b89701f738184cd6c5d3371ca44977679d0e051c987f4da",
+    "post_windows_byte_equal": true,
+    "pre_record_sha256": "e1ebd58c73984dc3e0f70cb763700557c6c940e00ce1816f7b2cc467b0debdd8",
+    "restored_stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+    "selinux": "Enforcing",
+    "slot": "_a",
+    "status": "HARDWARE_PASS",
+    "status_scope": "Verified audited observations, boot and recovery",
+    "stock_bytes": 67108864,
+    "three_distinct_android_boots": true
+  },
+  "kernel_sha256": "48544798740fcf1b341cf6cd2a232cd68e1e62404131973c24af9b64cba64df5",
+  "loader_sha256": "35d9a77a53d67a7ef10d5aa4e7fa43087aff45bf23ff9bbc7cea9d11cac201ce",
+  "payload_sha256": "fd8a0496decc05aaf63d95ddf2e304bf64646e5637d79e578f3b9d52c8fe6d74",
+  "ramdisk_audit": {
+    "apfs_bytes": 4194304,
+    "apfs_sha256": "dfa1dc9944a2408077760b08cf693e454706b7fade0ad5c28bd79af919ba6947",
+    "baseline_paths": 66,
+    "new_binary_sha256": "70cb22607c6b6ebdbe18f9396107dd8885611a3151ad83b1e30768153d18fc6e",
+    "new_paths": 67,
+    "other_entries_equal": true,
+    "rc_sha256": "ab3647f5c9f62dba64f4ebd7f17b790f5036af05a6d5a521786c713b228122be"
+  },
+  "ramdisk_sha256": "dfa1dc9944a2408077760b08cf693e454706b7fade0ad5c28bd79af919ba6947",
+  "stock_bytes": 67108864,
+  "stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+  "trial": 733,
+  "userspace_program_sha256": "70cb22607c6b6ebdbe18f9396107dd8885611a3151ad83b1e30768153d18fc6e"
+}

@@ -1,0 +1,594 @@
+--- a/source/ufs_twoblock/engine/ufs_two_block_engine.h
++++ b/source/ufs_twoblock/engine/ufs_two_block_engine.h
+@@ -136,6 +136,22 @@
+     return vr2_make_read(request, limits, command);
+ }
+ 
++#define GPT_BACKUP_HEADER_LBA (VR_CAPACITY_BLOCKS - 1u)
++#define GPT_BACKUP_ARRAY_LBA  UINT32_C(31240184)
++
++/* Only these three READ(10) commands belong to the captured backup layout. */
++static inline bool
++vrq_make_backup_read(const struct vr_request *request, const struct vr_limits *limits,
++                     struct vr_command *command)
++{
++    if (!request || !limits || limits->lba_max_exclusive != VR_CAPACITY_BLOCKS) return false;
++    if (request->lba == GPT_BACKUP_HEADER_LBA)
++        return vr_make_read(request, limits, command);
++    if (request->lba == GPT_BACKUP_ARRAY_LBA || request->lba == GPT_BACKUP_ARRAY_LBA + 2u)
++        return vr2_make_read(request, limits, command);
++    return false;
++}
++
+ static inline bool vrq_prepare(struct vrq_counters *ctr, const struct vrq_io *io,
+                                const struct vr_command *c, uint32_t data_words)
+ {
+@@ -259,10 +275,14 @@
+     return io->stopped(io->context);
+ }
+ 
+-static inline void vrq_run(const struct vrq_io *io, const struct vr_request *r,
++/* backup_gpt selects which ceiling the encoder applies. It is false everywhere except the
++ * Trial733 backup window; with false this function is byte-for-byte the behaviour every earlier
++ * trial was verified against. */
++static inline void vrq_run_bound(const struct vrq_io *io, const struct vr_request *r,
+                            const struct vr_limits *lim, struct vrq_workspace *saved,
+                            struct vrq_outcome *out, struct vrq_counters *ctr,
+-                           bool reference_present, uint32_t reference_crc32)
++                           bool reference_present, uint32_t reference_crc32,
++                           bool backup_gpt)
+ {
+     struct vr_command cmd;
+     uint64_t started;
+@@ -282,7 +302,8 @@
+         !io->stopped || !io->ring || !io->barrier || !io->now_us) return;
+     const struct vr_request request = *r;
+     const struct vr_limits limits = *lim;
+-    if (!vrq_make_read(&request, &limits, &cmd)) return;
++    if (!(backup_gpt ? vrq_make_backup_read(&request, &limits, &cmd)
++                         : vrq_make_read(&request, &limits, &cmd))) return;
+     const uint32_t data_words = request.blocks * VRQ_BLOCK_WORDS;
+     const uint32_t transfer_bytes = request.blocks * VR_BLOCK_BYTES;
+ 
+@@ -412,4 +433,13 @@
+     out->result = VRQ_UNCERTAIN;
+     out->restored = false;
+ }
++
++/* The unchanged entry point: always the stage window. */
++static inline void vrq_run(const struct vrq_io *io, const struct vr_request *r,
++                           const struct vr_limits *lim, struct vrq_workspace *saved,
++                           struct vrq_outcome *out, struct vrq_counters *ctr,
++                           bool reference_present, uint32_t reference_crc32)
++{
++    vrq_run_bound(io, r, lim, saved, out, ctr, reference_present, reference_crc32, false);
++}
+ #endif
+--- a/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
++++ b/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
+@@ -68,12 +68,21 @@
+ #define GPT_ARRAY_MODE 5u
+ #define GPT_REQUESTS 3u
+ #define GPT_SNAPSHOT_BYTES (5u * VR_BLOCK_BYTES)
++/* Trial730/731/732: the primary GPT window, unchanged. LBA 1 header, LBA 2+3 array, LBA 4+5 array. */
+ static const struct vr_request gpt_requests[GPT_REQUESTS] = {
+ 	{ VR_LUN, 1u, 1u, VR_BLOCK_BYTES },
+ 	{ VR_LUN, 2u, 2u, VR_BLOCK_BYTES },
+ 	{ VR_LUN, 4u, 2u, VR_BLOCK_BYTES },
+ };
+ 
++/* Mode 6 exports a header block followed by two pairs of entry-array blocks. */
++#define GPT_BACKUP_MODE 6u
++static const struct vr_request gpt_backup_requests[GPT_REQUESTS] = {
++	{ VR_LUN, GPT_BACKUP_HEADER_LBA, 1u, VR_BLOCK_BYTES },
++	{ VR_LUN, GPT_BACKUP_ARRAY_LBA, 2u, VR_BLOCK_BYTES },
++	{ VR_LUN, GPT_BACKUP_ARRAY_LBA + 2u, 2u, VR_BLOCK_BYTES },
++};
++
+ /* The two additional Android reference CRCs apply only to the fixed GPT read set. */
+ static bool
+ twoblock_reference(uint32_t lba, uint32_t mode, uint32_t *crc)
+@@ -81,6 +90,24 @@
+ 	if (mode == GPT_ARRAY_MODE && (lba == 4u || lba == 5u)) {
+ 		*crc = lba == 4u ? UINT32_C(0xa0d23c1c) : UINT32_C(0xc71c0011);
+ 		return true;
++	}
++	/* Trial733: the backup header block and the four blocks of its array, measured on the same
++	 * device. Only these five addresses carry a reference in this mode. */
++	if (mode == GPT_BACKUP_MODE) {
++		static const struct { uint32_t lba, crc; } backup[] = {
++			{ GPT_BACKUP_HEADER_LBA,     UINT32_C(0x4b13d623) },
++			{ GPT_BACKUP_ARRAY_LBA,      UINT32_C(0x0d024e0c) },
++			{ GPT_BACKUP_ARRAY_LBA + 1u, UINT32_C(0x58f10429) },
++			{ GPT_BACKUP_ARRAY_LBA + 2u, UINT32_C(0xa0d23c1c) },
++			{ GPT_BACKUP_ARRAY_LBA + 3u, UINT32_C(0xc71c0011) },
++		};
++		for (unsigned i = 0; i < sizeof(backup) / sizeof(backup[0]); ++i) {
++			if (backup[i].lba == lba) {
++				*crc = backup[i].crc;
++				return true;
++			}
++		}
++		return false;
+ 	}
+ 	if (!varread_reference_is_known(lba)) return false;
+ 	*crc = varread_reference_crc(lba);
+@@ -326,8 +353,9 @@
+ 	}
+ 
+ 	platform.data_bytes = transfer_bytes;
+-	vrq_run(&io, pinned, limits, &twoblock_workspace, &twoblock_outcome,
+-	    &twoblock_counters, false, 0);
++	/* Only the backup window is above the stage range; every other caller keeps vrq_run. */
++	vrq_run_bound(&io, pinned, limits, &twoblock_workspace, &twoblock_outcome,
++	    &twoblock_counters, false, 0, range_mode_id == GPT_BACKUP_MODE);
+ 	if (outcome->result != VRQ_DELIVERED || !outcome->restored ||
+ 	    !outcome->readback_restored || outcome->data_words_valid != data_words ||
+ 	    outcome->data_words_attempted != data_words || twoblock_counters.ring != 1u) {
+@@ -420,9 +448,11 @@
+ 		for (uint32_t i = 0; i < slice_len; ++i)
+ 			dst[i] = twoblock_stage[i];
+ 		*out_delivered = slice_len;
+-		printf("mt6895-ufs-twoblock: slice offset=%u blocks=%u bytes=%u first=%u second=%u "
++		/* 64-bit: the backup window's absolute offset is far above 2^32/4096. */
++		printf("mt6895-ufs-twoblock: slice offset=%llu blocks=%u bytes=%u first=%u second=%u "
+ 		       "cap=%u crc=%#x delivered=1\n",
+-		       slice->first_lba * VR_BLOCK_BYTES + slice->in_block_offset,
++		       (unsigned long long)((uint64_t)slice->first_lba * VR_BLOCK_BYTES) +
++		           slice->in_block_offset,
+ 		       slice->blocks, slice_len, slice->first_bytes, slice->second_bytes,
+ 		       dst_capacity, slice_crc);
+ 	} else if (out_delivered != NULL) {
+@@ -448,7 +478,11 @@
+ #endif
+ 	uint32_t mode = 0;
+ 	uint32_t trial = 0;
+-	if (!PE_parse_boot_argn("mtk_ufs_twoblock", &mode, sizeof(mode)) || !mode) return;
++	if (!PE_parse_boot_argn("mtk_ufs_twoblock", &mode, sizeof(mode)) || !mode) {
++#ifdef US_HOST_TEST
++	#endif
++		return;
++	}
+ 	static const char *const competing[] = {
+ 		"mtk_ufs_varread", "mtk_ufs_service", "mtk_ufs_read", "mtk_ufs_probe",
+ 		"mtk_ufs_capacity",
+@@ -464,7 +498,11 @@
+ 		printf("mt6895-ufs-twoblock: invalid trial or competing mode; no access\n");
+ 		return;
+ 	}
+-	if (us_control(&twoblock_lease) != US_NEW) return;
++	if (us_control(&twoblock_lease) != US_NEW) {
++#ifdef US_HOST_TEST
++	#endif
++		return;
++	}
+ 
+ 	/* The window start comes from the command line. Absent means 1; an explicit 0 is a value,
+ 	 * not a missing argument, so it is kept and refused later for lacking a reference. */
+@@ -563,17 +601,23 @@
+ 	}
+ 	uint32_t vfs = 0;
+ 	(void)PE_parse_boot_argn("mtk_ufs_vfs", &vfs, sizeof(vfs));
+-	if (vfs && (vfs > GPT_ARRAY_MODE || !range_mode || range_off != range_source_offset(vfs) ||
++	if (vfs && (vfs > GPT_BACKUP_MODE || !range_mode || range_off != range_source_offset(vfs) ||
+ 	    range_len != range_source_length(vfs) || range_cap != range_len)) return;
+ 	if (mixed && (start != 3u || blocks != 1u)) return;
+ 	const struct vr_request standard_requests[] = { pinned, { VR_LUN, 2u, 2u, VR_BLOCK_BYTES }, pinned };
+-	const struct vr_request *requests = vfs == GPT_ARRAY_MODE ? gpt_requests : standard_requests;
+-	const uint32_t count = vfs == GPT_ARRAY_MODE ? GPT_REQUESTS :
++	const struct vr_request *requests = vfs == GPT_BACKUP_MODE ? gpt_backup_requests :
++	    vfs == GPT_ARRAY_MODE ? gpt_requests : standard_requests;
++	const uint32_t count = vfs >= GPT_ARRAY_MODE ? GPT_REQUESTS :
+ 	    (mixed ? (uint32_t)(sizeof(standard_requests) / sizeof(standard_requests[0])) : 1u);
++	/* The backup window lives above the 16-block stage window, so those three fixed requests are
++	 * encoded against the capacity limits. Nothing else changes: the stage guard still governs
++	 * every other mode, and these requests are still the only three this mode can build. */
++	const struct vr_limits encode_limits = vfs == GPT_BACKUP_MODE ? vr_capacity_limits() : limits;
+ 	for (uint32_t i = 0; i < count; ++i) {
+ 		const struct vr_request *r = &requests[i];
+ 		struct vr_command encoded;
+-		if (!vrq_make_read(r, &limits, &encoded)) return;
++		if (!(vfs == GPT_BACKUP_MODE ? vrq_make_backup_read(r, &encode_limits, &encoded) :
++		    vrq_make_read(r, &encode_limits, &encoded))) return;
+ 		for (uint32_t block = 0; block < r->blocks; ++block) {
+ 			uint32_t crc;
+ 			if (!twoblock_reference(r->lba + block, vfs, &crc)) {
+@@ -586,7 +630,7 @@
+ 
+ 	printf("mt6895-ufs-twoblock: bounded READ10 lun2 lba%u blocks%u bytes%u "
+ 	       "budget%u; guarded handoff required\n",
+-	       pinned.lba, pinned.blocks, pinned.blocks * VR_BLOCK_BYTES, count);
++	       requests[0].lba, requests[0].blocks, requests[0].blocks * VR_BLOCK_BYTES, count);
+ 
+ #ifdef US_HOST_TEST
+ 	if (twoblock_host_bad_managed()) {
+--- a/source/ufs_twoblock/support/ufs_read_contract.h
++++ b/source/ufs_twoblock/support/ufs_read_contract.h
+@@ -8,7 +8,7 @@
+ #include <stdbool.h>
+ #include <stddef.h>
+ 
+-#define UR_TRIAL 732u
++#define UR_TRIAL 733u
+ #define UR_MAGIC 0x554c5345u
+ #define UR_VERSION 1u
+ #define UR_LIST_PA UINT64_C(0x51266400)
+--- a/source/ufs_twoblock/ufs_range_vfs.h
++++ b/source/ufs_twoblock/ufs_range_vfs.h
+@@ -59,22 +59,30 @@
+ static uint32_t
+ range_snapshot_length(uint32_t mode)
+ {
+-	return mode == GPT_ARRAY_MODE ? GPT_SNAPSHOT_BYTES : range_source_length(mode);
++	return (mode == GPT_BACKUP_MODE || mode == GPT_ARRAY_MODE) ? GPT_SNAPSHOT_BYTES : range_source_length(mode);
+ }
+ 
+ static int
+ range_fill_snapshot(uint32_t length)
+ {
+ 	uint32_t done = 0;
+-	if (range_mode_id != GPT_ARRAY_MODE) {
+-		int error = range_read_bytes(range_source_offset(range_mode_id), length,
++	const uint32_t fixed_mode = range_mode_id;
++	if (fixed_mode != GPT_ARRAY_MODE && fixed_mode != GPT_BACKUP_MODE) {
++		int error = range_read_bytes(range_source_offset(fixed_mode), length,
+ 		    snapshot, length, &done);
+ 		return error ? error : (done == length ? 0 : EIO);
+ 	}
+-	const struct vr_limits limits = vr_runtime_limits();
++	/* The two fixed windows differ only in which table drives them: the primary array reads
++	 * LBA 1/2/4, the backup window reads the last LBA and the four blocks before it. */
++	const struct vr_request *const table =
++	    fixed_mode == GPT_BACKUP_MODE ? gpt_backup_requests : gpt_requests;
++
++	/* The backup window sits above the stage range, so those requests are bounded by capacity. */
++	const struct vr_limits limits = fixed_mode == GPT_BACKUP_MODE ? vr_capacity_limits() :
++	    vr_runtime_limits();
+ 	uint32_t offset = 0;
+ 	for (uint32_t i = 0; i < GPT_REQUESTS; ++i) {
+-		const struct vr_request *r = &gpt_requests[i];
++		const struct vr_request *r = &table[i];
+ 		const uint32_t size = r->blocks * VR_BLOCK_BYTES;
+ 		const struct vrb_window full = { r->lba, r->blocks, 0, VR_BLOCK_BYTES, size - VR_BLOCK_BYTES };
+ 		if (size > length - offset || us_stopped(&twoblock_lease)) return EIO;
+@@ -229,7 +237,7 @@
+ 	__atomic_store_n(&range_ready, 1u, __ATOMIC_RELEASE);
+ 	if (mode >= 3u) {
+ 		printf("mt6895-ufs-twoblock: snapshot registered path=" RANGE_PATH " bytes=%u budget=%u\n",
+-		    range_snapshot_length(mode), mode == GPT_ARRAY_MODE ? GPT_REQUESTS : 1u);
++		    range_snapshot_length(mode), mode >= GPT_ARRAY_MODE ? GPT_REQUESTS : 1u);
+ 		return;
+ 	}
+ 	if (mode == 2u) {
+--- a/tests/test-ufs-twoblock-platform.c
++++ b/tests/test-ufs-twoblock-platform.c
+@@ -16,6 +16,11 @@
+ static uint32_t table_page[PAGE_SIZE / 4u];
+ static uint8_t *scratch;
+ static uint8_t *ref_window;   /* local reference blocks, never printed */
++/* Trial733: the backup window lives far above the stage range, so it gets its own five-block
++ * reference laid out exactly as the published snapshot: header first, then the four array blocks.
++ * Keeping it separate means the low-LBA tests cannot silently satisfy a high-LBA read. */
++static uint8_t *ref_backup;   /* 5 blocks: LBA 31240191, then 31240184..187 */
++static bool use_backup_ref;
+ #include "ufs_vfs_callbacks.h"
+ static bool overlap_fill;
+ static unsigned failures;     /* Trial726 cases count their own failures */
+@@ -165,14 +170,40 @@
+ 	assert(upiu[0] == 1 && upiu[1] == 0x40 && upiu[2] == 2 && upiu[16] == 0x28);
+ 	model.cdb_lba = ur_be32(upiu + 18);
+ 	model.cdb_blocks = ((uint32_t)upiu[23] << 8) | upiu[24];
+-	assert(model.cdb_lba == model.want_lba);
+-	assert(model.cdb_blocks == want_blocks);
++	/* The backup window is driven by a fixed table, so the expected LBA/block pair comes from the
++	 * table position rather than from the boot-argument geometry. */
++	if (use_backup_ref) {
++		const uint32_t expect_lba = model.rings == 1u ? GPT_BACKUP_HEADER_LBA
++		    : (model.rings == 2u ? GPT_BACKUP_ARRAY_LBA : GPT_BACKUP_ARRAY_LBA + 2u);
++		const uint32_t expect_blocks = model.rings == 1u ? 1u : 2u;
++		assert(model.cdb_lba == expect_lba && model.cdb_blocks == expect_blocks);
++	} else {
++		assert(model.cdb_lba == model.want_lba);
++		assert(model.cdb_blocks == want_blocks);
++	}
+ 	const uint32_t bytes = model.cdb_blocks * VR_BLOCK_BYTES;
+ 	assert(ur_be32(upiu + 12) == bytes);
+ 	assert((table()[7] & 0xffffu) == 1u && ucd()[256] == UR_DATA_PA && ucd()[259] == bytes - 1u);
+ 
+-	assert(model.cdb_lba + model.cdb_blocks <= 16u);
+-	memcpy(data(), ref_window + (size_t)model.cdb_lba * VR_BLOCK_BYTES, bytes);
++	/* Resolve the source for this LBA. The backup window is the only place above the stage
++	 * range, and it must come from its own reference, not from the low window. */
++	const uint8_t *src = NULL;
++	if (use_backup_ref) {
++		assert(model.cdb_lba >= GPT_BACKUP_ARRAY_LBA);
++		assert(model.cdb_lba + model.cdb_blocks <= GPT_BACKUP_ARRAY_LBA + 4u ||
++		    model.cdb_lba == GPT_BACKUP_HEADER_LBA);
++		if (model.cdb_lba == GPT_BACKUP_HEADER_LBA) {
++			src = ref_backup;
++		} else {
++			/* The array blocks follow the header block in the snapshot reference. */
++			src = ref_backup + VR_BLOCK_BYTES +
++			    (size_t)(model.cdb_lba - GPT_BACKUP_ARRAY_LBA) * VR_BLOCK_BYTES;
++		}
++	} else {
++		assert(model.cdb_lba + model.cdb_blocks <= 16u);
++		src = ref_window + (size_t)model.cdb_lba * VR_BLOCK_BYTES;
++	}
++	memcpy(data(), src, bytes);
+ 	if (model.swap_blocks) {
+ 		for (uint32_t i = 0; i < VRQ_BLOCK_WORDS; i++) {
+ 			uint32_t t = data()[i];
+@@ -198,7 +229,10 @@
+ 
+ bool vr_host_ring_hook(void)
+ {
+-	assert(regs[0x58 / 4] == 1 && model.rings < (mixed_arg || model.vfs_mode == 5u ? 3u : 1u));
++	/* The fixed-window modes may ring up to three times; everything else stays single-command. */
++	const uint32_t ring_cap = (mixed_arg || model.vfs_mode == 5u ||
++	    model.vfs_mode == GPT_BACKUP_MODE) ? 3u : 1u;
++	assert(regs[0x58 / 4] == 1 && model.rings < ring_cap);
+ 	model.rings++;
+ 	model.pending = true;
+ 	return true;
+@@ -206,8 +240,14 @@
+ 
+ bool vr_host_read_word_hook(int region, uint32_t offset)
+ {
+-	if (region == VRQ_DATA) assert(offset < want_blocks * VR_BLOCK_BYTES);
+-	if (region == VRQ_DATA && model.completed && model.partial_last && offset == want_blocks * VR_BLOCK_BYTES - 4u) {
++	/* The command in flight decides the data span; the backup table's second and third commands
++	 * move two blocks even though the boot-argument seed names one. */
++	/* rings counts completed doorbells, so the command being prepared is rings+1: the first moves
++	 * one block, the second and third move two each. */
++	const uint32_t data_blocks = use_backup_ref && model.rings >= 1u ? 2u : want_blocks;
++	if (region == VRQ_DATA) assert(offset < data_blocks * VR_BLOCK_BYTES);
++	if (region == VRQ_DATA && model.completed && model.partial_last &&
++	    offset == (use_backup_ref && model.rings >= 1u ? 2u : want_blocks) * VR_BLOCK_BYTES - 4u) {
+ 		model.partial_last = false;
+ 		return false;
+ 	}
+@@ -216,11 +256,13 @@
+ 
+ bool vr_host_write_hook(int region, uint32_t offset)
+ {
++	/* Same span rule as the read hook: the backup table's later commands move two blocks. */
++	const uint32_t write_blocks = use_backup_ref && model.rings >= 1u ? 2u : want_blocks;
+ 	if (region == VRQ_DATA) {
+-		assert(offset < want_blocks * VR_BLOCK_BYTES);
++		assert(offset < write_blocks * VR_BLOCK_BYTES);
+ 		model.data_writes++;
+ 		if (model.completed) {
+-			if (model.fail_last_restore && offset == want_blocks * VR_BLOCK_BYTES - 4u) {
++			if (model.fail_last_restore && offset == write_blocks * VR_BLOCK_BYTES - 4u) {
+ 				model.fail_last_restore = false;
+ 				return false;
+ 			}
+@@ -708,6 +750,115 @@
+ 	hakios_mt6895_ufs_twoblock_quiesce();
+ 	assert(lease_record()->state == UR_RESTORED);
+ 	puts("Trial730 GPT block snapshot, bounds, single request and restore PASS");
++}
++
++
++/* Trial733: the fixed backup-GPT window. Three two-block-or-one commands, all far above the
++ * stage range, published only after every block matched its frozen reference. */
++static void
++start_gpt_backup(void)
++{
++	/* Trial733 uses the same 4 KiB seed as mode 5; the 20480-byte window is not a boot argument. */
++	range_settings(VR_BLOCK_BYTES, VR_BLOCK_BYTES, VR_BLOCK_BYTES);
++	model.vfs_mode = GPT_BACKUP_MODE;
++	use_backup_ref = true;
++	memcpy(initial_desc.table, table(), sizeof(initial_desc.table));
++	memcpy(initial_desc.ucd, ucd(), sizeof(initial_desc.ucd));
++	memcpy(initial_data, data(), sizeof(initial_data));
++	hakios_mt6895_ufs_twoblock_init();
++	assert(range_ready && !model.rings);
++}
++
++static void
++test_gpt_backup(void)
++{
++	struct vr_command cmd;
++	const struct vr_limits full = vr_capacity_limits(), stage = vr_runtime_limits();
++	const uint32_t probes[] = { 0u, 15u, 16u, GPT_BACKUP_ARRAY_LBA-1u,
++	    GPT_BACKUP_ARRAY_LBA, GPT_BACKUP_ARRAY_LBA+1u, GPT_BACKUP_ARRAY_LBA+2u,
++	    GPT_BACKUP_ARRAY_LBA+3u, GPT_BACKUP_HEADER_LBA-1u, GPT_BACKUP_HEADER_LBA,
++	    VR_CAPACITY_BLOCKS, UINT32_MAX };
++	for (unsigned i = 0; i < sizeof(probes)/sizeof(probes[0]); ++i) {
++		uint32_t lba = probes[i];
++		for (uint32_t blocks = 0; blocks <= 3; ++blocks) {
++			struct vr_request q = {VR_LUN,lba,blocks,VR_BLOCK_BYTES};
++			bool allowed = (lba == GPT_BACKUP_HEADER_LBA && blocks == 1) ||
++			    ((lba == GPT_BACKUP_ARRAY_LBA || lba == GPT_BACKUP_ARRAY_LBA + 2u) && blocks == 2);
++			assert(vrq_make_backup_read(&q, &full, &cmd) == allowed);
++			assert(!vrq_make_backup_read(&q, &stage, &cmd));
++			assert(!vrq_make_read(&q, &full, &cmd));
++		}
++	}
++
++	static uint8_t out[5u * VR_BLOCK_BYTES + 2u];
++	start_gpt_backup();
++	assert(range_dev_open(fake_node.device, FWRITE, 0, NULL) == EROFS);
++
++	/* Nothing past the end of the window may cost a doorbell. */
++	memset(out, 0xa5, sizeof(out));
++	struct uio u = {5u * VR_BLOCK_BYTES, 1, out, 0, true};
++	assert(range_dev_read(fake_node.device, &u, 0) == 0 && !u.moved && !model.rings);
++
++	/* One header read fills the whole window with exactly three commands. */
++	u = (struct uio){0, VR_BLOCK_BYTES, out + 1, 0, true};
++	assert(range_dev_read(fake_node.device, &u, 0) == 0 && !u.residual);
++	assert(model.rings == 3 && snapshot_state == SNAP_READY);
++
++	/* Read the rest back and compare against the independent reference, in window order. */
++	u = (struct uio){VR_BLOCK_BYTES, 4u * VR_BLOCK_BYTES, out + 1 + VR_BLOCK_BYTES, 0, true};
++	assert(range_dev_read(fake_node.device, &u, 0) == 0 && !u.residual);
++	assert(!memcmp(out + 1, ref_backup, 5u * VR_BLOCK_BYTES));
++	assert(out[0] == 0xa5 && out[sizeof(out)-1] == 0xa5 && range_rings() == 3);
++	hakios_mt6895_ufs_twoblock_quiesce();
++	assert(lease_record()->state == UR_RESTORED);
++
++	/* Each command failing in turn must deliver nothing at all, and must not retry. */
++	for (unsigned ordinal = 1; ordinal <= 3; ++ordinal) {
++		for (unsigned fault = 0; fault < 2; ++fault) {
++			start_gpt_backup();
++			model.corrupt_last = fault == 0;
++			fault_request = ordinal;
++			model.stop_at = fault == 1 ? 2u : 0u;
++			stop_request = ordinal;
++			memset(out, 0x5a, sizeof(out));
++			u = (struct uio){0, VR_BLOCK_BYTES, out + 1, 0, true};
++			assert(range_dev_read(fake_node.device, &u, 0) != 0 && !u.moved);
++			assert(snapshot_state == SNAP_FAILED && range_rings() == ordinal);
++			assert(range_dev_read(fake_node.device, &u, 0) != 0 && !u.moved &&
++			    range_rings() == ordinal);
++			for (size_t j = 0; j < sizeof(out); ++j) assert(out[j] == 0x5a);
++		}
++	}
++
++	/* The mode refuses any other geometry: these three pairs are the only accepted ones. */
++	/* A declared capacity above the real buffer is clamped down by the driver, so only a capacity
++	 * *below* the length is a refusal. The accepted case stays the 4 KiB seed. */
++	struct { uint64_t off, len, cap; bool ok; } geo[] = {
++		{ VR_BLOCK_BYTES, VR_BLOCK_BYTES, VR_BLOCK_BYTES, true },
++		{ 0, VR_BLOCK_BYTES, VR_BLOCK_BYTES, false },
++		{ VR_BLOCK_BYTES, 5u * VR_BLOCK_BYTES, 5u * VR_BLOCK_BYTES, false },
++		{ VR_BLOCK_BYTES, VR_BLOCK_BYTES, 5u * VR_BLOCK_BYTES, true },
++	};
++	for (unsigned i = 0; i < sizeof(geo) / sizeof(geo[0]); ++i) {
++		/* reset() is what returns the lease to US_NEW; without it the second init in this loop
++		 * would find a live lease and return early, leaving the previous ready flag in place. */
++		reset();
++		model.range_present = true;
++		model.range_offset = geo[i].off;
++		model.range_length = geo[i].len;
++		model.range_capacity = geo[i].cap;
++		model.cap_present = true;
++		model.vfs_mode = GPT_BACKUP_MODE;
++		use_backup_ref = true;
++		memcpy(initial_desc.table, table(), sizeof(initial_desc.table));
++		memcpy(initial_desc.ucd, ucd(), sizeof(initial_desc.ucd));
++		memcpy(initial_data, data(), sizeof(initial_data));
++		hakios_mt6895_ufs_twoblock_init();
++		assert(range_ready == geo[i].ok);
++		if (!geo[i].ok) assert(!model.rings);
++	}
++	use_backup_ref = false;
++	puts("Trial733 backup GPT snapshot, three fixed commands, high-LBA CDB and geometry refusal PASS");
+ }
+ 
+ /* The Android reference, fixed CDB sequence and original DMA area are independent oracles. */
+@@ -762,12 +913,19 @@
+ 
+ int main(int argc, char **argv)
+ {
+-	assert(argc == 2);
++	assert(argc == 3);
+ 	FILE *f = fopen(argv[1], "rb");
+ 	assert(f);
+ 	ref_window = malloc(16u * VR_BLOCK_BYTES);
+ 	assert(ref_window && fread(ref_window, VR_BLOCK_BYTES, 16, f) == 16 && fgetc(f) == EOF);
+ 	assert(fclose(f) == 0);
++
++	/* Second argument: the five-block backup window, in published order (header, then array). */
++	FILE *g = fopen(argv[2], "rb");
++	assert(g);
++	ref_backup = malloc(5u * VR_BLOCK_BYTES);
++	assert(ref_backup && fread(ref_backup, VR_BLOCK_BYTES, 5, g) == 5 && fgetc(g) == EOF);
++	assert(fclose(g) == 0);
+ 	scratch = mmap(NULL, VR_SCRATCH_BYTES + PAGE_SIZE, PROT_READ | PROT_WRITE,
+ 	    MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+ 	assert((void *)scratch != MAP_FAILED);
+@@ -890,6 +1048,7 @@
+ 	test_snapshot();
+ 	test_header_snapshot();
+ 	test_gpt_array();
++	test_gpt_backup();
+ 	free(ref_window);
+ 	assert(munmap(scratch, VR_SCRATCH_BYTES + PAGE_SIZE) == 0);
+ 
+--- a/tests/test-user-range-client.c
++++ b/tests/test-user-range-client.c
+@@ -202,7 +202,7 @@
+ 
+ 	/* Re-sign each malformed header independently to exercise layout checks. */
+ 	const struct { unsigned offset; uint32_t value; } invalid[] = {
+-		{72,3}, {72,1}, {72,33}, {76,1}, {0,0}, {8,0x20000}, {12,91}, {12,4097},
++		{72,2}, {72,31240183}, {72,31240188}, {24,1}, {32,31240191}, {40,5}, {48,31240184}, {76,1}, {0,0}, {8,0x20000}, {12,91}, {12,4097},
+ 		{20,1}, {24,2}, {32,123}, {40,1}, {48,31240191}, {48,31240189},
+ 		{80,0}, {80,64}, {80,256}, {80,UINT32_MAX}, {84,64}, {84,136}, {84,0x80000000}
+ 	};
+@@ -232,14 +232,20 @@
+ 
+ }
+ 
++static void load_sample(const char *path, uint8_t *dst, size_t size)
++{
++	FILE *f = fopen(path, "rb");
++	assert(f);
++	assert(fread(dst, 1, size, f) == size);
++	assert(fgetc(f) == EOF && !ferror(f));
++	assert(fclose(f) == 0);
++}
++
+ int main(int argc, char **argv)
+ {
+-	assert(argc == 2);
+-	FILE *f = fopen(argv[1], "rb");
+-	assert(f);
+-	assert(fseek(f, 4096, SEEK_SET) == 0 && fread(sample_h, 1, BLOCK_BYTES, f) == BLOCK_BYTES);
+-	assert(fseek(f, 8192, SEEK_SET) == 0 && fread(sample_a, 1, ARRAY_BYTES, f) == ARRAY_BYTES);
+-	assert(fclose(f) == 0);
++	assert(argc == 3);
++	load_sample(argv[1], sample_h, sizeof(sample_h));
++	load_sample(argv[2], sample_a, sizeof(sample_a));
+ 
+ 	uint64_t declared = (uint64_t)get32(sample_h, 80) * get32(sample_h, 84);
+ 	assert(declared == ARRAY_BYTES);
+@@ -361,6 +367,6 @@
+ 	reseal(declared);
+ 	run(1);
+ 	expect(3, 125, 0, 0, 3, 0, 0, 3);
+-	puts("Trial732 entry audit client: real snapshot, synthetic, ignored-unused, stride and 64-bit PASS");
++	puts("Trial733 backup entry audit client: real snapshot, synthetic, ignored-unused, stride and 64-bit PASS");
+ 	return 0;
+ }
+--- a/ufs_range_check.c
++++ b/ufs_range_check.c
+@@ -1,4 +1,4 @@
+-/* Validate the primary GPT header and the entry array from the read-only LUN 2 snapshot.
++/* Validate the backup GPT header and the entry array from the read-only LUN 2 snapshot.
+  *
+  * The snapshot is one 20480-byte window: offset 0 is the 4096-byte header block, offset 4096 is the
+  * 16384-byte entry array. The array is read whole and its CRC32 is recomputed over exactly the
+@@ -63,15 +63,15 @@
+ 	if (actual != le32(p + 16)) return 0;
+ 	uint64_t first = le64(p + 40), last = le64(p + 48), entries = le64(p + 72);
+ 	uint32_t count = le32(p + 80), stride = le32(p + 84);
+-	if (le64(p + 24) != 1 || le64(p + 32) != LAST_LBA || first > last ||
+-	    last >= LAST_LBA || entries != 2 || entries >= first || !count ||
++	if (le64(p + 24) != LAST_LBA || le64(p + 32) != 1 || first < 2 || first > last ||
++	    entries != UINT64_C(31240184) || last >= entries || !count ||
+ 	    stride < 128 || (stride & (stride - 1u))) return 0;
+ 	uint64_t bytes = (uint64_t)count * stride;
+ 	uint64_t blocks = bytes / BLOCK_BYTES + (bytes % BLOCK_BYTES != 0);
+ 	/* The declared array must fit the approved window, and the LBA geometry must allow it. */
+ 	if (bytes != ARRAY_BYTES) return 0;
+-	if (blocks > first - entries || blocks > LAST_LBA - last - 1) return 0;
+-	printf("ufs-range-user: header pid=%d size=%u crc=0x%x self=1 alternate=%llu first=%llu last=%llu\n",
++	if (blocks > first - 2 || blocks > LAST_LBA - entries) return 0;
++	printf("ufs-range-user: header pid=%d size=%u crc=0x%x self=%llu alternate=1 first=%llu last=%llu\n",
+ 	    pid, size, actual, (unsigned long long)LAST_LBA, (unsigned long long)first,
+ 	    (unsigned long long)last);
+ 	printf("ufs-range-user: layout pid=%d entries_lba=%llu count=%u stride=%u blocks=%llu\n",
+@@ -121,7 +121,7 @@
+ 	int pid = getpid();
+ 	int writer = open(NODE, O_WRONLY, 0);
+ 	int error = writer < 0 ? errno : 0;
+-	printf("ufs-range-user: trial=732 pid=%d write_error=%d\n", pid, error);
++	printf("ufs-range-user: trial=733 pid=%d write_error=%d\n", pid, error);
+ 	if (writer >= 0) {
+ 		close(writer);
+ 		return 1;

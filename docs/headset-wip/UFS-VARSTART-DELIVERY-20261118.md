@@ -34,3 +34,5 @@ Trial730 在 xaga 上通过用户态只读文件描述符取得 LUN 2 的 GPT �
 Trial731 从 LUN 2 的 LBA 1 至 5 取得主表头与完整分区项数组。三个 READ(10) 共触发三次门铃。用户进程对 16,384 字节数组重算 CRC32 得到 `ce39daa8`，与表头声明一致。恢复前后的 HLOG 相同，原厂分区已全长核对。[731 实机记录与复测](raw/ufs-gpt-array-731/README.md)
 
 Trial732 在 xaga 上逐项审计主 GPT。88 个已用条目中，一个条目的起始 LBA 早于表头声明的首个可用 LBA，实测 `consistent=0`。条目之间的区间交集数为零。两份 HLOG 相同，原厂分区已全长核对。[732 实机计数与复测](raw/ufs-gpt-entries-732/README.md)
+
+Trial733 在 xaga 上以三次 READ(10) 读出 LUN 2 末端的备份 GPT，五个数据块的 CRC32 全部匹配原厂参考。用户进程重算了表头和完整数组校验，发现与主表相同的一项可用范围边界异常。原厂分区已恢复并通过全长核对。[733 实机记录与复测](raw/ufs-gpt-mirror-733/README.md)

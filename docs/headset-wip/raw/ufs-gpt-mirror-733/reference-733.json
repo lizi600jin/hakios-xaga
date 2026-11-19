@@ -1,0 +1,21 @@
+{
+  "stock_reference": true,
+  "logical_block_bytes": 4096,
+  "blocks": 31240192,
+  "two_captures_identical": true,
+  "primary_and_backup_arrays_identical": true,
+  "primary_header_crc32": "0x7fdb9634",
+  "backup_header_crc32": "0xba3342fe",
+  "backup_block_crc32": [
+    "0x4b13d623",
+    "0xd024e0c",
+    "0x58f10429",
+    "0xa0d23c1c",
+    "0xc71c0011"
+  ],
+  "backup_request_crc32": [
+    "0x4b13d623",
+    "0xc6984388",
+    "0xfbe507f5"
+  ]
+}
