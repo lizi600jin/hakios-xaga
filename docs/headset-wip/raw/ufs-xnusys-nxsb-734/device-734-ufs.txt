@@ -1,0 +1,34 @@
+ufs-range-user: trial=734 pid=4 write_error=30
+ufs-range-user: block pid=4 bytes=4096 errno=0 guards=1
+ufs-range-user: header pid=4 size=92 crc=0xba3342fe self=31240191 alternate=1 first=34 last=31240183
+ufs-range-user: layout pid=4 entries_lba=31240184 count=128 stride=128 blocks=4
+ufs-range-user: array pid=4 bytes=16384 crc=0xce39daa8 stored=0xce39daa8 guards=1
+ufs-range-user: entries pid=4 used=88 unused=40 reversed=0 before=1 after=0 overlaps=0 zero_ids=0 duplicates=0 consistent=0
+ufs-range-user: partition pid=4 bytes=4096 errno=0 guards=1
+ufs-range-user: nxsb pid=4 type=1 block_size=4096 blocks=608448 checksum_ok=1 valid=1
+ufs-range-user: eof pid=4 bytes=0 unchanged=1
+ufs-range-user: final pid=4 passed=1 close=0
+[   19.365072]: mt6895-ufs-twoblock: bounded READ10 lun2 lba31240191 blocks1 bytes4096 budget4; guarded handoff required
+[   19.365232]: mt6895-ufs-twoblock: guard magic=0x554c5345 version=1 trial=734 state=0
+[   19.365819]: mt6895-ufs-twoblock: opened control=0x2 shared=1
+[   19.366013]: mt6895-ufs-twoblock: snapshot registered path=/dev/mt6895-ufs-range bytes=24576 budget=4
+[   20.328274]: mt6895-ufs-twoblock: request=1 lba=31240191 blocks=1 bytes=4096 admitted=1 readback_ok=1 issued=1 rings=1 response_valid=0x1fff failures=0 ocs=0 data_words=1024/1024 restored=1 copied=1 control=0x4 shared=1
+[   20.329136]: mt6895-ufs-twoblock: block=1 lba=31240191 reference_present=1 crc=0x4b13d623 reference_crc=0x4b13d623 match=1
+[   20.330026]: mt6895-ufs-twoblock: slice offset=127959822336 blocks=1 bytes=4096 first=4096 second=0 cap=4096 crc=0x4b13d623 delivered=1
+[   20.333293]: mt6895-ufs-twoblock: request=2 lba=31240184 blocks=2 bytes=8192 admitted=1 readback_ok=1 issued=1 rings=1 response_valid=0x1fff failures=0 ocs=0 data_words=2048/2048 restored=1 copied=1 control=0x4 shared=1
+[   20.334226]: mt6895-ufs-twoblock: block=1 lba=31240184 reference_present=1 crc=0xd024e0c reference_crc=0xd024e0c match=1
+[   20.335159]: mt6895-ufs-twoblock: block=2 lba=31240185 reference_present=1 crc=0x58f10429 reference_crc=0x58f10429 match=1
+[   20.336128]: mt6895-ufs-twoblock: slice offset=127959793664 blocks=2 bytes=8192 first=4096 second=4096 cap=8192 crc=0xc6984388 delivered=1
+[   20.339554]: mt6895-ufs-twoblock: request=3 lba=31240186 blocks=2 bytes=8192 admitted=1 readback_ok=1 issued=1 rings=1 response_valid=0x1fff failures=0 ocs=0 data_words=2048/2048 restored=1 copied=1 control=0x4 shared=1
+[   20.340570]: mt6895-ufs-twoblock: block=1 lba=31240186 reference_present=1 crc=0xa0d23c1c reference_crc=0xa0d23c1c match=1
+[   20.341574]: mt6895-ufs-twoblock: block=2 lba=31240187 reference_present=1 crc=0xc71c0011 reference_crc=0xc71c0011 match=1
+[   20.342613]: mt6895-ufs-twoblock: slice offset=127959801856 blocks=2 bytes=8192 first=4096 second=4096 cap=8192 crc=0xfbe507f5 delivered=1
+[   20.343872]: mt6895-ufs-twoblock: partition xnusys first=30580480 last=31236087 resolved=1
+[   20.346864]: mt6895-ufs-twoblock: request=4 lba=30580480 blocks=1 bytes=4096 admitted=1 readback_ok=1 issued=1 rings=1 response_valid=0x1fff failures=0 ocs=0 data_words=1024/1024 restored=1 copied=1 control=0x4 shared=1
+[   20.347960]: mt6895-ufs-twoblock: block=1 lba=30580480 reference_present=1 crc=0x787ea9ea reference_crc=0x787ea9ea match=1
+[   20.349082]: mt6895-ufs-twoblock: slice offset=125257646080 blocks=1 bytes=4096 first=4096 second=0 cap=4096 crc=0x787ea9ea delivered=1
+[   20.350185]: mt6895-ufs-twoblock: userspace read pid=4 offset=0 requested=4096 error=0 residual=0 rings=4
+[   20.354656]: mt6895-ufs-twoblock: userspace read pid=4 offset=4096 requested=16384 error=0 residual=0 rings=4
+[   20.358498]: mt6895-ufs-twoblock: userspace read pid=4 offset=20480 requested=4096 error=0 residual=0 rings=4
+[   20.362040]: mt6895-ufs-twoblock: userspace read pid=4 offset=24576 requested=1 error=0 residual=1 rings=4
+mt6895-ufs-twoblock: return-gate magic=0x554c5345 version=1 trial=734 state=2 allowed=1

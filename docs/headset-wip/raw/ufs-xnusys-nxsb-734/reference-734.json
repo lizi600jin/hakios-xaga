@@ -1,0 +1,12 @@
+{
+  "lba": 30580480,
+  "last_lba": 31236087,
+  "partition_blocks": 655608,
+  "block_bytes": 4096,
+  "apfs_blocks": 608448,
+  "nxsb_sha256": "19eaa6cd1af244ebcd352fd0bca001e4ffe093c051b507467e81b30e1eaeff28",
+  "nxsb_crc32": "0x787ea9ea",
+  "checksum_ok": true,
+  "host_image_first_block_equal": true,
+  "android_sampling_reported_identical": true
+}

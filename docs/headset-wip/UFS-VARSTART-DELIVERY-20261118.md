@@ -36,3 +36,5 @@ Trial731 从 LUN 2 的 LBA 1 至 5 取得主表头与完整分区项数组。三
 Trial732 在 xaga 上逐项审计主 GPT。88 个已用条目中，一个条目的起始 LBA 早于表头声明的首个可用 LBA，实测 `consistent=0`。条目之间的区间交集数为零。两份 HLOG 相同，原厂分区已全长核对。[732 实机计数与复测](raw/ufs-gpt-entries-732/README.md)
 
 Trial733 在 xaga 上以三次 READ(10) 读出 LUN 2 末端的备份 GPT，五个数据块的 CRC32 全部匹配原厂参考。用户进程重算了表头和完整数组校验，发现与主表相同的一项可用范围边界异常。原厂分区已恢复并通过全长核对。[733 实机记录与复测](raw/ufs-gpt-mirror-733/README.md)
+
+Trial734 按备份 GPT 解析出的起始 LBA 30580480 读取了 xnusys 的 APFS 容器超级块。用户进程通过 Fletcher 校验，并读出容器块数 608448。恢复前后日志相同，原厂分区已全长核对。[734 实机记录与复测](raw/ufs-xnusys-nxsb-734/README.md)
