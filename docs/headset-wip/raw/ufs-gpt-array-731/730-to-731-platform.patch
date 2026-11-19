@@ -1,0 +1,574 @@
+--- a/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
++++ b/source/ufs_twoblock/hakios.mt6895_ufs_twoblock.c
+@@ -64,6 +64,28 @@
+ 
+ static struct vr_platform platform;
+ static uint32_t twoblock_total_rings;
++static uint32_t range_mode_id;
++#define GPT_ARRAY_MODE 5u
++#define GPT_REQUESTS 3u
++#define GPT_SNAPSHOT_BYTES (5u * VR_BLOCK_BYTES)
++static const struct vr_request gpt_requests[GPT_REQUESTS] = {
++	{ VR_LUN, 1u, 1u, VR_BLOCK_BYTES },
++	{ VR_LUN, 2u, 2u, VR_BLOCK_BYTES },
++	{ VR_LUN, 4u, 2u, VR_BLOCK_BYTES },
++};
++
++/* The two additional Android reference CRCs apply only to the fixed GPT read set. */
++static bool
++twoblock_reference(uint32_t lba, uint32_t mode, uint32_t *crc)
++{
++	if (mode == GPT_ARRAY_MODE && (lba == 4u || lba == 5u)) {
++		*crc = lba == 4u ? UINT32_C(0xa0d23c1c) : UINT32_C(0xc71c0011);
++		return true;
++	}
++	if (!varread_reference_is_known(lba)) return false;
++	*crc = varread_reference_crc(lba);
++	return true;
++}
+ static bool twoblock_publish(void *, uint32_t);
+ static struct us_lease twoblock_lease = { 0, twoblock_publish, &platform };
+ static struct vrq_workspace twoblock_workspace;
+@@ -334,11 +356,10 @@
+ 	for (uint32_t block = 0; block < pinned->blocks; block++) {
+ 		uint32_t lba = pinned->lba + block;
+ 		crc[block] = vrq_crc32(twoblock_copy + block * VR_BLOCK_BYTES, VR_BLOCK_BYTES);
+-		if (!varread_reference_is_known(lba)) {
++		if (!twoblock_reference(lba, range_mode_id, &reference[block])) {
+ 			twoblock_fail("block reference missing");
+ 			return false;
+ 		}
+-		reference[block] = varread_reference_crc(lba);
+ 		if (crc[block] != reference[block]) {
+ 			printf("mt6895-ufs-twoblock: lba=%u checksum mismatch crc=%#x reference_crc=%#x\n",
+ 			       lba, crc[block], reference[block]);
+@@ -542,17 +563,20 @@
+ 	}
+ 	uint32_t vfs = 0;
+ 	(void)PE_parse_boot_argn("mtk_ufs_vfs", &vfs, sizeof(vfs));
+-	if (vfs && (vfs > 4u || !range_mode || range_off != range_source_offset(vfs) ||
++	if (vfs && (vfs > GPT_ARRAY_MODE || !range_mode || range_off != range_source_offset(vfs) ||
+ 	    range_len != range_source_length(vfs) || range_cap != range_len)) return;
+ 	if (mixed && (start != 3u || blocks != 1u)) return;
+-	const struct vr_request requests[] = { pinned, { VR_LUN, 2u, 2u, VR_BLOCK_BYTES }, pinned };
+-	const uint32_t count = mixed ? sizeof(requests) / sizeof(requests[0]) : 1u;
++	const struct vr_request standard_requests[] = { pinned, { VR_LUN, 2u, 2u, VR_BLOCK_BYTES }, pinned };
++	const struct vr_request *requests = vfs == GPT_ARRAY_MODE ? gpt_requests : standard_requests;
++	const uint32_t count = vfs == GPT_ARRAY_MODE ? GPT_REQUESTS :
++	    (mixed ? (uint32_t)(sizeof(standard_requests) / sizeof(standard_requests[0])) : 1u);
+ 	for (uint32_t i = 0; i < count; ++i) {
+ 		const struct vr_request *r = &requests[i];
+ 		struct vr_command encoded;
+ 		if (!vrq_make_read(r, &limits, &encoded)) return;
+ 		for (uint32_t block = 0; block < r->blocks; ++block) {
+-			if (!varread_reference_is_known(r->lba + block)) {
++			uint32_t crc;
++			if (!twoblock_reference(r->lba + block, vfs, &crc)) {
+ 				printf("mt6895-ufs-twoblock: lba %u has no frozen reference; no request\n",
+ 				    r->lba + block);
+ 				return;
+--- a/source/ufs_twoblock/ufs_range_vfs.h
++++ b/source/ufs_twoblock/ufs_range_vfs.h
+@@ -7,20 +7,20 @@
+ #define RANGE_PATH       "/dev/" RANGE_NODE
+ 
+ static uint32_t vfs_request_used;
+-static uint32_t range_mode_id;
++
+ 
+ /* Mode 4 exports exactly the primary GPT header block. The registered geometry is
+  * fixed before publishing the node. Earlier modes retain their existing window. */
+ static uint32_t
+ range_source_offset(uint32_t mode)
+ {
+-	return mode == 4u ? VR_BLOCK_BYTES : RANGE_VFS_OFFSET;
++	return mode >= 4u ? VR_BLOCK_BYTES : RANGE_VFS_OFFSET;
+ }
+ 
+ static uint32_t
+ range_source_length(uint32_t mode)
+ {
+-	return mode == 4u ? VR_BLOCK_BYTES : RANGE_VFS_LENGTH;
++	return mode >= 4u ? VR_BLOCK_BYTES : RANGE_VFS_LENGTH;
+ }
+ 
+ static uint32_t
+@@ -54,7 +54,36 @@
+ static uint32_t range_ready;
+ enum snapshot_state { SNAP_EMPTY, SNAP_FILLING, SNAP_READY, SNAP_FAILED };
+ static uint32_t snapshot_state;
+-static uint8_t snapshot[VR_BLOCK_BYTES];
++static uint8_t snapshot[GPT_SNAPSHOT_BYTES];
++
++static uint32_t
++range_snapshot_length(uint32_t mode)
++{
++	return mode == GPT_ARRAY_MODE ? GPT_SNAPSHOT_BYTES : range_source_length(mode);
++}
++
++static int
++range_fill_snapshot(uint32_t length)
++{
++	uint32_t done = 0;
++	if (range_mode_id != GPT_ARRAY_MODE) {
++		int error = range_read_bytes(range_source_offset(range_mode_id), length,
++		    snapshot, length, &done);
++		return error ? error : (done == length ? 0 : EIO);
++	}
++	const struct vr_limits limits = vr_runtime_limits();
++	uint32_t offset = 0;
++	for (uint32_t i = 0; i < GPT_REQUESTS; ++i) {
++		const struct vr_request *r = &gpt_requests[i];
++		const uint32_t size = r->blocks * VR_BLOCK_BYTES;
++		const struct vrb_window full = { r->lba, r->blocks, 0, VR_BLOCK_BYTES, size - VR_BLOCK_BYTES };
++		if (size > length - offset || us_stopped(&twoblock_lease)) return EIO;
++		if (!twoblock_run(r, &limits, i + 1u, &full, snapshot + offset, size, &done) ||
++		    done != size) return EIO;
++		offset += done;
++	}
++	return offset == length ? 0 : EIO;
++}
+ 
+ /* Only the winner writes snapshot. Readers acquire the published immutable bytes. */
+ static int
+@@ -62,16 +91,14 @@
+ {
+ 	if (offset < 0 || requested < 0) return EINVAL;
+ 	if (us_stopped(&twoblock_lease)) return ENXIO;
+-	const uint32_t length = range_source_length(range_mode_id);
++	const uint32_t length = range_snapshot_length(range_mode_id);
+ 	if (!requested || (uint64_t)offset >= length) return 0;
+ 
+ 	uint32_t state = __atomic_load_n(&snapshot_state, __ATOMIC_ACQUIRE);
+ 	if (state == SNAP_EMPTY && __atomic_compare_exchange_n(&snapshot_state, &state,
+ 	    SNAP_FILLING, false, __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE)) {
+-		uint32_t done = 0;
+-		int error = range_read_bytes(range_source_offset(range_mode_id), length,
+-		    snapshot, length, &done);
+-		bool valid = !error && done == length && !us_stopped(&twoblock_lease);
++		int error = range_fill_snapshot(length);
++		bool valid = !error && !us_stopped(&twoblock_lease);
+ 		state = valid ? SNAP_READY : SNAP_FAILED;
+ 		__atomic_store_n(&snapshot_state, state, __ATOMIC_RELEASE);
+ 		if (!valid) return error ? error : EIO;
+@@ -201,7 +228,8 @@
+ 	range_mode_id = mode;
+ 	__atomic_store_n(&range_ready, 1u, __ATOMIC_RELEASE);
+ 	if (mode >= 3u) {
+-		printf("mt6895-ufs-twoblock: snapshot registered path=" RANGE_PATH " bytes=%u budget=1\n", range_source_length(mode));
++		printf("mt6895-ufs-twoblock: snapshot registered path=" RANGE_PATH " bytes=%u budget=%u\n",
++		    range_snapshot_length(mode), mode == GPT_ARRAY_MODE ? GPT_REQUESTS : 1u);
+ 		return;
+ 	}
+ 	if (mode == 2u) {
+--- a/source/ufs_twoblock/support/ufs_read_contract.h
++++ b/source/ufs_twoblock/support/ufs_read_contract.h
+@@ -8,7 +8,7 @@
+ #include <stdbool.h>
+ #include <stddef.h>
+ 
+-#define UR_TRIAL 730u
++#define UR_TRIAL 731u
+ #define UR_MAGIC 0x554c5345u
+ #define UR_VERSION 1u
+ #define UR_LIST_PA UINT64_C(0x51266400)
+--- a/tests/test-ufs-twoblock-platform.c
++++ b/tests/test-ufs-twoblock-platform.c
+@@ -198,7 +198,7 @@
+ 
+ bool vr_host_ring_hook(void)
+ {
+-	assert(regs[0x58 / 4] == 1 && model.rings < (mixed_arg ? 3u : 1u));
++	assert(regs[0x58 / 4] == 1 && model.rings < (mixed_arg || model.vfs_mode == 5u ? 3u : 1u));
+ 	model.rings++;
+ 	model.pending = true;
+ 	return true;
+@@ -247,6 +247,16 @@
+ 	}
+ 	if (model.stop_at == (uint32_t)which && (!stop_request || stop_request == model.rings))
+ 		hakios_mt6895_ufs_twoblock_quiesce();
++	if (which == 3 && model.vfs_mode == 5) {
++		assert(!memcmp(table(), initial_desc.table, sizeof(initial_desc.table)));
++		assert(!memcmp(ucd(), initial_desc.ucd, sizeof(initial_desc.ucd)));
++		assert(!memcmp(data(), initial_data, sizeof(initial_data)));
++		assert(!memcmp(twoblock_copy, ref_window + model.want_lba * VR_BLOCK_BYTES,
++		    want_blocks * VR_BLOCK_BYTES));
++		model.completed = false;
++		model.want_lba = model.rings == 1u ? 2u : 4u;
++		want_blocks = 2;
++	}
+ 	if (which == 3 && mixed_arg && strcmp(mixed_arg, "1") == 0) {
+ 		const uint32_t bytes = want_blocks * VR_BLOCK_BYTES;
+ 		assert(model.rings == verified_copies + 1);
+@@ -700,6 +710,56 @@
+ 	puts("Trial730 GPT block snapshot, bounds, single request and restore PASS");
+ }
+ 
++/* The Android reference, fixed CDB sequence and original DMA area are independent oracles. */
++static void
++start_gpt_array(void)
++{
++	range_settings(VR_BLOCK_BYTES, VR_BLOCK_BYTES, VR_BLOCK_BYTES);
++	model.vfs_mode = 5;
++	memcpy(initial_desc.table, table(), sizeof(initial_desc.table));
++	memcpy(initial_desc.ucd, ucd(), sizeof(initial_desc.ucd));
++	memcpy(initial_data, data(), sizeof(initial_data));
++	hakios_mt6895_ufs_twoblock_init();
++	assert(range_ready && !model.rings);
++}
++
++static void
++test_gpt_array(void)
++{
++	static uint8_t out[5u * VR_BLOCK_BYTES + 2u];
++	start_gpt_array();
++	assert(range_dev_open(fake_node.device, FWRITE, 0, NULL) == EROFS);
++	memset(out, 0xa5, sizeof(out));
++	struct uio u = {5 * VR_BLOCK_BYTES, 1, out, 0, true};
++	assert(range_dev_read(fake_node.device, &u, 0) == 0 && !u.moved && !model.rings);
++	u = (struct uio){0, VR_BLOCK_BYTES, out + 1, 0, true};
++	overlap_fill = true;
++	assert(range_dev_read(fake_node.device, &u, 0) == 0 && !u.residual && !overlap_fill);
++	assert(model.rings == 3 && snapshot_state == SNAP_READY);
++	u = (struct uio){VR_BLOCK_BYTES, 4 * VR_BLOCK_BYTES, out + 1 + VR_BLOCK_BYTES, 0, true};
++	assert(range_dev_read(fake_node.device, &u, 0) == 0 && !u.residual);
++	assert(!memcmp(out + 1, ref_window + VR_BLOCK_BYTES, 5 * VR_BLOCK_BYTES));
++	assert(out[0] == 0xa5 && out[sizeof(out)-1] == 0xa5 && range_rings() == 3);
++	hakios_mt6895_ufs_twoblock_quiesce();
++	assert(lease_record()->state == UR_RESTORED);
++	for (unsigned ordinal = 1; ordinal <= 3; ++ordinal) {
++		for (unsigned fault = 0; fault < 2; ++fault) {
++			start_gpt_array();
++			model.corrupt_last = fault == 0;
++			fault_request = ordinal;
++			model.stop_at = fault == 1 ? 2u : 0u;
++			stop_request = ordinal;
++			memset(out, 0x5a, sizeof(out));
++			u = (struct uio){0, VR_BLOCK_BYTES, out + 1, 0, true};
++			assert(range_dev_read(fake_node.device, &u, 0) != 0 && !u.moved);
++			assert(snapshot_state == SNAP_FAILED && range_rings() == ordinal);
++			assert(range_dev_read(fake_node.device, &u, 0) != 0 && !u.moved && range_rings() == ordinal);
++			for (size_t j = 0; j < sizeof(out); ++j) assert(out[j] == 0x5a);
++		}
++	}
++	puts("Trial731 full GPT snapshot, fixed three requests, atomic publication and six fault cases PASS");
++}
++
+ int main(int argc, char **argv)
+ {
+ 	assert(argc == 2);
+@@ -829,6 +889,7 @@
+ 	puts("Trial728 userspace uio, exact range, EOF and exhausted budget PASS");
+ 	test_snapshot();
+ 	test_header_snapshot();
++	test_gpt_array();
+ 	free(ref_window);
+ 	assert(munmap(scratch, VR_SCRATCH_BYTES + PAGE_SIZE) == 0);
+ 
+--- a/tests/test-user-range-client.c
++++ b/tests/test-user-range-client.c
+@@ -1,15 +1,25 @@
+-/* Link the shipped GPT client to host syscalls. zlib independently signs fixtures. */
++/* Link the shipped GPT client to host syscalls. zlib independently signs fixtures.
++ *
++ * The snapshot the client sees is one 20480-byte window: a 4096-byte header block followed by the
++ * 16384-byte entry array. The stub serves those two reads in order and then EOF, so the client's
++ * own sequencing, bounds and CRC comparison are what the assertions exercise.
++ */
+ #include <assert.h>
+ #include <stdint.h>
+ #include <stdio.h>
+ #include <string.h>
+ #include <zlib.h>
+ 
++#define BLOCK_BYTES 4096u
++#define ARRAY_BYTES 16384u
++
+ int range_client(int, char **, char **);
+ int range_errno;
+-static uint8_t block[4096], sample[4096];
++static uint8_t header[BLOCK_BYTES], array[ARRAY_BYTES];
++static uint8_t sample_h[BLOCK_BYTES], sample_a[ARRAY_BYTES];
+ static int reads, closes;
+-enum fault { OK, WRITE_OPEN, OPEN_FAIL, SHORT_READ, GUARD, EOF_BYTE, EOF_WRITE, CLOSE_FAIL };
++enum fault { OK, WRITE_OPEN, OPEN_FAIL, SHORT_HEADER, SHORT_ARRAY, GUARD, EOF_BYTE,
++	     EOF_WRITE, CLOSE_FAIL };
+ static enum fault fault;
+ 
+ int range_pid(void) { return 42; }
+@@ -27,13 +37,20 @@
+ long range_read(int fd, void *dst, size_t n)
+ {
+ 	assert(fd == 7);
+-	if (++reads == 1) {
+-		assert(n == sizeof(block));
+-		memcpy(dst, block, n);
++	++reads;
++	if (reads == 1) {                       /* the header block */
++		assert(n == BLOCK_BYTES);
++		memcpy(dst, header, n);
+ 		if (fault == GUARD) ((uint8_t *)dst)[n] = 0;
+-		return fault == SHORT_READ ? (long)n-1 : (long)n;
++		return fault == SHORT_HEADER ? (long)n - 1 : (long)n;
+ 	}
+-	assert(reads == 2 && n == 1);
++	if (reads == 2) {                       /* the whole array */
++		assert(n == ARRAY_BYTES);
++		memcpy(dst, array, n);
++		if (fault == GUARD) ((uint8_t *)dst)[n] = 0;
++		return fault == SHORT_ARRAY ? (long)n - 1 : (long)n;
++	}
++	assert(reads == 3 && n == 1);           /* EOF probe */
+ 	if (fault == EOF_WRITE) *(uint8_t *)dst = 0;
+ 	return fault == EOF_BYTE ? 1 : 0;
+ }
+@@ -45,47 +62,95 @@
+ 	reads = closes = 0;
+ 	assert((range_client(0, NULL, NULL) == 0) == pass);
+ 	assert(closes == (fault == OPEN_FAIL ? 0 : 1));
+-	if (pass) assert(reads == 2);
++	if (pass) assert(reads == 3);
+ }
+ 
+-static void put32(unsigned off, uint32_t value)
++static void put32(uint8_t *p, unsigned off, uint32_t value)
+ {
+-	for (unsigned i=0; i<4; ++i) block[off+i] = (uint8_t)(value >> (8*i));
++	for (unsigned i = 0; i < 4; ++i) p[off + i] = (uint8_t)(value >> (8 * i));
+ }
++static uint32_t get32(const uint8_t *p, unsigned off)
++{
++	return (uint32_t)p[off] | ((uint32_t)p[off+1] << 8) |
++	    ((uint32_t)p[off+2] << 16) | ((uint32_t)p[off+3] << 24);
++}
++/* Re-sign the header after a deliberate change, so only the array logic can catch it. */
+ static void sign_header(unsigned size)
+ {
+-	put32(16,0);
+-	put32(16,(uint32_t)crc32(0,block,size));
++	put32(header, 16, 0);
++	put32(header, 16, (uint32_t)crc32(0, header, size));
++}
++/* Re-sign the array too: the header's stored_crc is what the client compares against. */
++static void sign_array(uint64_t declared)
++{
++	put32(header, 88, (uint32_t)crc32(0, array, (unsigned)declared));
++	sign_header(get32(header, 12));
++}
++static void restore(void)
++{
++	memcpy(header, sample_h, sizeof(header));
++	memcpy(array, sample_a, sizeof(array));
+ }
+ 
+ int main(int argc, char **argv)
+ {
+ 	assert(argc == 2);
+-	FILE *f=fopen(argv[1],"rb");
+-	assert(f && fseek(f,4096,SEEK_SET)==0 && fread(sample,1,sizeof(sample),f)==sizeof(sample));
+-	assert(fclose(f)==0);
+-	memcpy(block,sample,sizeof(block));
+-	for (int i=OK; i<=CLOSE_FAIL; ++i) { fault=(enum fault)i; run(i==OK); }
+-	fault=OK;
+-	const struct { unsigned off; uint32_t value; } invalid[] = {
+-		{0,0}, {8,0x20000}, {12,91}, {12,4097}, {20,1}, {24,2}, {32,123},
+-		{40,1}, {48,31240191}, {48,31240189}, {72,1}, {72,33}, {76,1},
+-		{80,0}, {80,1}, {80,UINT32_MAX}, {84,64}, {84,136}, {84,0x80000000}
++	FILE *f = fopen(argv[1], "rb");
++	assert(f);
++	/* The fixture is a LUN 2 window starting at LBA 0: header at LBA 1, array from LBA 2. */
++	assert(fseek(f, 4096, SEEK_SET) == 0 && fread(sample_h, 1, sizeof(sample_h), f) == sizeof(sample_h));
++	assert(fseek(f, 8192, SEEK_SET) == 0 && fread(sample_a, 1, sizeof(sample_a), f) == sizeof(sample_a));
++	assert(fclose(f) == 0);
++
++	uint64_t declared = (uint64_t)get32(sample_h, 80) * get32(sample_h, 84);
++	assert(declared == ARRAY_BYTES);
++	assert((uint32_t)crc32(0, sample_a, ARRAY_BYTES) == get32(sample_h, 88));
++
++	/* 1. every syscall fault in turn */
++	restore();
++	for (int i = OK; i <= CLOSE_FAIL; ++i) { fault = (enum fault)i; run(i == OK); }
++	fault = OK;
++
++	/* 2. the unmodified real snapshot must pass */
++	restore();
++	run(1);
++
++	/* 3. array corruption at both ends and in the middle. The header is left exactly as the
++	 *    device reported it, so the stored CRC no longer describes the array we serve. */
++	restore(); array[0] ^= 1; run(0);
++	restore(); array[ARRAY_BYTES - 1] ^= 1; run(0);
++	restore(); array[ARRAY_BYTES / 2] ^= 0x80; run(0);
++
++	/* Re-sign each malformed header independently to exercise layout checks. */
++	const struct { unsigned offset; uint32_t value; } invalid[] = {
++		{72,3}, {72,1}, {72,33}, {76,1}, {0,0}, {8,0x20000}, {12,91}, {12,4097},
++		{20,1}, {24,2}, {32,123}, {40,1}, {48,31240191}, {48,31240189},
++		{80,0}, {80,64}, {80,256}, {80,UINT32_MAX}, {84,64}, {84,136}, {84,0x80000000}
+ 	};
+-	for (unsigned i=0;i<sizeof(invalid)/sizeof(invalid[0]);++i) {
+-		memcpy(block,sample,sizeof(block));
+-		put32(invalid[i].off,invalid[i].value);
++	for (size_t i = 0; i < sizeof(invalid)/sizeof(invalid[0]); ++i) {
++		restore();
++		put32(header, invalid[i].offset, invalid[i].value);
+ 		sign_header(92);
+ 		run(0);
+ 	}
+-	memcpy(block,sample,sizeof(block));
+-	block[56]^=1; /* Changed a covered byte and kept the old CRC. */
++	restore(); header[56] ^= 1; run(0);
++	restore(); put32(header, 12, 96); header[92] = 0x51; sign_header(96); run(1);
++
++	/* 6. stored CRC altered but header re-signed: array comparison must catch it */
++	restore();
++	put32(header, 88, get32(header, 88) ^ 0xffffffffu);
++	sign_header(get32(header, 12));
+ 	run(0);
+-	memcpy(block,sample,sizeof(block));
+-	put32(12,96);
+-	block[92]=0x51;
+-	sign_header(96);
+-	run(1); /* CRC covers the actual declared length. */
+-	puts("Trial730 GPT client: device header, extended header, syscall and malformed-header regressions PASS");
++
++	/* A different valid count/stride pair describes the same approved array. */
++	restore(); put32(header, 80, 64); put32(header, 84, 256); sign_header(92); run(1);
++
++	/* 8. independent legal control: a different but self-consistent array passes */
++	restore();
++	for (unsigned i = 0; i < ARRAY_BYTES; ++i) array[i] = (uint8_t)(i * 7u + 1u);
++	sign_array(declared);
++	run(1);
++
++	puts("Trial731 GPT array client: header, whole-array CRC, EOF and malformed-snapshot regressions PASS");
+ 	return 0;
+ }
+--- a/ufs_range_check.c
++++ b/ufs_range_check.c
+@@ -1,8 +1,14 @@
+-/* Validate the primary GPT header from the read-only LUN 2 snapshot. */
++/* Validate the primary GPT header and the entry array from the read-only LUN 2 snapshot.
++ *
++ * The snapshot is one 20480-byte window: offset 0 is the 4096-byte header block, offset 4096 is the
++ * 16384-byte entry array. The array is read whole and its CRC32 is recomputed over exactly the
++ * count*stride bytes the header declares, then compared with the value stored in the header.
++ */
+ #include "mini.h"
+ 
+ #define NODE "/dev/mt6895-ufs-range"
+ #define BLOCK_BYTES 4096u
++#define ARRAY_BYTES 16384u
+ /* Last logical block from the previously measured xaga LUN 2 capacity. */
+ #define LAST_LBA UINT64_C(31240191)
+ 
+@@ -19,21 +25,30 @@
+ 	return le32(p) | ((uint64_t)le32(p + 4) << 32);
+ }
+ 
++static uint32_t
++crc_update(uint32_t crc, const uint8_t *p, size_t length)
++{
++	for (size_t i = 0; i < length; ++i) {
++		crc ^= p[i];
++		for (int bit = 0; bit < 8; ++bit)
++			crc = (crc >> 1) ^ (UINT32_C(0xedb88320) & (0u - (crc & 1u)));
++	}
++	return crc;
++}
++
+ /* UEFI 5.3.2 includes HeaderSize bytes with the CRC field treated as zero. */
+ static uint32_t
+ header_crc(const uint8_t *p, uint32_t size)
+ {
+-	uint32_t crc = ~0u;
+-	for (uint32_t i = 0; i < size; ++i) {
+-		crc ^= i >= 16u && i < 20u ? 0u : p[i];
+-		for (int bit = 0; bit < 8; ++bit)
+-			crc = (crc >> 1) ^ (UINT32_C(0xedb88320) & (0u - (crc & 1u)));
+-	}
+-	return ~crc;
++	static const uint8_t zero[4];
++	uint32_t crc = crc_update(~0u, p, 16);
++	crc = crc_update(crc, zero, sizeof(zero));
++	return ~crc_update(crc, p + 20, size - 20);
+ }
+ 
++/* Header and geometry checks carried over from Trial730, plus the array window requirement. */
+ static int
+-check_header(const uint8_t *p, int pid)
++check_header(const uint8_t *p, int pid, uint32_t *stored_crc, uint64_t *declared_bytes)
+ {
+ 	uint32_t size = le32(p + 12);
+ 	if (memcmp(p, "EFI PART", 8) || le32(p + 8) != 0x10000 || size < 92 ||
+@@ -43,16 +58,21 @@
+ 	uint64_t first = le64(p + 40), last = le64(p + 48), entries = le64(p + 72);
+ 	uint32_t count = le32(p + 80), stride = le32(p + 84);
+ 	if (le64(p + 24) != 1 || le64(p + 32) != LAST_LBA || first > last ||
+-	    last >= LAST_LBA || entries < 2 || entries >= first || !count ||
++	    last >= LAST_LBA || entries != 2 || entries >= first || !count ||
+ 	    stride < 128 || (stride & (stride - 1u))) return 0;
+ 	uint64_t bytes = (uint64_t)count * stride;
+ 	uint64_t blocks = bytes / BLOCK_BYTES + (bytes % BLOCK_BYTES != 0);
+-	if (bytes < 16384 || blocks > first - entries || blocks > LAST_LBA - last - 1) return 0;
++	/* The declared array must fit the approved window, and the LBA geometry must allow it. */
++	if (bytes != ARRAY_BYTES) return 0;
++	if (blocks > first - entries || blocks > LAST_LBA - last - 1) return 0;
+ 	printf("ufs-range-user: header pid=%d size=%u crc=0x%x self=1 alternate=%llu first=%llu last=%llu\n",
+ 	    pid, size, actual, (unsigned long long)LAST_LBA, (unsigned long long)first,
+ 	    (unsigned long long)last);
+ 	printf("ufs-range-user: layout pid=%d entries_lba=%llu count=%u stride=%u blocks=%llu\n",
+ 	    pid, (unsigned long long)entries, count, stride, (unsigned long long)blocks);
++	/* The header is overwritten by the array read, so hand its stored CRC to the caller now. */
++	*stored_crc = le32(p + 88);
++	*declared_bytes = bytes;
+ 	return 1;
+ }
+ 
+@@ -65,7 +85,7 @@
+ 	int pid = getpid();
+ 	int writer = open(NODE, O_WRONLY, 0);
+ 	int error = writer < 0 ? errno : 0;
+-	printf("ufs-range-user: trial=730 pid=%d write_error=%d\n", pid, error);
++	printf("ufs-range-user: trial=731 pid=%d write_error=%d\n", pid, error);
+ 	if (writer >= 0) {
+ 		close(writer);
+ 		return 1;
+@@ -73,17 +93,33 @@
+ 	if (pid <= 1 || (error != 13 && error != 30)) return 1;
+ 	int fd = open(NODE, O_RDONLY, 0);
+ 	if (fd < 0) return 1;
+-	static uint8_t data[BLOCK_BYTES + 2u];
++
++	static uint8_t data[ARRAY_BYTES + 2u];
+ 	memset(data, 0xa5, sizeof(data));
+ 	int bytes = (int)read(fd, data + 1, BLOCK_BYTES);
+-	int guards = data[0] == 0xa5 && data[sizeof(data)-1] == 0xa5;
++	int guards = data[0] == 0xa5 && data[1 + BLOCK_BYTES] == 0xa5;
+ 	printf("ufs-range-user: block pid=%d bytes=%d errno=%d guards=%d\n",
+ 	    pid, bytes, bytes < 0 ? errno : 0, guards);
+-	int ok = bytes == (int)BLOCK_BYTES && guards && check_header(data + 1, pid);
++	uint32_t stored = 0;
++	uint64_t declared = 0;
++	int ok = bytes == (int)BLOCK_BYTES && guards &&
++	    check_header(data + 1, pid, &stored, &declared);
++
++	/* Read the whole array in one call and check both sentinels on either side of it. */
++	if (ok) {
++		memset(data, 0xa5, sizeof(data));
++		bytes = (int)read(fd, data + 1, ARRAY_BYTES);
++		guards = data[0] == 0xa5 && data[1 + ARRAY_BYTES] == 0xa5;
++		uint32_t actual = bytes == (int)ARRAY_BYTES ? ~crc_update(~0u, data + 1, (size_t)declared) : 0u;
++		printf("ufs-range-user: array pid=%d bytes=%d crc=0x%x stored=0x%x guards=%d\n",
++		    pid, bytes, actual, stored, guards);
++		ok = bytes == (int)ARRAY_BYTES && guards && actual == stored;
++	}
+ 	if (ok) {
+ 		uint8_t sentinel = 0x5a;
+ 		bytes = (int)read(fd, &sentinel, 1);
+-		printf("ufs-range-user: eof pid=%d bytes=%d unchanged=%d\n", pid, bytes, sentinel == 0x5a);
++		printf("ufs-range-user: eof pid=%d bytes=%d unchanged=%d\n", pid, bytes,
++		    sentinel == 0x5a);
+ 		ok = bytes == 0 && sentinel == 0x5a;
+ 	}
+ 	int closed = close(fd);

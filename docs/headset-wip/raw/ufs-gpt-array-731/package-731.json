@@ -1,0 +1,41 @@
+{
+  "trial": 731,
+  "boot_bytes": 23019520,
+  "boot_sha256": "e1d2644da88faa0b3f09bd7fb8fd5058f5b2d2f739b59b1ccfad52232469c5f0",
+  "stock_bytes": 67108864,
+  "stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+  "loader_sha256": "ea3f4b4450a2382ada2d24eb258483fcc447f09c489714598e88a439b0295f8c",
+  "payload_sha256": "7c79b321dd6beb172978dcf84514ef2ceabf18760ffcc0eb60530d35ba7821f2",
+  "kernel_sha256": "bf8afb9bf6f555d826ecb108e80899244ffd1212671b5c69e26e8c1902d49059",
+  "ramdisk_sha256": "a006f10497fa7d228a61f6b2b83026044dac7af0edbfc295f8928eb69620a13f",
+  "arguments_sha256": "e3e96fd0aaf2f8ea44e232dd3a883dcf4ce7d992d56e1e30a70212376bf855c1",
+  "userspace_program_sha256": "bb8454eb14eb1d9094b49a5dc0ced8512eff369ebc13e40ce99b5de992604bec",
+  "client_source_sha256": "14f410b21b3b64247839b48117bcc139b87d879f052547c74a64276dc0740e8f",
+  "hardware": {
+    "status": "HARDWARE_PASS",
+    "pre_record_sha256": "4d7ce06a356bac599928577805990ff23bf3d883746bbd53d192b5f97597681a",
+    "post_record_sha256": "5bd47494d6662a45b72d7c442910c42dd5b37745fe2d4debd9d8d1ef577b5936",
+    "body_bytes": 495816,
+    "body_sha256": "f913bbffb50efc93edc5faed8793ccd359b651d32475060a2d57856a4565e8be",
+    "post_window_sha256": "14521aebbc994aad93a5b64ecd2c07ad3c095c8b29bf45f142623a95f4c9ecd1",
+    "candidate_prefix_bytes": 23019520,
+    "candidate_prefix_byte_equal": true,
+    "restored_stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+    "stock_bytes": 67108864,
+    "baseline_and_recovery_equal_stock": true,
+    "post_windows_byte_equal": true,
+    "three_distinct_android_boots": true,
+    "slot": "_a",
+    "boot_completed": 1,
+    "selinux": "Enforcing"
+  },
+  "ramdisk_audit": {
+    "apfs_bytes": 4194304,
+    "apfs_sha256": "a006f10497fa7d228a61f6b2b83026044dac7af0edbfc295f8928eb69620a13f",
+    "baseline_paths": 66,
+    "new_paths": 67,
+    "new_binary_sha256": "bb8454eb14eb1d9094b49a5dc0ced8512eff369ebc13e40ce99b5de992604bec",
+    "rc_sha256": "ab3647f5c9f62dba64f4ebd7f17b790f5036af05a6d5a521786c713b228122be",
+    "other_entries_equal": true
+  }
+}
