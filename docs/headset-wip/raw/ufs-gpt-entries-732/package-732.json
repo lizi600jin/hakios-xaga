@@ -1,0 +1,53 @@
+{
+  "trial": 732,
+  "boot_bytes": 23019520,
+  "boot_sha256": "d95ef40f583413b0ce1f6e3e4411eb8a5e4973065dc9b65ba753c2456518765b",
+  "stock_bytes": 67108864,
+  "stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+  "loader_sha256": "507ac81b9b0897d100c51241c6f0704f001334cdab4c4620b666e9268197d7eb",
+  "payload_sha256": "a6412890c1975002de4dc1f139934af801df66a93763fec46199479726b9b207",
+  "kernel_sha256": "d8cff01d77e4a40aa1f31eaa14163d628f0d1b790b427d9bfc060a31448097d1",
+  "ramdisk_sha256": "16d36384de2e3f8cbcb6fdf3ccb1ce58d417f10740b4e8fd7d4d17f686a7d237",
+  "arguments_sha256": "44fb095c927e2c0f6b0097cf04566256d8fe3f857cdf6cc5e2a583cc36125345",
+  "userspace_program_sha256": "3fbd8f4bf537bb97be9a6f9becb21c56728ec5081fb0d4474720a4f5c35b7420",
+  "client_source_sha256": "e7e23f847ce4ddac2dd436009a2f8a882f03c0e75a1b82ba5368a02aeee1c7c0",
+  "hardware": {
+    "status": "HARDWARE_PASS",
+    "pre_record_sha256": "5bd47494d6662a45b72d7c442910c42dd5b37745fe2d4debd9d8d1ef577b5936",
+    "post_record_sha256": "e1ebd58c73984dc3e0f70cb763700557c6c940e00ce1816f7b2cc467b0debdd8",
+    "body_bytes": 494117,
+    "body_sha256": "14322e829a12234f9b9a301c6cd8521739171d5b2fbadbf78a4aa56f40fc94b4",
+    "post_window_sha256": "7aa874b5edad407b5f359c18f0cc3dd18474ea2fb91504d0b708489d242147fa",
+    "candidate_prefix_bytes": 23019520,
+    "candidate_prefix_byte_equal": true,
+    "restored_stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+    "stock_bytes": 67108864,
+    "baseline_and_recovery_equal_stock": true,
+    "post_windows_byte_equal": true,
+    "three_distinct_android_boots": true,
+    "slot": "_a",
+    "boot_completed": 1,
+    "selinux": "Enforcing",
+    "entry_audit": {
+      "used": 88,
+      "unused": 40,
+      "reversed": 0,
+      "before": 1,
+      "after": 0,
+      "overlaps": 0,
+      "zero_ids": 0,
+      "duplicates": 0,
+      "consistent": 0
+    },
+    "status_scope": "Verified audited observations, boot and recovery"
+  },
+  "ramdisk_audit": {
+    "apfs_bytes": 4194304,
+    "apfs_sha256": "16d36384de2e3f8cbcb6fdf3ccb1ce58d417f10740b4e8fd7d4d17f686a7d237",
+    "baseline_paths": 66,
+    "new_paths": 67,
+    "new_binary_sha256": "3fbd8f4bf537bb97be9a6f9becb21c56728ec5081fb0d4474720a4f5c35b7420",
+    "rc_sha256": "ab3647f5c9f62dba64f4ebd7f17b790f5036af05a6d5a521786c713b228122be",
+    "other_entries_equal": true
+  }
+}

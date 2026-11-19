@@ -1,0 +1,486 @@
+--- a/source/ufs_twoblock/support/ufs_read_contract.h
++++ b/source/ufs_twoblock/support/ufs_read_contract.h
+@@ -8,7 +8,7 @@
+ #include <stdbool.h>
+ #include <stddef.h>
+ 
+-#define UR_TRIAL 731u
++#define UR_TRIAL 732u
+ #define UR_MAGIC 0x554c5345u
+ #define UR_VERSION 1u
+ #define UR_LIST_PA UINT64_C(0x51266400)
+--- a/tests/test-user-range-client.c
++++ b/tests/test-user-range-client.c
+@@ -1,12 +1,17 @@
+-/* Link the shipped GPT client to host syscalls. zlib independently signs fixtures.
++/* Link the shipped GPT client to host syscalls and to a capturing printf.
+  *
+- * The snapshot the client sees is one 20480-byte window: a 4096-byte header block followed by the
+- * 16384-byte entry array. The stub serves those two reads in order and then EOF, so the client's
+- * own sequencing, bounds and CRC comparison are what the assertions exercise.
++ * The client is compiled with -Dprintf=range_printf, so every line it prints lands in a buffer the
++ * test can assert on. That is how the audit line is checked as *output* rather than inferred from
++ * a return code: a malformed layout must still be reported faithfully, with consistent=0, while
++ * the run itself succeeds.
++ *
++ * The snapshot is one 20480-byte window: a 4096-byte header block, then the 16384-byte entry array.
+  */
+ #include <assert.h>
++#include <stdarg.h>
+ #include <stdint.h>
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <zlib.h>
+ 
+@@ -15,6 +20,10 @@
+ 
+ int range_client(int, char **, char **);
+ int range_errno;
++int range_printf(const char *fmt, ...);
++
++static char out[16384];
++static size_t out_len;
+ static uint8_t header[BLOCK_BYTES], array[ARRAY_BYTES];
+ static uint8_t sample_h[BLOCK_BYTES], sample_a[ARRAY_BYTES];
+ static int reads, closes;
+@@ -22,6 +31,16 @@
+ 	     EOF_WRITE, CLOSE_FAIL };
+ static enum fault fault;
+ 
++int range_printf(const char *fmt, ...)
++{
++	va_list ap;
++	va_start(ap, fmt);
++	int n = vsnprintf(out + out_len, sizeof(out) - out_len, fmt, ap);
++	va_end(ap);
++	if (n > 0) out_len += (size_t)n < sizeof(out) - out_len ? (size_t)n : sizeof(out) - out_len - 1;
++	return n;
++}
++
+ int range_pid(void) { return 42; }
+ int range_open(const char *path, int flags, int mode)
+ {
+@@ -38,19 +57,19 @@
+ {
+ 	assert(fd == 7);
+ 	++reads;
+-	if (reads == 1) {                       /* the header block */
++	if (reads == 1) {
+ 		assert(n == BLOCK_BYTES);
+ 		memcpy(dst, header, n);
+ 		if (fault == GUARD) ((uint8_t *)dst)[n] = 0;
+ 		return fault == SHORT_HEADER ? (long)n - 1 : (long)n;
+ 	}
+-	if (reads == 2) {                       /* the whole array */
++	if (reads == 2) {
+ 		assert(n == ARRAY_BYTES);
+ 		memcpy(dst, array, n);
+ 		if (fault == GUARD) ((uint8_t *)dst)[n] = 0;
+ 		return fault == SHORT_ARRAY ? (long)n - 1 : (long)n;
+ 	}
+-	assert(reads == 3 && n == 1);           /* EOF probe */
++	assert(reads == 3 && n == 1);
+ 	if (fault == EOF_WRITE) *(uint8_t *)dst = 0;
+ 	return fault == EOF_BYTE ? 1 : 0;
+ }
+@@ -60,61 +79,121 @@
+ static void run(int pass)
+ {
+ 	reads = closes = 0;
++	out_len = 0;
++	out[0] = 0;
+ 	assert((range_client(0, NULL, NULL) == 0) == pass);
+ 	assert(closes == (fault == OPEN_FAIL ? 0 : 1));
+ 	if (pass) assert(reads == 3);
+ }
+ 
+-static void put32(uint8_t *p, unsigned off, uint32_t value)
+-{
+-	for (unsigned i = 0; i < 4; ++i) p[off + i] = (uint8_t)(value >> (8 * i));
++/* Most recent line beginning with `tag`; the audit line is what these tests are about. */
++static const char *line_with(const char *tag)
++{
++	const char *found = NULL;
++	for (const char *p = out; p && *p; ) {
++		if (!strncmp(p, tag, strlen(tag))) found = p;
++		const char *nl = strchr(p, '\n');
++		p = nl ? nl + 1 : NULL;
++	}
++	return found;
++}
++
++static void put32(uint8_t *p, unsigned off, uint32_t v)
++{
++	for (unsigned i = 0; i < 4; ++i) p[off + i] = (uint8_t)(v >> (8 * i));
+ }
+ static uint32_t get32(const uint8_t *p, unsigned off)
+ {
+ 	return (uint32_t)p[off] | ((uint32_t)p[off+1] << 8) |
+ 	    ((uint32_t)p[off+2] << 16) | ((uint32_t)p[off+3] << 24);
+ }
+-/* Re-sign the header after a deliberate change, so only the array logic can catch it. */
++static void put64(uint8_t *p, unsigned off, uint64_t v)
++{
++	put32(p, off, (uint32_t)v);
++	put32(p, off + 4, (uint32_t)(v >> 32));
++}
+ static void sign_header(unsigned size)
+ {
+ 	put32(header, 16, 0);
+ 	put32(header, 16, (uint32_t)crc32(0, header, size));
+ }
+-/* Re-sign the array too: the header's stored_crc is what the client compares against. */
+-static void sign_array(uint64_t declared)
++static void restore(void)
++{
++	memcpy(header, sample_h, sizeof(header));
++	memcpy(array, sample_a, sizeof(array));
++}
++/* Re-sign after editing the array so the header still describes what we serve. */
++static void reseal(uint64_t declared)
+ {
+ 	put32(header, 88, (uint32_t)crc32(0, array, (unsigned)declared));
+ 	sign_header(get32(header, 12));
+ }
+-static void restore(void)
+-{
+-	memcpy(header, sample_h, sizeof(header));
+-	memcpy(array, sample_a, sizeof(array));
+-}
+-
+-int main(int argc, char **argv)
+-{
+-	assert(argc == 2);
+-	FILE *f = fopen(argv[1], "rb");
+-	assert(f);
+-	/* The fixture is a LUN 2 window starting at LBA 0: header at LBA 1, array from LBA 2. */
+-	assert(fseek(f, 4096, SEEK_SET) == 0 && fread(sample_h, 1, sizeof(sample_h), f) == sizeof(sample_h));
+-	assert(fseek(f, 8192, SEEK_SET) == 0 && fread(sample_a, 1, sizeof(sample_a), f) == sizeof(sample_a));
+-	assert(fclose(f) == 0);
+-
+-	uint64_t declared = (uint64_t)get32(sample_h, 80) * get32(sample_h, 84);
+-	assert(declared == ARRAY_BYTES);
+-	assert((uint32_t)crc32(0, sample_a, ARRAY_BYTES) == get32(sample_h, 88));
+-
+-	/* 1. every syscall fault in turn */
+-	restore();
+-	for (int i = OK; i <= CLOSE_FAIL; ++i) { fault = (enum fault)i; run(i == OK); }
+-	fault = OK;
+-
+-	/* 2. the unmodified real snapshot must pass */
+-	restore();
+-	run(1);
+-
++
++/* Parse the audit line and return the six problem counters plus consistent. */
++static void audit(unsigned *used, unsigned *unused, unsigned *reversed, unsigned *before,
++    unsigned *after, unsigned *overlaps, unsigned *zero_ids, unsigned *dups, unsigned *consistent)
++{
++	const char *l = line_with("ufs-range-user: entries ");
++	assert(l);
++	int n = sscanf(l,
++	    "ufs-range-user: entries pid=%*d used=%u unused=%u reversed=%u before=%u after=%u "
++	    "overlaps=%u zero_ids=%u duplicates=%u consistent=%u",
++	    used, unused, reversed, before, after, overlaps, zero_ids, dups, consistent);
++	assert(n == 9);
++}
++
++/* Every scenario states the counters it expects; the audit must report them, not hide them. */
++static void expect(unsigned used, unsigned unused, unsigned reversed, unsigned before,
++    unsigned after, unsigned overlaps, unsigned zero_ids, unsigned dups)
++{
++	unsigned u, un, rv, bf, af, ov, z, dp, cs;
++	audit(&u, &un, &rv, &bf, &af, &ov, &z, &dp, &cs);
++	int want_consistent = !(reversed || before || after || overlaps || zero_ids || dups);
++	if (getenv("AUDIT_TRACE"))
++		fprintf(stderr, "  used=%u unused=%u rev=%u bef=%u aft=%u ov=%u z=%u dup=%u c=%u\n",
++		    u, un, rv, bf, af, ov, z, dp, cs);
++	if (u != used || un != unused || rv != reversed || bf != before || af != after ||
++	    ov != overlaps || z != zero_ids || dp != dups || cs != (unsigned)want_consistent) {
++		fprintf(stderr, "MISMATCH got used=%u unused=%u rev=%u bef=%u aft=%u ov=%u z=%u dup=%u c=%u\n"
++		    "        want used=%u unused=%u rev=%u bef=%u aft=%u ov=%u z=%u dup=%u c=%d\n",
++		    u, un, rv, bf, af, ov, z, dp, cs,
++		    used, unused, reversed, before, after, overlaps, zero_ids, dups, want_consistent);
++		exit(9);
++	}
++}
++
++/* "Used" means the whole 16-byte type GUID is not all zero, so a used slot is filled with that
++ * many non-zero bytes rather than a single marker. */
++static void put64(uint8_t *p, unsigned off, uint64_t v);
++
++/* Mark only entry `n` as used; every other slot stays all-zero and is ignored by the audit.
++ * The unique GUID is filled too, so a plain used entry is not reported as a zero-id defect. */
++static void one_used_n(unsigned n, uint8_t tag)
++{
++	uint8_t *e = array + n * 128u;
++	memset(e, tag, 16);           /* non-zero type GUID: the slot counts as used */
++	memset(e + 16, (uint8_t)(tag + 0x40u), 16);  /* distinct non-zero unique GUID */
++	put64(e, 32, 1000u + n * 1000u);             /* a legal, disjoint default range */
++	put64(e, 40, 1010u + n * 1000u);
++}
++
++/* Clear the array first, then mark exactly one slot as used. */
++static void one_used(unsigned n)
++{
++	memset(array, 0, ARRAY_BYTES);
++	one_used_n(n, 0x3c);
++}
++
++static void clear_array(uint8_t type_byte)
++{
++	memset(array, 0, ARRAY_BYTES);
++	if (type_byte == 0) return;
++	for (unsigned i = 0; i < ARRAY_BYTES; i += 128)
++		memset(array + i, type_byte, 16);
++}
++
++static void test_header_and_array(uint64_t declared)
++{
+ 	/* 3. array corruption at both ends and in the middle. The header is left exactly as the
+ 	 *    device reported it, so the stored CRC no longer describes the array we serve. */
+ 	restore(); array[0] ^= 1; run(0);
+@@ -148,9 +227,140 @@
+ 	/* 8. independent legal control: a different but self-consistent array passes */
+ 	restore();
+ 	for (unsigned i = 0; i < ARRAY_BYTES; ++i) array[i] = (uint8_t)(i * 7u + 1u);
+-	sign_array(declared);
++	reseal(declared);
+ 	run(1);
+ 
+-	puts("Trial731 GPT array client: header, whole-array CRC, EOF and malformed-snapshot regressions PASS");
++}
++
++int main(int argc, char **argv)
++{
++	assert(argc == 2);
++	FILE *f = fopen(argv[1], "rb");
++	assert(f);
++	assert(fseek(f, 4096, SEEK_SET) == 0 && fread(sample_h, 1, BLOCK_BYTES, f) == BLOCK_BYTES);
++	assert(fseek(f, 8192, SEEK_SET) == 0 && fread(sample_a, 1, ARRAY_BYTES, f) == ARRAY_BYTES);
++	assert(fclose(f) == 0);
++
++	uint64_t declared = (uint64_t)get32(sample_h, 80) * get32(sample_h, 84);
++	assert(declared == ARRAY_BYTES);
++
++	/* 1. every syscall fault in turn: the run fails, and no audit line is claimed as a pass */
++	restore();
++	for (int i = OK; i <= CLOSE_FAIL; ++i) { fault = (enum fault)i; run(i == OK); }
++	fault = OK;
++
++	/* 2. the real snapshot: 88 used, 40 unused, one entry before FirstUsable, nothing else */
++	restore();
++	run(1);
++	expect(88, 40, 0, 1, 0, 0, 0, 0);
++
++	/* 3. a fully empty array */
++	restore(); clear_array(0); reseal(declared); run(1);
++	expect(0, 128, 0, 0, 0, 0, 0, 0);
++
++	/* 4. reversed range on one used entry */
++	restore(); one_used(0);
++	put64(array, 32, 100); put64(array, 40, 50); reseal(declared); run(1);
++	expect(1, 127, 1, 0, 0, 0, 0, 0);
++
++	/* 5. adjacent ranges do not overlap */
++	restore(); one_used(0); memset(array + 128, 0x3d, 16); memset(array + 128 + 16, 0x7f, 16);
++	put64(array, 32, 1000); put64(array, 40, 1010);
++	put64(array, 128 + 32, 1011); put64(array, 128 + 40, 1020); reseal(declared); run(1);
++	expect(2, 126, 0, 0, 0, 0, 0, 0);
++
++	/* 6. partial overlap */
++	restore(); one_used(0); memset(array + 128, 0x3d, 16); memset(array + 128 + 16, 0x7f, 16);
++	put64(array, 32, 1000); put64(array, 40, 1020);
++	put64(array, 128 + 32, 1015); put64(array, 128 + 40, 1025); reseal(declared); run(1);
++	expect(2, 126, 0, 0, 0, 1, 0, 0);
++
++	/* 7. containment counts as one overlapping pair */
++	restore(); one_used(0); memset(array + 128, 0x3d, 16); memset(array + 128 + 16, 0x7f, 16);
++	put64(array, 32, 1000); put64(array, 40, 1100);
++	put64(array, 128 + 32, 1020); put64(array, 128 + 40, 1030); reseal(declared); run(1);
++	expect(2, 126, 0, 0, 0, 1, 0, 0);
++
++	/* 8. identical endpoints touch and therefore overlap */
++	restore(); one_used(0); memset(array + 128, 0x3d, 16); memset(array + 128 + 16, 0x7f, 16);
++	put64(array, 32, 1000); put64(array, 40, 1010);
++	put64(array, 128 + 32, 1010); put64(array, 128 + 40, 1020); reseal(declared); run(1);
++	expect(2, 126, 0, 0, 0, 1, 0, 0);
++
++	/* 9. before FirstUsable and after LastUsable */
++	restore(); one_used(0);
++	put64(array, 32, 1); put64(array, 40, 2); reseal(declared); run(1);
++	expect(1, 127, 0, 1, 0, 0, 0, 0);
++	restore(); one_used(0);
++	put64(array, 32, 31240184); put64(array, 40, 31240190); reseal(declared); run(1);
++	expect(1, 127, 0, 0, 1, 0, 0, 0);
++
++	/* 10. a used entry with an all-zero unique GUID, range otherwise legal */
++	restore(); one_used(0); memset(array + 16, 0, 16); reseal(declared); run(1);
++	expect(1, 127, 0, 0, 0, 0, 1, 0);
++
++	/* 11. duplicates: same non-zero GUID twice, both ranges legal and disjoint */
++	restore(); memset(array, 0, ARRAY_BYTES); one_used_n(0, 0x3c); one_used_n(1, 0x3d);
++	memset(array + 16, 0x11, 16);
++	memcpy(array + 128 + 16, array + 16, 16);
++	put64(array, 128 + 32, 2000); put64(array, 128 + 40, 2010);
++	reseal(declared); run(1);
++	expect(2, 126, 0, 0, 0, 0, 0, 1);
++
++	/* 12. three used entries: a duplicate pair plus one with an all-zero unique GUID */
++	restore(); memset(array, 0, ARRAY_BYTES); one_used_n(0, 0x3c); one_used_n(1, 0x3d); one_used_n(2, 0x3e);
++	memset(array + 16, 0x22, 16);
++	memcpy(array + 128 + 16, array + 16, 16);
++	put64(array, 128 + 32, 2000); put64(array, 128 + 40, 2010);
++	memset(array + 256 + 16, 0, 16);          /* third keeps an all-zero unique GUID */
++	put64(array, 256 + 32, 3000); put64(array, 256 + 40, 3010);
++	reseal(declared); run(1);
++	expect(3, 125, 0, 0, 0, 0, 1, 1);
++
++	/* 13. unused entries are ignored even when their ranges look wrong */
++	restore(); clear_array(0);
++	put64(array, 32, 100); put64(array, 40, 50);      /* garbage in an unused slot */
++	reseal(declared); run(1);
++	expect(0, 128, 0, 0, 0, 0, 0, 0);
++
++	/* 14a. stride 256 with count 64 still fills the window exactly: a legal layout */
++	restore(); memset(array, 0, ARRAY_BYTES);
++	put32(header, 80, 64);                             /* 64*256 = 16384 */
++	put32(header, 84, 256);
++	/* entries sit at 0 and 256; the bytes in between must be ignored */
++	memset(array, 0x3c, 16); memset(array + 16, 0x7e, 16);
++	put64(array, 32, 1000); put64(array, 40, 1010);
++	memset(array + 256, 0x3d, 16); memset(array + 256 + 16, 0x7f, 16);
++	put64(array, 256 + 32, 2000); put64(array, 256 + 40, 2010);
++	reseal(declared); run(1);
++	expect(2, 62, 0, 0, 0, 0, 0, 0);
++
++	/* 14b. stride 256 with count 128 declares 32768 bytes: larger than the approved window */
++	restore();
++	put32(header, 84, 256);
++	sign_header(get32(header, 12));
++	run(0);
++
++	/* 15. 64-bit LBAs near the top of the usable range stay correct */
++	restore(); one_used(0);
++	put64(array, 32, UINT64_C(31240183)); put64(array, 40, UINT64_C(31240183));
++	reseal(declared); run(1);
++	expect(1, 127, 0, 0, 0, 0, 0, 0);
++
++	test_header_and_array(declared);
++	/* A type may be nonzero only in its last byte. Three equal IDs give three unordered pairs. */
++	restore();
++	memset(array, 0, ARRAY_BYTES);
++	for (size_t i = 0; i < 3; ++i) {
++		uint8_t *entry = array + 128 * i;
++		entry[15] = 1;
++		entry[31] = 2;
++		put64(entry, 32, UINT64_C(0x100000030) + i);
++		put64(entry, 40, UINT64_C(0x100000030) + i);
++	}
++	reseal(declared);
++	run(1);
++	expect(3, 125, 0, 0, 3, 0, 0, 3);
++	puts("Trial732 entry audit client: real snapshot, synthetic, ignored-unused, stride and 64-bit PASS");
+ 	return 0;
+ }
+--- a/ufs_range_check.c
++++ b/ufs_range_check.c
+@@ -46,9 +46,15 @@
+ 	return ~crc_update(crc, p + 20, size - 20);
+ }
+ 
+-/* Header and geometry checks carried over from Trial730, plus the array window requirement. */
++struct gpt_layout {
++	uint64_t first_usable;
++	uint64_t last_usable;
++	uint32_t count;
++	uint32_t stride;
++	uint32_t array_crc;
++};
+ static int
+-check_header(const uint8_t *p, int pid, uint32_t *stored_crc, uint64_t *declared_bytes)
++check_header(const uint8_t *p, int pid, struct gpt_layout *layout)
+ {
+ 	uint32_t size = le32(p + 12);
+ 	if (memcmp(p, "EFI PART", 8) || le32(p + 8) != 0x10000 || size < 92 ||
+@@ -70,10 +76,40 @@
+ 	    (unsigned long long)last);
+ 	printf("ufs-range-user: layout pid=%d entries_lba=%llu count=%u stride=%u blocks=%llu\n",
+ 	    pid, (unsigned long long)entries, count, stride, (unsigned long long)blocks);
+-	/* The header is overwritten by the array read, so hand its stored CRC to the caller now. */
+-	*stored_crc = le32(p + 88);
+-	*declared_bytes = bytes;
++	*layout = (struct gpt_layout){first, last, count, stride, le32(p + 88)};
+ 	return 1;
++}
++
++/* check_header bounds count to at most 128 records of at least 128 bytes. */
++static void
++audit_entries(const uint8_t *array, const struct gpt_layout *layout, int pid)
++{
++	static const uint8_t zero_guid[16];
++	uint32_t used = 0, reversed = 0, before = 0, after = 0;
++	uint32_t overlaps = 0, zero_ids = 0, duplicates = 0;
++	for (uint32_t i = 0; i < layout->count; ++i) {
++		const uint8_t *entry = array + (size_t)i * layout->stride;
++		if (memcmp(entry, zero_guid, sizeof(zero_guid)) == 0) continue;
++		++used;
++		uint64_t lo = le64(entry + 32), hi = le64(entry + 40);
++		int zero_id = memcmp(entry + 16, zero_guid, sizeof(zero_guid)) == 0;
++		zero_ids += (uint32_t)zero_id;
++		reversed += lo > hi;
++		before += lo < layout->first_usable;
++		after += hi > layout->last_usable;
++
++		for (uint32_t j = 0; j < i; ++j) {
++			const uint8_t *other = array + (size_t)j * layout->stride;
++			if (memcmp(other, zero_guid, sizeof(zero_guid)) == 0) continue;
++			uint64_t other_lo = le64(other + 32), other_hi = le64(other + 40);
++			overlaps += lo <= hi && other_lo <= other_hi && lo <= other_hi && other_lo <= hi;
++			duplicates += !zero_id && memcmp(entry + 16, other + 16, sizeof(zero_guid)) == 0;
++		}
++	}
++	unsigned consistent = !(reversed || before || after || overlaps || zero_ids || duplicates);
++	printf("ufs-range-user: entries pid=%d used=%u unused=%u reversed=%u before=%u after=%u "
++	    "overlaps=%u zero_ids=%u duplicates=%u consistent=%u\n", pid, used, layout->count-used,
++	    reversed, before, after, overlaps, zero_ids, duplicates, consistent);
+ }
+ 
+ int
+@@ -85,7 +121,7 @@
+ 	int pid = getpid();
+ 	int writer = open(NODE, O_WRONLY, 0);
+ 	int error = writer < 0 ? errno : 0;
+-	printf("ufs-range-user: trial=731 pid=%d write_error=%d\n", pid, error);
++	printf("ufs-range-user: trial=732 pid=%d write_error=%d\n", pid, error);
+ 	if (writer >= 0) {
+ 		close(writer);
+ 		return 1;
+@@ -100,20 +136,20 @@
+ 	int guards = data[0] == 0xa5 && data[1 + BLOCK_BYTES] == 0xa5;
+ 	printf("ufs-range-user: block pid=%d bytes=%d errno=%d guards=%d\n",
+ 	    pid, bytes, bytes < 0 ? errno : 0, guards);
+-	uint32_t stored = 0;
+-	uint64_t declared = 0;
++	struct gpt_layout layout;
+ 	int ok = bytes == (int)BLOCK_BYTES && guards &&
+-	    check_header(data + 1, pid, &stored, &declared);
++	    check_header(data + 1, pid, &layout);
+ 
+ 	/* Read the whole array in one call and check both sentinels on either side of it. */
+ 	if (ok) {
+ 		memset(data, 0xa5, sizeof(data));
+ 		bytes = (int)read(fd, data + 1, ARRAY_BYTES);
+ 		guards = data[0] == 0xa5 && data[1 + ARRAY_BYTES] == 0xa5;
+-		uint32_t actual = bytes == (int)ARRAY_BYTES ? ~crc_update(~0u, data + 1, (size_t)declared) : 0u;
++		uint32_t actual = bytes == (int)ARRAY_BYTES ? ~crc_update(~0u, data + 1, ARRAY_BYTES) : 0u;
+ 		printf("ufs-range-user: array pid=%d bytes=%d crc=0x%x stored=0x%x guards=%d\n",
+-		    pid, bytes, actual, stored, guards);
+-		ok = bytes == (int)ARRAY_BYTES && guards && actual == stored;
++		    pid, bytes, actual, layout.array_crc, guards);
++		ok = bytes == (int)ARRAY_BYTES && guards && actual == layout.array_crc;
++		if (ok) audit_entries(data + 1, &layout, pid);
+ 	}
+ 	if (ok) {
+ 		uint8_t sentinel = 0x5a;
