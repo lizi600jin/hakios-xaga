@@ -1,0 +1,53 @@
+{
+  "trial": 737,
+  "phase": "2 - directory and path lookup",
+  "result": "HARDWARE_PASS",
+  "at": "2026-11-20",
+  "boot": {
+    "bytes": 23031808,
+    "sha256": "d81a3d3748c7891603541e3bd1101b8475396fb765a331d04f801eea8b4aa34e"
+  },
+  "kernel_side": {
+    "commands": 20,
+    "all_completed": true,
+    "components": [
+      {
+        "index": 0,
+        "inode": 61075
+      },
+      {
+        "index": 1,
+        "inode": 61076
+      }
+    ],
+    "blocks_fetched": 8,
+    "final_inode": 61076
+  },
+  "host_agreement": {
+    "usr": 61075,
+    "usr/bin": 61076,
+    "source": "coordinator/host-reference-737.json"
+  },
+  "tree_structure": {
+    "root": {
+      "addr": 2510,
+      "level": 3,
+      "nkeys": 2
+    },
+    "descent": "1029 -> 1030(2511,L2) -> 1032(2513,L1) -> 1156(2637,L0)",
+    "second_component": "1029 -> 1031(2512,L2) -> 1152(2633,L1) -> 13013(14494,L0)",
+    "omap_leaves": "2399..2509, chosen by the map root's key order"
+  },
+  "userspace": {
+    "trial_string": "737",
+    "parsed_root": true,
+    "eof_check": "failed in this run; the program assumed a fixed window length, now fixed to read to the end first"
+  },
+  "stock_restored": true,
+  "stock_readback": {
+    "bytes": 67108864,
+    "byte_equal": true,
+    "sha256": "c5f8e7bde8e9f1d8..."
+  },
+  "notes": "The kernel half is what this round set out to prove: the walk chose every block itself, resolved each virtual identifier through the volume's object map, and reached the same inodes the host reader does. The user program's end-of-window check was wrong for a window whose length depends on the walk; that is a program bug, not a driver one."
+}

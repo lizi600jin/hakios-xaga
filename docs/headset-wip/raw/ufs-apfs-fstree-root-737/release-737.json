@@ -1,0 +1,27 @@
+{
+  "trial": 737,
+  "phase": "2 - directory and path lookup",
+  "boot_path": "<trial>/trial736/boot.img",
+  "boot_bytes": 23031808,
+  "boot_sha256": "d81a3d3748c7891603541e3bd1101b8475396fb765a331d04f801eea8b4aa34e",
+  "stock_path": "<project>/backup/boot_a_stock_real.img",
+  "stock_bytes": 67108864,
+  "stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+  "loader_sha256": "ec565f72bb32deb5ff1f56aa2c1b0931cf3e620e8b38813fac875b6b7fec7cb6",
+  "payload_sha256": "f91e3dd6145ecf5ea8591621b929e9a3877e93b2746b6a05fb338d63d9e40ccc",
+  "kernel_sha256": "e4f2634e80328ddf93c2ce3da9b3f7dea8e35808d6f1df0001802ef5d89aea48",
+  "ramdisk_sha256": "d67d6c47af3573f23fdc756390385e62a6dde53ce3545913ea3b83afa6f786c4",
+  "userspace_program_sha256": "749602d522d452cb61baf6cef31216d8728972bf5bcdc2e38e2514e519828172",
+  "boot_args": {
+    "mtk_ufs_vfs": 10,
+    "mali_trial": 737,
+    "mode": "path walk"
+  },
+  "expected": {
+    "usr": 61075,
+    "usr/bin": 61076,
+    "absent": "not-here"
+  },
+  "device_scope": "xaga boot_a, one Trial737 flash then full stock restore",
+  "artifact_verified": true
+}
