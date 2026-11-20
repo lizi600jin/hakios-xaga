@@ -1,0 +1,28 @@
+{
+  "trial": 738,
+  "phase": "3 - first file contents",
+  "boot_path": "<trial>/trial736/boot.img",
+  "boot_bytes": 23031808,
+  "boot_sha256": "bcdba73ba3d442dfbed401d4624e9bf7a0790116c051906d15c3fcd38eb44db0",
+  "stock_path": "<project>/backup/boot_a_stock_real.img",
+  "stock_bytes": 67108864,
+  "stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+  "loader_sha256": "6c5bed2de29f41caa8046a8d1673eeb7459ee373d9d3f3298295fb63514d9a3f",
+  "payload_sha256": "26547d3d09871aa82b98f571176b39f9c20181fd7d641e963d4e3c79b1b6d654",
+  "kernel_sha256": "d72d616ae5346aef42713b2185b2174f242f925834e9a13ad01b87e4e32e55ba",
+  "ramdisk_sha256": "2251be8bacc539c4d2161c92a46332def17476b59d4a3765e92e28dbcf7353d5",
+  "userspace_program_sha256": "ff3f0014fb974f6eb096d191ea872ff68cd6be32b56afe3cd659073ef0a2f930",
+  "boot_args": {
+    "mtk_ufs_vfs": 11,
+    "mali_trial": 738,
+    "mode": "path to file contents"
+  },
+  "expected": {
+    "path": "/usr/libexec/GKCentralCache.momd/VersionInfo.plist",
+    "inode": 61314,
+    "size": 5230,
+    "sha256": "a66105d1635cffceb77213684bb66a1145ac76cbf6922f9a8cafcb96c8b1ea1c"
+  },
+  "device_scope": "xaga boot_a, one Trial738 flash then full stock restore",
+  "artifact_verified": true
+}
