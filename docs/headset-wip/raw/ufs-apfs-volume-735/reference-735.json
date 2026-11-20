@@ -1,0 +1,58 @@
+{
+  "chain_sha256": "edbeb3a76bc84437ecc25437264ac5b4771deea12c4b6175628799e5fbd8df2c",
+  "stock_and_host_blocks_equal": true,
+  "objects": [
+    {
+      "relative_block": 0,
+      "oid": 1,
+      "xid": 1,
+      "type": 2147483649,
+      "subtype": 0,
+      "crc32": "0x787ea9ea"
+    },
+    {
+      "relative_block": 1,
+      "oid": 1,
+      "xid": 1,
+      "type": 1073741836,
+      "subtype": 0,
+      "crc32": "0x14f752f0"
+    },
+    {
+      "relative_block": 2,
+      "oid": 1,
+      "xid": 1,
+      "type": 2147483649,
+      "subtype": 0,
+      "crc32": "0x787ea9ea"
+    },
+    {
+      "relative_block": 2394,
+      "oid": 2394,
+      "xid": 1,
+      "type": 1073741835,
+      "subtype": 0,
+      "crc32": "0x3cb0c204"
+    },
+    {
+      "relative_block": 2395,
+      "oid": 2395,
+      "xid": 1,
+      "type": 1073741826,
+      "subtype": 11,
+      "crc32": "0xb708a29a"
+    },
+    {
+      "relative_block": 2396,
+      "oid": 1028,
+      "xid": 1,
+      "type": 13,
+      "subtype": 0,
+      "crc32": "0xd85f81f9"
+    }
+  ],
+  "checkpoint_xid": 1,
+  "omap": 2394,
+  "volume_oid": 1028,
+  "volume_block": 2396
+}

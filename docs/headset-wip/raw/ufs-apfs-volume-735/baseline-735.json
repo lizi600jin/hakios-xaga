@@ -1,0 +1,12 @@
+{
+  "capture_bytes": 8388608,
+  "capture_sha256": "d89593f13403d87ce91e9e69afd6d67ae84b06c15dafd5f9476e1995ba47a658",
+  "window_bytes": 4198400,
+  "window_sha256": "8e6c7c0b88328b2911faefe0e9b6d147537002826809a500b348bd729f5aec3a",
+  "record_sha256": "66d2a6924630222ec0574e90541c901b5b1bc6cb20c817eac977031a089cda71",
+  "body_bytes": 632,
+  "reason": 4277009102,
+  "code": 0,
+  "prior_ufs734_record_sha256": "3784bdc026f1b94065ba460d6eb3d302b7ce1a6f9ddaf29b17aa120c2c520b1a",
+  "provenance": "The first Trial735 preflight stopped before reboot or flash. Stock boot_a matched in full. Its HLOG contained an early loader timing note with mali_trial=734 and mtk_ufs_vfs=0. The note format, reason and boot arguments match the separate boot-speed experiment. The precise image that last wrote the note is unverified."
+}

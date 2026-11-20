@@ -38,3 +38,5 @@ Trial732 在 xaga 上逐项审计主 GPT。88 个已用条目中，一个条目�
 Trial733 在 xaga 上以三次 READ(10) 读出 LUN 2 末端的备份 GPT，五个数据块的 CRC32 全部匹配原厂参考。用户进程重算了表头和完整数组校验，发现与主表相同的一项可用范围边界异常。原厂分区已恢复并通过全长核对。[733 实机记录与复测](raw/ufs-gpt-mirror-733/README.md)
 
 Trial734 按备份 GPT 解析出的起始 LBA 30580480 读取了 xnusys 的 APFS 容器超级块。用户进程通过 Fletcher 校验，并读出容器块数 608448。恢复前后日志相同，原厂分区已全长核对。[734 实机记录与复测](raw/ufs-xnusys-nxsb-734/README.md)
+
+Trial735 在同一次实机启动中经容器检查点和对象映射找到首个 APFS 卷。第八条 READ(10) 从 LBA 30582876 取得卷超级块，PID 4 验证了对象 1028、事务 1 和 Fletcher 校验和。恢复前后的 HLOG 逐字节相同，原厂 `boot_a` 已通过 64 MiB 全长读回。[735 实机记录与复测](raw/ufs-apfs-volume-735/README.md)
