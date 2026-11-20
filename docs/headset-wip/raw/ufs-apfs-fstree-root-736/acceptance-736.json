@@ -1,0 +1,92 @@
+{
+  "trial": 736,
+  "phase": "1 - file-system tree root",
+  "result": "HARDWARE_PASS",
+  "at": "2026-11-20",
+  "boot": {
+    "bytes": 23027712,
+    "sha256": "cf8d447a5e547ac9d8e5b52b2c17a64d397a5c9aaa2ae8433deeb032b4eda684"
+  },
+  "kernel_side": {
+    "commands": 12,
+    "lba": [
+      31240191,
+      31240184,
+      31240186,
+      30580480,
+      30580481,
+      30582874,
+      30582875,
+      30582876,
+      30582877,
+      30582878,
+      30582879,
+      30582990
+    ],
+    "blocks": [
+      1,
+      2,
+      2,
+      1,
+      2,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "all_completed": true,
+    "snapshot_bytes": 61440,
+    "budget": 12,
+    "four_new_blocks": {
+      "2397": "30582877",
+      "2398": "30582878",
+      "2399": "30582879",
+      "2510": "30582990"
+    }
+  },
+  "userspace": {
+    "passed": true,
+    "volume": {
+      "checkpoint": 1,
+      "omap": 2394,
+      "oid": 1028,
+      "xid": 1,
+      "index": 0
+    },
+    "root": {
+      "oid": 1029,
+      "xid": 1,
+      "level": 3,
+      "keys": 2
+    },
+    "children": [
+      1030,
+      1031
+    ]
+  },
+  "host_agreement": {
+    "root_oid": 1029,
+    "root_level": 3,
+    "root_keys": 2,
+    "children": [
+      1030,
+      1031
+    ],
+    "source": "coordinator/host-reference.json"
+  },
+  "stock_restored": true,
+  "stock_readback": {
+    "bytes": 67108864,
+    "byte_equal": true
+  },
+  "four_runs": {
+    "run1": "kernel PASS; userspace stopped at metadata (guard offset assumed 6 blocks)",
+    "run2": "trial string and guards fixed; stopped because complete was passed as 9",
+    "run3": "volume line printed; root read past the end of the chain (index 10)",
+    "run4": "PASS: root 1029 level 3 keys 2 children 1030 1031"
+  },
+  "note_on_run4_capture": "fastboot reboot raced the USB re-enumeration, so the A7 step reported a command error while the boot itself succeeded. The HLOG was read directly afterwards; the device was confirmed on the stock readback path as usual."
+}

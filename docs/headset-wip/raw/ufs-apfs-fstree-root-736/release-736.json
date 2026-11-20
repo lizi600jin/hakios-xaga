@@ -1,0 +1,39 @@
+{
+  "trial": 736,
+  "boot_path": "<trial>/trial736/boot.img",
+  "boot_bytes": 23027712,
+  "boot_sha256": "cf8d447a5e547ac9d8e5b52b2c17a64d397a5c9aaa2ae8433deeb032b4eda684",
+  "stock_path": "<project>/backup/boot_a_stock_real.img",
+  "stock_bytes": 67108864,
+  "stock_sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc",
+  "loader_sha256": "6b0633d85303987948759d7b05605a4fbc4082c3111b65275e7ae656db581832",
+  "payload_sha256": "df2b90f8222373926fa62876d6c72e3596a466a187f7df50615afb95248f4fb3",
+  "kernel_sha256": "1a4f45c1a90b3bcdcee8d2137079983079e801176a9944814a571f5d76658fd5",
+  "ramdisk_sha256": "6ed84233daab087a4399c6858bd21947ccd22ed1361e78efdbfef37249b35d00",
+  "userspace_program_sha256": "a96ca5079325084feb8bb1ed3eda48aec9772c3a5909591dc1247b0beca4cdd3",
+  "boot_args": {
+    "mtk_ufs_vfs": 9,
+    "mali_trial": 736,
+    "snapshot_bytes": 61440,
+    "commands": 12
+  },
+  "sources": {
+    "codec/ufs_apfs_volume.h": "1a2b0fd323ee5ae881fd85b6f16e4417614d9f05b54d521a9f43dab0b2985690",
+    "codec/ufs_byte_range_codec.h": "5161bfabfe92e91b2fe52315574355c29cb89956a837ba2816bcbb99d00318e8",
+    "codec/ufs_two_block_codec.h": "4daee22b3e72949d35814d5e74116d6a8d1d856ea55d5d5aed8ae28f717956c0",
+    "engine/ufs_two_block_engine.h": "47433684aeff51f0b76f2b2b8da5a43374f7a7b364781c169ea30e9b1790c101",
+    "hakios.mt6895_ufs_twoblock.c": "e127c4f9a1f820b2510957945c09f7284b604af166eec6fe8309f0f9a6b47821",
+    "support/ufs_read_contract.h": "c5d463e3952dc9fd6375f2f5228e11cddeabb634a2c20d0578593ac751b58027",
+    "support/ufs_read_engine.h": "81aeee096c339fbbf61aa23bf248b1fa24aa3b38e4c5ce26d642d35cd3afc7df",
+    "support/ufs_service_lease.h": "05432b2c8c295157ca0cfc21a9ae7069ee030814ea398a3bbaaab960d5d9a0bd",
+    "ufs_range_vfs.h": "c3f8a794084dac3bd7bdf4c406369249e69b97a1a6361f1715914d08a4254c1d"
+  },
+  "reference": {
+    "fstree_sha256": "39bbf7bfbdec8264d690ff78883b90efa0551284b92678561358b54aaac928ee",
+    "fstree_whole_sha256": "39bbf7bfbdec8264d690ff78883b90efa0551284b92678561358b54aaac928ee",
+    "chain736_sha256": "fde3480a0304819582fb09976cc70b14c4969cf818a3a24cbdd27e47e15b9f82"
+  },
+  "device_scope": "xaga boot_a, one Trial736 flash then full stock restore",
+  "artifact_verified": true,
+  "revision": "4: root block index corrected to 9"
+}
