@@ -1,0 +1,44 @@
+{
+  "trial": 747,
+  "phase": "4 (last line) and 5 (delivery record)",
+  "at": "2026-11-21",
+  "read_error_recovery": {
+    "result": "PASS",
+    "error": {
+      "what": "a read starting at block 608448, one past the last",
+      "rc": -1,
+      "note": "a real partition bound, not an injected fault"
+    },
+    "after": {
+      "file": "GenericForeground_128@2x.png",
+      "bytes": 7814,
+      "fnv1a": "30630d20",
+      "matches_host": true
+    },
+    "then": {
+      "unmount": "-> 0",
+      "return_gate": "state=2 (UR_RESTORED) allowed=1"
+    },
+    "chain": "read error -> device still usable -> unmount -> ownership returned"
+  },
+  "correction": {
+    "what_i_said_last_round": "stage 5 still needs the read moved into the kernel's boot path",
+    "why_that_was_wrong": "the roadmap asks for an early user program to read a real resource off the mounted volume, which Trial746 already did; the kernel-boot-path requirement was mine, not the roadmap's",
+    "roadmap_text": "\u8ba9\u4e00\u4e2a\u65e9\u671f\u7528\u6237\u7a0b\u5e8f\u4ece\u5df2\u6302\u8f7d\u5377\u8bfb\u53d6\u5b9e\u9645\u8d44\u6e90\uff0c\u8bb0\u5f55\u9996\u6b21\u6210\u529f\u8bfb\u53d6\u3001\u547d\u4ee4\u6570\u548c\u8017\u65f6"
+  },
+  "stage5_delivery_record": {
+    "independent_mount": true,
+    "early_user_program_read": true,
+    "system_volume_switch": false,
+    "why_switch_not_done": "the roadmap makes it conditional and nothing in stages 1-4 depends on it"
+  },
+  "boot": {
+    "bytes": 23056384,
+    "sha256": "9478104e2185234db8cf3fe98fccdadb4d02722a69fdc41b6bfb52e90e689b69"
+  },
+  "stock_restored": {
+    "bytes": 67108864,
+    "byte_equal": true,
+    "sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc"
+  }
+}
