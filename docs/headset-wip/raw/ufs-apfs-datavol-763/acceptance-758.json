@@ -1,0 +1,55 @@
+{
+  "trial": 758,
+  "phase": "route four - can the loader read /data's blocks directly?",
+  "at": "2026-11-21",
+  "result": "NO - /data is encrypted at the block layer",
+  "question": "Android allocates and pins image files inside /data; if the loader could follow the extent map to the physical partition it would get a large block device without any FBE work and without touching the GPT. This trial asked whether that read is plaintext.",
+  "evidence": [
+    {
+      "step": "where /data is mounted",
+      "observed": "/dev/block/dm-50, f2fs, with inlinecrypt in the mount options"
+    },
+    {
+      "step": "what dm-50 sits on",
+      "observed": "exactly one slave: /dev/block/sdc86, the physical userdata partition (103.98 GiB)"
+    },
+    {
+      "step": "same offset in both, block 100",
+      "observed": "dm-50 has 4073 non-zero bytes, sdc86 is all zeros there"
+    },
+    {
+      "step": "same offset in both, block 0 offset 1024 -- where an f2fs superblock lives",
+      "observed": "dm-50 reads 10 20 f5 f2 (the f2fs magic 0xF2F52010, little endian); sdc86 reads random-looking bytes at the same place"
+    },
+    {
+      "step": "metadata encryption",
+      "observed": "ro.crypto.metadata.enabled = true"
+    },
+    {
+      "step": "the fstab entry",
+      "observed": "fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized, keydirectory=/metadata/vold/metadata_encryption"
+    },
+    {
+      "step": "where that key directory lives",
+      "observed": "/dev/block/sdc20 mounted on /metadata, ext4"
+    }
+  ],
+  "conclusion": "dm-50 is not a linear mapping of sdc86. The physical partition holds ciphertext: the f2fs superblock is legible through dm-50 and unreadable directly on sdc86. Metadata encryption (AES-256-XTS with a key in the metadata partition) sits at the block layer, under the file system.",
+  "what_this_settles": [
+    "route four is closed as stated: following extents to sdc86 yields ciphertext",
+    "no amount of offset or unit correction would fix this -- the bytes themselves differ"
+  ],
+  "what_would_still_be_needed": [
+    "the metadata encryption key, which lives in the keymaster/keystore chain",
+    "or a partition that is not encrypted at all"
+  ],
+  "what_this_rules_out_for_the_gpt_plan": "splitting userdata would produce another encrypted-by-default volume unless the new entry is deliberately left unencrypted, and shrinking the file system is the real difficulty anyway",
+  "next": [
+    "measure the var_store archive size, which needs nothing new",
+    "or design an unencrypted data area, which means a GPT change and a file system that can shrink"
+  ],
+  "phone": {
+    "stock_boot_a": true,
+    "android_boots": true
+  }
+}
