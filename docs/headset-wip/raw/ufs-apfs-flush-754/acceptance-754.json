@@ -1,0 +1,61 @@
+{
+  "trial": 754,
+  "phase": "6 - a real SYNCHRONIZE CACHE(10)",
+  "at": "2026-11-21",
+  "result": "ACHIEVED",
+  "kernel": "mt6895-ufs-twoblock: flush done, ocs=0 polls=231 restored=1",
+  "poll_comparison": {
+    "plain_write": 39,
+    "fua_write": 252,
+    "flush": 231,
+    "reading": "a plain write answers as soon as the device has the data; FUA and flush both take about six times as long because the device is committing before it answers"
+  },
+  "blocks_verified": [
+    {
+      "block": 608456,
+      "kind": "plain write",
+      "header": "575a3457ed020000",
+      "byte_identical": true
+    },
+    {
+      "block": 608457,
+      "kind": "FUA write",
+      "header": "a9ad0ec32e7ca23c",
+      "byte_identical": true
+    },
+    {
+      "block": 608458,
+      "kind": "plain write then flush",
+      "header": "f082391786299763",
+      "byte_identical": true
+    }
+  ],
+  "read_path": "Android's own UFS driver, after a reboot",
+  "two_mistakes": [
+    {
+      "what": "_IO('x', 5) never reached the kernel",
+      "why": "XNU's _IO is IOC_VOID | group | num and IOC_VOID is 0x20000000, so the number user space must pass is not the small one it looks like",
+      "fix": "_IOW with an 8-byte argument"
+    },
+    {
+      "what": "PRDT entry count of 1 on a command that moves no data",
+      "why": "utrd[7] packs prd_table_length in the low half, in entries not bytes; 0x00000001 says one entry at offset 0",
+      "symptom": "the device answered OCS 1, INVALID_COMMAND",
+      "fix": "0x01000000 -- zero entries at the usual offset",
+      "note": "codex had warned not to reuse the data description; the host test also carried the wrong value in an assertion and caught the correction"
+    }
+  ],
+  "regression": {
+    "optimised": "38 PASS",
+    "asan_ubsan": "38 PASS, 0 violations"
+  },
+  "not_yet": [
+    "unmount that requires a successful flush instead of MNT_FORCE",
+    "power-loss durability (deliberately not attempted: codex's judgement was not to risk it for one acceptance line)"
+  ],
+  "phone": {
+    "stock_boot_a": true,
+    "boot_a_byte_equal": true,
+    "sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "trial": 753,
+  "phase": "6 - FUA write, and what the follow-up power cycle does and does not prove",
+  "at": "2026-11-21",
+  "fua_write": {
+    "block": 608457,
+    "kernel": "mt6895-ufs-twoblock: zone write 608457 (FUA) ocs=0 polls=246 restored=1",
+    "plain_write_for_comparison": "zone write 608456 ocs=0 polls=39 restored=1",
+    "polls_ratio": "246 vs 39 -- the FUA command took six times as long to answer, which is what asking the device to commit looks like",
+    "device_supports_fua": "/sys/block/sda/queue/write_cache = 'write back', queue/fua = 1",
+    "content": {
+      "nonce": "a9ad0ec32e7ca23c",
+      "sha256": "efcb25e8344991aeb2a00865e6d33e11f633f480667b4446dcd257c8b4681215",
+      "byte_identical_after_readback": true
+    }
+  },
+  "plain_write_still_there": {
+    "block": 608456,
+    "byte_identical": true,
+    "sha256": "8c24127cf404e2f76e7f4af840c8efec7d0d0da8f410ea9390c84a871943af22"
+  },
+  "what_was_attempted": [
+    "reboot -p from Android (power off, not reboot)",
+    "the phone disappeared from USB entirely",
+    "no cable was touched by me; the operator reports the phone came up in fastboot on its own"
+  ],
+  "what_this_proves": [
+    "both blocks survive a power-off request and a subsequent boot",
+    "the FUA write put the same bytes on the medium that were asked for"
+  ],
+  "what_this_does_not_prove": [
+    "a real supply interruption. The operator says nothing was unplugged, and reboot -p on this board appears to land in fastboot rather than holding the rails down. Without a confirmed interruption the UFS device's volatile cache cannot be ruled out, so this is not evidence of power-loss durability -- it is evidence of surviving a reboot that was asked to be a power-off."
+  ],
+  "next": [
+    "a power cycle with the supply confirmed gone: hold the power button to force off, or unplug the battery",
+    "a SYNCHRONIZE CACHE(10) path, since FUA covers only the one command"
+  ],
+  "phone": {
+    "stock_boot_a": true,
+    "android_boots": true
+  }
+}

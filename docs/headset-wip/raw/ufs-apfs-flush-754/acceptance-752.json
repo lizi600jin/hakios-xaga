@@ -1,0 +1,45 @@
+{
+  "trial": 752,
+  "phase": "6 - persistence across a reboot",
+  "at": "2026-11-21",
+  "result": "PERSISTS",
+  "sequence": [
+    "wrote block 608456 through the XNU driver (ocs=0)",
+    "archived the exact 4096 bytes that were written",
+    "flashed the stock boot_a back",
+    "Android booted (sys.boot_completed=1)",
+    "read the same block with Android's own UFS driver: dd if=/dev/block/by-name/xnusys skip=608456"
+  ],
+  "comparison": {
+    "written_sha256": "8c24127cf404e2f76e7f4af840c8efec7d0d0da8f410ea9390c84a871943af22",
+    "after_reboot_sha256": "8c24127cf404e2f76e7f4af840c8efec7d0d0da8f410ea9390c84a871943af22",
+    "byte_identical": true,
+    "block_header": {
+      "magic": "0x57345a57",
+      "trial": 749,
+      "bytes": 4096,
+      "fill": "0x74974974"
+    }
+  },
+  "what_this_rules_out": [
+    "a software cache in the XNU driver: a different OS read it, through a different driver",
+    "the block being rewritten at boot: nothing writes it except the writer this image does not run"
+  ],
+  "what_this_does_not_rule_out": [
+    "the UFS device's own volatile cache: the phone was never powered off, only rebooted. WRITE(10) went out with FUA clear (upiu[17] = 0x00) and DKIOCSYNCHRONIZECACHE is a stub, so nothing forced the data out of the device's buffer."
+  ],
+  "independent_read_path": {
+    "who": "Android's kernel and its MediaTek UFS driver",
+    "how": "dd from the block device node",
+    "why_independent": "not the XNU driver, not this project's code, and after a full reboot"
+  },
+  "next": [
+    "a fresh sample with a per-round random nonce, so a stale block cannot pass for a new write",
+    "a real power-off, not a reboot, before reading it back",
+    "FUA on the write, or a real SYNCHRONIZE CACHE(10) -- the ioctl is a stub today"
+  ],
+  "phone": {
+    "stock_boot_a": true,
+    "sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc"
+  }
+}
