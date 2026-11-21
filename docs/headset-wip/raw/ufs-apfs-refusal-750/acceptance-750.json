@@ -1,0 +1,38 @@
+{
+  "trial": 750,
+  "phase": "6 - pinning down the refusal semantics on the host",
+  "at": "2026-11-21",
+  "where": "host only; the phone was not touched",
+  "what_this_fixes": "Trial749 poisoned the lease on any write failure without asking whether the command had been issued. On the phone that made the loader guard refuse to take ownership back, twice, each needing a manual fastboot.",
+  "new_assertions": [
+    {
+      "name": "refused outside the window, and never poisoned",
+      "covers": "six addresses: container superblock, inside the container, the container's last block, the first log block, the partition's last block, far past the partition",
+      "checks": "refused, zero rings, state != UR_POISONED, US_POISON_BIT clear"
+    },
+    {
+      "name": "a refused write leaves the lease usable",
+      "covers": "a device deliberately left not-idle so the request cannot go out",
+      "checks": "refused, zero rings, US_POISON_BIT clear"
+    }
+  ],
+  "host_model_fixes": [
+    "the stub asserted upiu[16] == 0x28, so the first WRITE(10) aborted it; it now recognises both shapes strictly",
+    "a write branch checks one block inside 608448..653559, placed before the chain branches because a write address (608456) falls inside the range those accept"
+  ],
+  "not_achieved": [
+    "a successful write end to end on the host: the polling loop ran the full 500000 iterations with completions=500000 but completed=0, cause not found",
+    "the case where a command is issued and then fails to restore, which is the one where poisoning is correct"
+  ],
+  "removed_rather_than_left_half_done": [
+    "the success test",
+    "the rang-but-did-not-restore test"
+  ],
+  "regression": {
+    "optimised": "37 PASS",
+    "asan_ubsan": "37 PASS, 0 violations",
+    "dir_enum": "11 PASS",
+    "path_walk": "8 PASS"
+  },
+  "phone": "untouched this round; boot_a remains the byte-equal stock image"
+}
