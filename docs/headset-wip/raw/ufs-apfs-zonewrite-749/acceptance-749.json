@@ -1,0 +1,52 @@
+{
+  "trial": 749,
+  "phase": "6 - first attempt to write to the phone's flash",
+  "at": "2026-11-21",
+  "result": "NOT_ACHIEVED - three attempts, two root causes fixed, the third unverified",
+  "test_zone": {
+    "blocks": "608448..653559 (176.2 MiB)",
+    "why": "the APFS container's own superblock declares block_count=608448, and the loader keeps the partition's last 8 MiB (2048 blocks) for its log, so nothing owns the blocks between",
+    "state_before": "all zeros in the 512 blocks backed up",
+    "backup": {
+      "file": "hostwrite/backup/zone-512.bin",
+      "sha256": "5647f05ec18958947d32874bea788fa396a05d0bab7c1b71f112ceb7e9b31eee"
+    },
+    "container_tail_backup": {
+      "file": "hostwrite/backup/container-tail.bin",
+      "sha256": "07854d2fef297a06ba81685e660c332de36d5d18d546927d30daad6d7fda1541"
+    }
+  },
+  "failures": [
+    {
+      "what": "physio hands the strategy a user address",
+      "detail": "buf_map() returns bp->b_datap unchanged for a buffer without B_CLUSTER, and physio sets b_datap to uio_curriovbase(uio), a user address. Dereferencing it in the kernel is the data abort.",
+      "how_found": "two panics at a pc that resolved into loader_log's neighbourhood, with x0 holding a value shaped like a truncated user pointer",
+      "fix": "writes go through an ioctl with copyin(), never through physio"
+    },
+    {
+      "what": "my own poisoning took the storage path down",
+      "detail": "VRQ_NO_LEASE returns without reaching clean, so restored is false even though no command was issued. The driver treated that as 'issued and failed to restore' and called us_poison(), after which the loader guard refused to take ownership back -- no HLOG, no Android IO, manual fastboot.",
+      "how_found": "the panic text on the phone's screen was the exact string I added",
+      "fix": "a refused write returns the lease and is not poisoned"
+    },
+    {
+      "what": "ioctl argument size",
+      "detail": "struct xnusys_write_arg is 32 bytes after alignment (uint64_t, uint64_t, pointer, uint32_t, uint32_t); the user side computed 24, so _IOW encoded a length the kernel never matched",
+      "fix": "32 on both sides; unverified"
+    }
+  ],
+  "also_fixed": {
+    "platform.data_bytes": "bounds every DATA-region access; the write path narrowed it without restoring, which made later two-block reads address past the mapping. Now saved and put back."
+  },
+  "test_zone_untouched": {
+    "verified": true,
+    "how": "after restoring stock, blocks 608448..608959 read back byte-identical to the backup, and so did the container tail",
+    "conclusion": "no write ever reached the flash"
+  },
+  "risk_statement": "two of the three rounds left the phone needing a manual fastboot. Until the lease and poison semantics are settled, further write images should not be flashed.",
+  "stock_restored": {
+    "bytes": 67108864,
+    "byte_equal": true,
+    "sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc"
+  }
+}
