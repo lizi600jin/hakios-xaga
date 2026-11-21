@@ -1,0 +1,28 @@
+{
+  "trial": 756,
+  "images_actually_flashed": {
+    "boot_img": {
+      "path": "trial736/boot.img",
+      "bytes": 23093248,
+      "sha256": "af72c90fd62878508f68603119fd279f756d9b7bd5a439fcf3583e830d02ab9e"
+    },
+    "kernel": {
+      "path": "kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837",
+      "sha256": "74a0610ce5e0de734208970302fbda26c4ce9ca109a6bc9a1f6edaa417c56ef7"
+    },
+    "loader": {
+      "path": "build/loader-out/loader.bin",
+      "sha256": "f29afc386da6252c6bb3bce76d4b9a66d8d98df7aaf22fa0a71c97ecbfc14226"
+    },
+    "ramdisk": {
+      "path": "build/root756b.apfs",
+      "sha256": "261d585729c68b811115176cbfc7daddaf760c8890c0211980960c3fc1eebda6"
+    },
+    "user_programs": {
+      "xnusys_flushfail": "3aa9b4496516aef869461417a0ff97957f93c3d9fd46b36251e9bd6bd4ef2fe8",
+      "xnusys_unmount2": "10eba744f0b079297875534aa521fca8d9535787062703d69daae87c0e89f3b5",
+      "xnusys_flush": "feb573b5251a744ee18927ac6780a27d9c11ec2c3cbdcaa7b14212557d158388"
+    }
+  },
+  "why": "codex asked for the kernel, ramdisk and user-program hashes of what was actually flashed, so the evidence is tied to the final image and not to whatever was built last"
+}

@@ -1,0 +1,70 @@
+{
+  "trial": 756,
+  "phase": "6 - a flush failure that the unmount must refuse",
+  "at": "2026-11-21",
+  "result": "PASS",
+  "how_the_failure_was_made": "boot-arg xnusys_flush_fail=1 arms a one-shot refusal: the next flush reports failure without sending anything, the one after it works. A healthy device never fails a SYNCHRONIZE CACHE here, so without this the branch would never run.",
+  "observations": [
+    {
+      "step": "before anything",
+      "observed": "the volume's file reads whole",
+      "value": 1
+    },
+    {
+      "step": "unmount with the flush refused",
+      "expected": "refused",
+      "observed": -1
+    },
+    {
+      "step": "the volume after the refusal",
+      "expected": "still mounted, file intact",
+      "observed": "1 -- 7814 bytes, fnv1a 30630d20"
+    },
+    {
+      "step": "the second unmount, without rebooting",
+      "expected": "succeeds",
+      "observed": "0"
+    },
+    {
+      "step": "the volume after the second unmount",
+      "expected": "gone",
+      "observed": -1
+    }
+  ],
+  "proof_dounmount_was_not_called": "the kernel log has one 'from a lookup' line and then 'the flush was refused on purpose, staying mounted' with no 'calling dounmount'; the second attempt has both",
+  "two_mistakes_of_mine": [
+    {
+      "what": "the one-shot fault was consumed by an earlier program in rc",
+      "detail": "unmount2 ran before flushfail and took it",
+      "fix": "flushfail now runs first"
+    },
+    {
+      "what": "the injection was only in the XNUSYS_FLUSH ioctl",
+      "detail": "the unmount calls the driver directly and never passes through that check, so the fault was never seen and the unmount succeeded -- the test passed the wrong way round",
+      "fix": "the unmount branch checks the flag itself",
+      "lesson": "a test that only exercises the ioctl can miss the real call path"
+    }
+  ],
+  "stage6_status": {
+    "host_rehearsal": "done, Trial748",
+    "test_space": "done, 176 MiB unowned and backed up",
+    "backup_and_independent_read": "done",
+    "plain_write": "done, Trial751",
+    "survives_reboot": "done, Trial752/753",
+    "fua_write": "done, Trial754",
+    "real_synchronize_cache": "done, Trial754",
+    "unmount_flushes_and_does_not_force": "done, Trial755",
+    "injected_flush_failure_refused": "done, this trial",
+    "power_loss_durability": "deferred -- codex's judgement was not to risk it for one line"
+  },
+  "not_covered": [
+    "a real device error",
+    "a timeout on the flush",
+    "power-loss recovery"
+  ],
+  "phone": {
+    "stock_boot_a": true,
+    "boot_a_byte_equal": true,
+    "sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc"
+  }
+}
