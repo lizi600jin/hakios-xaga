@@ -1,0 +1,54 @@
+{
+  "trial": 751,
+  "phase": "6 - the first successful write to the phone's flash",
+  "at": "2026-11-21",
+  "result": "ACHIEVED",
+  "evidence": {
+    "kernel": "mt6895-ufs-twoblock: zone write 608456 ocs=0 polls=39 restored=1",
+    "block_608456_before": "all zeros",
+    "block_608456_after": "575a3457 ed020000 = 'WZ4W' + trial number",
+    "read_back": "read independently through the block device after the write"
+  },
+  "blast_radius": {
+    "zone_blocks_compared": 512,
+    "blocks_that_differ": [
+      8
+    ],
+    "note": "relative to the zone start, so block 608456 and nothing else",
+    "container_tail": "128 blocks byte-identical to the backup"
+  },
+  "root_cause": {
+    "symptom": "ocs=7, INVALID_PRD_TABLE, which looks like a scatter-gather problem",
+    "actual": "two direction fields were wrong in the WRITE(10) the contract builds",
+    "fields": [
+      {
+        "field": "upiu[1]",
+        "wrote": "0x00",
+        "correct": "0x20",
+        "meaning": "UPIU_FLAG_WRITE; a read uses 0x40"
+      },
+      {
+        "field": "utrd[0]",
+        "wrote": "0x0a000000",
+        "correct": "0x12000000",
+        "meaning": "CT_UFS (1<<28) plus DD_OUT (1<<25); 0x0a000000 carried 2<<25, which is data-in"
+      }
+    ],
+    "how_missed": "the constants were written by hand instead of taken from the loader's own ufs.h, which has had UTRD_DD_OUT and UPIU_FLAG_WRITE all along"
+  },
+  "attempts_before_this": [
+    "749-a: physio handed the strategy a user address (kernel data abort)",
+    "749-b: a refused write poisoned the lease, so the guard refused ownership back and the phone needed a manual fastboot -- twice",
+    "749-c: the ioctl argument was encoded as 24 bytes when the struct is 32"
+  ],
+  "not_yet": [
+    "whether block 608456 still holds that data after a reboot",
+    "no unmount of the written volume",
+    "the user program reads back ok=0 even though the kernel returned 0 and the data landed -- a struct layout detail"
+  ],
+  "phone": {
+    "stock_restored": true,
+    "boot_a_byte_equal": true,
+    "sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc"
+  }
+}
