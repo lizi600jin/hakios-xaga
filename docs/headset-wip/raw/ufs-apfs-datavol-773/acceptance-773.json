@@ -1,0 +1,49 @@
+{
+  "trial": 773,
+  "phase": "the data volume: eleven attempts, one assumption disproved, one route left",
+  "at": "2026-11-22",
+  "result": "STOPPED BY DECISION, not by a wall",
+  "the_one_that_worked": {
+    "what": "a 439-second boot that came back cleanly, iOS home screen running at 10 fps",
+    "what_it_proves": "registering the data volume device does not disturb anything",
+    "what_it_does_not_prove": "that reading it works: zone_read was called zero times. The rc that boot ran was 'exec /sbin/launchd.ios' and nothing else.",
+    "how_it_was_missed": "it looked like a success, so the investigation stayed on the read path instead of asking what that boot had actually exercised"
+  },
+  "assumption_disproved": {
+    "assumption": "the APFS volume being mounted on the same device is what conflicts",
+    "experiment": "unmount /redwood/lib first, then read flash block 608512",
+    "outcome": "still hung, still poisoned",
+    "conclusion": "the conflict is not between two users of the controller"
+  },
+  "two_real_bugs_fixed": [
+    {
+      "what": "d_psize returned a block count where a sector size is expected",
+      "detail": "set_blocksize() stores it in v_specsize; spec_read rejects anything over PAGE_SIZE",
+      "reference": "memdev's mdevsize and virtio_blk's blk_dev_size both return 512"
+    },
+    {
+      "what": "one failed request poisoned the lease for good",
+      "detail": "every failure called us_poison, including ones where nothing was issued; and the kernel's init refuses to run at all once state is not UR_UNUSED, so the first failure was permanent",
+      "fix": "twoblock_refuse (gives the lease back, does not poison) versus twoblock_fail (both)"
+    }
+  ],
+  "diagnostics_added": {
+    "lease_state_on_the_screen": "ufs-read guard: lease magic=... version=... trial=... state=0x3",
+    "guard_no_longer_spins": "it used to loop on wfe before the kernel log was written, which is why ten failures produced no log at all"
+  },
+  "route_found_not_finished": {
+    "what": "bsd/dev/hakios.ufs.c",
+    "how_it_differs": "the kernel does not touch the UFS controller. It writes a request into a shared page and core 0 (the loader) does the read, flushes, and reads it back before answering.",
+    "why_it_matters": "it never enters the lease state machine, so it cannot poison it",
+    "status": "compiled into the kernel this round (bsd/conf/files: optional -> standard, and the empty versions in hakios.stubs.c turned off)",
+    "what_is_missing": "the kernel wants boot-arg ufs_shared_pa and the loader does not supply one. The loader needs to set aside a shared page, pass its address, and service requests on core 0.",
+    "prior_art": "var_store already uses this channel"
+  },
+  "process_failure": "eleven flips, each confirmed by flashing. Two bugs were found by reading the source, none by testing. Worse: the one clean boot was never pinned as a baseline, so the reproducible success was lost by continuing to edit.",
+  "restores_this_session": 12,
+  "phone": {
+    "stock_boot_a": true,
+    "boot_a_byte_equal": true,
+    "sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc"
+  }
+}
