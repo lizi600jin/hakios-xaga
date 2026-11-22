@@ -1,0 +1,8 @@
+# Evidence: ufs=2 was on the command line, but the shared page address never was.
+
+xnusys-ufs: opening /dev/ufs_xnusys
+xnusys-ufs: no such device (-1)
+com.apple.xpc.launchd|1970-01-01 08:00:20.110509 <Notice>: boot-args = rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=740 headset=0 mtk_ufs_twoblock=1 mtk_ufs_vfs=11 mtk_ufs_byte_offset=4096 mtk_ufs_byte_length=4096 mtk_ufs_byte_capacity=4096 mtk_ufs_varread=0 mtk_ufs_probe=0 mtk_ufs_read=0 mtk_ufs_service=0 mtk_ufs_capacity=0 xnusys_blk=1 ufs=2 loader_return_after=420 hakios_kver=2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty
+[   19.227695]: mt6895-ufs-twoblock: guard magic=0x554c5345 version=1 trial=740 state=0
+[   19.228678]: xnusys-blk: /dev/xnusys_var carries the data volume: blocks 608512..653055 of the flash
+mt6895-ufs-twoblock: return-gate magic=0x554c5345 version=1 trial=740 state=2 allowed=1

@@ -1,0 +1,53 @@
+{
+  "trial": 775,
+  "phase": "ufs=2 never took effect: the file I edited is not in the build",
+  "at": "2026-11-22",
+  "result": "ROOT CAUSE FOUND, work is a port not a flag",
+  "what_was_configured": {
+    "kernel_includes_hakios_ufs": true,
+    "stub_ufs_init_disabled": true,
+    "rc_has_only_xnusys_ufsdev": true,
+    "loader_boot_arg_ufs_2": true,
+    "note": "all four in place for the first time"
+  },
+  "what_happened": {
+    "boot": "healthy: state=0 at start, state=2 allowed=1 at return, Android came back",
+    "program_ran": "xnusys-ufs: opening /dev/ufs_xnusys / xnusys-ufs: no such device (-1)",
+    "ufs_shared_pa_in_the_log": 0,
+    "ufs_2_in_the_log": 1
+  },
+  "why_the_device_did_not_exist": {
+    "the_driver_returns_early": "hakios_ufs_init() returns immediately when boot-arg ufs_shared_pa is absent or zero",
+    "the_address_was_never_sent": "the loader injects ufs_shared_pa=0x... only when block_enabled is set, and block_enabled is set by block_start(), which lives in a file that is not compiled"
+  },
+  "the_root_cause": {
+    "edited": "loader-src/xnuloader/loader.c",
+    "compiled": "mtk/loader/mtkloader.c",
+    "how_it_was_confirmed": "the build list has exactly one C unit, mtk/loader/mtkloader.c; and the diagnostic string I added to xnuloader/loader.c is absent from loader.bin, while present in the source",
+    "what_mtkloader_has": "its own ufs_read() that talks to the controller directly, and no loader_block, no RDWBLOCK, no shared page at all",
+    "how_it_was_missed": "the two files are both called loader.c and the first one found had a complete implementation of exactly the protocol being looked for"
+  },
+  "two_misjudgements": [
+    {
+      "said": "the loader side is already written, only a flag is missing",
+      "because": "did not check which sources are in the build"
+    },
+    {
+      "said": "the right file was edited, it just did not recompile",
+      "because": "the missing diagnostic string was read as a build-cache problem"
+    }
+  ],
+  "what_the_port_needs": [
+    "struct loader_block definitions copied from xnuloader/loader.c (~70 lines)",
+    "a page of shared memory set aside",
+    "ufs_shared_pa= injected into the command line after boot_note",
+    "block_poll() called from mtkloader's existing main loop",
+    "read and write branches implemented over the existing ufs_read()"
+  ],
+  "why_this_round_mattered": "it replaced a wrong belief ('almost free') with a right one ('a port'), which is the difference between one round and none",
+  "phone": {
+    "stock_boot_a": true,
+    "boot_a_byte_equal": true,
+    "sha256": "c5f8e7bde8e9f1d824d0c7915f7d701adce8142656a82c20e10ccb75e15e01fc"
+  }
+}
