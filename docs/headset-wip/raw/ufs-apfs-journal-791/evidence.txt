@@ -1,0 +1,117 @@
+Trial791 / 792a / 792b — evidence
+2026-11-23
+
+791 — the kernel creates the journal
+------------------------------------
+starting state, which is what mkfs.hfsplus -J produces:
+      attributes  = 0x80002100   (Journaled | Unmounted)
+      JIB.flags   = 0x00000005   (InFS | NeedInit)
+      journal area = all zero (blocks 4..2051, 8 MiB)
+
+hfs: Initializing the journal (joffset 0x4000 sz 0x800000)...
+hfs: mounted RedwoodVar on device xnusys_var
+hfs: unmount initiated on RedwoodVar on device xnusys_var
+hfs: unmount: flushing files
+hfs: unmount: files flushed (retval=0)
+hfs: unmount: starting the transaction (jnl=0xfffffff8b7b04c00)
+hfs: unmount: transaction started retval=0
+
+after:
+      attributes  = 0x80002100   Journaled=1 Unmounted=1
+      lastMounted = 'HFSJ'       (was '10.0')
+      JIB.flags   = 0x00000001   (NeedInit cleared)
+      journal header @16384: magic 0x4a4e4c78, start == end, size 8 MiB
+
+the probe: mount rw -> 0, write 49 -> 49, fsync -> 0, unmount -> 0,
+           remount rw -> 0, read back matched, unmount -> 0
+
+The journal header is in host byte order, and that is correct
+-------------------------------------------------------------
+Read as big-endian the magic looks like 0x784c4e4a, i.e. reversed. It is not a bug:
+
+      hfs_journal.c:783   swap_journal_header() uses OSSwapInt32/64
+      hfs_journal.h:201   #define JOURNAL_NEED_SWAP 0x00080000
+      hfs_journal.c:1963  jnl->flags |= JOURNAL_NEED_SWAP;
+
+HFS Plus volume headers are big-endian; journal headers use the host's native order and
+record which one it was in the endian field (0x12345678). 78 4c 4e 4a / 78 56 34 12 is the
+standard ARM64 form.
+
+792a — a volume left dirty
+--------------------------
+mount rw -> 0
+open -> 4
+write 40 -> 40
+fsync -> 0
+no unmount; the loader's 420-second return-after ended the system
+
+flash afterwards:
+      block 0  attributes = 0x80002000   Journaled=1 Unmounted=0
+      block 3  JIB.flags  = 0x00000001   NeedInit=0
+      block 4  magic      = 0x4a4e4c78
+               start = 276992   end = 355328      (start != end: uncheckpointed transaction)
+
+the HLOG has zero occurrences of "Initializing the journal" -- this mount took journal_open
+
+792b — mount it and let the journal do its job
+----------------------------------------------
+No writes to the flash first. No fsck. No seed.
+
+before: attributes=0x80002000 Journaled=1 Unmounted=0 fileCount=9
+before: journal magic=0x4a4e4c78 start=276992 end=355328 not checkpointed
+[1] mount rw -> 0   OK -- it mounted a volume that was never unmounted
+[2] open /private/var/tmp/hfs-replay/dirty.txt -> 3
+    read -> 40
+    content = Trial792a: written but never unmounted.
+    it matches what 792a wrote   PASS
+[3] unmount -> 0
+after: attributes=0x80002100 Journaled=1 Unmounted=1 fileCount=9
+after: journal magic=0x4a4e4c78 start=487424 end=487424 checkpointed
+PASS
+
+kernel side:
+jnl: xnusys_var: replay_journal: from: 276992 to: 355328 (joffset 0x4000)
+jnl: xnusys_var: journal replay done.
+hfs: mounted RedwoodVar on device xnusys_var
+
+276992 -> 355328 is exactly the range 792a left uncommitted.
+
+A volume without a journal refuses this state: Trial786c saw
+"hfs_mounthfsplus: cannot mount dirty non-journaled volumes" and mount failed with EINVAL.
+
+fsck.hfsplus misreports small journaled volumes
+------------------------------------------------
+fsck.hfsplus -n on our volume says:
+
+      invalid primary VHB at 2 result 35
+      alternate VHB is at block 356350
+      ** The volume RedwoodVar was found corrupt and needs to be repaired.
+
+A volume made fresh by the same toolset says the same thing:
+
+      truncate -s 182452224 /tmp/refj.img
+      mkfs.hfsplus -v RedwoodVar -b 4096 -J /tmp/refj.img
+      fsck.hfsplus -n /tmp/refj.img
+      -> invalid primary VHB at 2 result 35
+
+So this is hfsprogs 540.1 misreporting a 174 MiB volume with 4096-byte blocks, not a fault in
+the volume. The comparison against that reference volume also showed every volume-header field
+matches: signature, version, blockSize, totalBlocks, journalInfoBlock, JIB flags/offset/size,
+and the allocationFile, extentsFile, catalogFile and attributesFile forks.
+
+A real bug, left alone: the clock is not calibrated
+---------------------------------------------------
+The volume header's modifyDate comes out as 0x7c25b095 = 2082844821.
+MAC_GMT_FACTOR is 2082844800, so the value being converted was 21 -- seconds since boot,
+not calendar time.
+
+      hfs_cnode.c:1962   microtime(&tv);
+      hfs_cnode.c:2007   HFSTOVCB(hfsmp)->vcbLsMod = tv.tv_sec;
+      MacOSStubs.c:123   to_hfs_time(t) { return (u32)t + MAC_GMT_FACTOR; }
+
+      kern_time.c:243    inittodr() -- "the calendar has already been set up from the
+                         platform clock"
+
+Nothing in this port reads a platform clock, so wall time starts at zero. Mount, write,
+unmount and journal replay all work; the timestamps are wrong and macOS would call the volume
+damaged. mtkloader.c:212 mentions an epoch= argument in a comment but nothing implements it.
