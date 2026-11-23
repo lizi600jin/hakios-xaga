@@ -1,0 +1,75 @@
+{
+  "trial": 794,
+  "phase": "volume root permission 0000: /private/var finally boots iOS",
+  "at": "2026-11-23",
+  "result": "PASS on storage and on iOS boot; the volume is too small for real use",
+
+  "the_two_gates": {
+    "storage": {
+      "mount": "/private/var: HFS Plus from /dev/xnusys_var, kept between boots",
+      "skeleton": "110 directories, 16 files",
+      "persistence": "Trial793a/793b already proved data survives an unclean restart"
+    },
+    "ios_boot": {
+      "before_794": "lsd killed 10 times, 14 processes, SpringBoard never produced an IOSurface, BootUI overlay never withdrawn",
+      "after_794": "Corpse 0, CPU monitor refusals 0, IOSurface 11, SpringBoard 1498 log lines",
+      "operator": "confirmed the system reached the home screen with no progress bar"
+    }
+  },
+
+  "root_cause": {
+    "one_line": "the root directory of the volume had mode 0000, so a process running as mobile could not even traverse it",
+    "chain": [
+      "init.c:854  memset(&args, 0, sizeof(args)) leaves hfs_mask at 0, which is not VNOVAL",
+      "hfs_vfsops.c:1367  any mask that is not VNOVAL is stored in hfs_dir_mask; 0 & 0777 = 0",
+      "hfs_catalog.c:3830  an entry with no type bits gets S_IFDIR | (hfs_dir_mask & ACCESSPERMS) = S_IFDIR | 0"
+    ],
+    "why_it_never_showed_before": "ramfs gives its root 0755, and the same var.skel ran on it unchanged",
+    "symptoms": {
+      "lsd": "its first process logged 19 'failed lookup: com.apple.mobileactivationd' in 20 lines over 90 seconds, because it could not open /private/var/db/lsd; the skeleton makes that 755 501:501 but the parent was 0000",
+      "backboardd": "reported EACCES from 23.9s, before lsd even started; 144 times in the run, against 0 in both ramfs runs"
+    },
+    "what_it_was_not": "mobileactivationd is unregistered in both images (23 jobs, 106 MachServices, all 23 plists byte-identical); the ramfs baseline has the same gap and gets past it in 7 lookups"
+  },
+
+  "the_fix": {
+    "file": "userland/src/init.c",
+    "change_1": "args.uid/gid/mask/pad all set to -1 (VNOVAL); mask is mode_t in the kernel but declared uint16_t mask + uint16_t pad here, so both halves must be 0xFFFF",
+    "change_2": "chmod(\"/private/var\", 0755) after the mount, matching what ramfs gave the directory",
+    "why_both": "VNOVAL makes the kernel use UNKNOWNPERMISSIONS (0705: owner rwx, group none, others r-x), which is traversable but leaves no group access; 0755 matches the behaviour being replaced"
+  },
+
+  "also_required": {
+    "file": "sysimage/var.skel",
+    "change": "removed the line 'd 755 0 0 /private/var/vm'",
+    "why_the_source_and_not_the_copy": "build.sh copies sysimage/var.skel into root/etc/var.skel and then appends the eight plists, mobile/tmp and two timezone links; editing the copy is thrown away",
+    "why_vm_must_not_exist": "vm_swapfile_open uses O_CREAT on /private/var/vm/swapfile, and the iOS branch of vm_compressor_backing_store.h sets MAX_SWAP_FILE_SIZE to 128 MiB, against a 174 MiB volume",
+    "proof_it_worked": "freeBlocks fell 41440 -> 39217, 8.7 MiB, which is the skeleton; a swapfile would have shown 32768 blocks"
+  },
+
+  "evidence_table": {
+    "columns": ["corpse", "cpu_monitor_refusals", "iosurface", "springboard_lines", "eacces"],
+    "790_ramfs_baseline":  [0, 701,  2, 1472, 0],
+    "792b_ramfs_baseline": [0, 701,  2, 1466, 0],
+    "793a_hfs_before_fix": [5, 3360, 0,   30, 144],
+    "794_hfs_after_fix":   [0, 0,   11, 1498, 0]
+  },
+
+  "a_caveat_about_this_table": "the kernel ring kept in the 794 dump starts around 221.8 s, so a grep for Corpse/CPU over the whole file does not prove the early part was clean. To be sure, count from the start of the run rather than the start of the retained buffer.",
+
+  "the_next_problem": {
+    "symptom": "Settings shows Capacity and Available both Zero KB",
+    "volume": { "totalBlocks": 44544, "freeBlocks": 0, "nonZeroBlocks": 43325, "fileCount": 997, "folderCount": 5127 },
+    "what_filled_it": [
+      { "blocks": "14221..32755", "size": "72.4 MiB", "contents": "Objective-C runtime diagnostics, literal %s format strings -- dyld shared cache string extraction, likely /private/var/db/uuidtext/dsc" },
+      { "blocks": "34002..41804", "size": "30.5 MiB", "contents": "SpringBoard and backboardd logging -- BiometricKit, UIWindowScene, BKSProcessAssertion" }
+    ],
+    "so": "174 MiB is not enough for a real iOS install; a 64 GiB partition is being planned"
+  },
+
+  "method_notes": {
+    "three_kinds_of_timestamp": "HLOG mixes [  N.N]: (kernel relative), 1970-01-01 00:00:SS (UTC wall clock) and com.apple.xpc.launchd|1970-01-01 08:00:SS (+0800). Reading one as another produced three contradictory conclusions from the same file.",
+    "read_the_volume_on_the_host": "modprobe hfsplus followed by mount -t hfsplus -o ro,loop works and is far more reliable than parsing the catalog by hand",
+    "one_retained_snapshot_is_not_enough": "win-792b.bin holds 135 non-zero blocks and its catalog cannot be located at the offset the volume header gives; the volume still fsck-clean, so the snapshot itself is the problem, not the volume"
+  }
+}
