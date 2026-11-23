@@ -1,0 +1,81 @@
+Trial788 / 790 — evidence
+2026-11-23
+
+A/B, Trial788 — the operation Trial785c hung on, unchanged
+----------------------------------------------------------
+785c: read-only mount, open probe.txt, read 56 bytes, close, unmount
+      -> hung until loader_return_after (420 s) expired on 785c
+      -> the log has "hfs: mounted RedwoodVar" and no "hfs: unmount initiated"
+
+788:  the same probe against the same volume, with buf_unmap in the driver
+      hfs-ab: mount ro -> 0
+      hfs-ab: open /private/var/tmp/hfs-ab/probe.txt -> 3
+      hfs-ab: read 56 -> 56
+      hfs-ab: content = Trial785b: written through HFS Plus on the data volume.
+      hfs-ab: close -> 0
+      hfs-ab: calling unmount -- this is where 785c stopped
+      hfs-ab: unmount -> 0
+      hfs-ab: PASS
+
+      kernel: hfs: mounted RedwoodVar on device xnusys_var
+              hfs: unmount initiated on RedwoodVar on device xnusys_var
+              hfs: unmount: flushing files
+              hfs: unmount: files flushed (retval=0)
+
+End to end, Trial790
+--------------------
+hfs-final: flash before: attributes=0x80000100 freeBlocks=41443 last=fsck
+hfs-final:   Unmounted=1
+hfs-final: [1] mount rw -> 0   OK
+hfs-final:     free blocks = 41443
+hfs-final: [2] open -> 3
+hfs-final:     write 59 -> 59
+hfs-final:     fsync -> 0
+hfs-final:     free blocks = 41442  (a block was allocated)
+hfs-final: [3] unmount ...
+hfs-final:     unmount -> 0
+hfs-final: [4] flash after: attributes=0x80000100 freeBlocks=41442 last=10.0
+hfs-final:     Unmounted=1   the volume is clean on the flash
+hfs-final: [5] remount ro -> 0
+hfs-final:     open -> 3
+hfs-final:     content = Trial790: a writable mount that ends with a clean unmount.
+hfs-final:     unmount -> 0
+hfs-final: PASS
+
+      kernel: hfs: unmount initiated on RedwoodVar on device xnusys_var
+              hfs: unmount: flushing files
+              hfs: unmount: files flushed (retval=0)
+              hfs: unmount: starting the transaction (jnl=0)
+              hfs: unmount: transaction started retval=0
+
+After a reboot
+--------------
+volume header read straight off the flash, nothing mounted:
+
+      attributes   = 0x80000100   (bit8 Unmounted set, bit13 Journaled clear)
+      freeBlocks   = 41442
+      lastMounted  = '10.0'
+
+files still there, one from each of three different boots:
+
+      block 10056: Trial785b: written through HFS Plus on the data volume.
+      block 10059: Trial787: does the volume header reach the flash?
+      block 10060: Trial790: a writable mount that ends with a clean unmount.
+
+      non-zero blocks in the 174 MiB window: 14
+
+What the driver does now, and what it did before
+------------------------------------------------
+before:  buf_map(bp, &mapped)  ...  buf_biodone(bp)          (mapping leaked)
+after:   buf_map(bp, &mapped)  ...  buf_unmap(bp); buf_biodone(bp)
+
+         buf_unmap() on a buffer that was never mapped returns 0 without doing
+         anything, and on a non-clustered buffer it also returns 0, so the added
+         call is harmless on every path that does not need it.
+
+Host test for the read-modify-write that went in earlier
+--------------------------------------------------------
+tests/test-rmw.c: 211 PASS, 0 FAIL
+  13 fixed shapes (volume header at 1024, alternate at the end, whole blocks,
+  block boundaries, one byte) plus 200 random offsets and lengths, and two
+  refusals (past the end, zero length).
