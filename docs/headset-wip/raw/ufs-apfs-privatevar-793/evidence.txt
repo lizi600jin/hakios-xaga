@@ -1,0 +1,75 @@
+Trial793a / 793b — evidence
+2026-11-23
+
+Two edits, no C
+---------------
+1. loader-build.json: -DXNU_EXTRA_ARGS gained var_hfs=xnusys_var.
+   XNU_EXTRA_ARGS is guarded by #ifndef in mtkloader.c, so the build flag is enough.
+2. userdata/root/etc/var.skel: removed 'd 755 0 0 /private/var/vm'.
+
+Verified the argument reached the kernel:
+
+    strings loader-out/loader.bin
+    boot args: rd=md0 -v cpus=4 ... xnusys_blk=1 ufs=2 var_hfs=xnusys_var loader_return_after=420
+
+Why /private/var/vm had to go
+-----------------------------
+vm_compressor_backing_store.h, !XNU_TARGET_OS_OSX branch:
+
+    #define MIN_SWAP_FILE_SIZE   (64 * 1024 * 1024ULL)
+    #define MAX_SWAP_FILE_SIZE   (128 * 1024 * 1024ULL)
+
+vm_compressor_backing_file.c:64:
+
+    vnode_open(path, (O_CREAT | O_TRUNC | FREAD | FWRITE), S_IRUSR|S_IWUSR, 0, vp, ctx)
+
+The volume is 174 MiB with 162 MiB free, so a 128 MiB swapfile would fit on the first
+attempt and take 79% of it. With the directory absent, vnode_open fails with ENOENT and
+the swap thread goes on failing exactly as it always did, writing nothing.
+
+793a
+----
+    -- writable filesystem --
+    /private/var: HFS Plus from /dev/xnusys_var, kept between boots
+    110 directories, 8 files
+
+    attributes   freeBlocks   fileCount
+    0x80002100   41440        9        before
+    0x80002000   39217        765      after
+
+2223 blocks = 8.7 MiB used. A swapfile would have shown 32768 blocks.
+launchd.ios ran to the loader's 440-second return at 60 frames a second.
+
+793b — same image, nothing written to the flash, just a reboot
+-------------------------------------------------------------
+    /private/var: HFS Plus from /dev/xnusys_var, kept between boots
+    110 directories, 16 files
+
+    attributes   freeBlocks   fileCount   folderCount
+    0x80002000   38079        765         4980
+
+fileCount 765 -> 765: everything the first boot created is still there.
+
+No replay_journal line this time. Trial792b had one because 792a left an uncommitted
+transaction; here 793a's fsync had already checkpointed the journal (start == end), so
+there was nothing to replay. It mounted the volume while Unmounted=0, which is the journal
+doing its job -- a volume without one refuses a writable mount in that state.
+
+The eight plists and where they come from
+-----------------------------------------
+var.skel carries eight 'f' records:
+
+    f 644 501 501 /private/var/mobile/Library/Preferences/com.apple.springboard.plist  /var/mobile/Library/Preferences/com.apple.springboard.plist
+
+in_image() prefixes /redwood, so the source is
+/redwood/var/mobile/Library/Preferences/... -- the read-only system image, not the memory
+disk's /var. That is why replacing /var with a symlink cannot break the copy.
+
+What is still not done: /var does not point at /private/var
+----------------------------------------------------------
+    wifid[8:232] store URL: file:///var/root/Library/Caches/com.apple.wif...
+
+/var is still the memory disk's own directory (drwxr-xr-x /redwood/var), so anything
+written under /var/ rather than /private/var/ is lost on the next boot. Standard iOS has
+/var -> private/var. var.skel has no such entry, and /var already exists as a non-empty
+directory, so symlink() would return EEXIST.
