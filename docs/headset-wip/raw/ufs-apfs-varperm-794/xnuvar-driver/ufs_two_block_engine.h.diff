@@ -1,0 +1,32 @@
+--- engine/ufs_two_block_engine.h.bak-794	2026-11-23 20:29:42.358791459 +0800
++++ engine/ufs_two_block_engine.h	2026-11-23 20:29:42.378551531 +0800
+@@ -150,6 +150,13 @@
+ #define ZONE_LBA_LAST      (XNUSYS_LBA + ZONE_LAST_BLOCK)
+ 
+ /*
++ * Trial795: the volume carved out of userdata. These are absolute logical blocks, not offsets
++ * from XNUSYS_LBA -- the partition is elsewhere on the disk and the two do not touch.
++ */
++#define XNUVAR_PART_LBA_FIRST  UINT64_C(13803264)
++#define XNUVAR_PART_LBA_LAST   UINT64_C(30580479)
++
++/*
+  * The engine's own WRITE(10) builder. struct vr_command and struct ur_command have the same
+  * layout (both asserted to 80 bytes), but they are different types, and the engine deals in
+  * vr_command. The contract's ur_make_write() is the one place the byte layout is written down;
+@@ -203,7 +210,14 @@
+ static inline bool
+ zone_write_allowed(uint64_t lba)
+ {
+-    return lba >= ZONE_LBA_FIRST && lba <= ZONE_LBA_LAST;
++    if (lba >= ZONE_LBA_FIRST && lba <= ZONE_LBA_LAST) return true;
++    /*
++     * Trial795: the 64 GiB volume is not in xnusys. GPT entry 89, absolute logical blocks
++     * 13803264..30580479. Tested as its own range and not as the far end of the one above,
++     * because everything between them belongs to userdata.
++     */
++    if (lba >= XNUVAR_PART_LBA_FIRST && lba <= XNUVAR_PART_LBA_LAST) return true;
++    return false;
+ }
+ 
+ /* Only these three READ(10) commands belong to the captured backup layout. */

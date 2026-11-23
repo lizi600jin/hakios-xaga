@@ -1,0 +1,339 @@
+--- hakios.xnusys_blk.c.bak-794	2026-11-23 20:25:02.965529738 +0800
++++ hakios.xnusys_blk.c	2026-11-23 20:37:31.269631950 +0800
+@@ -151,6 +151,37 @@
+ #define XNUSYS_ZONE_FIRST   UINT64_C(608448)
+ #define XNUSYS_ZONE_LAST    UINT64_C(653559)
+ 
++/*
++ * Trial795: /dev/xnuvar, the partition the 64 GiB volume lives in.
++ *
++ * GPT entry 89, carved out of what used to be the end of userdata: logical blocks
++ * 13803264..30580479, 16777216 of them, 64 GiB. It is not inside xnusys at all, so none of the
++ * bounds above apply to it and none of them may be stretched to cover it either -- the two ranges
++ * are disjoint and a request for one must never be admitted by a check written for the other.
++ *
++ * What it shares with xnusys_var is the whole of the implementation: the 512-byte BSD sector, the
++ * read-modify-write for partial blocks, the per-block loop that the hardware needs, the unmap on
++ * every exit, the flush. So the two are one strategy over a descriptor rather than two copies of
++ * it, and adding a third would be a table entry.
++ */
++struct xnusys_vol {
++	uint64_t	first;		/* flash block this device calls block 0 */
++	uint64_t	blocks;		/* how many of them it owns */
++	const char     *name;		/* for the one message an open prints */
++};
++
++#define XNUVAR_PART_FIRST   UINT64_C(13803264)
++#define XNUVAR_PART_BLOCKS  UINT64_C(16777216)
++#define XNUVAR_PART_BYTES   (XNUVAR_PART_BLOCKS * XNUSYS_BLOCK)
++
++/*
++ * Where the xnusys partition itself starts on the disk. The engine header has the same number and
++ * notes that keeping one copy is what stops the driver and the whitelist disagreeing -- but this
++ * file does not include that header, and pulling it in for one constant would drag the whole
++ * request geometry along. It is restated here; if the partition moves, both have to move.
++ */
++#define XNUSYS_DISK_LBA     UINT64_C(30580480)
++
+ extern bool hakios_mt6895_ufs_mount_read(uint64_t offset, void *dst, uint32_t len);
+ extern bool hakios_mt6895_ufs_zone_write(uint64_t block, const void *src);
+ extern bool hakios_mt6895_ufs_zone_write_fua(uint64_t block, const void *src, bool fua);
+@@ -642,11 +673,13 @@
+  */
+ static int  xnusys_var_bmajor = -1;
+ static int  xnusys_var_cmajor = -1;
++static int  xnuvar_bmajor = -1;
++static int  xnuvar_cmajor = -1;
+ 
+ extern bool hakios_mt6895_ufs_zone_read(uint64_t block, void *dst);
+ 
+ static void
+-xnusys_var_strategy_locked(buf_t bp)
++xnusys_vol_strategy_locked(const struct xnusys_vol *vol, buf_t bp)
+ {
+ 	uint64_t offset, len;
+ 	caddr_t mapped;
+@@ -658,17 +691,18 @@
+ 		return;
+ 	}
+ 
+-	/* Offsets are this device's own: block 0 is flash block XNUSYS_VAR_FIRST. */
++	/* Offsets are this device's own: block 0 is flash block vol->first. */
++
+ 	offset = (uint64_t)buf_blkno(bp) * XNUSYS_SECTOR;
+ 	len = buf_count(bp);
+ 
+-	if (offset >= XNUSYS_VAR_BYTES) {
+-		buf_seterror(bp, offset == XNUSYS_VAR_BYTES ? 0 : EINVAL);
++	if (offset >= (vol->blocks * XNUSYS_BLOCK)) {
++		buf_seterror(bp, offset == (vol->blocks * XNUSYS_BLOCK) ? 0 : EINVAL);
+ 		buf_setresid(bp, buf_count(bp));
+ 		buf_biodone(bp);
+ 		return;
+ 	}
+-	if (offset + len > XNUSYS_VAR_BYTES) len = (uint64_t)(XNUSYS_VAR_BYTES - offset);
++	if (offset + len > (vol->blocks * XNUSYS_BLOCK)) len = (uint64_t)((vol->blocks * XNUSYS_BLOCK) - offset);
+ 	if (len == 0u) {
+ 		buf_seterror(bp, EINVAL);
+ 		buf_biodone(bp);
+@@ -716,7 +750,7 @@
+ 		uint64_t lastblk = (offset + len + XNUSYS_BLOCK - 1u) / XNUSYS_BLOCK;
+ 		uint64_t nblk = lastblk - first;
+ 
+-		if (len == 0u || nblk == 0u || first + nblk > XNUSYS_VAR_BLOCKS) {
++		if (len == 0u || nblk == 0u || first + nblk > vol->blocks) {
+ 			buf_seterror(bp, EROFS);
+ 			buf_unmap(bp);
+ 			buf_biodone(bp);
+@@ -734,7 +768,7 @@
+ 		if ((offset % XNUSYS_BLOCK) == 0u && (len % XNUSYS_BLOCK) == 0u) {
+ 			/* Whole blocks: the cheap path, unchanged. */
+ 			for (uint64_t i = 0; i < nblk; i++) {
+-				if (!hakios_mt6895_ufs_zone_write_fua(XNUSYS_VAR_FIRST + first + i,
++				if (!hakios_mt6895_ufs_zone_write_fua(vol->first + first + i,
+ 				    mapped + i * XNUSYS_BLOCK, false)) {
+ 					buf_seterror(bp, EIO);
+ 					buf_unmap(bp);
+@@ -766,7 +800,7 @@
+ 
+ 				if (within == 0u && n == XNUSYS_BLOCK) {
+ 					/* this block is fully covered: no read needed */
+-					if (!hakios_mt6895_ufs_zone_write_fua(XNUSYS_VAR_FIRST + blk,
++					if (!hakios_mt6895_ufs_zone_write_fua(vol->first + blk,
+ 					    mapped + (copy_from - offset), false)) {
+ 						buf_seterror(bp, EIO);
+ 						buf_unmap(bp);
+@@ -774,7 +808,7 @@
+ 						return;
+ 					}
+ 				} else {
+-					if (!hakios_mt6895_ufs_zone_read(XNUSYS_VAR_FIRST + blk, bounce)) {
++					if (!hakios_mt6895_ufs_zone_read(vol->first + blk, bounce)) {
+ 						buf_seterror(bp, EIO);
+ 						buf_unmap(bp);
+ 						buf_biodone(bp);
+@@ -783,7 +817,7 @@
+ 					for (uint64_t k = 0; k < n; k++) {
+ 						bounce[within + k] = mapped[(copy_from - offset) + k];
+ 					}
+-					if (!hakios_mt6895_ufs_zone_write_fua(XNUSYS_VAR_FIRST + blk, bounce, false)) {
++					if (!hakios_mt6895_ufs_zone_write_fua(vol->first + blk, bounce, false)) {
+ 						buf_seterror(bp, EIO);
+ 						buf_unmap(bp);
+ 						buf_biodone(bp);
+@@ -806,7 +840,7 @@
+ 	if ((offset % XNUSYS_BLOCK) == 0u && (len % XNUSYS_BLOCK) == 0u) {
+ 		uint64_t first = offset / XNUSYS_BLOCK;
+ 		for (uint64_t i = 0; i < len / XNUSYS_BLOCK; i++) {
+-			if (!hakios_mt6895_ufs_zone_read(XNUSYS_VAR_FIRST + first + i,
++			if (!hakios_mt6895_ufs_zone_read(vol->first + first + i,
+ 			    mapped + i * XNUSYS_BLOCK)) {
+ 				buf_seterror(bp, EIO);
+ 				buf_unmap(bp);
+@@ -825,7 +859,7 @@
+ 			const uint64_t within = at - base;
+ 			const uint64_t take = min(len - done, (uint64_t)(XNUSYS_BLOCK - within));
+ 
+-			if (!hakios_mt6895_ufs_zone_read(XNUSYS_VAR_FIRST + base / XNUSYS_BLOCK, vbounce)) {
++			if (!hakios_mt6895_ufs_zone_read(vol->first + base / XNUSYS_BLOCK, vbounce)) {
+ 				buf_seterror(bp, EIO);
+ 				buf_unmap(bp);
+ 				buf_biodone(bp);
+@@ -841,8 +875,21 @@
+ 	buf_biodone(bp);
+ }
+ 
++/*
++ * `first` is an absolute logical block. The old window used to be an offset that the driver added
++ * XNUSYS_LBA to; the 64 GiB volume sits before xnusys, so no single offset serves both and the
++ * addition moved here. Everything the strategy does below is unchanged.
++ */
++static const struct xnusys_vol xnusys_var_vol = {
++	XNUSYS_DISK_LBA + XNUSYS_VAR_FIRST, XNUSYS_VAR_BLOCKS, "xnusys_var"
++};
++
++static const struct xnusys_vol xnuvar_vol = {
++	XNUVAR_PART_FIRST, XNUVAR_PART_BLOCKS, "xnuvar"
++};
++
+ static void
+-xnusys_var_strategy(buf_t bp)
++xnusys_vol_strategy(const struct xnusys_vol *vol, buf_t bp)
+ {
+ 	if (xnusys_lock == NULL) {
+ 		buf_seterror(bp, ENXIO);
+@@ -850,10 +897,22 @@
+ 		return;
+ 	}
+ 	lck_mtx_lock(xnusys_lock);
+-	xnusys_var_strategy_locked(bp);
++	xnusys_vol_strategy_locked(vol, bp);
+ 	lck_mtx_unlock(xnusys_lock);
+ }
+ 
++static void
++xnusys_var_strategy(buf_t bp)
++{
++	xnusys_vol_strategy(&xnusys_var_vol, bp);
++}
++
++static void
++xnuvar_strategy(buf_t bp)
++{
++	xnusys_vol_strategy(&xnuvar_vol, bp);
++}
++
+ static int
+ xnusys_var_open(dev_t dev, int flag, int devtype, struct proc *p)
+ {
+@@ -997,6 +1056,122 @@
+ 	.d_type     = D_DISK,
+ };
+ 
++/*
++ * Trial795: the same node for /dev/xnuvar.
++ *
++ * Written out rather than generated with a macro so that the two are readable side by side and a
++ * change to one is visible as a change to one. The only differences from xnusys_var above are the
++ * volume descriptor each hands to the shared strategy, and the size and ioctl that follow from it.
++ */
++static int
++xnuvar_open(dev_t dev, int flag, int devtype, struct proc *p)
++{
++	(void)dev; (void)flag; (void)devtype; (void)p;
++	printf("xnuvar: open flag=%d\n", flag);
++	return xnusys_ready ? 0 : ENXIO;
++}
++
++static int
++xnuvar_close(dev_t dev, int flag, int devtype, struct proc *p)
++{
++	(void)dev; (void)flag; (void)devtype; (void)p;
++	return 0;
++}
++
++/*
++ * The sector size, not the block count -- see the note on xnusys_var_size. 512 either way.
++ */
++static int
++xnuvar_size(dev_t dev)
++{
++	(void)dev;
++	return (int)XNUSYS_SECTOR;
++}
++
++static int
++xnuvar_read(dev_t dev, struct uio *uio, __unused int flags)
++{
++	return physio(xnuvar_strategy, NULL, dev, B_READ,
++	    (u_int (*)(buf_t))xnuvar_size, uio, XNUSYS_SECTOR);
++}
++
++static int
++xnuvar_write(dev_t dev, struct uio *uio, __unused int flags)
++{
++	return physio(xnuvar_strategy, NULL, dev, B_WRITE,
++	    (u_int (*)(buf_t))xnuvar_size, uio, XNUSYS_SECTOR);
++}
++
++static int
++xnuvar_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
++{
++	switch (cmd) {
++	case DKIOCGETBLOCKSIZE:
++	case DKIOCSETBLOCKSIZE:
++		*(uint32_t *)data = XNUSYS_SECTOR;
++		return 0;
++	case DKIOCGETBLOCKCOUNT:
++		/*
++		 * 16777216 blocks of 4096, expressed in 512-byte sectors: 134217728. Both halves are
++		 * 64-bit here; a 32-bit multiply of the block count would wrap and the file system
++		 * would size itself against a number that has nothing to do with the partition.
++		 */
++		*(uint64_t *)data = XNUVAR_PART_BYTES / XNUSYS_SECTOR;
++		return 0;
++	case DKIOCISWRITABLE:
++		*(uint32_t *)data = 1;
++		return 0;
++	case DKIOCGETMAXBLOCKCOUNTREAD:
++	case DKIOCGETMAXBLOCKCOUNTWRITE:
++		*(uint64_t *)data = 1;
++		return 0;
++	case DKIOCGETMAXSEGMENTCOUNTREAD:
++	case DKIOCGETMAXSEGMENTCOUNTWRITE:
++		*(uint64_t *)data = 1;
++		return 0;
++	case DKIOCGETMAXBYTECOUNTREAD:
++	case DKIOCGETMAXBYTECOUNTWRITE:
++		*(uint64_t *)data = XNUSYS_BLOCK;
++		return 0;
++	case DKIOCSYNCHRONIZE:
++	case DKIOCSYNCHRONIZECACHE: {
++		int err = 0;
++		if (xnusys_lock == NULL) return ENXIO;
++		lck_mtx_lock(xnusys_lock);
++		if (!hakios_mt6895_ufs_zone_flush()) err = EIO;
++		lck_mtx_unlock(xnusys_lock);
++		return err;
++	}
++	default:
++		return eno_ioctl(dev, cmd, data, flag, p);
++	}
++}
++
++static struct bdevsw xnuvar_bdevsw = {
++	.d_open     = xnuvar_open,
++	.d_close    = xnuvar_close,
++	.d_strategy = xnuvar_strategy,
++	.d_ioctl    = xnuvar_ioctl,
++	.d_dump     = eno_dump,
++	.d_psize    = xnuvar_size,
++	.d_type     = D_DISK,
++};
++
++static struct cdevsw xnuvar_cdevsw = {
++	.d_open     = xnuvar_open,
++	.d_close    = xnuvar_close,
++	.d_read     = xnuvar_read,
++	.d_write    = xnuvar_write,
++	.d_ioctl    = xnuvar_ioctl,
++	.d_stop     = eno_stop,
++	.d_reset    = eno_reset,
++	.d_ttys     = NULL,
++	.d_select   = eno_select,
++	.d_mmap     = eno_mmap,
++	.d_strategy = xnuvar_strategy,
++	.d_type     = D_DISK,
++};
++
+ static struct bdevsw xnusys_bdevsw = {
+ 	.d_open     = xnusys_open,
+ 	.d_close    = xnusys_close,
+@@ -1082,6 +1257,27 @@
+ 			    (unsigned long long)(XNUSYS_VAR_FIRST + XNUSYS_VAR_BLOCKS - 1u));
+ 		}
+ 	}
++	/*
++	 * Trial795: the 64 GiB volume, on the partition carved out of userdata.
++	 *
++	 * A separate node from xnusys_var and a separate range, because the two do not overlap and
++	 * nothing that guards one may be reused for the other. Failure here is loud but not fatal:
++	 * a boot with only the old volume still has somewhere to put /private/var.
++	 */
++	xnuvar_bmajor = bdevsw_add(-1, &xnuvar_bdevsw);
++	if (xnuvar_bmajor < 0) {
++		printf("xnusys-blk: cannot add xnuvar's block device, /dev/xnuvar will not exist\n");
++	} else {
++		xnuvar_cmajor = cdevsw_add_with_bdev(-1, &xnuvar_cdevsw, xnuvar_bmajor);
++		if (xnuvar_cmajor >= 0 &&
++		    devfs_make_node(makedev(xnuvar_bmajor, 0), DEVFS_BLOCK, UID_ROOT,
++		    GID_OPERATOR, 0640, "xnuvar") != NULL) {
++			printf("xnusys-blk: /dev/xnuvar carries the %llu MiB volume: flash blocks %llu..%llu\n",
++			    (unsigned long long)(XNUVAR_PART_BYTES / (1024u * 1024u)),
++			    (unsigned long long)XNUVAR_PART_FIRST,
++			    (unsigned long long)(XNUVAR_PART_FIRST + XNUVAR_PART_BLOCKS - 1u));
++		}
++	}
+ 	if (xnusys_cmajor < 0) {
+ 		printf("xnusys-blk: cdevsw_add failed\n");
+ 		(void)bdevsw_remove(xnusys_bmajor, &xnusys_bdevsw);
