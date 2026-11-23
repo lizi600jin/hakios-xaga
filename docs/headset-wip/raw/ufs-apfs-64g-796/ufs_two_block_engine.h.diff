@@ -1,0 +1,199 @@
+--- engine/ufs_two_block_engine.h.bak-794	2026-11-23 20:29:42.358791459 +0800
++++ engine/ufs_two_block_engine.h	2026-11-23 22:02:58.561794250 +0800
+@@ -150,6 +150,13 @@
+ #define ZONE_LBA_LAST      (XNUSYS_LBA + ZONE_LAST_BLOCK)
+ 
+ /*
++ * Trial795: the volume carved out of userdata. These are absolute logical blocks, not offsets
++ * from XNUSYS_LBA -- the partition is elsewhere on the disk and the two do not touch.
++ */
++#define XNUVAR_PART_LBA_FIRST  UINT64_C(13803264)
++#define XNUVAR_PART_LBA_LAST   UINT64_C(30580479)
++
++/*
+  * The engine's own WRITE(10) builder. struct vr_command and struct ur_command have the same
+  * layout (both asserted to 80 bytes), but they are different types, and the engine deals in
+  * vr_command. The contract's ur_make_write() is the one place the byte layout is written down;
+@@ -175,15 +182,32 @@
+ }
+ 
+ static inline bool
+-vrq_make_write_flags(uint64_t lba, bool fua, struct vr_command *c)
++vrq_make_write_blocks_flags(uint64_t lba, uint32_t blocks, bool fua, struct vr_command *c)
+ {
+     struct ur_command uc;
+-    if (!c || !ur_make_write_flags(lba, fua, &uc)) return false;
++    if (!c || !ur_make_write_blocks_flags(lba, blocks, fua, &uc)) return false;
+     for (size_t i = 0; i < sizeof(*c); i++) ((uint8_t *)c)[i] = ((const uint8_t *)&uc)[i];
+     return true;
+ }
+ 
+-/* The same strict check, against the engine's type. */
++static inline bool
++vrq_make_write_flags(uint64_t lba, bool fua, struct vr_command *c)
++{
++    return vrq_make_write_blocks_flags(lba, 1u, fua, c);
++}
++
++/* Exact readback check against the engine's type, including block count and FUA bit. */
++static inline bool
++vrq_write_blocks_flags_allowed(const struct vr_command *actual, uint64_t lba,
++                               uint32_t blocks, bool fua)
++{
++    struct ur_command uc;
++    if (!actual) return false;
++    for (size_t i = 0; i < sizeof(*actual); i++) ((uint8_t *)&uc)[i] = ((const uint8_t *)actual)[i];
++    return ur_write_blocks_flags_allowed(&uc, lba, blocks, fua);
++}
++
++/* The same strict check, against the engine's type (single-block wrapper). */
+ static inline bool
+ vrq_write_allowed(const struct vr_command *actual, uint64_t lba)
+ {
+@@ -196,14 +220,31 @@
+ static inline bool
+ vrq_make_write(uint64_t lba, struct vr_command *c)
+ {
+-    return vrq_make_write_flags(lba, false, c);
++    return vrq_make_write_blocks_flags(lba, 1u, false, c);
++}
++
++/* Contiguous whole blocks, all inside the SAME allowed region. Nothing may cross a boundary. */
++static inline bool
++zone_write_range_allowed(uint64_t lba, uint32_t blocks)
++{
++    if (blocks == 0u || blocks > UR_WRITE_MAX_BLOCKS) return false;
++    if (lba > UINT64_MAX - (uint64_t)(blocks - 1u)) return false;
++    const uint64_t last = lba + (uint64_t)(blocks - 1u);
++    if (lba >= ZONE_LBA_FIRST && last <= ZONE_LBA_LAST) return true;
++    /*
++     * Trial795: the 64 GiB volume is not in xnusys. GPT entry 89, absolute logical blocks
++     * 13803264..30580479. Tested as its own range and not as the far end of the one above,
++     * because everything between them belongs to userdata.
++     */
++    if (lba >= XNUVAR_PART_LBA_FIRST && last <= XNUVAR_PART_LBA_LAST) return true;
++    return false;
+ }
+ 
+-/* One whole block, absolute LBA inside the zone. Nothing else may be written. */
++/* One whole block, absolute LBA inside an allowed region. Nothing else may be written. */
+ static inline bool
+ zone_write_allowed(uint64_t lba)
+ {
+-    return lba >= ZONE_LBA_FIRST && lba <= ZONE_LBA_LAST;
++    return zone_write_range_allowed(lba, 1u);
+ }
+ 
+ /* Only these three READ(10) commands belong to the captured backup layout. */
+@@ -351,15 +392,29 @@
+             (uint64_t)request->lba + request->blocks <= (uint64_t)XNUSYS_LBA + 608448u &&
+             vr_make_read(request, limits, cmd);
+     case VRQ_DATA_WINDOW_READ:
++        /*
++         * Trial795: two windows now, not one.
++         *
++         * The old window is the 174 MiB inside xnusys, unchanged. The new one is the 64 GiB
++         * partition before xnusys, and its first block is 13803264 -- which the bound above
++         * rejects outright, so a file system on it could not read its own volume header. Both
++         * are absolute, and both are checked separately: the span between them is the APFS
++         * container and then userdata, and neither is a place to read from.
++         */
+         return request && limits && request->blocks == 1u &&
+             limits->lba_max_exclusive == VR_CAPACITY_BLOCKS &&
+-            request->lba >= (uint64_t)XNUSYS_LBA + 608512u &&
+-            request->lba <  (uint64_t)XNUSYS_LBA + 653056u &&
++            ((request->lba >= (uint64_t)XNUSYS_LBA + 608512u &&
++              request->lba <  (uint64_t)XNUSYS_LBA + 653056u) ||
++             (request->lba >= XNUVAR_PART_LBA_FIRST &&
++              request->lba <= XNUVAR_PART_LBA_LAST)) &&
+             vr_make_read(request, limits, cmd);
+     case VRQ_ZONE_WRITE:
+-        return request && request->blocks == 1u && limits &&
++        return request && request->lun == VR_LUN &&
++            request->logical_block_bytes == VR_BLOCK_BYTES &&
++            request->blocks >= 1u && request->blocks <= UR_WRITE_MAX_BLOCKS && limits &&
+             limits->lba_max_exclusive == VR_CAPACITY_BLOCKS &&
+-            zone_write_allowed(request->lba) && vrq_make_write(request->lba, cmd);
++            zone_write_range_allowed(request->lba, request->blocks) &&
++            vrq_make_write_blocks_flags(request->lba, request->blocks, false, cmd);
+     }
+     return false;
+ }
+@@ -697,10 +752,16 @@
+     if (!io->read_reg || !io->read_word || !io->write_word || !io->claim || !io->finish ||
+         !io->stopped || !io->ring || !io->barrier || !io->now_us) return;
+     const struct vr_request request = *r;
++    if (request.lun != VR_LUN || request.logical_block_bytes != VR_BLOCK_BYTES) return;
+     if (lim->lba_max_exclusive < (uint32_t)XNUSYS_LBA + 655608u) return;
+-    if (!vrq_make_write_flags(request.lba, fua, &cmd)) return;
+-    if (!zone_write_allowed(request.lba) || request.blocks != 1u) return;
++    if (!zone_write_range_allowed(request.lba, request.blocks)) return;
++    if (!vrq_make_write_blocks_flags(request.lba, request.blocks, fua, &cmd)) return;
+     const uint32_t data_words = request.blocks * VRQ_BLOCK_WORDS;
++    /* Preserve the inherited scratch window (up to two blocks: 0..8191) without reading and
++     * restoring up to 256 KiB of uncached loader DMA bounce buffer on every multi-block write.
++     * Single- and two-block writes still snapshot and restore every touched word identically.
++     */
++    const uint32_t save_words = (data_words < VRQ_DATA_WORDS) ? data_words : VRQ_DATA_WORDS;
+ 
+     if (vrq_stopped(ctr,io) || !vrq_idle(ctr,io)) return;
+     for (i = 0; i < 8; i++) {
+@@ -712,7 +773,7 @@
+         if (!io->read_word(io->context, VRQ_UCD, i * 4, &saved->baseline.ucd[i])) return;
+     }
+     if (!ur_previous_read(&saved->baseline)) return;
+-    for (i = 0; i < data_words; i++) {
++    for (i = 0; i < save_words; i++) {
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_DATA, i * 4, vrq_saved_word(saved, i))) return;
+     }
+@@ -724,7 +785,7 @@
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_UCD, i * 4, &w) || w != saved->baseline.ucd[i]) return;
+     }
+-    for (i = 0; i < data_words; i++) {
++    for (i = 0; i < save_words; i++) {
+         vrq_note(ctr,1);
+         if (!io->read_word(io->context, VRQ_DATA, i * 4, &w) || w != *vrq_saved_word(saved, i)) return;
+     }
+@@ -768,7 +829,7 @@
+                 out->result = VRQ_READBACK_FAILED; goto clean;
+             }
+         }
+-        if (!vrq_write_allowed(&back, request.lba)) {
++        if (!vrq_write_blocks_flags_allowed(&back, request.lba, request.blocks, fua)) {
+             out->result = VRQ_READBACK_FAILED; goto clean;
+         }
+     }
+@@ -800,9 +861,29 @@
+     if (!vrq_idle(ctr,io)) goto poison;
+     out->completed = true;
+ 
+-    out->result = out->ocs == 0u ? VRQ_DELIVERED : VRQ_REJECTED;
++    /*
++     * Check the Response UPIU, not just OCS. OCS==0 only means the UTP transport finished;
++     * a SCSI CHECK CONDITION or non-zero residual transfer count still arrives with OCS==0
++     * and must never be mistaken for a committed multi-block write.
++     */
++    for (i = 0; i < VRQ_RESP_WORDS; i++) {
++        out->response_attempted |= 1u << i;
++        vrq_note(ctr, 1);
++        if (!io->read_word(io->context, VRQ_UCD, 512 + i * 4, &out->response[i])) {
++            out->result = VRQ_PARTIAL; goto clean;
++        }
++        out->response_valid |= 1u << i;
++    }
++    out->response_complete = true;
++    if (out->ocs != 0u) { out->result = VRQ_REJECTED; goto clean; }
++    {
++        uint8_t image[VRQ_RESP_WORDS * 4];
++        for (i = 0; i < VRQ_RESP_WORDS; i++) vrq_put32le(image + i * 4, out->response[i]);
++        out->response_failures = ur_response_failures(image);
++    }
++    out->result = out->response_failures == 0u ? VRQ_DELIVERED : VRQ_REJECTED;
+ clean:
+-    if (!vrq_restore(ctr, io, saved, data_words)) {
++    if (!vrq_restore(ctr, io, saved, save_words)) {
+         out->result = VRQ_UNCERTAIN; out->restored = false; return;
+     }
+     out->restored = true;

@@ -1,0 +1,30 @@
+ loader-src/mtk/loader/mtkloader.c | the UFS read guard
+@@ ur_guard_initialize 之前（约 2712 行）
+
+-    if (!ufs_read(8u, 8u, (void *)(uintptr_t)UR_DATA_PA) ||
+-        ur_guard_block_crc32((const volatile uint32_t *)(uintptr_t)UR_DATA_PA,
+-                             UR_BLOCK_BYTES / 4) != 0x28a2836cu) {
+-        out("ufs-read guard: predecessor READ/reference failed; manual fastboot required\n");
+-        for (;;) { __asm__ volatile("wfe"); }
+-    }
++    if (!ufs_read(8u, 8u, (void *)(uintptr_t)UR_DATA_PA)) {
++        out("ufs-read guard: predecessor READ did not answer; manual fastboot required\n");
++        for (;;) { __asm__ volatile("wfe"); }
++    }
++    {
++        const uint32_t got = ur_guard_block_crc32(
++            (const volatile uint32_t *)(uintptr_t)UR_DATA_PA, UR_BLOCK_BYTES / 4);
++        if (got != 0xec726accu) {
++            out("ufs-read guard: predecessor READ returned crc=");
++            out_hex((uint64_t)got);
++            out(", expected 0xec726acc; manual fastboot required\n");
++            for (;;) { __asm__ volatile("wfe"); }
++        }
++    }
+
+为什么：LBA 8（512 字节扇区）就是 4096 字节块的 LBA 1，GPT 主头。
+0x28a2836c 是改表前那一版的 CRC32，划出 xnuvar 之后它变了，loader 停在这里。
+新值 0xec726acc 是同一块在改表后的 CRC32，在主机上用 loader 自己的 CRC 函数算的，
+并与设备回读的字节逐字节比对过。
+
+顺便把两种失败分开打印：命令没应答，和应答了但内容不符，是两件事。

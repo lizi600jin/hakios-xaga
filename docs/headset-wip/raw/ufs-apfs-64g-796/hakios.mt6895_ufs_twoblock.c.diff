@@ -1,0 +1,313 @@
+--- hakios.mt6895_ufs_twoblock.c.bak-794	2026-11-23 20:28:09.916693721 +0800
++++ hakios.mt6895_ufs_twoblock.c	2026-11-23 22:04:18.034780859 +0800
+@@ -51,12 +51,20 @@
+ 
+ #define VR_REG_PA        0x112b0000u
+ #define VR_REG_BYTES     0x2300u
+-#define VR_SCRATCH_BYTES ((vm_offset_t)(UR_DATA_PA + VR2_TRANSFER_BYTES - UR_LEASE_PA))
++/* Map UR_LEASE_PA through the full multi-block write buffer (UR_DATA_PA + UR_WRITE_MAX_BYTES),
++ * rounded up to ARM64 XNU's 16 KiB page size (0x4000).
++ * 0x60100000..0x6014ffff (0x50000 = 320 KiB) stays inside the loader's 8 MiB UFS_SLOT_BUFFER
++ * (0x6010e000..0x6090dfff) and far below the first reservation at 0x66f00000.
++ */
++#define VR_SCRATCH_RAW   ((vm_offset_t)(UR_DATA_PA + UR_WRITE_MAX_BYTES - UR_LEASE_PA))
++#define VR_SCRATCH_BYTES ((VR_SCRATCH_RAW + 0x3fffu) & ~(vm_offset_t)0x3fffu)
+ 
+ #define VR2_LBA_DEFAULT 1u
+ 
+ _Static_assert(VR2_BLOCKS == 2u && VR2_TRANSFER_BYTES == 8192u, "two-block transfer");
+-_Static_assert(VR_SCRATCH_BYTES == 0x10000u, "full scratch span");
++_Static_assert(VR_SCRATCH_BYTES == 0x50000u, "full scratch span");
++_Static_assert(UR_DATA_PA - UR_LEASE_PA + UR_WRITE_MAX_BYTES <= VR_SCRATCH_BYTES,
++    "multi-block write buffer fits mapped scratch");
+ 
+ struct vr_platform {
+ 	vm_offset_t regs, table, scratch;
+@@ -66,6 +74,9 @@
+ static struct vr_platform platform;
+ static uint32_t twoblock_total_rings;
+ static uint32_t range_mode_id;
++static uint32_t twoblock_write_max_blocks = UR_WRITE_MAX_BLOCKS;
++static uint64_t twoblock_zone_write_cmds;
++static uint64_t twoblock_zone_write_blks;
+ #define GPT_ARRAY_MODE 5u
+ #define GPT_REQUESTS 3u
+ #define GPT_SNAPSHOT_BYTES (5u * VR_BLOCK_BYTES)
+@@ -197,6 +208,12 @@
+ #define APFS_TOTAL_REQUESTS 12u
+ /* XNUSYS_LBA comes from the engine header so the driver and the whitelist cannot disagree. */
+ #define XNUSYS_LAST_LBA UINT32_C(31236087)
++
++#define XNUSYS_ZONE_LBA_FIRST   (XNUSYS_LBA + UINT64_C(608448))   /* 31188928 */
++#define XNUSYS_ZONE_LBA_LAST    (XNUSYS_LBA + UINT64_C(653559))   /* 31234039 */
++#define XNUVAR_FIRST_BLOCK      UINT64_C(13803264)
++#define XNUVAR_LAST_BLOCK       UINT64_C(30580479)
++
+ #define XNUSYS_NAME_OFFSET 56u   /* GPT entry: partition name, 72 UTF-16LE bytes */
+ #define XNUSYS_NAME_BYTES 72u
+ static uint64_t
+@@ -232,7 +249,7 @@
+ twoblock_reference(uint32_t lba, uint32_t mode, uint32_t *crc)
+ {
+ 	if (mode == GPT_ARRAY_MODE && (lba == 4u || lba == 5u)) {
+-		*crc = lba == 4u ? UINT32_C(0xa0d23c1c) : UINT32_C(0xc71c0011);
++		*crc = lba == 4u ? UINT32_C(0x7bbefbac) : UINT32_C(0xc71c0011);
+ 		return true;
+ 	}
+ 	/* Trial733: the backup header block and the four blocks of its array, measured on the same
+@@ -240,10 +257,10 @@
+ 	if (mode == GPT_BACKUP_MODE || mode == XNUSYS_MODE || mode == APFS_VOLUME_MODE ||
+ 	    mode == APFS_FSTREE_MODE || APFS_IS_PATH_MODE(mode)) {
+ 		static const struct { uint32_t lba, crc; } backup[] = {
+-			{ GPT_BACKUP_HEADER_LBA,     UINT32_C(0x4b13d623) },
++			{ GPT_BACKUP_HEADER_LBA,     UINT32_C(0x8fc33f83) },
+ 			{ GPT_BACKUP_ARRAY_LBA,      UINT32_C(0x0d024e0c) },
+ 			{ GPT_BACKUP_ARRAY_LBA + 1u, UINT32_C(0x58f10429) },
+-			{ GPT_BACKUP_ARRAY_LBA + 2u, UINT32_C(0xa0d23c1c) },
++			{ GPT_BACKUP_ARRAY_LBA + 2u, UINT32_C(0x7bbefbac) },
+ 			{ GPT_BACKUP_ARRAY_LBA + 3u, UINT32_C(0xc71c0011) },
+ 		};
+ 		for (unsigned i = 0; i < sizeof(backup) / sizeof(backup[0]); ++i) {
+@@ -716,18 +733,20 @@
+ 		return false;
+ 	}
+ 
+-	printf("mt6895-ufs-twoblock: request=%u lba=%u blocks=%u bytes=%u admitted=%u "
+-	       "readback_ok=%u issued=%u rings=%u response_valid=%#x failures=%#x ocs=%#x "
+-	       "data_words=%u/%u restored=%u copied=1 control=%#x shared=%u\n",
+-	       ordinal, pinned->lba, pinned->blocks, transfer_bytes,
+-	       outcome->claimed ? 1u : 0u, outcome->readback_ok ? 1u : 0u, outcome->issued ? 1u : 0u,
+-	       twoblock_counters.ring, outcome->response_valid, outcome->response_failures, outcome->ocs,
+-	       outcome->data_words_valid, outcome->data_words_attempted, outcome->restored ? 1u : 0u,
+-	       control, state);
+-	for (uint32_t block = 0; block < pinned->blocks; block++) {
+-		printf("mt6895-ufs-twoblock: block=%u lba=%u reference_present=1 "
+-		       "crc=%#x reference_crc=%#x match=1\n",
+-		       block + 1u, pinned->lba + block, crc[block], reference[block]);
++	if (scope != VRQ_DATA_WINDOW_READ) {
++		printf("mt6895-ufs-twoblock: request=%u lba=%u blocks=%u bytes=%u admitted=%u "
++		       "readback_ok=%u issued=%u rings=%u response_valid=%#x failures=%#x ocs=%#x "
++		       "data_words=%u/%u restored=%u copied=1 control=%#x shared=%u\n",
++		       ordinal, pinned->lba, pinned->blocks, transfer_bytes,
++		       outcome->claimed ? 1u : 0u, outcome->readback_ok ? 1u : 0u, outcome->issued ? 1u : 0u,
++		       twoblock_counters.ring, outcome->response_valid, outcome->response_failures, outcome->ocs,
++		       outcome->data_words_valid, outcome->data_words_attempted, outcome->restored ? 1u : 0u,
++		       control, state);
++		for (uint32_t block = 0; block < pinned->blocks; block++) {
++			printf("mt6895-ufs-twoblock: block=%u lba=%u reference_present=1 "
++			       "crc=%#x reference_crc=%#x match=1\n",
++			       block + 1u, pinned->lba + block, crc[block], reference[block]);
++		}
+ 	}
+ 
+ 	/* Every check has passed: commit the sealed slice to the caller now. */
+@@ -740,12 +759,14 @@
+ 			dst[i] = twoblock_stage[i];
+ 		*out_delivered = slice_len;
+ 		/* 64-bit: the backup window's absolute offset is far above 2^32/4096. */
+-		printf("mt6895-ufs-twoblock: slice offset=%llu blocks=%u bytes=%u first=%u second=%u "
+-		       "cap=%u crc=%#x delivered=1\n",
+-		       (unsigned long long)((uint64_t)slice->first_lba * VR_BLOCK_BYTES) +
+-		           slice->in_block_offset,
+-		       slice->blocks, slice_len, slice->first_bytes, slice->second_bytes,
+-		       dst_capacity, slice_crc);
++		if (scope != VRQ_DATA_WINDOW_READ) {
++			printf("mt6895-ufs-twoblock: slice offset=%llu blocks=%u bytes=%u first=%u second=%u "
++			       "cap=%u crc=%#x delivered=1\n",
++			       (unsigned long long)((uint64_t)slice->first_lba * VR_BLOCK_BYTES) +
++			           slice->in_block_offset,
++			       slice->blocks, slice_len, slice->first_bytes, slice->second_bytes,
++			       dst_capacity, slice_crc);
++		}
+ 	} else if (out_delivered != NULL) {
+ 		*out_delivered = 0u;
+ 	}
+@@ -957,10 +978,21 @@
+ 	    !ur_outside_vm(UR_LEASE_PA, VR_SCRATCH_BYTES, gPhysBase, gPhysSize) ||
+ 	    pmap_valid_address(UR_LIST_PA) || pmap_valid_address(UR_LIST_PA + 31) ||
+ 	    pmap_valid_address(UR_LEASE_PA) ||
+-	    pmap_valid_address(UR_DATA_PA + VR2_TRANSFER_BYTES - 1)) {
++	    pmap_valid_address(UR_DATA_PA + VR2_TRANSFER_BYTES - 1) ||
++	    pmap_valid_address(UR_LEASE_PA + VR_SCRATCH_BYTES - 1)) {
+ 		printf("mt6895-ufs-twoblock: scratch overlaps managed memory; no mapping\n");
+ 		return;
+ 	}
++	{
++		uint32_t wmax = 0;
++		if (PE_parse_boot_argn("ufs_write_max_blocks", &wmax, sizeof(wmax))) {
++			if (wmax < 1u) wmax = 1u;
++			if (wmax > UR_WRITE_MAX_BLOCKS) wmax = UR_WRITE_MAX_BLOCKS;
++			twoblock_write_max_blocks = wmax;
++		} else {
++			twoblock_write_max_blocks = UR_WRITE_MAX_BLOCKS;
++		}
++	}
+ 	platform.data_bytes = pinned.blocks * VR_BLOCK_BYTES;
+ 	platform.scratch = ml_io_map_unmappable(UR_LEASE_PA, VR_SCRATCH_BYTES, VM_WIMG_WCOMB);
+ 	if (!platform.scratch) return;
+@@ -1114,7 +1146,23 @@
+ 
+ 	if (dst == NULL || len == 0u) return false;
+ 	if ((offset % VR_BLOCK_BYTES) != 0u || (len % VR_BLOCK_BYTES) != 0u) return false;
+-	if (offset / VR_BLOCK_BYTES + len / VR_BLOCK_BYTES > UINT64_C(653560)) return false;
++	/*
++	 * Trial795: this bound used to be `<= 653560`, an offset inside xnusys, and it is now a
++	 * check against absolute blocks. It was the reason a read of the new volume's own block 0
++	 * came back refused: 13803264 is past 653560.
++	 *
++	 * The test is on the first and last block of the request, both absolute, and both windows
++	 * are named. `at` below is already absolute since the strategy passes vol->first down.
++	 */
++	{
++		const uint64_t first_block = offset / VR_BLOCK_BYTES;
++		const uint64_t last_block = first_block + len / VR_BLOCK_BYTES - 1u;
++		const bool in_old = first_block >= (XNUSYS_LBA + UINT64_C(608512)) &&
++		                    last_block  <= (XNUSYS_LBA + UINT64_C(653055));
++		const bool in_new = first_block >= XNUVAR_FIRST_BLOCK &&
++		                    last_block  <= XNUVAR_LAST_BLOCK;
++		if (!in_old && !in_new) return false;
++	}
+ 	if (us_stopped(&twoblock_lease)) return false;
+ 
+ 	range_mode_id = DATA_WINDOW_MODE;
+@@ -1122,7 +1170,7 @@
+ 		const uint32_t at = (uint32_t)(offset / VR_BLOCK_BYTES) + done / VR_BLOCK_BYTES;
+ 		const uint32_t nblocks = 1u;
+ 		const uint32_t bytes = nblocks * VR_BLOCK_BYTES;
+-		struct vr_request r = { VR_LUN, XNUSYS_LBA + at, nblocks, VR_BLOCK_BYTES };
++		struct vr_request r = { VR_LUN, at, nblocks, VR_BLOCK_BYTES };
+ 		struct vrb_window w = { r.lba, nblocks, 0u, VR_BLOCK_BYTES,
+ 		    (nblocks - 1u) * VR_BLOCK_BYTES };
+ 		uint32_t got = 0;
+@@ -1153,15 +1201,50 @@
+  * do is verify the result. A device that took the write and one that dropped it both report the
+  * same completion, so the only proof is a later read of the same block through hakios_mt6895_ufs_zone_read().
+  */
++/*
++ * Trial795: the blocks this driver is allowed to touch, as two disjoint ranges, both absolute.
++ *
++ * The first version of this got the older range wrong: it used 608448..653559 -- the offsets the
++ * write trials and the old data window had *inside* xnusys -- as if they were addresses on the
++ * disk. They are not, and after the carve that span falls inside partition 77, `super`. The
++ * inner write guard would have refused those addresses anyway, so nothing was written, but a
++ * range check that names another partition is not one worth keeping.
++ *
++ * Every number here is now an absolute logical block, which is also what the strategy passes
++ * down since the same trial.
++ */
++static inline bool
++twoblock_range_is_ours(uint64_t block, uint32_t blocks)
++{
++	if (blocks == 0u || blocks > UR_WRITE_MAX_BLOCKS) return false;
++	if (block > UINT64_MAX - (uint64_t)(blocks - 1u)) return false;
++	const uint64_t last = block + (uint64_t)(blocks - 1u);
++	if (block >= XNUSYS_ZONE_LBA_FIRST && last <= XNUSYS_ZONE_LBA_LAST) return true;
++	if (block >= XNUVAR_FIRST_BLOCK && last <= XNUVAR_LAST_BLOCK) return true;
++	return false;
++}
++
++static inline bool
++twoblock_block_is_ours(uint64_t block)
++{
++	return twoblock_range_is_ours(block, 1u);
++}
++
++uint32_t
++hakios_mt6895_ufs_write_max_blocks(void)
++{
++	return twoblock_write_max_blocks;
++}
++
+ bool
+-hakios_mt6895_ufs_zone_write_fua(uint64_t block, const void *src, bool fua)
++hakios_mt6895_ufs_zone_write_blocks(uint64_t block, uint32_t blocks, const void *src, bool fua)
+ {
+ 	struct vr_request r;
+ 	struct vr_limits limits;
+ 	const struct vrq_io io = twoblock_io();
+ 
+-	if (src == NULL) return false;
+-	if (block < UINT64_C(608448) || block > UINT64_C(653559)) return false;
++	if (src == NULL || blocks == 0u || blocks > twoblock_write_max_blocks) return false;
++	if (!twoblock_range_is_ours(block, blocks)) return false;
+ 	/*
+ 	 * The three mappings this needs are made once, at twoblock_init. A write that arrives before
+ 	 * that would dereference a zero base, so say so instead of finding out the hard way.
+@@ -1181,22 +1264,15 @@
+ 	}
+ 	/*
+ 	 * data_bytes bounds every access to the DATA region (twoblock_word case VRQ_DATA), so it is
+-	 * device state, not a per-call argument. Set it for this write and put it back afterwards:
+-	 * leaving it at one block made later reads of two blocks address past the mapping, which is
+-	 * the data abort the second run died on.
+-	 */
+-	/*
+-	 * data_bytes bounds every access to the DATA region, so it is device state rather than a
+-	 * per-call argument. A write of one block needs one block of it, but the mapping was sized
+-	 * for two and the read path will ask for two again; leaving it narrow is what made the next
+-	 * read address past the mapping. Narrow it, put it back, and do not assume either value.
++	 * device state rather than a per-call argument. Set it to this write's exact byte span
++	 * (bounded by UR_WRITE_MAX_BYTES <= mapped scratch) and always restore it before returning.
+ 	 */
+ 	const uint32_t saved_data_bytes = platform.data_bytes;
+-	if (platform.data_bytes > VR_BLOCK_BYTES) platform.data_bytes = VR_BLOCK_BYTES;
++	platform.data_bytes = blocks * VR_BLOCK_BYTES;
+ 
+ 	r.lun = VR_LUN;
+-	r.lba = (uint32_t)(XNUSYS_LBA + block);
+-	r.blocks = 1u;
++	r.lba = (uint32_t)block;
++	r.blocks = blocks;
+ 	r.logical_block_bytes = VR_BLOCK_BYTES;
+ 	limits = vr_capacity_limits();
+ 
+@@ -1215,22 +1291,41 @@
+ 	(void)us_mark_drained(&twoblock_lease);
+ 	(void)us_copy_done(&twoblock_lease);
+ 
+-	if (twoblock_outcome.result != VRQ_DELIVERED && twoblock_outcome.result != VRQ_REJECTED) {
+-		printf("mt6895-ufs-twoblock: zone write %llu did not complete: result=%d ocs=%#x\n",
+-		    (unsigned long long)block, (int)twoblock_outcome.result, twoblock_outcome.ocs);
++	if (twoblock_outcome.result != VRQ_DELIVERED) {
++		printf("mt6895-ufs-twoblock: zone write %llu+%u%s failed: result=%d ocs=%#x "
++		    "resp_fail=%#x resp1=%#x resp3=%#x polls=%u restored=%u\n",
++		    (unsigned long long)block, blocks, fua ? " (FUA)" : "",
++		    (int)twoblock_outcome.result, twoblock_outcome.ocs,
++		    twoblock_outcome.response_failures,
++		    twoblock_outcome.response[1], twoblock_outcome.response[3],
++		    twoblock_outcome.polls, twoblock_outcome.restored ? 1u : 0u);
+ 		return false;
+ 	}
+-	printf("mt6895-ufs-twoblock: zone write %llu%s ocs=%#x polls=%u restored=%u\n",
+-	    (unsigned long long)block, fua ? " (FUA)" : "", twoblock_outcome.ocs,
+-	    twoblock_outcome.polls, twoblock_outcome.restored ? 1u : 0u);
+-	return twoblock_outcome.result == VRQ_DELIVERED;
++	twoblock_zone_write_cmds++;
++	twoblock_zone_write_blks += blocks;
++	/* Log the first 16 commands and every 128th thereafter to avoid 4-6 ms/line FB scroll stalls. */
++	if (twoblock_zone_write_cmds <= 16u || (twoblock_zone_write_cmds & 127u) == 0u) {
++		printf("mt6895-ufs-twoblock: zone write %llu+%u%s ocs=%#x polls=%u restored=%u "
++		    "(cmds=%llu blks=%llu)\n",
++		    (unsigned long long)block, blocks, fua ? " (FUA)" : "", twoblock_outcome.ocs,
++		    twoblock_outcome.polls, twoblock_outcome.restored ? 1u : 0u,
++		    (unsigned long long)twoblock_zone_write_cmds,
++		    (unsigned long long)twoblock_zone_write_blks);
++	}
++	return true;
++}
++
++bool
++hakios_mt6895_ufs_zone_write_fua(uint64_t block, const void *src, bool fua)
++{
++	return hakios_mt6895_ufs_zone_write_blocks(block, 1u, src, fua);
+ }
+ 
+ /* Read one block back through the ordinary read path, so the write has an independent witness. */
+ bool
+ hakios_mt6895_ufs_zone_read(uint64_t block, void *dst)
+ {
+-	if (dst == NULL || block < UINT64_C(608448) || block > UINT64_C(653559)) return false;
++	if (dst == NULL || !twoblock_block_is_ours(block)) return false;
+ 	/*
+ 	 * Trial772: back to the baseline.
+ 	 *

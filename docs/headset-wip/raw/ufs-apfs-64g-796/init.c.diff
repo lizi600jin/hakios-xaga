@@ -1,0 +1,48 @@
+--- /home/lizi/IOS/hakios-mtk/userland/src/init.c.bak-varperm	2026-11-23 19:32:42.565251288 +0800
++++ /home/lizi/IOS/hakios-mtk/userland/src/init.c	2026-11-23 19:33:21.923382631 +0800
+@@ -852,10 +852,45 @@
+ 	strcpy(dev + 5, name);
+ 	memset(&args, 0, sizeof(args));
+ 	args.fspec = dev;
++	/*
++	 * Trial794: let the volume use the permissions it has.
++	 *
++	 * A zeroed args leaves hfs_mask at 0, and the kernel takes any mask that is not VNOVAL
++	 * seriously: hfs_vfsops.c:1367 stores it in hfs_dir_mask, and hfs_catalog.c:3830 builds
++	 * the mode of every catalog entry whose type bits are zero as
++	 * S_IFDIR | (hfs_dir_mask & ACCESSPERMS). With a mask of zero that is a directory with
++	 * mode 0000 -- including the root of the volume.
++	 *
++	 * The memory filesystem this replaces has a 0755 root, so nothing noticed. On this volume
++	 * it meant lsd could not open /private/var/db/lsd, backboardd could not read
++	 * /Library/Preferences (which links into /private/var/preferences), and the failures cost
++	 * 144 EACCES in a run that used to have none.
++	 *
++	 * VNOVAL for uid, gid and mask is what hfs_mount.h asks for when the file system's own
++	 * ownership and permissions are to be kept. It is -1, and the width of mode_t is wider than
++	 * the uint16_t declared here, so the padding field has to carry the rest of it: both bytes
++	 * set, and pad with them.
++	 */
++	args.uid = (uint32_t)-1;
++	args.gid = (uint32_t)-1;
++	args.mask = (uint16_t)-1;
++	args.pad = (uint16_t)-1;
+ 	if (mount("hfs", "/private/var", 0, &args) != 0) {
+ 		printf("  HFS Plus from %s: %s; a memory filesystem instead, empty at every boot\n", dev, strerror(errno));
+ 		return 0;
+ 	}
++	/*
++	 * Trial794: the root of the volume, given the mode the memory filesystem had.
++	 *
++	 * The mount arguments above ask for the file system's own permissions, which is what made
++	 * the entries under it usable, but the root entry of a freshly made HFS Plus volume carries
++	 * no type bits and no owner, so whatever the kernel synthesised for it at mount time is
++	 * what it keeps. 0755 matches what ramfs gave this directory, and it is what lets a process
++	 * running as mobile reach /private/var/db/lsd, which the skeleton creates as 501:501.
++	 */
++	if (chmod("/private/var", 0755) != 0) {
++		printf("  /private/var: the root could not be made reachable: %s\n", strerror(errno));
++	}
+ 	printf("  /private/var: HFS Plus from %s, kept between boots\n", dev);
+ 	return 1;
+ }
