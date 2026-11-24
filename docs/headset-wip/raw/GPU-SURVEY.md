@@ -6,7 +6,23 @@
 
 ---
 
-## 一、GPU 握手：上电成功，但核心没响应
+## 一、GPU 握手：硬件认出来了，MCU 没起来
+
+> **修正**：第一轮刷机后我读到的是"GPU_ID = 0、八个域全失败"。那是**第一次启动**的日志。
+> 设备后来重启了一次，第二次走得更远。下面这份是完整结果。
+
+### 关键数据（Neon 要的）
+
+```
+GPU_ID        0xa8670004            ← Mali-G610，真值，不是 0 也不是 0xffffffff
+CSF           0x40a0412             ← Command Stream Frontend
+L2 features   0x7130306
+Shader        0x130013
+MMU           0x2830 (va 48 bits, pa 40 bits, address spaces 0xff)
+tiler 0x1  l2 0x1  stack 0x33  thread_max 0x800
+固件           258048 bytes, header 0.1, 10 个 section
+域             7 of 12 answered
+```
 
 ### 做了什么
 
@@ -41,58 +57,71 @@ mali: mfg3  ST0 on: 0xc000000d   ✅
 mali: mfg4  ST1 on: 0xc000000d   ✅
 ```
 
-### 失败的部分
-
-**`GPU_ID` 读出来是 0：**
+### 第一轮为什么看起来全失败
 
 ```
 mali: gpu_id as the loader left it 0
+mali: mfg5  ST4    no ack after 2000000 reads (0x4000111e)
+mali: mfg6  ST5    no ack after 2000000 reads (0x4000111e)
+mali: mfg7  ST0T0  no ack ...
+...（八个全失败）
+mali: 7 of twelve domains answered   ← 实际是 5 个，加上 MPU/L2 是 7
 ```
 
-驱动自己判断 `gpu_id == 0 || 0xffffffff` 就是"冷"，于是走冷启动路径。
-但上电之后仍然是 0——**说明 GPU 核心寄存器对访问没有响应。**
+**第一轮 `gpu_id` 读到 0**，驱动走冷启动路径。但冷启动之后仍然失败。
 
-**八个着色器核心全部起不来：**
+**第二轮不一样。** 设备重启后，`gpu_id` 第一次读就到了 `0xa8670004`——
+说明 **loader 已经在 GPU 上电状态**，XNU 接手的是一颗活的 GPU。
+
+**这里的教训**：`mali=6` 的冷启动路径和热路径结果差很多。
+第一轮可能是 loader 那边冷启动没完成就跳转了。
+
+### 真正的卡点：MCU 不启动
 
 ```
-mali: mfg5  ST4    no ack after 2000000 reads (0x4000111e)   ❌
-mali: mfg6  ST5    no ack after 2000000 reads (0x4000111e)   ❌
-mali: mfg7  ST0T0  no ack after 2000000 reads (0x111e)       ❌
-mali: mfg8  ST1T0  no ack after 2000000 reads (0x111e)       ❌
-mali: mfg9  ST0T1  no ack after 2000000 reads (0x111e)       ❌
-mali: mfg10 ST4T0  no ack after 2000000 reads (0x111e)       ❌
-mali: mfg11 ST5T0  no ack after 2000000 reads (0x111e)       ❌
-mali: mfg12 ST4T1  no ack after 2000000 reads (0x111e)       ❌
+mali: the whole block settled, so power and clocks are not the problem
+mali: firmware 258048 bytes, header 0.1, entry table ends at 768
+mali: 10 sections, 9 page tables
+mali: coverage: every section fully mapped
+mali: reset vector: sp 0x2040000  pc 0x10018ed
+mali: entry words at VA 0x1000000: 0x10019b1 0x10019b1 0xd00cf8df 0xf832f002
+mali: firmware loaded; enabling the address spaces
+mali: AS0 enabled: root 0x50000000 transcfg 0x42000006
+mali: address space 0 is live; starting the MCU
+mali: sentinel 0xff5aa5f0 written to the version word
+mali: the start loop ended after 1000000 spins (halt seen 0, fatal seen 0)
+mali: MCU status 1 (raw state 1; boot unproven), job irq 0, gpu irq 0
+mali: version word 0xff5aa5f0 (untouched; no firmware version published)
+mali: the global interface never raised; the MCU did not boot
 ```
 
-`sta 0x1, sram pdn 0 ack 0` / `sta 0, sram pdn 0 ack 0`——**状态位不置、SRAM 不掉电、没有应答。**
+**做到哪一步了：**
 
-### 我的判断
+1. ✅ 电源和时钟稳定（驱动自己确认：`power and clocks are not the problem`）
+2. ✅ 固件读进来了，10 个 section 全部映射，页表验证通过（`every section fully mapped`）
+3. ✅ reset vector 正确（`sp 0x2040000 pc 0x10018ed`，入口字有真实指令 `0x10019b1`）
+4. ✅ AS0 地址空间启用了（`root 0x50000000`）
+5. ❌ **MCU 启动请求发出后，`MCU status` 一直是 1，`halt seen 0, fatal seen 0`**
+6. ❌ **版本字的哨兵 `0xff5aa5f0` 没被固件改掉** —— 说明 MCU 根本没执行
 
-**这不是"步骤写错了"，是"少了一步"。**
-
-证据：
-
-1. `mfg1`–`mfg4`（MPU、L2、ST0、ST1）成功，说明总线、时钟、AOC 这些**是通的**
-2. `mfg5` 开始（ST4、ST5 及所有 tile）全失败，而且**失败模式一致**（sta=0/1, ack=0）
-3. `gpu_id` 是 0 —— 核心本身没有响应
-
-ST4、ST5 是 Mali-G610 的两组着色器核心。G610 MP6 的布局是 6 个 shader core，
-分成 ST0/ST1/ST4/ST5 几个 shader tile，每 tile 里还有 T0/T1。
+**这个诊断很干净：固件在内存里是对的（有真实的 ARM64 指令），
+地址空间通了，但 MCU 没有开始执行。**
 
 **可能的原因（需要你判断）**：
 
-1. **缺 MFGPLL 频率设置。** 驱动注释说 loader 已经"把 MFGPLL 设在 300 MHz"，
-   但代码里如果没实际写过 MFGPLL，着色器核心在低频或没时钟的状态下不会应答。
-2. **缺 SRAM 上电序列。** `sram pdn 0` 说明 SRAM 没被从掉电状态拉起来。
-   这通常需要写 `MFG_MMU` 或某个 `PWR_ON` 寄存器组,而不只是 `MFG_*_PWR_ON`。
-3. **ST4/ST5 需要单独的 power domain（`mfg5`/`mfg6` 是独立的 domain ID）。**
-   前面四个 domain 起来了，可能就是少了它们的 `domain_on()` 调用序列，
-   或者顺序不对（要先 MPU 再 L2 再 shader tile，现在看起来是这个顺序）。
-4. **需要先配 MFG_MMU 的页表**，才允许 core 访问它的指令 RAM。
+1. **门铃没敲对。** 日志有 `MCU control reads 0 before the start request (doorbell disable clear)`
+   —— doorbell 相关的位可能是反的。CSF 架构里，`MCU_CONTROL` 的 bit 0 是 `MCU_START`，
+   但也有 `DOORBELL` 需要单独处理。
+2. **`mali: glb req 0 -> 0 (halt was already clear)`** —— 全局接口的 halt 位本来就是清的，
+   但也许应该先 set 再 clear，才能产生一个上升沿。
+3. **`bus idle after the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)`**
+   —— 但 `after the failed start: debug_top 0x1b (still busy after 100000 spins)`。
+   **`0x1b` 的 bit 3 和 bit 4 置了**，说明总线上有东西在等。这可能是 MCU 在取指但卡住，
+   也可能是某个 AXI 事务没完成。
+4. **中断没接。** `gpu irq status 0`、`job irq status 0`、`mmu irq 0`——一条中断都没来。
+   CSF 的 MCU 启动后会通过 `JOB IRQ` 报告，如果中断路径没通，驱动会以为没启动。
 
-**`hakios.adreno.c` 里可能有可参考的电源序列**（高通的做法不同，但
-"先解总线保护 → 再开 AOC → 再按域上电 → 最后等 ack"这个骨架是对的）。
+**第 3 点我觉得最可疑**：`debug_top 0x1b` 意味着总线忙着，而驱动却在等 MCU 状态位。
 
 ### 一个重要的架构事实
 
@@ -120,12 +149,12 @@ dlopen /redwood/lib/libhakios.gl.dylib  → src/eagl.c（4205 行，Mesa 后端�
 CoreAnimation 用 ES 渲染器而不是软件渲染器
 ```
 
-**所以即使 GPU 起来了，`gpu=1` → `HakiosGPU` → `eagl.c` 这条链路仍然接不上，
+**所以即使 MCU 起来了，`gpu=1` → `HakiosGPU` → `eagl.c` 这条链路仍然接不上，
 因为 `HakiosGPU` 是 Adreno 侧的，`mali610.c` 里没有对应实现。**
 
 `libhakios.gl.dylib` **也不在镜像里**（只有 `src/gl_osmesa.c`，Mesa 的软件后端）。
 
-**这是 Stage 2 真正的缺口，比电源序列更根本。**
+**这是 Stage 2 真正的缺口，比 MCU 启动更根本。**
 
 ---
 
@@ -266,13 +295,23 @@ LS /System/Library/LaunchDaemons → 0 项
 
 **如果是"先证明硬件活着"，那补电源序列就够了。**
 
-### 2. ST4/ST5 起不来，你有具体线索吗？
+### 2. MCU 不启动，你有具体线索吗？
 
-我需要的信息：
+现在的状态很干净——电源、时钟、固件、页表、reset vector 全对，
+就是 MCU 不执行。我列的四个可能：
 
-- 天玑 8100 的 Mali-G610 有没有独立的 shader tile 供电序列
-- `sram pdn 0` 需要哪个寄存器（`MFG_MMU`？还是某个 `PWR_ON`）
-- MFGPLL 到底该不该由内核设（驱动注释说 loader 设了 300 MHz，但没验证）
+1. **门铃（doorbell）位搞反了**：`MCU control reads 0 before the start request
+   (doorbell disable clear)` —— CSF 里 `MCU_CONTROL` 的 bit 0 是 START，
+   但 DOORBELL 可能需要单独的上升沿
+2. **`glb req 0 -> 0 (halt was already clear)`** —— 全局接口 halt 位本来就是清的，
+   也许应该先 set 再 clear 才有边沿
+3. **`debug_top 0x1b`（bit 3/4 置位）** —— 总线忙着，但驱动在等 MCU 状态位。
+   可能 MCU 在取指但卡住，也可能是某个 AXI 事务没完成
+4. **一条中断都没来**（gpu/job/mmu irq 全 0）—— 如果中断路径没通，
+   驱动会误判"没启动"
+
+**最有用的信息是**：Mali-G610（CSF 架构）的 MCU 启动序列里，
+`MCU_CONTROL` 的准确位定义，以及启动前后 `JOB IRQ` 应该看到什么。
 
 ### 3. USB 上到 25 MB/s 要上 QMU，现在做还是等？
 
