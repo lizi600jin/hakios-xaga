@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.hakios.hakid</string>
+	<!-- The maintenance daemon behind the USB link: run commands, push and pull files, read the
+	     kernel log, and end the run early. KeepAlive with a short throttle so a crash in it shows
+	     up as restarts in the log rather than as silence. -->
+	<key>ProgramArguments</key>
+	<array>
+		<string>/redwood/bin/hakid</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>5</integer>
+	<key>StandardOutPath</key>
+	<string>/dev/console</string>
+	<key>StandardErrorPath</key>
+	<string>/dev/console</string>
+</dict>
+</plist>
