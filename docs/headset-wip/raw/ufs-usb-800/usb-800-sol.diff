@@ -1,0 +1,693 @@
+--- hakios.mt6895_usb.c.bak-798	2026-11-23 23:25:21.900676860 +0800
++++ hakios.mt6895_usb.c	2026-11-24 16:11:19.699460888 +0800
+@@ -158,6 +158,7 @@
+ #define EP0_TXPKTRDY    (1u << 18)
+ #define EP0_SETUPPKTRDY (1u << 17)
+ #define EP0_RXPKTRDY    (1u << 16)
++#define EP0_TX_BUSY     (EP0_FIFOFULL | EP0_TXPKTRDY)
+ #define EP0_MAXPKTSZ_MSK 0x3ffu
+ #define EP0_MAXPKTSZ(x)  ((x) & EP0_MAXPKTSZ_MSK)
+ #define EP0_W1C_BITS    (~(EP0_RXPKTRDY | EP0_SETUPPKTRDY | EP0_SENTSTALL))
+@@ -179,6 +180,17 @@
+ #define DEV_ADDR(x)     ((0x7fu & (x)) << 24)
+ #define SSUSB_DEV_SPEED(x) ((x) & 0x7u)
+ #define EP0_RST         (1u << 0)
++/*
++ * Trial799b: EP0_FIFO_RST, bit 16 of the same register. Resetting the endpoint (bit 0) does not
++ * empty its FIFO; this bit does.
++ *
++ * The log shows why it matters: after the first GET_DESCRIPTOR the endpoint read 0x800040 --
++ * FIFOFULL set, TXPKTRDY clear, and DPHTX clear too. The 64-byte descriptor went into the FIFO
++ * and never left, and the bit that said "this FIFO is for IN traffic" had been dropped, so the
++ * controller was waiting for an OUT packet it would never get. Clearing EP0_RST alone leaves
++ * that full FIFO standing.
++ */
++#define EP0_FIFO_RST    (1u << 16)
+ 
+ #define SUSPENDM_ENABLE (1u << 0)
+ #define HS_ENABLE       (1u << 5)
+@@ -509,25 +521,25 @@
+ static void
+ ep0_write_fifo(const void *src, uint32_t length)
+ {
+-	volatile uint32_t *fifo = (volatile uint32_t *)(usb_mac + U3D_FIFO0);
++	vm_offset_t fifo = usb_mac + U3D_FIFO0;
+ 	const uint8_t *in = src;
+-	uint32_t words = length >> 2;
+-	uint32_t index = 0;
+ 
+-	for (uint32_t i = 0; i < words; i++) {
+-		uint32_t value = (uint32_t)in[index] |
+-		    ((uint32_t)in[index + 1] << 8) |
+-		    ((uint32_t)in[index + 2] << 16) |
+-		    ((uint32_t)in[index + 3] << 24);
+-		fifo[0] = value;
+-		index += 4;
++	while (length >= 4u) {
++		uint32_t value = (uint32_t)in[0] |
++		    ((uint32_t)in[1] << 8) |
++		    ((uint32_t)in[2] << 16) |
++		    ((uint32_t)in[3] << 24);
++		*(volatile uint32_t *)fifo = value;
++		in += 4;
++		length -= 4;
++	}
++	/* FIFO0 counts the bytes written by each access. Match mtu3.ko's tail writes. */
++	if ((length & 2u) != 0u) {
++		*(volatile uint16_t *)fifo = (uint16_t)in[0] | ((uint16_t)in[1] << 8);
++		in += 2;
+ 	}
+-	if ((length & 0x3u) != 0) {
+-		uint32_t value = 0;
+-		for (uint32_t i = 0; i < (length & 0x3u); i++) {
+-			value |= (uint32_t)in[index + i] << (8 * i);
+-		}
+-		fifo[0] = value;
++	if ((length & 1u) != 0u) {
++		*(volatile uint8_t *)fifo = in[0];
+ 	}
+ 	__asm__ volatile ("dsb sy" ::: "memory");
+ }
+@@ -545,6 +557,7 @@
+  *   ep2 IN      bulk, ours
+  */
+ #define USB_EP0_MAXPACKET_HS    64
++#define EP0_TX_TIMEOUT_MS       100u
+ 
+ struct usb_device_descriptor_local {
+ 	uint8_t bLength;
+@@ -682,92 +695,129 @@
+ static unsigned usb_descriptors;
+ static bool usb_configured;
+ 
+-/*
+- * Sending an EP0 packet is two register writes and one FIFO fill: load the FIFO, then set
+- * TXPKTRDY. The controller clears it when the host has taken the packet, which is what the
+- * caller waits for. mtu3_gadget_ep0.c:ep0_tx_state() does the same three steps.
+- */
+-static bool
+-ep0_send(const void *data, uint32_t length, uint16_t wLength)
++/* Complete a control request with no data stage. */
++static void
++ep0_status(void)
+ {
+-	const uint8_t *bytes = data;
+-	uint32_t sent = 0;
++	uint32_t csr = mac_rd(U3D_EP0CSR) & EP0_W1C_BITS;
+ 
+-	/*
+-	 * Trial798: mtu3_gadget_ep0.c:ep0_tx_state sends one packet at a time, writing only
+-	 * EP0_TXPKTRDY and leaving EP0_DPHTX as it was set when the setup packet was read:
+-	 *
+-	 *     mac_wr(EP0CSR, (rd(EP0CSR) & 0xffb8ffffu) | EP0_TXPKTRDY)
+-	 *
+-	 * EP0_DATAEND is not merged into the last packet. The module writes it separately, from
+-	 * the TX_END branch of mtu3_ep0_isr, once the last packet's TXPKTRDY has been cleared by
+-	 * the hardware:
+-	 *
+-	 *     mac_wr(EP0CSR, (rd(EP0CSR) & 0xffb4ffffu) | EP0_DATAEND)
+-	 *
+-	 * The previous version merged DATAEND into the last packet and then wrote it again, which
+-	 * is two ends for one transfer.
+-	 */
+-	while (sent < length) {
+-		uint32_t chunk = length - sent;
++	mac_wr(U3D_EP0CSR, csr | EP0_SETUPPKTRDY | EP0_DATAEND);
++}
++
++static void
++ep0_stall(bool ack_setup)
++{
++	uint32_t csr = mac_rd(U3D_EP0CSR) & EP0_W1C_BITS;
+ 
+-		if (chunk > USB_EP0_MAXPACKET_HS) chunk = USB_EP0_MAXPACKET_HS;
++	mac_wr(U3D_EP0CSR, csr | EP0_SENDSTALL | (ack_setup ? EP0_SETUPPKTRDY : 0u));
++}
++
++static bool
++ep0_tx_aborted(uint32_t csr, uint32_t epi, uint32_t intr)
++{
++	return (intr & (RESET_INTR | DISCONN_INTR)) != 0u ||
++	       (epi & SETUPENDISR) != 0u ||
++	       (csr & (EP0_SETUPPKTRDY | EP0_RXPKTRDY | EP0_SENTSTALL)) != 0u;
++}
++
++/* Queue one packet, then poll the same endpoint completion that mtu3_ep0_isr handles. */
++static bool
++ep0_send_packet(const uint8_t *bytes, uint32_t sent, uint32_t chunk, uint32_t length, bool last)
++{
++	uint32_t intr = mac_rd(U3D_COMMON_USB_INTR);
++	uint32_t epi = mac_rd(U3D_EPISR);
++	uint32_t csr = mac_rd(U3D_EP0CSR);
++	const uint32_t busy = last ? EP0_TXPKTRDY : EP0_TX_BUSY;
++	uint64_t deadline;
++	const char *result = "timeout";
++	bool complete = false;
++
++	if (ep0_tx_aborted(csr, epi, intr) || (csr & (EP0_DPHTX | EP0_TX_BUSY)) != EP0_DPHTX) {
++		printf("usb: ep0 tx blocked offset %u chunk %u/%u csr %#x epi %#x intr %#x\n",
++		    sent, chunk, length, csr, epi, intr);
++		return false;
++	}
++	/* Discard a stale EP0 event before arming. SETUPEND belongs to ep0_poll(). */
++	if ((epi & EP0ISR) != 0u) {
++		mac_wr(U3D_EPISR, EP0ISR);
++	}
++	if (chunk != 0u) {
+ 		ep0_write_fifo(bytes + sent, chunk);
+-		mac_wr(U3D_EP0CSR, (mac_rd(U3D_EP0CSR) & 0xffb8ffffu) | EP0_TXPKTRDY);
++	}
+ 
+-		bool taken = false;
+-		for (unsigned i = 0; i < 200000u; i++) {
+-			if ((mac_rd(U3D_EP0CSR) & EP0_TXPKTRDY) == 0) { taken = true; break; }
+-		}
+-		if (!taken) return false;
+-		sent += chunk;
++	intr = mac_rd(U3D_COMMON_USB_INTR);
++	epi = mac_rd(U3D_EPISR);
++	const uint32_t pre = mac_rd(U3D_EP0CSR);
++	if (ep0_tx_aborted(pre, epi, intr) || (pre & EP0_DPHTX) == 0u) {
++		printf("usb: ep0 tx aborted before arm offset %u chunk %u/%u csr %#x epi %#x intr %#x\n",
++		    sent, chunk, length, pre, epi, intr);
++		return false;
+ 	}
++	const uint32_t command = (pre & EP0_W1C_BITS) | EP0_TXPKTRDY;
++	mac_wr(U3D_EP0CSR, command);
++	const uint32_t post = mac_rd(U3D_EP0CSR);
++	uint32_t seen = post;
+ 
+-	/*
+-	 * A zero-length packet only when the host asked for more than we are giving and what we
+-	 * gave is an exact multiple of the packet size. If the host asked for exactly what we sent,
+-	 * USB 2.0 says there is no short packet to add.
+-	 */
+-	if (length < wLength && length != 0u && (length % USB_EP0_MAXPACKET_HS) == 0u) {
+-		mac_wr(U3D_EP0CSR, (mac_rd(U3D_EP0CSR) & 0xffb8ffffu) | EP0_TXPKTRDY);
+-		for (unsigned i = 0; i < 200000u; i++) {
+-			if ((mac_rd(U3D_EP0CSR) & EP0_TXPKTRDY) == 0) break;
++	clock_interval_to_deadline(EP0_TX_TIMEOUT_MS, NSEC_PER_MSEC, &deadline);
++	for (;;) {
++		intr = mac_rd(U3D_COMMON_USB_INTR);
++		epi = mac_rd(U3D_EPISR);
++		csr = mac_rd(U3D_EP0CSR);
++		seen |= csr;
++		if (ep0_tx_aborted(csr, epi, intr)) {
++			result = "aborted";
++			break;
++		}
++		/*
++		 * TXPKTRDY can clear between polls. Use the completion interrupt, as the
++		 * vendor's TX_END branch does. Only another FIFO fill needs FIFOFULL clear.
++		 */
++		if ((epi & EP0ISR) != 0u && (csr & busy) == 0u) {
++			mac_wr(U3D_EPISR, EP0ISR);
++			if (last) {
++				mac_wr(U3D_EP0CSR, (csr & EP0_W1C_BITS) | EP0_DATAEND);
++			}
++			complete = true;
++			result = "done";
++			break;
++		}
++		if (mach_absolute_time() >= deadline) {
++			break;
+ 		}
++		delay_for_interval(1, NSEC_PER_MSEC);
+ 	}
+ 
+-	/* The end of the transfer, on its own, after the last packet has gone. */
+-	mac_wr(U3D_EP0CSR, (mac_rd(U3D_EP0CSR) & 0xffb4ffffu) | EP0_DATAEND);
+-	return true;
++	printf("usb: ep0 tx %s offset %u chunk %u/%u pre %#x write %#x post %#x "
++	    "csr %#x epi %#x intr %#x tx_seen %u dataend %u\n",
++	    result, sent, chunk, length, pre, command, post, csr, epi, intr,
++	    (seen & EP0_TXPKTRDY) != 0u ? 1u : 0u, complete && last ? 1u : 0u);
++	return complete;
+ }
+ 
+-/*
+- * The status stage of a transfer whose data went the other way: no payload, just the handshake.
+- * ep0_do_status_stage() in the reference driver, verbatim.
+- */
+-static void
+-ep0_status(void)
++static bool
++ep0_send(const void *data, uint32_t available, uint16_t wLength)
+ {
+-	uint32_t csr = mac_rd(U3D_EP0CSR) & EP0_W1C_BITS;
+-
+-	mac_wr(U3D_EP0CSR, csr | EP0_SETUPPKTRDY | EP0_DATAEND);
+-}
++	if (wLength == 0u) {
++		ep0_status();
++		return true;
++	}
+ 
+-static void
+-ep0_stall(void)
+-{
+-	uint32_t csr = mac_rd(U3D_EP0CSR) & EP0_W1C_BITS;
++	uint32_t length = available < wLength ? available : wLength;
++	bool zlp = length < wLength && (length % USB_EP0_MAXPACKET_HS) == 0u;
+ 
+-	mac_wr(U3D_EP0CSR, csr | EP0_SENDSTALL | EP0_SETUPPKTRDY);
+-}
++	for (uint32_t sent = 0;;) {
++		uint32_t remaining = length - sent;
++		uint32_t chunk = remaining < USB_EP0_MAXPACKET_HS ? remaining : USB_EP0_MAXPACKET_HS;
++		bool last = chunk == remaining && (chunk == 0u || !zlp);
+ 
+-/* A reply that is shorter than the host asked for, which is how a descriptor is trimmed. */
+-static uint32_t
+-reply_length(uint32_t available, uint16_t wanted)
+-{
+-	if (wanted == 0 || wanted > available) {
+-		return available;
++		if (!ep0_send_packet(data, sent, chunk, length, last)) {
++			return false;
++		}
++		if (last) {
++			return true;
++		}
++		sent += chunk;
+ 	}
+-	return wanted;
+ }
+ 
+ static void
+@@ -775,30 +825,20 @@
+ {
+ 	uint8_t kind = (uint8_t)(setup->value >> 8);
+ 	uint8_t index = (uint8_t)(setup->value & 0xff);
++	bool sent;
+ 
+ 	switch (kind) {
+ 	case DESC_DEVICE:
+-		ep0_send(&usb_device_descriptor,
+-		    reply_length(sizeof(usb_device_descriptor), setup->length), setup->length);
++		sent = ep0_send(&usb_device_descriptor, sizeof(usb_device_descriptor), setup->length);
+ 		break;
+ 
+-	case DESC_CONFIGURATION: {
+-		uint32_t total = sizeof(usb_configuration);
+-
+-		/*
+-		 * wLength of 9 is how a host asks for the configuration header alone before it
+-		 * knows how long the whole thing is; replying with the full set is allowed and
+-		 * saves a round trip, but a host that asked for 9 and got 75 will ignore the rest.
+-		 * Replying with exactly what was asked keeps both behaviours happy.
+-		 */
+-		ep0_send(usb_configuration, reply_length(total, setup->length), setup->length);
++	case DESC_CONFIGURATION:
++		sent = ep0_send(usb_configuration, sizeof(usb_configuration), setup->length);
+ 		break;
+-	}
+ 
+ 	case DESC_STRING:
+ 		if (index == 0) {
+-			ep0_send(usb_string_zero,
+-			    reply_length(sizeof(usb_string_zero), setup->length), setup->length);
++			sent = ep0_send(usb_string_zero, sizeof(usb_string_zero), setup->length);
+ 		} else if (index < (sizeof(usb_strings) / sizeof(usb_strings[0]))) {
+ 			const char *text = usb_strings[index];
+ 			uint8_t buffer[64];
+@@ -811,9 +851,10 @@
+ 			}
+ 			buffer[0] = (uint8_t)(2 + 2 * length);
+ 			buffer[1] = DESC_STRING;
+-			ep0_send(buffer, reply_length(2 + 2 * length, setup->length), setup->length);
++			sent = ep0_send(buffer, 2 + 2 * length, setup->length);
+ 		} else {
+-			ep0_stall();
++			ep0_stall(setup->length == 0u);
++			return;
+ 		}
+ 		break;
+ 
+@@ -829,15 +870,17 @@
+ 				0x0a, 0x06, 0x00, 0x02, 0x00, 0x00, 0x00,
+ 				0x40, 0x01, 0x00,
+ 			};
+-			ep0_send(qualifier, reply_length(sizeof(qualifier), setup->length), setup->length);
++			sent = ep0_send(qualifier, sizeof(qualifier), setup->length);
+ 		}
+ 		break;
+ 
+ 	default:
+-		ep0_stall();
++		ep0_stall(setup->length == 0u);
+ 		return;
+ 	}
+-	usb_descriptors++;
++	if (sent) {
++		usb_descriptors++;
++	}
+ }
+ 
+ static void
+@@ -864,26 +907,7 @@
+ 		case REQ_SET_ADDRESS: {
+ 			uint32_t conf;
+ 
+-			/*
+-			 * Trial797: the address is taken after the status stage, not before.
+-			 *
+-			 * SET_ADDRESS is a no-data request: the device acknowledges it, and only then does
+-			 * the new address take effect. Writing DEV_ADDR first means the status packet the
+-			 * host sends to address 0 -- the one that completes this very request -- arrives at
+-			 * a device that has already stopped answering to 0, and the hardware drops it. The
+-			 * host then times out on a request the device believes it has finished.
+-			 *
+-			 * mtu3 does the same: mtu3_gadget_ep0.c sets the address from ep0_set_address()
+-			 * after the status stage.
+-			 */
+-			/*
+-			 * Trial798: back to the order mtu3.ko uses. Neon disassembled
+-			 * handle_standard_request (0xb2a8..0xb33c) and the module writes DEV_ADDR first,
+-			 * then calls ep0_status(). Trial797 had this the other way round on the general
+-			 * USB rule that the address takes effect after the status stage; this silicon
+-			 * latches it differently, and the module's order is the one that has been seen
+-			 * working on this part.
+-			 */
++			/* mtu3.ko programs DEV_ADDR before triggering the status stage. */
+ 			usb_address = (uint8_t)(setup->value & 0x7fu);
+ 			conf = mac_rd(U3D_DEVICE_CONF) & ~DEV_ADDR_MSK;
+ 			conf |= DEV_ADDR(usb_address);
+@@ -903,7 +927,7 @@
+ 		case REQ_GET_CONFIGURATION: {
+ 			uint8_t value = usb_configuration_value;
+ 
+-			ep0_send(&value, reply_length(1, setup->length), setup->length);
++			ep0_send(&value, sizeof(value), setup->length);
+ 			return;
+ 		}
+ 
+@@ -917,14 +941,14 @@
+ 		case REQ_GET_INTERFACE: {
+ 			uint8_t value = usb_alternate;
+ 
+-			ep0_send(&value, reply_length(1, setup->length), setup->length);
++			ep0_send(&value, sizeof(value), setup->length);
+ 			return;
+ 		}
+ 
+ 		case REQ_GET_STATUS: {
+ 			uint8_t value[2] = { 0, 0 };
+ 
+-			ep0_send(value, reply_length(2, setup->length), setup->length);
++			ep0_send(value, sizeof(value), setup->length);
+ 			return;
+ 		}
+ 
+@@ -955,7 +979,7 @@
+ 	}
+ 
+ 	printf("usb: stall on type %02x req %02x\n", setup->request_type, setup->request);
+-	ep0_stall();
++	ep0_stall(setup->length == 0u);
+ }
+ 
+ /*
+@@ -967,7 +991,29 @@
+ static bool
+ ep0_poll(void)
+ {
+-	uint32_t csr = mac_rd(U3D_EP0CSR);
++	uint32_t csr;
++	uint32_t ep_isr = mac_rd(U3D_EPISR) & (EP0ISR | SETUPENDISR);
++
++	/*
++	 * Trial799: acknowledge EP0's interrupt before looking at it.
++	 *
++	 * EP0ISR (bit 0) latched at 0x1 one fifth of a second after the port came up in Trial798
++	 * and never went away, and SETUPENDISR sits beside it. The register is write-one-to-clear;
++	 * nothing in this driver wrote it after usb_take_over() masked everything, so the endpoint
++	 * stayed in "an event is still pending" and the poll below found SETUPPKTRDY clear every
++	 * single time.
++	 */
++	if (ep_isr != 0u) {
++		mac_wr(U3D_EPISR, ep_isr);
++	}
++
++	csr = mac_rd(U3D_EP0CSR);
++
++	/* A stall the controller is still holding would keep the endpoint shut. */
++	if ((csr & EP0_SENTSTALL) != 0u) {
++		mac_wr(U3D_EP0CSR, (csr & (EP0_W1C_BITS & ~EP0_SENDSTALL)) | EP0_SENTSTALL);
++		csr = mac_rd(U3D_EP0CSR);
++	}
+ 
+ 	if ((csr & EP0_SETUPPKTRDY) == 0) {
+ 		return false;
+@@ -977,40 +1023,24 @@
+ 		struct usb_setup setup;
+ 		uint32_t count = mac_rd(U3D_RXCOUNT0);
+ 
+-		for (unsigned i = 0; i < sizeof(setup); i++) {
+-			((uint8_t *)&setup)[i] = 0;
++		if (count != sizeof(setup)) {
++			ep0_stall(true);
++			printf("usb: ep0 invalid setup count %u csr %#x\n", count, csr);
++			return true;
+ 		}
+-		ep0_read_fifo(&setup, count > sizeof(setup) ? sizeof(setup) : count);
++		ep0_read_fifo(&setup, count);
+ 
+ 		/*
+-		 * The setup packet is done with: TXPKTRDY is cleared and so is SETUPPKTRDY, which
+-		 * is what tells the controller the FIFO may be reused. ep0_read_setup() does this
+-		 * with one read-modify-write of the W1C-safe bits only.
+-		 */
+-		/*
+-		 * Trial798: this used to be `mac_wr(U3D_EP0CSR, EP0_CLEAR_SETUP)`, which is a bare
+-		 * 0x20000 and wipes the low ten bits -- EP0_MAXPKTSZ. Neon caught it against mtu3.ko:
+-		 * the module never writes EP0CSR absolutely, always read-modify-write with
+-		 * 0xffacffffu, which keeps the max packet size and the direction bit.
+-		 *
+-		 * The module also does not clear SETUPPKTRDY here for a no-data request. It leaves the
+-		 * bit standing and lets ep0_status() or ep0_stall() clear it together with the flags
+-		 * that end the transfer; clearing it early makes the controller think a data stage
+-		 * follows, and the status stage goes wrong.
+-		 *
+-		 * So the three cases are split, exactly as mtu3_gadget_ep0.c:ep0_read_setup does it.
++		 * Acknowledge SETUP and select the data direction in one write, as mtu3.ko does.
++		 * For no-data requests, the status or stall write acknowledges SETUP.
+ 		 */
+-		{
+-			const uint32_t keep = 0xffacffffu;
+-			const uint32_t now = mac_rd(U3D_EP0CSR);
++		if (setup.length != 0u) {
++			uint32_t ack = (csr & (EP0_W1C_BITS & ~EP0_DPHTX)) | EP0_SETUPPKTRDY;
+ 
+-			if (setup.length == 0u) {
+-				/* leave SETUPPKTRDY for ep0_status() / ep0_stall() */
+-			} else if ((setup.request_type & 0x80u) != 0u) {
+-				mac_wr(U3D_EP0CSR, (now & keep) | EP0_DPHTX | EP0_SETUPPKTRDY);
+-			} else {
+-				mac_wr(U3D_EP0CSR, (now & keep) | EP0_SETUPPKTRDY);
++			if ((setup.request_type & 0x80u) != 0u) {
++				ack |= EP0_DPHTX;
+ 			}
++			mac_wr(U3D_EP0CSR, ack);
+ 		}
+ 
+ 		handle_setup(&setup);
+@@ -1331,22 +1361,14 @@
+ 	    phy_rd(XSP_U2PHYDTM0), phy_rd(XSP_U2PHYDTM1));
+ }
+ 
+-/*
+- * Program EP0's max packet size.
+- *
+- * mtu3_core.c:mtu3_ep0_setup() is four lines -- read EP0CSR, clear EP0_MAXPKTSZ_MSK, or in the
+- * width, write back the W1C-safe bits -- and mtu3_link_isr() calls it after every bus reset,
+- * because the reset clears the field. The host reads bMaxPacketSize0 out of this same field
+- * during the first GET_DESCRIPTOR, so a wrong value makes the first control transfer fail and
+- * the host drops the port without printing anything on this side, which is exactly what the
+- * log showed before this existed.
+- */
++/* Program EP0's packet size and event enables, as mtu3_ep0_setup() does. */
+ static void
+ ep0_configure(void)
+ {
+ 	uint32_t csr = (mac_rd(U3D_EP0CSR) & ~EP0_MAXPKTSZ_MSK) & EP0_W1C_BITS;
+ 
+ 	mac_wr(U3D_EP0CSR, csr | EP0_MAXPKTSZ(USB_EP0_MAXPACKET_HS));
++	mac_wr(U3D_EPIESR, EP0ISR | SETUPENDISR);
+ }
+ 
+ static void
+@@ -1503,19 +1525,41 @@
+ 	 * left it and the host's first GET_DESCRIPTOR gets no answer.
+ 	 */
+ 	mac_wr(U3D_DEV_LINK_INTR_ENABLE, SSUSB_DEV_SPEED_CHG_INTR);
+-	mac_wr(U3D_EPIESR, EP0ISR | SETUPENDISR);
+ 
+-	/* EP0 out of whatever state fastboot left it in */
+-	mac_wr(U3D_EP_RST, EP0_RST);
+-	{
+-		unsigned i;
++	/*
++	 * EP0 out of whatever state fastboot left it in.
++	 *
++	 * Trial799: U3D_EP_RST (0x804) is level-held, not a self-clearing pulse. Writing EP0_RST
++	 * and waiting for the hardware to take it back is a wait that never ends -- the old code
++	 * spun ten thousand times, gave up, and left EP0_RST asserted for the whole run.
++	 *
++	 * That is why no SETUP packet ever arrived. With EP0 held in reset the endpoint still
++	 * reports its configuration through EP0CSR (0x40, max packet 64) but never latches
++	 * SETUPPKTRDY, so ep0_poll() saw bit 17 clear on every call and returned at its first line.
++	 * The four bus resets the host sent, five seconds apart, were it waiting for a GET_DESCRIPTOR
++	 * answer that could not come; the port then suspended.
++	 *
++	 * mtu3_core.c:mtu3_ep_reset() raises the bit, delays, and clears it again:
++	 *
++	 *     6940: add  x8, x8, #0x804
++	 *     6964: orr  w11, w11, w9      ; set EP0_RST
++	 *     696c: str  w11, [x8]
++	 *     6998: bic  w9, w10, w9       ; clear it again
++	 *     69a0: str  w9, [x8]
++	 *
++	 * The 4.75 ms gap between "qfcr" and "u2 ctrl" in the Trial798 log is those ten thousand
++	 * reads timing out. It should disappear.
++	 */
++	mac_set(U3D_EP_RST, EP0_RST);
++	delay(1);
++	mac_clear(U3D_EP_RST, EP0_RST);
+ 
+-		for (i = 0; i < 10000u; i++) {
+-			if ((mac_rd(U3D_EP_RST) & EP0_RST) == 0) {
+-				break;
+-			}
+-		}
+-	}
++	/* and the FIFO, which the endpoint reset above does not touch */
++	mac_set(U3D_EP_RST, EP0_FIFO_RST);
++	delay(1);
++	mac_clear(U3D_EP_RST, EP0_FIFO_RST);
++
++	printf("usb: ep0 rst released; ep_rst %#x\n", mac_rd(U3D_EP_RST));
+ 	csr = mac_rd(U3D_EP0CSR) & EP0_W1C_BITS;
+ 	mac_wr(U3D_EP0CSR, csr | EP0_SENTSTALL);
+ 
+@@ -1806,16 +1850,12 @@
+  * watching after 2.5 seconds and the host-side result was indistinguishable from "the port
+  * never came up".
+  */
+-static void
+-usb_service_once(uint32_t *seenp)
++static bool
++usb_service_once(uint32_t intr, uint32_t *seenp)
+ {
+-	uint32_t intr = mac_rd(U3D_COMMON_USB_INTR);
+-
+-	ep0_poll();
+-
+-	if (intr == 0u) return;
+-
+-	mac_wr(U3D_COMMON_USB_INTR, intr);      /* W1C, every time */
++	if (intr != 0u) {
++		mac_wr(U3D_COMMON_USB_INTR, intr);      /* W1C, every time */
++	}
+ 
+ 	if (intr & ~(*seenp)) {
+ 		printf("usb: intr %#x%s%s%s%s%s%s\n", intr,
+@@ -1840,6 +1880,30 @@
+ 		    mac_rd(U3D_USB20_OPSTATE),
+ 		    SSUSB_DEV_SPEED(mac_rd(U3D_DEVICE_CONF)));
+ 	}
++
++	/*
++	 * Trial799: the speed-change interrupt, which is a separate latch.
++	 *
++	 * mtu3 reaches its own mtu3_ep0_setup() twice: once at init, and again from
++	 * mtu3_link_isr() when SSUSB_DEV_SPEED_CHG_INTR arrives -- that is the moment the reset is
++	 * over and the chirp has settled on high speed. Trial798 never cleared this latch, so it
++	 * was still standing from the first moment (lv1 read 0x20 from the start) and EP0 was never
++	 * re-armed after the reset.
++	 */
++	{
++		uint32_t link = mac_rd(U3D_DEV_LINK_INTR);
++
++		if (link != 0u) {
++			mac_wr(U3D_DEV_LINK_INTR, link);
++			if (link & SSUSB_DEV_SPEED_CHG_INTR) {
++				ep0_configure();
++				printf("usb: speed change; ep0 re-armed, speed %u opstate %#x\n",
++				    SSUSB_DEV_SPEED(mac_rd(U3D_DEVICE_CONF)),
++				    mac_rd(U3D_USB20_OPSTATE));
++			}
++		}
++	}
++	return ep0_poll();
+ }
+ 
+ static void
+@@ -1879,56 +1943,7 @@
+ 		uint32_t intr = mac_rd(U3D_COMMON_USB_INTR);
+ 		uint32_t opstate = mac_rd(U3D_USB20_OPSTATE);
+ 
+-		/*
+-		 * Serve EP0 while watching. The host sends GET_DESCRIPTOR right after the reset,
+-		 * and a SETUPPKTRDY nobody reads just sits there until the host gives up. Polling
+-		 * here keeps the first control transfer moving instead of stalling for the length
+-		 * of this loop.
+-		 */
+-		ep0_poll();
+-
+-		/*
+-		 * Trial797: acknowledge every interrupt, not just the ones not seen before.
+-		 *
+-		 * The old condition was `intr & ~seen`, with `seen` accumulating. A bit already seen was
+-		 * therefore never written back, so it was never cleared, and the flag stayed raised for
+-		 * the rest of the run. RESET_INTR is the one that hurts: a second bus reset neither
+-		 * cleared the flag nor re-ran ep0_configure(), so EP0 kept whatever max packet the reset
+-		 * had knocked out of it. logbook-tsfw-0055.bin has lv1 pinned at 0x31 from this.
+-		 *
+-		 * Now the clear happens on every round the register is non-zero, and only the printing
+-		 * is rate-limited -- that was the reason `seen` existed in the first place.
+-		 */
+-		if (intr != 0u) {
+-			mac_wr(U3D_COMMON_USB_INTR, intr);      /* W1C */
+-			if (intr & ~seen) {
+-				printf("usb: [%u us] intr %#x%s%s%s%s%s%s\n",
+-				    round * 1000u, intr,
+-				    (intr & DISCONN_INTR) ? " disconn" : "",
+-				    (intr & CONN_INTR) ? " conn" : "",
+-				    (intr & SOF_INTR) ? " sof" : "",
+-				    (intr & RESET_INTR) ? " reset" : "",
+-				    (intr & RESUME_INTR) ? " resume" : "",
+-				    (intr & SUSPEND_INTR) ? " suspend" : "");
+-				seen |= intr;
+-			}
+-
+-			/*
+-			 * A bus reset clears EP0's max packet field and the address, so put both back.
+-			 * This is what mtu3_link_isr() does at the end, and a reset is the only event that
+-			 * can arrive before the first SETUP.
+-			 */
+-			if (intr & RESET_INTR) {
+-				usb_address = 0;
+-				{
+-					uint32_t conf = mac_rd(U3D_DEVICE_CONF) & ~DEV_ADDR_MSK;
+-					mac_wr(U3D_DEVICE_CONF, conf);
+-				}
+-				ep0_configure();
+-				printf("usb: reset seen; ep0 csr %#x maxpacket %u\n",
+-				    mac_rd(U3D_EP0CSR), mac_rd(U3D_EP0CSR) & EP0_MAXPKTSZ_MSK);
+-			}
+-		}
++		usb_service_once(intr, &seen);
+ 
+ 		if (live_at == 0xffffffffu && (round < 800u ? (round % 50u) == 0u : (round % 500u) == 0u)) {
+ 			printf("usb: [%u us] opstate %#x ltssm %#x dev conf %#x power %#x ep0 %#x lv1 %#x\n",
+@@ -1997,8 +2012,7 @@
+ 		 * spins, so a millisecond of idle costs a millisecond of CPU and not a core.
+ 		 */
+ 		for (unsigned i = 0; i < 50u; i++) {
+-			usb_service_once(&last_intr);
+-			if (ep0_poll()) {
++			if (usb_service_once(mac_rd(U3D_COMMON_USB_INTR), &last_intr)) {
+ 				worked = true;
+ 			}
+ 			delay_for_interval(1, NSEC_PER_MSEC);

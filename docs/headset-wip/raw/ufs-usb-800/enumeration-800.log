@@ -1,0 +1,109 @@
+[   19.270548]: usb: ip version 0x1006 (gen2 qmu); dev cap 0x101 (u3 ports 1)
+[   19.270568]: usb: pw sts1 0x1003d0f [sys125 1 ref 1 syspll 1 sleep 0]; sts2 0x1; u2 ctrl 0x48 [pdn 0 dis 0]
+[   19.270580]: usb: dp selector 0 [usb 0]
+[   19.270592]: usb: at handover: opstate 0 ltssm 0 dev ctl 0x99 power 0x60a1 softconn 0
+[   19.270603]: usb: otg sts 0x16c016c0 [vbus 1]; device conf 0x5000000 [speed 0 addr 5]; ep0 csr 0x40
+[   19.270614]: usb: power mgmt 0x60a1 [softconn 0 suspendm 1 hs 1]; misc 0x80000003 [vbus frc 1 on 1]
+[   19.270623]: usb: no dev rst; otg sts 0x16c016c0 [vbus 1]
+[   19.270632]: usb: misc ctrl 0x80000003 [vbus frc 1 on 1]; otg sts 0x16c016c0 [vbus 1]
+[   19.270642]: usb: qfcr 0x1ff01ff (gen2 qmu); vbus frc bits now 0x80000003
+[   19.270694]: usb: ep0 rst released; ep_rst 0
+[   19.270705]: usb: u2 ctrl 0x48 [pdn 0 dis 0 hostsel 0 otg 0]; u3 ctrl 0xf [dis 1 pdn 1 hostsel 1 dual 0]
+[   19.270736]: usb: u3 ctrl now 0x88 [dis 0 pdn 0 dual 1]
+[   19.270748]: usb: ltssm ctrl before 0x227
+[   19.270755]: usb: ltssm ctrl after  0x223 (Android, working, reads 0x223)
+[   19.270770]: usb: host pdn 0x1; pw sts1 0x1013d0f
+[   19.270780]: usb: no port cycle; u2 ctrl 0x48; clocks 0x1013d0f
+[   19.270788]: usb: clocks after cycle 0x1013d0f [sys125 1 ref 1 u3mac 1 syspll 1]; u2 ctrl 0x48
+[   19.270799]: usb: dp selector 0 -> 0x800 (usb 1)
+[   19.270812]: usb: phy before: acr0 0x46002a acr1 0x844400 acr4 0x1a acr5 0x40801000 acr6 0x442 dtm0 0x2be00d4 dtm1 0
+[   19.276162]: usb: slew: fmcr0 0x400 fmmonr1 0 fm_out 0 calib 3; acr5 0x40803000
+[   19.276181]: usb: phy ref clk gate is in apmixed; dtm1 0x226 acr0 0x46002a (live phy has bit5 set)
+[   19.276197]: usb: phy after:  acr0 0x46002a acr1 0x342400 acr4 0x1a acr5 0x40803000 acr6 0x40100442 dtm0 0x2000000 dtm1 0x226
+[   19.276208]: usb: soft disconnect (power mgmt 0x64a1)
+[   19.480160]: usb: soft connect again (power mgmt 0x64e1)
+[   19.482010]: usb: dev ctl 0x99; otg sts 0x16c016c0 [vbus 1]; power mgmt 0x64e1
+[   19.483876]: usb: powered up; power mgmt 0x64e1 [softconn 1 suspendm 1 hs 1 lpm 1], waiting for the host
+[   19.485718]: usb: test mode 0x400 misc 0x1 opstate 0x3 host pdn 0x1
+[   19.487524]: usb: test mode 0x400, letting the phy chirp
+[   19.489293]: usb: watching; intr now 0 enable 0x3f
+[   19.491082]: usb: speed change; ep0 re-armed, speed 0 opstate 0x3
+[   19.492879]: usb: [0 us] opstate 0x3 ltssm 0xff0101 dev conf 0 power 0x64e1 ep0 0x40 lv1 0
+[   19.494616]: usb: the port is live at 0 us
+[   19.496371]: usb: [0 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x3
+[   19.548901]: usb: intr 0x4 reset
+[   19.550651]: usb: reset; ep0 csr 0x40 maxpacket 64 opstate 0x11 speed 3
+[   19.552397]: usb: speed change; ep0 re-armed, speed 3 opstate 0x11
+[   19.598224]: usb: setup 1: type 80 req 06 value 0100 index 0000 length 64
+[   19.601167]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.604057]: usb: setup 2: type 00 req 05 value 0005 index 0000 length 0
+[   19.605772]: usb: address 5
+[   19.618834]: usb: setup 3: type 80 req 06 value 0100 index 0000 length 18
+[   19.621791]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.625843]: usb: setup 4: type 80 req 06 value 0200 index 0000 length 255
+[   19.628825]: usb: ep0 tx done offset 0 chunk 64/76 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 0
+[   19.631818]: usb: ep0 tx done offset 64 chunk 12/76 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.634760]: usb: setup 5: type 80 req 06 value 0303 index 0409 length 255
+[   19.637755]: usb: ep0 tx done offset 0 chunk 22/22 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.640709]: usb: setup 6: type 80 req 06 value 0300 index 0000 length 255
+[   19.643730]: usb: ep0 tx done offset 0 chunk 4/4 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.646715]: usb: setup 7: type 80 req 06 value 0302 index 0409 length 255
+[   19.649746]: usb: ep0 tx done offset 0 chunk 26/26 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.710694]: usb: setup 8: type 80 req 06 value 0300 index 0000 length 255
+[   19.717307]: usb: ep0 tx done offset 0 chunk 4/4 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.723733]: usb: setup 9: type 80 req 06 value 0301 index 0409 length 255
+[   19.730284]: usb: ep0 tx done offset 0 chunk 14/14 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.736734]: usb: setup 10: type 80 req 06 value 0302 index 0409 length 255
+[   19.743275]: usb: ep0 tx done offset 0 chunk 26/26 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.804107]: usb: [200000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   19.877410]: usb: reset; ep0 csr 0x40 maxpacket 64 opstate 0x11 speed 3
+[   19.921243]: usb: setup 11: type 80 req 06 value 0100 index 0000 length 64
+[   19.927855]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.935503]: usb: reset; ep0 csr 0x40 maxpacket 64 opstate 0x11 speed 3
+[   19.980560]: usb: setup 12: type 00 req 05 value 0005 index 0000 length 0
+[   19.985813]: usb: address 5
+[   20.001412]: usb: setup 13: type 80 req 06 value 0100 index 0000 length 18
+[   20.008096]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.081524]: usb: [400000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   20.124341]: usb: setup 14: type 80 req 06 value 0100 index 0000 length 64
+[   20.131075]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.138797]: usb: reset; ep0 csr 0x40 maxpacket 64 opstate 0x11 speed 3
+[   20.181673]: usb: setup 15: type 80 req 06 value 0100 index 0000 length 64
+[   20.188433]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.196206]: usb: reset; ep0 csr 0x40 maxpacket 64 opstate 0x11 speed 3
+[   20.241346]: usb: setup 16: type 00 req 05 value 0005 index 0000 length 0
+[   20.246708]: usb: address 5
+[   20.263523]: usb: setup 17: type 80 req 06 value 0100 index 0000 length 18
+[   20.270301]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.372180]: usb: [600000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   20.394727]: usb: setup 18: type 80 req 06 value 0100 index 0000 length 18
+[   20.401633]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.408404]: usb: setup 19: type 80 req 06 value 0200 index 0000 length 9
+[   20.415363]: usb: ep0 tx done offset 0 chunk 9/9 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.422229]: usb: setup 20: type 80 req 06 value 0200 index 0000 length 76
+[   20.429268]: usb: ep0 tx done offset 0 chunk 64/76 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 0
+[   20.436326]: usb: ep0 tx done offset 64 chunk 12/76 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.443287]: usb: setup 21: type 80 req 06 value 0300 index 0000 length 255
+[   20.450365]: usb: ep0 tx done offset 0 chunk 4/4 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.457344]: usb: setup 22: type 80 req 06 value 0302 index 0409 length 255
+[   20.464469]: usb: ep0 tx done offset 0 chunk 26/26 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.471455]: usb: setup 23: type 80 req 06 value 0301 index 0409 length 255
+[   20.478620]: usb: ep0 tx done offset 0 chunk 14/14 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.485650]: usb: setup 24: type 80 req 06 value 0303 index 0409 length 255
+[   20.492780]: usb: ep0 tx done offset 0 chunk 22/22 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.499820]: usb: setup 25: type 00 req 09 value 0001 index 0000 length 0
+[   20.505555]: usb: configuration 1
+[   20.512493]: usb: setup 26: type 01 req 0b value 0000 index 0001 length 0
+[   20.518232]: usb: interface 1 alternate 0
+[   20.724689]: usb: [800000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   20.957189]: usb: [1000000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   21.189634]: usb: [1200000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   21.421653]: usb: [1400000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   21.653663]: usb: [1600000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   21.885619]: usb: [1800000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   22.117588]: usb: [2000000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   22.349493]: usb: [2200000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   22.581393]: usb: [2400000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   22.813419]: usb: [2600000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   23.041225]: usb: [2800000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   23.325452]: usb: device conf 0x5000003 [speed 3 addr 5]; opstate 0x12
