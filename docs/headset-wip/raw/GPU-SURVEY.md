@@ -295,7 +295,48 @@ LS /System/Library/LaunchDaemons → 0 项
 
 **如果是"先证明硬件活着"，那补电源序列就够了。**
 
-### 2. MCU 不启动，你有具体线索吗？
+### 2. MCU 不启动 —— 仓库里有更早的调查
+
+**写这份文档时我还不认识下面这份材料，现在补上。**
+
+`docs/headset-wip/findings/FINDING-gpueb-2026-11-14-2215.md` 和
+`GPUEB-POWER-ON-IS-MANDATORY.md` 记录了同一件事的源码级调查：
+
+> 在 MT6895 上，GPU 的电源由 GPUEB（独立的协处理器）拥有。panthor 在写
+> `MCU_CONTROL=AUTO` 之前必须先向 GPUEB 发 IPI 请求上电。我们没有做这一步。
+>
+> `panthor_fw.c:1131-1146`：`if (of_machine_is_compatible("mediatek,mt6895")) {
+> ret = mt6895_gpueb_power_on(); if (ret) return ret; }` 然后才
+> `gpu_write(fw->iomem, MCU_CONTROL, MCU_CONTROL_AUTO);`
+
+`mt6895_gpueb_power_on()` 内部：先 `gpueb_power_init_locked()`（INIT_SHARED_MEM），
+再发 `CMD_POWER_CONTROL(POWER_ON)`，两步都走 IPI。
+
+**我们的 `mali610.c:4303` 只做了 `ml_io_map`，没有第二行——一次 IPI 都没发过。**
+
+而且 `mali_gpueb=1` 这个开关不是"启用 GPUEB 上电"，是"冒险映射一个可能没时钟的块"，
+注释说读门控未开的块会让 core 等待并触发硬件看门狗。
+
+已有材料：`GPUEB-IPI-PROTOCOL.md`（54 KB，协议已还原）、`gpueb-ipi.h`（26 KB）、
+`gpueb-sim.py`（模拟器 4/4 通过）。共享内存物理地址 `0x7c600000`。
+
+**但有一个和我们实测不符的地方，需要解释：**
+
+panthor 的注释说"不上电会读到全零 ID/features"。而我们读到了
+`GPU_ID = 0xa8670004`、`L2 = 0x7130306`、`shader = 0x130013`——寄存器全是活的。
+
+区别在启动路径。`mali610.c:4311-4327` 的注释说：
+
+> MTK 的 fastboot 路径会让这块板所有不相关的域都关着……这不是本内核启动时的状态。
+> **loader 画屏、arm 看门狗、然后在 GPU 上电于 26 MHz 晶振、MFGPLL 在 300 MHz
+> 的状态下跳到 XNU**，因为那是它自己 probe 的最后一步。
+
+日志里对应的是：`mali: the loader left it powered and clocked; not touching the SPM`。
+
+**所以 GPUEB 的作用可能不只是"上电"，而是"叫醒 GPUEB 这个协处理器本身"**
+——MCU 的取指/调度可能依赖它活着，即使 GPU 的电源域已经通了。
+
+### 3. 原来的四个可能
 
 现在的状态很干净——电源、时钟、固件、页表、reset vector 全对，
 就是 MCU 不执行。我列的四个可能：
