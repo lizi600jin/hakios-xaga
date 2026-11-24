@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.hakios.usbecm</string>
+	<!-- Trial902: wait for the interface to exist instead of sleeping a fixed 24 seconds. The
+	     endpoint appears when the host selects alt 1, and that is not at a predictable second;
+	     polling makes the first reachable moment earlier and removes a guess. -->
+	<key>ProgramArguments</key>
+	<array>
+		<string>/redwood/bin/net_test</string>
+		<string>waitif</string>
+		<string>en0</string>
+		<string>60</string>
+		<string>addr</string>
+		<string>en0</string>
+		<string>10.0.0.2/24</string>
+		<string>show</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/dev/console</string>
+	<key>StandardErrorPath</key>
+	<string>/dev/console</string>
+</dict>
+</plist>

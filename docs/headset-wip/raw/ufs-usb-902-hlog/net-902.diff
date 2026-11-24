@@ -1,0 +1,29 @@
+--- hakios.net.c.bak-804b	2026-11-24 18:13:14.602830731 +0800
++++ hakios.net.c	2026-11-24 18:13:14.620067388 +0800
+@@ -298,6 +298,26 @@
+ 	}
+ 	n->up = up;
+ 	printf("net: en%u's link (%s) is %s\n", n->unit, n->link->name, up ? "up" : "down");
++
++	/*
++	 * Trial804b: bring the interface itself up when the carrier arrives.
++	 *
++	 * IFF_UP is otherwise only ever set from SIOCSIFADDR, which means a process has to run
++	 * ifconfig on this interface before the stack will hand a single frame to the driver --
++	 * net_output() checks it indirectly through the protocol layers, and with IFF_UP clear
++	 * nothing calls transmit at all. On a cable that is correct, because the user decides
++	 * when to configure it. This one is a USB link that exists exactly as long as the endpoint
++	 * does, so there is nobody to make that decision and no window in which it would be useful.
++	 *
++	 * Without this the endpoint received 17 frames and transmitted none: the host's ARP
++	 * requests arrived, the stack answered them internally, and the answers had nowhere to go.
++	 */
++	if (up) {
++		ifnet_set_flags(n->ifp, IFF_UP | IFF_RUNNING, IFF_UP | IFF_RUNNING);
++	} else {
++		ifnet_set_flags(n->ifp, 0, IFF_UP | IFF_RUNNING);
++	}
++
+ 	net_link_event(n->ifp, up ? KEV_DL_LINK_ON : KEV_DL_LINK_OFF);
+ }
+ 
