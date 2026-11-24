@@ -1,0 +1,57 @@
+com.apple.xpc.launchd|1970-01-01 08:00:23.935371 (user/501/com.hakios.usbecm [14]) <Notice>: xpcproxy spawned with pid 14
+com.apple.xpc.launchd|1970-01-01 08:00:23.935405 (user/501/com.hakios.usbecm [14]) <Notice>: internal event: SPAWNED, code = 0
+com.apple.xpc.launchd|1970-01-01 08:00:23.935418 (user/501/com.hakios.usbecm [14]) <Notice>: service state: xpcproxy
+com.apple.xpc.launchd|1970-01-01 08:00:23.943030 (user/501/com.hakios.usbecm [14]) <Notice>: internal event: SOURCE_ATTACH, code = 0
+com.apple.xpc.launchd|1970-01-01 08:00:24.336997 (user/501/com.hakios.usbecm [14]) <Notice>: service state: running
+com.apple.xpc.launchd|1970-01-01 08:00:24.337027 (user/501/com.hakios.usbecm [14]) <Notice>: internal event: INIT, code = 0
+com.apple.xpc.launchd|1970-01-01 08:00:24.337042 (user/501/com.hakios.usbecm [14]) <Notice>: Successfully spawned net_test[14] because speculative
+net_test: addr en0 = 10.0.0.2/24: set
+net_test: lo0: flags 0x8049 up running, type 0x18
+net_test: lo0: inet 127.0.0.1 netmask 255.0.0.0
+net_test: lo0: inet6 ::1
+net_test: lo0: inet6 fe80::1
+net_test: en0: flags 0x8843 up running, type 0x6, address 02:00:00:00:68:02
+net_test: en0: inet 10.0.0.2 netmask 255.255.255.0
+net_test: tcp 10.0.0.1 port 8000: connected in 0.01 s
+net_test: tcp 10.0.0.1: 241 bytes in 0.01 s, the answer begins "HTTP/1.0 200 OK"
+net_test: lo0: flags 0x8049 up running, type 0x18
+net_test: lo0: inet 127.0.0.1 netmask 255.0.0.0
+net_test: lo0: inet6 ::1
+net_test: lo0: inet6 fe80::1
+net_test: en0: flags 0x8843 up running, type 0x6, address 02:00:00:00:68:02
+net_test: en0: inet 10.0.0.2 netmask 255.255.255.0
+com.apple.xpc.launchd|1970-01-01 08:00:51.463355 (user/501/com.hakios.usbecm [14]) <Notice>: exited due to exit(0)
+com.apple.xpc.launchd|1970-01-01 08:00:51.463392 (user/501/com.hakios.usbecm [14]) <Notice>: service state: exited
+com.apple.xpc.launchd|1970-01-01 08:00:51.463415 (user/501/com.hakios.usbecm [14]) <Notice>: internal event: EXITED, code = 0
+com.apple.xpc.launchd|1970-01-01 08:00:51.463447 (user/501/com.hakios.usbecm [14]) <Notice>: service state: not running
+[   20.367846]: ifnet_attach: Waiting for all kernel threads created for interface en0 to get scheduled at least once.
+[   20.369946]: ifnet_attach: All kernel threads created for interface en0 have been scheduled at least once. Proceeding.
+[   20.372030]: net: en0 attached on usb-ecm, address 02:00:00:00:68:02, link down
+[   20.374084]: usb: ecm attached to en0, MAC 02:00:00:00:68:02
+[   20.376109]: net: en0's link (usb-ecm) is up
+[   20.378142]: usb: ecm link up
+[   20.389484]: usb: ecm packet filter 0xc
+[   20.430456]: usb: ecm packet filter 0xe
+[   20.436772]: usb: ecm packet filter 0xe
+[   20.803115]: usb: ecm packet filter 0xe
+[   20.818170]: usb: ecm packet filter 0xe
+[   21.214445]: usb: ecm packet filter 0xe
+[   23.208737]: usb: ecm packet filter 0xe
+[   49.370518]: skip attaching fsw to en0 using legacy TX modelprocess lsd[21] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.439265]: tcp connect outgoing: [10.0.0.2:49152<->10.0.0.1:8000] interface: en0 (skipped: 0)
+so_gencnt: 13 t_state: SYN_SENT process: net_test:14 SYN in/out: 0/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 0.0 ms rttvar: 250.0 ms base_rtt: 0 ms error: 0 so_error: 0 svc/tc: 0tcp connected: [10.0.0.2:49152<->10.0.0.1:8000] interface: en0 (skipped: 0)
+so_gencnt: 13 t_state: ESTABLISHED process: net_test:14 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 0.0 ms rttvar: 250.0 ms base_rtt: 0 ms error: 0 so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:49152<->10.0.0.1:8000] interface: en0 (skipped: 0)
+so_gencnt: 13 t_state: LAST_ACK process: net_test:14 Duration: 0.12 sec Conn_Time: 0.4 sec bytes in/out: 241/56 pkts in/out: 2/1 pkt rxmit: 0 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 3.750 ms rttvar: 2.000 ms base rtt: 2 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:49152<->10.0.0.1:8000] interface: en0 (skipped: 0)
+so_gencnt: 13 t_state: LAST_ACK process: net_test:14 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   66.044043]: usb: ecm packet filter 0xe
+[   66.062261]: usb: ecm packet filter 0xe
+[   66.064545]: usb: ecm packet filter 0xe
+[   67.594811]: usb: ecm packet filter 0xe
+[  107.335553]: net: en0 so far 9 frames sent (590 bytes), 97 received (32937 bytes); dropped: 0 out, 0 in
+[  111.052838]: usb: ecm packet filter 0xe
+[  111.069660]: usb: ecm packet filter 0xe
+[  112.275394]: usb: ecm packet filter 0xe
+[  156.056294]: usb: ecm packet filter 0xe
+[  156.080102]: usb: ecm packet filter 0xe
+[  157.399122]: usb: ecm packet filter 0xe

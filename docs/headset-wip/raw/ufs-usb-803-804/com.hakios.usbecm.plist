@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.hakios.usbecm</string>
+	<!-- Trial804f: give en0 an address so the stack will answer the host.
+	     Without one the endpoint receives frames and sends none: the ARP layer has no source
+	     address to reply from, so net_output() is never called and the host sees a dead link.
+	     It waits first, because the endpoint only exists once alt 1 has been selected. -->
+	<key>ProgramArguments</key>
+	<array>
+		<string>/redwood/bin/net_test</string>
+		<string>wait</string>
+		<string>24</string>
+		<string>addr</string>
+		<string>en0</string>
+		<string>10.0.0.2/24</string>
+		<string>show</string>
+		<!-- Trial804i: prove the link carries TCP, not just ICMP. The host serves
+		     /tmp/usbtest on 10.0.0.1:8000; this asks it for the page and prints the
+		     first line of the answer, which is the plan's acceptance for 804. -->
+		<string>wait</string>
+		<string>2</string>
+		<string>tcp</string>
+		<string>10.0.0.1</string>
+		<string>8000</string>
+		<string>show</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/dev/console</string>
+	<key>StandardErrorPath</key>
+	<string>/dev/console</string>
+</dict>
+</plist>

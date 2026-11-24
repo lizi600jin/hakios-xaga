@@ -1,0 +1,47 @@
+--- /home/lizi/IOS/hakios-mtk/logs/ufs-apfs-fstree-root-736/loader-src/mtk/loader/mtkloader.c.bak-pre804	2026-11-24 17:58:55.178567775 +0800
++++ /home/lizi/IOS/hakios-mtk/logs/ufs-apfs-fstree-root-736/loader-src/mtk/loader/mtkloader.c	2026-11-24 17:59:00.053555013 +0800
+@@ -2786,11 +2786,42 @@
+          * guard has already established that the lease is not to be trusted.
+          */
+         out("ufs-read guard: continuing anyway so the kernel log can be read\n");
++        /*
++         * Trial804: the snapshot is only filled in when the observation succeeded, so copy the
++         * live lease here. Without this the state below reads as zero -- UR_UNUSED -- and the
++         * "still claimed" check can never fire.
++         */
++        ufs_return_snapshot.magic   = r->magic;
++        ufs_return_snapshot.version = r->version;
++        ufs_return_snapshot.trial   = r->trial;
++        ufs_return_snapshot.state   = r->state;
+     }
+     ufs_return_audit_n=(uint32_t)ur_guard_format_return(&ufs_return_snapshot,ufs_return_audit,sizeof(ufs_return_audit));
+     if (!ufs_return_audit_n) {
+-        out("ufs-read guard: return audit refused; no HLOG/Android IO; manual fastboot required\n");
+-        for (;;) { __asm__ volatile("wfe"); }
++        /*
++         * Trial804: do not hang here.
++         *
++         * The guard has two jobs: keep storage untouched when the lease cannot be trusted, and
++         * let the phone boot. The first is already done by the check above -- when the lease is
++         * not usable, the return path has not written anything. The second is what this line
++         * used to prevent: a lease left POISONED by a previous run (ur_atomic_finish() poisons
++         * whenever it cannot confirm a restore) is never cleared, because initialisation runs
++         * on the way into XNU and poisoning happens on the way out, so no boot ever gets a
++         * chance to reset it. Every boot from then on ends in the spin below, and the phone has
++         * to be forced into fastboot by hand.
++         *
++         * Spin only for a lease that is genuinely mid-flight -- one that says CLAIMED, which
++         * means somebody may still be writing. Anything else (POISONED, or a value that is not
++         * a lease at all) means the storage was left alone, so record why and carry on.
++         */
++        if (ufs_return_snapshot.state == UR_CLAIMED) {
++            out("ufs-read guard: lease still claimed; no HLOG/Android IO; manual fastboot required\n");
++            for (;;) { __asm__ volatile("wfe"); }
++        }
++        out("ufs-read guard: lease not usable (state=");
++        out_hex((uint64_t)ufs_return_snapshot.state);
++        out("); storage untouched, booting anyway\n");
++        ufs_return_audit_n=0;
+     }
+ #endif
+ }
