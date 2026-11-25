@@ -249,7 +249,9 @@ cpu 3  phys 0x700  A78 大核（boot 核，最快）
 
 无应答记「结果未知」，不自动重发——迟到的回包会让重发的那条无法归属。
 
-### 握手结果：INIT / ON / OFF 三项全部成功（`boot-917`）
+### 事务层通了，但电源命令号写错（`boot-917`）
+
+原始记录中的 `on` 和 `off` 是用户态命令名。`cmd` 来自回包的第一个字。
 
 ```
 seq 1 init  sent 1 replied 1 rx 0x2 verdict 0 cmd 0x0  ret 0
@@ -263,13 +265,28 @@ seq 3 off   sent 1 replied 1 rx 0x2 verdict 0 cmd 0x4  ret 30
 ```
 
 `sent` 与 `replied` 分开记录：`replied 1` 表示**收到了本次发送的应答**，
-不是读到了旧槽。`ret` 是 `w[2]` 的有符号值，`30` 即 `0x1e`，非负。
+不是读到了旧槽。这一层是成立的。
 
-`cmd 0x4` 是 `CMD_POWER_CONTROL`。
+**但 `cmd 0x4` 不是 `CMD_POWER_CONTROL`。** 厂商 `gpufreq_ipi.h:29-49`：
 
-### 共享页在 ON 前后确实变化
+```c
+CMD_INIT_SHARED_MEM    = 0     CMD_SET_LIMIT          = 5
+CMD_GET_FREQ_BY_IDX    = 1     CMD_POWER_CONTROL      = 6    ← 应该是这个
+CMD_GET_POWER_BY_IDX   = 2     CMD_COMMIT             = 7
+CMD_GET_OPPIDX_BY_FREQ = 3
+CMD_GET_LEAKAGE_POWER  = 4     ← 实际发的是这个
+```
 
-**ON 之前：**
+seq 2 / seq 3 都是漏电功耗查询。厂商调用方按电压参数 `u.volt` 发送请求，从应答的
+`u.power` 取结果，两笔均返回 **30 mW**。917 把这个正数当作电源操作成功，
+先将驱动本地的 `gpueb_held` 置 1，再清 0。三笔中没有 `CMD_POWER_CONTROL`。
+[厂商命令表](vendor-gpueb/gpufreq_ipi.h#L51) · [查询收发字段](vendor-gpueb/gpufreq_v2.c#L783)
+
+命令号已改成 `6`，尚未上板。
+
+### 共享页在两次查询前后变化（原因待定）
+
+**较早的快照（约 33–55 秒）**
 
 ```
 +000: 00000000 00000000 00000005 00000028 000d6d80 000d0020 000124f8 00010c8e
@@ -277,7 +294,7 @@ seq 3 off   sent 1 replied 1 rx 0x2 verdict 0 cmd 0x4  ret 30
 +060: 00000001 00000002 00130013 00000000 00000001 00000001 00000000 00000002
 ```
 
-**ON 之后：**
+**较晚的快照（55.389 秒）**
 
 ```
 +000: 00000003 0000001b 00000005 00000028 00068fb0 0005dfe8 0000ea60 0000d6d8
@@ -285,17 +302,18 @@ seq 3 off   sent 1 replied 1 rx 0x2 verdict 0 cmd 0x4  ret 30
 +060: 00000001 00000002 00130013 00000000 00000001 00000001 00000000 00000002
 ```
 
-| 偏移 | 变化 |
-|---|---|
-| `+000` | `0` → `3` |
-| `+004` | `0` → `0x1b` (27) |
-| `+010` | `0x000d6d80` (880000) → `0x00068fb0` (429488) |
-| `+014` | `0x000d0020` (852000) → `0x0005dfe8` (385000) |
-| `+018` | `0x000124f8` (75000) → `0x0000ea60` (60000) |
-| `+028` | `0` → `0x209` |
-| `+02c` | `0x6c0` → `0x209` |
+| 偏移 | 厂商字段 | 较早 → 较晚 |
+|---|---|---|
+| `+000 / +004` | `cur_oppidx_gpu / cur_oppidx_stack` | GPU 0 → 3，STACK 0 → 27 |
+| `+010 / +014` | `cur_fgpu / cur_fstack` | GPU 880 → 430 MHz，STACK 852 → 385 MHz |
+| `+018 / +01c` | `cur_vgpu / cur_vstack` | GPU 750 → 600 mV，STACK 687.5 → 550 mV |
+| `+028` | `cur_power_gpu` | 0 → 0 mW |
+| `+02c` | `cur_power_stack` | 1728 → 521 mW |
+| `+064 / +06c` | `dvfs_state / power_count` | 两次均为 2（`DVFS_POWEROFF`）和 0 |
 
-**GPUEB 不只是应答了，它的状态真的变了。** 频率量级的字段从 880/852 降到 429/385。
+两个采样点的共享页报告了不同的运行点和功耗值。刷新者、刷新时刻和触发条件仍待确定。
+917 缺少对应时刻的 MFG1 和 XPU 域状态读数。
+[共享页布局](vendor-gpueb/gpufreq_ipi.h#L109) · [DVFS 状态位](vendor-gpueb/gpufreq_v2.h#L69)
 
 ### probe 实测输出（`boot-913`，`mali=0`）
 
@@ -310,12 +328,12 @@ gpueb: shared before anything:
 
 **共享页不是空的**——GPUEB 的共享结构里已有完整数据。
 
-| 偏移 | 值 | 含义（待确认） |
+| 偏移 | 值 | 厂商字段 |
 |---|---|---|
-| `0x008` | 5 | power_count 或 dvfs 相关 |
-| `0x010` | 880000 | 频率量级 |
-| `0x014` | 852000 | 频率量级 |
-| `0x018/0x020/0x024` | 0x124f8 = 75000 | 频率量级 |
+| `0x008` | 5 | `opp_num_gpu`，GPU 工作表的档数 |
+| `0x010` | 880000 kHz | `cur_fgpu` |
+| `0x014` | 852000 kHz | `cur_fstack` |
+| `0x018/0x020/0x024` | 0x124f8 = 75000 | `cur_vgpu / cur_vsram_gpu / cur_vsram_stack`，均为 750 mV |
 | `0x068` | **0x00130013** | **shader_present，与 `GPU_ID` 的 `shader 0x130013` 一致** |
 
 **这引出一个还待确认的问题：`INIT_SHARED_MEM` 是否已经在 LK 阶段做过。**
@@ -335,20 +353,26 @@ gpueb: shared before anything:
 
 **已经核实的：**
 
-**GPUEB 握手可以打通。** `INIT_SHARED_MEM`、`POWER_CONTROL(ON)`、`POWER_CONTROL(OFF)`
-三项都收到了本次应答，共享页在 ON 前后确实变化。这条路径从"从未发起"变成了"验证通过"。
+**GPUEB 的 IPI 事务层可以打通。** `xfer` 能确认"消息已发"与"收到本次应答"两件事，
+`CMD_INIT_SHARED_MEM` 拿到了本次回包。这条路径从"从未发起"变成了"事务可验证"。
+
+**还没有做到：** 真正给 GPU 上电。`boot-917` 那两笔把命令号写成 `4`
+（`CMD_GET_LEAKAGE_POWER`），是两次漏电查询，不是 `POWER_CONTROL`。
+`CMD_POWER_CONTROL` 是 `6`，已改，尚未上板。
 
 **剩下的方向，按优先级：**
 
-**① 同一次启动中、`AUTO` 之前的 GPUEB 握手（首个待办已解决，见上）**
+**① 同一次启动中验证 GPUEB 电源命令和 MFG 域状态**
 
 参考驱动（xaga Panthor）的做法：
 
 - `CMD_INIT_SHARED_MEM`：看传输层是否收到**本次**应答（`IPI_ACTION_DONE`）
 - `CMD_POWER_CONTROL(POWER_ON)`：除应答外，还检查 `u.return_value >= 0`
 
-**907 没有这次事务，应记为「未发起」。**
-现有记录里还没有出现过一次握手超时——也就是说这条路从来没被测过。
+907 未发起这次事务。下一轮可在 `mali=0` 下采三次，分别在本次 INIT 成功且尚未发 ON 时、
+ON 应答成功且仍持有引用时、配对 OFF 应答后。每次保存时间、关联的事务序号、
+`MFG1_PWR_CON`（SPM+0xEBC）、`XPU_PWR_STA`（+0xF3C）、第二状态字（+0xF40）
+以及共享页的 `dvfs_state` 和 `power_count`。三次采样都可以在启动 GPU MCU 前完成。
 
 **② 若两步都成功而启动仍超时，查 AS0 取指路径**
 
