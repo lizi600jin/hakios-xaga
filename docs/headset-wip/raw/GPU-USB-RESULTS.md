@@ -839,6 +839,9 @@ boot-args 里去掉了 `mali_gpuebpower=1`，驱动默认就走 GPUEB 上电路�
 | 自动退出（`quiesce`） | ✅ 实测，30–32 秒（`boot-928f` / `929f`） |
 | 默认固化 | ✅ `mali=6` 单参数即可（`boot-929f`） |
 | loader 二次 fault | ✅ 已定位并修复，实测可用 |
+| GPU M2a：一组一流 + ring | ✅ 实测（`boot-933`，一次门铃 1 ms） |
+| M2a 下退出基线 | ✅ 仍 32 秒 |
+| ring 里执行命令（M2b） | ⬜ 命令编码在用户态（Mesa `v10.xml`） |
 | 首轮复位原因（看门狗 vs 人工） | ⬜ 缺证据区分 |
 
 926 的日志证明 XNU 到 550 秒仍在运行，`MARK_RUNNING` 证明后来的 loader 进了救援分支，
