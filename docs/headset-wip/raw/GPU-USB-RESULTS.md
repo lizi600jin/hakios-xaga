@@ -284,6 +284,61 @@ seq 2 / seq 3 都是漏电功耗查询。厂商调用方按电压参数 `u.volt`
 
 命令号已改成 `6`，尚未上板。
 
+### GPUEB 的 POWER_CONTROL 能让 MFG1 上电（`boot-919`）
+
+命令号修正后的三笔事务，同一次启动：
+
+```
+seq 1 init  cmd 0x0  ret 0   sent 1 replied 1 rx 0x2
+seq 2 on    cmd 0x6  ret 1   sent 1 replied 1 rx 0x2     ← CMD_POWER_CONTROL / POWER_ON
+seq 3 off   cmd 0x6  ret 0   sent 1 replied 1 rx 0x2     ← 配对 POWER_OFF
+```
+
+`ret` 是回包 `w[2]` 的有符号值（`u.return_value`）。
+
+**A 点与 B 点的域状态：**
+
+| 采样点 | `MFG1_PWR_CON` (`0xEBC`) | `0xF3C` | `0xF40` |
+|---|---|---|---|
+| A：INIT 后、ON 前 | `0x1112` ack `0/0` | `0x3`，`&0x3ffc = 0` | `0x3` |
+| B：ON 应答后 | `0xc0000112` ack `1/1` | `0x7`，`&0x3ffc = 0x4` | `0x7` |
+
+差值正好是 `0xEBC` 的 `bit30`+`bit31`，和 `0xF3C` 的 `bit2`（= MFG1）。
+
+**三项佐证同时成立：**
+
+1. 命令应答：本笔 `cmd=6`、`state=1`、`signed w[2] = 1 >= 0`
+2. 硬件报开：`(0xEBC >> 30) & 3 == 3`，`0xF3C` bit2 = 1，`0xF40` bit2 = 1
+3. 共享页：`+064` `dvfs_state` 从 `2`（`DVFS_POWEROFF`）变 `0`，
+   `+06c` `power_count` 从 `0` 变 `1`
+
+**所以 GPUEB 的电源命令不只是应答，它真的把 MPU 域打开了。**
+
+### PWR_CON 的位定义（容易读错）
+
+`mt6895_spm_reg.h:2179-2187`：
+
+| 位 | 名称 |
+|---|---|
+| `bit 0` | `PWR_RST_B`（复位释放，**不是**上电请求） |
+| `bit 2` | `PWR_ON` |
+| `bit 3` | `PWR_ON_2ND` |
+| `bit 4` | `PWR_CLK_DIS` |
+| `bit 30` | `PWR_ACK` |
+| `bit 31` | `PWR_ACK_2ND` |
+
+`mtk-scpsys.c:578-595` 的上电顺序：置 `PWR_ON` → 置 `PWR_ON_2ND` → 等 `PWR_ACK` → 清 `PWR_CLK_DIS`。
+
+**域状态掩码**（`gpufreq_mt6895.h:74-76`）：
+
+| 掩码 | 含义 |
+|---|---|
+| `0x6` | MFG0 + MFG1（AP 参考路径拉起 MFG1 后检查，`gpufreq_mt6895.c:3382-3385`） |
+| `0x3ffe` | MFG0..MFG12 |
+| `0x3ffc` | MFG1..MFG12（关电检查，`:3580`） |
+
+MFG1 单域看 `0xF3C` **bit 2**；MFG1+MFG2 是 `0xC`。
+
 ### 共享页在两次查询前后变化（原因待定）
 
 **较早的快照（约 33–55 秒）**
