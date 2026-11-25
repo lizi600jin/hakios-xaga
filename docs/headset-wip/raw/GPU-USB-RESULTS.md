@@ -743,6 +743,55 @@ if (logbook_kernel_saved) {
 **下次验证：** 刷入带这些改动的镜像，确认 `M1 done`，不手动 `stop` 直接发 `RETURN`，
 计时回 Android。目标是 32 秒。
 
+### 自动退出打通了（2026-11-26 凌晨，`boot-928f`）
+
+**不手动 `stop`，直接 `RETURN` → 30 秒回 Android。**
+
+阶段码证明 `stop()` 在 `loader_return()` 之前完整跑完了（从 xnusys 的 logbook 取回）：
+
+```
+41.438087  stop: stage 1 reached, gGpu 0xfffffff1dea00000, no register read yet
+41.439366  stop: stage 2 first register read about to happen
+41.440659  stop: enter (mcu status 1, tiler ready 0x1, l2 ready 0x1)   ← MCU 在跑
+41.441937  stop: stage 2 done, the block answers
+41.443193  stop: stage 3 halt
+41.447110  stop halt: reads 0x2 after 1000 us                          ← MCU_STATUS_HALT
+41.449619  stop disabled: reads 0 after 0 us                           ← MCU_STATUS_DISABLED
+41.451995  stop: stage 5 park as0
+41.453164  stop as0 parked: reads 0 after 0 us
+41.456502  stop l2 pwrtrans after off: reads 0
+41.458692  stop: l2 ready now 0                                        ← L2 断电
+41.460938  stop: irqs masked and cleared (raw 0 job 0 mmu 0)
+41.462083  stop: releasing the GPUEB reference
+41.476635  stop: done (mcu status 0, tiler ready 0, l2 ready 0)
+41.477986  return: stage A, about to stop the other processors
+41.940527  return: stage B, the others are off and this is the boot processor
+41.946254  return: stage C, before the Mali hook
+41.952003  return: stage D, the Mali hook returned
+```
+
+**关键在于顺序**：`stop()` 跑在 `psci_smp_stop_others()` 之前（stage A 在 stop 完成之后），
+所以六步用的是完整的时钟和正常的中断上下文。
+`quiesce()` 到达时 `gMaliStopped` 已置位，直接返回（stage C → D 只隔 6 ms）。
+
+### 这一轮修的三处
+
+**① `quiesce()` 在供电状态不确定时不再碰 MMIO**
+
+`gGpu != 0` 只证明寄存器映射过，不证明域还通着电。加了一道检查：
+`gpueb_bringup_held` 为假说明电源已释放，panic 兜底直接返回，不写任何寄存器。
+
+**② `gMaliStopped` 提到断电之前**
+
+原来是 `power_off()` 之后才置位，中间 panic 会让 `quiesce()` 以为 GPU 还要停，
+去写刚断电的寄存器。现在是先置位、再断电——万一在这中间 panic，
+留下的是"电源还在"而不是"写了一半"。
+
+**③ `hakid` 的 `do_return()` 去掉了多余的 close/reopen**
+
+原来打开设备后先 `say("OK returning")` 再 `close`、再 `open` 一次才写。
+主机看到 `OK returning` 时内核里的 `stop()` 根本还没开始。
+
 ### 结项状态（2026-11-25）
 
 | 项 | 状态 |
@@ -750,8 +799,8 @@ if (logbook_kernel_saved) {
 | GPU M1 启动 | ✅ 实测 |
 | `gpuebctl stop` 六步停机 | ✅ 实测，12 ms |
 | 手动 `stop` + `RETURN` | ✅ 实测，32 秒 |
-| 自动退出（`quiesce`） | ⬜ 待验证 |
-| loader 二次 fault | ✅ 已定位，修复已改，待上板 |
+| 自动退出（`quiesce`） | ✅ 实测，30 秒（`boot-928f`） |
+| loader 二次 fault | ✅ 已定位并修复，实测可用 |
 | 首轮复位原因（看门狗 vs 人工） | ⬜ 缺证据区分 |
 
 926 的日志证明 XNU 到 550 秒仍在运行，`MARK_RUNNING` 证明后来的 loader 进了救援分支，
