@@ -314,6 +314,31 @@ seq 3 off   cmd 0x6  ret 0   sent 1 replied 1 rx 0x2     ← 配对 POWER_OFF
 
 **所以 GPUEB 的电源命令不只是应答，它真的把 MPU 域打开了。**
 
+### C 点：配对 OFF 干净回到基线
+
+```
+587.661788 s   OFF 回包 cmd=6 ret=0
+587.661836 s   共享页 dvfs_state = 2 (DVFS_POWEROFF)，power_count = 0
+587.696025 s   MFG1 = 0x1112，ACK 0/0，F3C = F40 = 0x3
+614.614802 s   再次读到相同的关态
+```
+
+后两个采样点之间隔了 27 秒，读数一致：**关态是稳定的，不是瞬态。**
+
+与 A 点的 `0x1112` / `0x3` 完全相同，说明 OFF 把状态完整还原了。
+
+### `0xEBC` 的完整差值（A → B → C）
+
+```
+A^B = 0xc0001000
+    bit30  0 -> 1   PWR_ACK
+    bit31  0 -> 1   PWR_ACK_2ND
+    bit12  1 -> 0   SRAM_PDN_ACK
+```
+
+`bit12` 是 `SC_MFG1_SRAM_PDN_ACK`（`mt6895_spm_reg.h:2185`），它随上电撤销。
+`bit8`（`SRAM_PDN` 请求位）在 A 和 B 都是 1，没有变化——这一位的语义待确认。
+
 ### PWR_CON 的位定义（容易读错）
 
 `mt6895_spm_reg.h:2179-2187`：
