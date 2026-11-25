@@ -1,0 +1,1984 @@
+OK log
+HLOG magic=0x63061 size=1048576 bufx=191308 bufr=0 bufc=0xfffffff007d1b89c dbg=0xfffffff1b9e040a1..0xfffffff1b9e040a1
+
+[   19.125653]:  vm_cache_geometry_colors: 16
+[   19.125664]: do_cacheid() - 65536 bytes Unknown cache (I:32768 D:32768 (separate)), 16-way assoc, 64 bytes/line
+[   19.126201]: kprintf initialized
+[   19.126291]: initialize_screen: b=FE14E000, w=00000438, h=0000099C, r=00001100, d=00000000
+[   19.126340]: pe_arm_init_interrupts: args: 0xfffffff007b2e720
+[   19.126348]: pe_arm_map_interrupt_controller: soc_phys:  0xc000000
+[   19.126355]: pe_arm_map_interrupt_controller: failed to find the interrupt-controller.
+[   19.126363]: pe_arm_init_debug: failed to find cpu-debug-interface
+[   19.126393]: gic: v3, distributor 0xfffffff1ba8bc000, cpu 0's redistributor 0xfffffff1ba8fc000, virtual timer on PPI 27
+[   19.126426]: Darwin Kernel Version 22.5.0: 2026年 11月 25日 星期三 20:59:19 CST; lizi:kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837
+[   19.136507]: pmap_startup() init/release time: 8964 microsec
+[   19.136519]: pmap_startup() delayed init/release of 0 pages
+[   19.136531]: vm_page_bootstrap: 101290 free pages, 160854 wired pages, (up to 0 of which are delayed free)
+[   19.145539]: VM boostrap: 102 maps, 204 entries and 512 holes available
+[   19.145604]: Maximum number of VM swap files: 5
+[   19.145803]: gIOKitPageableFixed2    : 0xfffffff1bc000000 - 0xfffffff1c2000000 (96M)
+[   19.145815]: gIOKitPageableFixed0    : 0xfffffff1c2000000 - 0xfffffff1c8000000 (96M)
+[   19.145823]: ipc_kernel_map          : 0xfffffff1c8000000 - 0xfffffff1ca000000 (32M)
+[   19.145832]: kmem_data_range         : 0xfffffff1ca000000 - 0xfffffff3d22b8000 (8G)
+[   19.145841]: bsd_pageable            : 0xfffffff3d22b8000 - 0xfffffff3d3500000 (18M)
+[   19.145849]: kmem_sprayqtn_range     : 0xfffffff3d3500000 - 0xfffffff405080000 (795M)
+[   19.145857]: bufferhdr               : 0xfffffff405080000 - 0xfffffff4051a8000 (1184K)
+[   19.145865]: zone_meta               : 0xfffffff4051a8000 - 0xfffffff406e74000 (28M)
+[   19.145873]: zones                   : 0xfffffff406e74000 - 0xfffffffa06e74000 (24G)
+[   19.145881]: mb                      : 0xfffffffa06e74000 - 0xfffffffa0ce74000 (96M)
+[   19.145889]: gIOKitPageableFixed1    : 0xfffffffa0ce74000 - 0xfffffffa12e74000 (96M)
+[   19.145897]: io_submap               : 0xfffffffa12e74000 - 0xfffffffa13674000 (8M)
+[   19.145905]: kmem_ptr_range          : 0xfffffffa13674000 - 0xfffffffad1534000 (3038M)
+[   19.145913]: gIOKitPageableFixed3    : 0xfffffffad1534000 - 0xfffffffad7534000 (96M)
+[   19.145921]: kmem_ptr_range_meta     : 0xfffffffad7534000 - 0xfffffffad75c4000 (576K)
+[   19.145930]: compressor              : 0xfffffffad75c4000 - 0xfffffffbff5fc000 (4736M)
+[   19.145938]: ipc_kernel_copy_map     : 0xfffffffbff5fc000 - 0xfffffffbffdfc000 (8M)
+[   19.146018]: kmem_large_ranges[1]    : 0 - 0 (0B)
+[   19.146024]: kmem_large_ranges[2]    : 0 - 0 (0B)
+[   19.146030]: kmem_large_ranges[3]    : 0 - 0 (0B)
+[   19.146036]: kmem_large_ranges[4]    : 0xfffffff3d9870000 - 0xfffffff405080000 (696M)
+[   19.146044]: kmem_large_ranges[5]    : 0xfffffff20b057000 - 0xfffffff3d22b8000 (7G)
+[   19.146064]: "vm_compressor_mode" is 2
+[   19.146090]: zone_init: pgzalloc  0xfffffff406e74000:0xfffffff407ae0000 (12M) [397 slots]
+[   19.146110]: zone_init: map VM    0xfffffff407ae0000:0xfffffff4edf68000 (3684M)
+[   19.146127]: zone_init: map RO    0xfffffff4edf68000:0xfffffff53ab94000 (1228M)
+[   19.146144]: zone_init: map GEN0  0xfffffff53ab94000:0xfffffff62101c000 (3684M)
+[   19.146161]: zone_init: map GEN1  0xfffffff62101c000:0xfffffff7074a4000 (3684M)
+[   19.146178]: zone_init: map GEN2  0xfffffff7074a4000:0xfffffff7ed92c000 (3684M)
+[   19.146194]: zone_init: map GEN3  0xfffffff7ed92c000:0xfffffff8d3db8000 (3684M)
+[   19.146210]: zone_init: map DATA  0xfffffff8d3db8000:0xfffffffa06e74000 (4912M)
+[   19.146224]: zone_init: metadata  0xfffffff4051b8000:0xfffffff4069b8000 (24M)
+[   19.146232]: zone_init: metabits  0xfffffff4069b8000:0xfffffff406e64000 (4784K)
+[   19.146238]: zone_init: extra     0:0 (0B)
+[   19.146857]: VM bootstrap done: 90 maps, 163 entries and 500 holes left
+[   19.156054]: IOKit IOMD setownership ENABLED
+[   19.156068]: ATM subsystem is initialized
+[   19.157160]: Long logs support configured: size: 16384
+[   19.157169]: OSLog stream configured: stream: 8192 bytes, cache: 2112 bytes
+[   19.157175]: OSLog stream verification: 0
+[   19.157270]: Firehose configured: 16 chunks, 8 io pages
+[   19.157684]: Log queues configured: slot count: 32, per-slot size: 32768, total size: 1048576
+[   19.157718]: Telemetry: Sampling all tasks once per 1 second
+[   19.157741]: Scheduler: Default of clutch
+[   19.157750]: Setting scheduler priority decay band limit 18
+[   19.157766]: standard timeslicing quantum is 10000 us
+[   19.157772]: standard background quantum is 2500 us
+[   19.158242]: BANK subsystem is initialized
+[   19.158379]: mig_table_max_displ = 54 mach_kobj_count = 371
+[   19.163349]: panic_trace: PE_arm_debug_enable_trace enter
+[   19.163355]: panic_trace: PE_arm_debug_enable_trace exit
+[   19.163615]: Registered coredump handler for kernel
+[   19.163632]: Serial requested, consistent debug disabled or debug boot arg not present, configuring debugging over serial
+[   19.163637]: Initializing serial KDP
+[   19.176141]: iBoot version: iBoot-8422.100.650
+[   19.176196]: iBoot Stage 2 version: 
+[   19.181890]: IONVRAM.cpp:initImageFormat:1364 - NVRAM size is 8192 bytes
+[   19.182220]: IONVRAM.cpp:getNVRAMProperties:1176 - _bankSize=0x2000, _bankCount=0x1, _currentBank=0
+[   19.182550]: IONVRAMCHRPHandler.cpp:unserializeImage:479 - NVRAM : commonPartitionOffset - 0x30, commonPartitionSize - 0x1fd0, systemPartitionOffset - 0xffffffff, systemPartitionSize - 0
+[   19.183380]: ulock_initialize>thread_max=5120, ull_hash_buckets=2048
+[   19.183735]: minicrypto: registered (md5, sha1, sha2, hmac, aes-ecb/cbc/ctr, hmac-drbg prng); no xts/gcm, no RSA
+[   19.185089]: hakios-kernel: 6 drivers built in (.config): mt6895_headset mt6895_pmif mali610 mtk6895_keys nvt mt6895_usb
+[   19.185263]: calling mpo_policy_init for vnguard
+[   19.185382]: Security policy loaded: Guarded vnode policy (vnguard)
+[   19.185454]: calling mpo_policy_init for AMFI
+[   19.185596]: Security policy loaded: Apple Mobile File Integrity (stand-in) (AMFI)
+[   19.185673]: calling mpo_policy_init for Sandbox
+[   19.185813]: Security policy loaded: Seatbelt sandbox policy (stand-in) (Sandbox)
+[   19.190675]: No POST boot-arg set.
+[   19.191669]: PMRD: PMTraceWorker 0x84d794656ff51409
+[   19.191992]: PMRD: changePowerStateWithTagToPriv(ON_STATE, 10001)
+[   19.192974]: GenericARMPE: platform "D22AP"
+[   19.193081]: [0]ml_processor_register>pset_find(cluster_id=0) returned pset 0
+[   19.193087]: [0]ml_processor_register>cpu_id 0xfffffff707678340 cluster_id 0 cpu_number 0 is type 0
+[   19.193142]: GenericARMCPU: cpu 0 (phys id 0x0) registered
+[   19.193286]: [0]ml_processor_register>pset_find(cluster_id=0) returned pset 0
+[   19.193292]: [0]ml_processor_register>cpu_id 0xfffffff707679900 cluster_id 0 cpu_number 1 is type 0
+[   19.193342]: GenericARMCPU: cpu 1 (phys id 0x400) registered
+[   19.193489]: [0]ml_processor_register>pset_find(cluster_id=0) returned pset 0
+[   19.193495]: [0]ml_processor_register>cpu_id 0xfffffff70767bb80 cluster_id 0 cpu_number 2 is type 0
+[   19.193541]: GenericARMCPU: cpu 2 (phys id 0x500) registered
+[   19.193689]: [0]ml_processor_register>pset_find(cluster_id=0) returned pset 0
+[   19.193695]: [0]ml_processor_register>cpu_id 0xfffffff70767a080 cluster_id 0 cpu_number 3 is type 0
+[   19.193880]: cpu 0 (phys id 0x0) is a slower core: the scheduler uses it after cpu 3 (phys id 0x700)
+[   19.193933]: GenericARMCPU: cpu 3 (phys id 0x700) registered
+[   19.194412]: Copyright (c) 1982, 1986, 1989, 1991, 1993
+	The Regents of the University of California. All rights reserved.
+
+[   19.194419]: bsd_init: calling kauth_init
+[   19.194480]: bsd_init: calling process_name
+[   19.194486]: bsd_init: calling get_bsdthread_info
+[   19.194568]: MAC Framework successfully initialized
+[   19.194802]: bsd_init: calling kauth_cred_create
+[   19.194809]: bsd_init: calling chgproccnt
+[   19.194813]: bsd_init: calling kmem_suballoc
+[   19.194825]: bsd_init: calling bsd_bufferinit
+[   19.195488]: using 2036 buffer headers and 2036 cluster IO buffer headers
+[   19.195526]: bsd_init: calling IOKitInitializeTime
+[   19.195598]: clock_initialize_calendar system does not have monotonic clock
+[   19.195604]: clock_initialize_calendar WARNING: UTC time is less then sys time, (0 s 0 u) UTC (19 s 195542 u) sys
+[   19.195612]: bsd_init: calling vfsinit
+[   19.196042]: ktriage_register_subsystem_strings: set subsystem 8 strings
+[   19.196170]: bsd_init: calling proc_uuid_policy_init()
+[   19.196924]: mcache: 4 CPU(s), 64 bytes CPU cache line size
+[   19.196930]: bsd_init: calling mbinit
+[   19.197475]: mbinit: done [96 MB total pool size, (64/32) split]
+[   19.197486]: bsd_init: calling knote_init
+[   19.197490]: bsd_init: calling eventhandler_init
+[   19.197493]: bsd_init: calling aio_init
+[   19.197565]: bsd_init: calling pshm_cache_init
+[   19.197570]: bsd_init: calling psem_cache_init
+[   19.197647]: bsd_init: calling nwk_wq_init
+[   19.197677]: bsd_init: calling dlil_init
+[   19.197699]: SK: netagent is enabled by default for this platform
+[   19.198639]: DLIL: running SUM16 self-tests ... PASSED
+[   19.199054]: dlil_init: Waiting for all the create dlil kernel threads to get scheduled at least once.
+[   19.199215]: PMRD: power event 7 args 0x84d794673c8b9279 0x0
+[   19.199229]: PMRD: power event 7 args 0x84d794673c8b9319 0x0
+[   19.199812]: PMRD: PowerChangeOverride (OFF_STATE->ON_STATE, f, 0x2) tag 0x20064
+[   19.199847]: PMRD: sysPowerDownHandler message kIOMessageSystemCapabilityChange
+[   19.199853]: PMRD: sysPowerDownHandler cap f -> f (flags 1)
+[   19.200140]: dlil_init: All the created dlil kernel threads have been scheduled at least once. Proceeding.
+[   19.200148]: bsd_init: calling socketinit
+[   19.200197]: bsd_init: calling domaininit
+[   19.201034]: bsd_init: calling skywalk_init
+[   19.201218]: SK[0]: skmem_region_init              seg_size 16384, md_seg_size 16384, drv_buf_seg_size 65536 [eff 65536], usr_buf_seg_size 16384
+[   19.203839]: Skywalk: running self-tests
+[   19.203843]: Skywalk: sk_copy64_8 ... PASSED
+[   19.203848]: Skywalk: sk_copy32_8 ... PASSED
+[   19.203854]: Skywalk: sk_copy64_16 ... PASSED
+[   19.203858]: Skywalk: sk_copy32_16 ... PASSED
+[   19.203862]: Skywalk: sk_copy64_20 ... PASSED
+[   19.203866]: Skywalk: sk_copy64_24 ... PASSED
+[   19.203870]: Skywalk: sk_copy64_32 ... PASSED
+[   19.203874]: Skywalk: sk_copy32_32 ... PASSED
+[   19.203877]: Skywalk: sk_copy64_40 ... PASSED
+[   19.203881]: Skywalk: sk_copy64_64x ... PASSED
+[   19.203885]: Skywalk: sk_copy64_32x ... PASSED
+[   19.203889]: Skywalk: sk_copy64_8x ... PASSED
+[   19.203893]: Skywalk: sk_copy64_4x ... PASSED
+[   19.203897]: Skywalk: sk_zero_16 ... PASSED
+[   19.203901]: Skywalk: sk_zero_32 ... PASSED
+[   19.203904]: Skywalk: sk_zero_48 ... PASSED
+[   19.203908]: Skywalk: sk_zero_128 ... PASSED
+[   19.203961]: Skywalk: memcmp mask ... PASSED
+[   19.205387]: bsd_init: calling memorystatus_freeze_init
+[   19.205391]: bsd_init: calling memorystatus_init
+[   19.205572]: bsd_init: calling sysctl_mib_init
+[   19.205579]: bsd_init: calling bsd_autoconf
+[   19.205582]: bsd_autoconf: calling kminit
+[   19.209750]: bsd_init: calling loopattach
+[   19.210570]: ifnet_attach: All kernel threads created for interface lo0 have been scheduled at least once. Proceeding.
+[   19.210590]: bsd_init: calling ether_family_init
+[   19.210750]: bsd_init: calling net_init_run
+[   19.211091]: skip attaching fsw to lo0 using legacy TX modelReinit'd ND information for interface lo0
+[   19.212048]: bsd_init: calling inittodr
+[   19.212053]: bsd_init: calling setconf
+[   19.212204]: PMRD: sysPowerDownHandler message kIOMessageSystemCapabilityChange
+[   19.212211]: PMRD: sysPowerDownHandler cap f -> f (flags 2)
+[   19.212222]: PMRD: tellChangeUp OFF_STATE->ON_STATE
+[   19.212236]: PMRD: PowerChangeDone: OFF_STATE->ON_STATE
+[   19.212240]: PMRD: Force re-evaluating aggressiveness
+[   19.212246]: PMRD: changePowerStateWithTagToPriv(ON_STATE, 30002)
+[   19.212267]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x2) tag 0x10001
+[   19.212274]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   19.212279]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x302) tag 0x40064
+[   19.212291]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   19.212295]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x302) tag 0x50064
+[   19.212306]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   19.212316]: PMRD: adjustPowerState ON_STATE, asap 0, idleSleepEnabled 0
+[   19.212321]: PMRD: changePowerStateWithTagToPriv(ON_STATE, 60008)
+[   19.212334]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x2) tag 0x30002
+[   19.212340]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   19.212349]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x2) tag 0x60008
+[   19.212354]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   19.212535]: cpu_start() cpu: 0
+[   19.212574]: cpu_start() cpu: 1
+[   19.213342]: gic: v3, distributor 0xfffffff1ba8bc000, cpu 1's redistributor 0xfffffff1ba97c000, virtual timer on PPI 27
+[   19.213350]: panic_trace: PE_arm_debug_enable_trace enter
+[   19.213352]: panic_trace: PE_arm_debug_enable_trace exit
+[   19.213353]: arm_cpu_init(): cpu 1 online
+[   19.214390]: cpu_start() cpu: 2
+[   19.214823]: gic: v3, distributor 0xfffffff1ba8bc000, cpu 2's redistributor 0xfffffff1ba99c000, virtual timer on PPI 27
+[   19.214829]: panic_trace: PE_arm_debug_enable_trace enter
+[   19.214830]: panic_trace: PE_arm_debug_enable_trace exit
+[   19.214831]: arm_cpu_init(): cpu 2 online
+[   19.215866]: cpu_start() cpu: 3
+[   19.216402]: gic: v3, distributor 0xfffffff1ba8bc000, cpu 3's redistributor 0xfffffff1ba9dc000, virtual timer on PPI 27
+[   19.216416]: panic_trace: PE_arm_debug_enable_trace enter
+[   19.216420]: panic_trace: PE_arm_debug_enable_trace exit
+[   19.216424]: arm_cpu_init(): cpu 3 online
+[   19.217324]: GenericARMPE: 4 of 4 processors are running
+[   19.217560]: MiniIOMobileFramebuffer: ovl0 l1 scans 0xfeb89000 pitch 4320; the loader said 0xfffffff1b9e86000 pitch 4352
+[   19.217643]: MiniIOMobileFramebuffer: ovl1 l1 scans 0xfeb89870 pitch 4320; the loader said 0xfffffff1b9e86000 pitch 4352
+[   19.217724]: MiniIOMobileFramebuffer: ovl4 l0 scans 0xfe14f000 pitch 4352; the loader said 0xfffffff1b9e86000 pitch 4352
+[   19.217804]: MiniIOMobileFramebuffer: ovl6 l0 scans 0xfe14f870 pitch 4352; the loader said 0xfffffff1b9e86000 pitch 4352
+[   19.217895]: MiniIOMobileFramebuffer: ovl0 l1 pointed at 0xfeb88000, was 0xfeb89000
+[   19.217948]: MiniIOMobileFramebuffer: ovl1 l1 pointed at 0xfeb88870, was 0xfeb89870
+[   19.218002]: MiniIOMobileFramebuffer: ovl4 l0 pointed at 0xfe14e000, was 0xfe14f000
+[   19.218056]: MiniIOMobileFramebuffer: ovl6 l0 pointed at 0xfe14e870, was 0xfe14f870
+[   19.218107]: MiniIOMobileFramebuffer: the engine scanned 0xfe14f870, which is a page above the loader's 0xfe14e000; the plane address has been moved down onto it
+[   19.218214]: MiniIOMobileFramebuffer: fb_disp: ovl0 src_con 0x2 datapath 0x7000005
+[   19.218264]: MiniIOMobileFramebuffer: fb_disp:   ovl0 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88000
+[   19.218342]: MiniIOMobileFramebuffer: fb_disp: ovl1 src_con 0x2 datapath 0x7000005
+[   19.218393]: MiniIOMobileFramebuffer: fb_disp:   ovl1 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88870
+[   19.218471]: MiniIOMobileFramebuffer: fb_disp: ovl3 src_con 0 datapath 0x3000000
+[   19.218521]: MiniIOMobileFramebuffer: fb_disp: ovl4 src_con 0x1 datapath 0x7000001
+[   19.218571]: MiniIOMobileFramebuffer: fb_disp:   ovl4 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e000
+[   19.218648]: MiniIOMobileFramebuffer: fb_disp: ovl5 src_con 0 datapath 0x3000000
+[   19.218698]: MiniIOMobileFramebuffer: fb_disp: ovl6 src_con 0x1 datapath 0x7000001
+[   19.218748]: MiniIOMobileFramebuffer: fb_disp:   ovl6 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e870
+[   19.218826]: MiniIOMobileFramebuffer: fb_disp: dsi start        0x1
+[   19.218868]: MiniIOMobileFramebuffer: fb_disp: dsi size_con     0x99c0168
+[   19.218913]: MiniIOMobileFramebuffer: fb_disp: dsi vact_nl      0x99c
+[   19.218955]: MiniIOMobileFramebuffer: fb_disp: dsi hsa_wc       0x14
+[   19.218996]: MiniIOMobileFramebuffer: fb_disp: dsi hbp_wc       0x1c
+[   19.219037]: MiniIOMobileFramebuffer: fb_disp: dsi hfp_wc       0x3cc
+[   19.219078]: MiniIOMobileFramebuffer: fb_disp: panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080
+[   19.219200]: MiniIOMobileFramebuffer: display 1080x2460 on a panel of 1080x2460 (4352 bytes per row)
+[   19.313106]: !BSD
+[   19.313361]: Added memory device md0/rmd0 (01000000/0D000000) at FFFFFFF00C000000 for 00000000948C0000
+[   19.313574]: Added memory device md1/rmd1 (01000001/0D000001) at FFFFFFF0083D0000 for 0000000000400000
+[   19.313584]: BSD root: md0, major 1, minor 0
+[   19.313658]: bsd_init: vfs_mountroot
+[   19.315304]: apfs: device 1,0: requests to it cost next to nothing (a disk in memory)
+[   19.315487]: apfs: 4 threads on a request of many pieces (3 helpers)
+[   19.315975]: apfs: volume 0 "System" of container 0 (at 0 MB): 45138 files, 16547 directories, 605719 blocks of 4096 used
+[   19.316026]: bsd_init: calling VFS_ROOT
+[   19.316055]: bsd_init: calling devfs_kernel_mount
+[   19.316883]: hakios-kernel: version 2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty
+[   19.317177]: mt6895-ufs-twoblock: bounded READ10 lun2 lba31240191 blocks1 bytes4096 budget36; guarded handoff required
+[   19.317346]: mt6895-ufs-twoblock: guard magic=0x554c5345 version=1 trial=740 state=0
+[   19.317933]: mt6895-ufs-twoblock: opened control=0x2 shared=1
+[   19.318133]: mt6895-ufs-twoblock: snapshot registered path=/dev/mt6895-ufs-range bytes=159744 budget=36
+[   19.318333]: xnusys-blk: /dev/xnusys_var carries the data volume: blocks 608512..653055 of the flash
+[   19.318532]: xnusys-blk: /dev/xnuvar carries the 65536 MiB volume: flash blocks 13803264..30580479
+[   19.318713]: xnusys-blk: /dev/xnusys 655608 blocks of 4096, read only, bmajor=2 cmajor=17
+[   19.318797]: nvt: step 1, the gpio block is mapped at 0xfffffffa12f31000
+[   19.318811]: usb: ip version 0x1006 (gen2 qmu); dev cap 0x101 (u3 ports 1)
+[   19.318812]: hlog: /dev/hlog major 20, 1048576 bytes of kernel log
+[   19.318834]: usb: pw sts1 0x1003d0f [sys125 1 ref 1 syspll 1 sleep 0]; sts2 0x1; u2 ctrl 0x48 [pdn 0 dis 0]
+[   19.318836]: hlog: /dev/hakios-return major 21
+[   19.318848]: usb: dp selector 0 [usb 0]
+[   19.318857]: usb: at handover: opstate 0 ltssm 0 dev ctl 0x99 power 0x60a1 softconn 0
+[   19.318867]: usb: otg sts 0x16c016c0 [vbus 1]; device conf 0x5000000 [speed 0 addr 5]; ep0 csr 0x40
+[   19.318875]: gpueb: /dev/hakios-gpueb major 22; writing probe/init/on/off/stop works it, opening it does not
+[   19.318878]: usb: power mgmt 0x60a1 [softconn 0 suspendm 1 hs 1]; misc 0x80000003 [vbus frc 1 on 1]
+[   19.318889]: usb: no dev rst; otg sts 0x16c016c0 [vbus 1]
+[   19.318898]: usb: misc ctrl 0x80000003 [vbus frc 1 on 1]; otg sts 0x16c016c0 [vbus 1]
+[   19.318907]: usb: qfcr 0x1ff01ff (gen2 qmu); vbus frc bits now 0x3
+[   19.318916]: usb: fifo cap tx 0x2000 (8192) rx 0x2000 (8192); epinfo 0x808 eps tx 8 rx 8
+[   19.318973]: usb: ep0 rst released; ep_rst 0
+[   19.318986]: usb: u2 ctrl 0x48 [pdn 0 dis 0 hostsel 0 otg 0]; u3 ctrl 0xf [dis 1 pdn 1 hostsel 1 dual 0]
+[   19.319019]: usb: u3 ctrl now 0x88 [dis 0 pdn 0 dual 1]
+[   19.319030]: usb: ltssm ctrl before 0x227
+[   19.319038]: usb: ltssm ctrl after  0x223 (Android, working, reads 0x223)
+[   19.319051]: usb: host pdn 0x1; pw sts1 0x1013d0f
+[   19.319059]: usb: no port cycle; u2 ctrl 0x48; clocks 0x1013d0f
+[   19.319064]: bsd_init: calling siginit
+[   19.319068]: usb: clocks after cycle 0x1013d0f [sys125 1 ref 1 u3mac 1 syspll 1]; u2 ctrl 0x48
+[   19.319070]: bsd_init: calling bsd_utaskbootstrap
+[   19.319081]: usb: dp selector 0 -> 0x800 (usb 1)
+[   19.319094]: usb: phy before: acr0 0x46002a acr1 0x844400 acr4 0x1a acr5 0x40801000 acr6 0x442 dtm0 0x2be00d4 dtm1 0
+[   19.319464]: bsd_init: calling mountroot_post_hook
+[   19.319470]: bsd_init: done
+[   19.319477]: vm_free_delayed_pages: initialized 0 free pages
+[   19.319514]: No POST boot-arg set.
+[   19.319521]: bsd_init: bsd_do_post - doneload_init_program: attempting to load /usr/appleinternal/sbin/launchd.development
+[   19.319768]: VM Swap Subsystem is ON
+[   19.319924]: Failed to open swap file 2
+[   19.319931]: vm_swap_create_file failed @ 19 secs
+[   19.319936]: vm_swap_create_file failed @ 19 secs
+[   19.320139]: mt6895-keys: boot took a baseline of 0..0x5f
+[   19.320161]: mt6895-keys: the PMIC's key register 0x1e reads 1e (bit 1 power, bit 3 home/volume up; clear means held)
+[   19.320179]: mt6895-keys: for comparison register 0x2a reads 88
+[   19.320184]: headset: headset=0, disabled
+[   19.320188]: mt6895-keys: the keypad reads ffff ffff ffff ffff ffff every 20 ms; line 0 is volume down
+[   19.320192]: mt6895-keys: polling every 20 ms; PMIC bit 1 is power, bit 3 volume up
+[   19.320195]: mt6895-keys: keypad at 0x1c00e000: 00=00000000 04=0000ffff 08=0000ffff 0c=0000ffff 10=0000ffff 14=0000ffff 18=00000400 1c=00000011 20=00001c71 24=00000001 28=00000000 2c=00000000 30=00000000 34=00000000 38=00000000 3c=00000000
+[   19.320248]: mt6895-keys: 0x1e 1e 0x2a 88
+[   19.320357]: load_init_program: attempting to load /sbin/launchd
+[   19.323983]: usb: slew: fmcr0 0x400 fmmonr1 0 fm_out 0 calib 3; acr5 0x40803000
+[   19.323989]: usb: phy ref clk gate is in apmixed; dtm1 0x226 acr0 0x46002a (live phy has bit5 set)
+[   19.323996]: usb: phy after:  acr0 0x46002a acr1 0x342400 acr4 0x1a acr5 0x40803000 acr6 0x40100442 dtm0 0x2000000 dtm1 0x226
+[   19.324002]: usb: soft disconnect (power mgmt 0x64a1)
+[   19.326276]: apfs: device 1,1: requests to it cost next to nothing (a disk in memory)
+[   19.326349]: apfs: volume 0 "redwood" of container 0 (at 0 MB): 53 files, 20 directories, 64 blocks of 4096 used
+[   19.327545]: xnuvar: open flag=3
+[   19.327622]: xnusys-var: strategy read offset=1024 len=512
+[   19.329097]: xnusys-var: strategy read offset=2101248 len=512
+[   19.330517]: xnusys-var: strategy read offset=2105344 len=512
+[   19.331932]: jnl: xnuvar: replay_journal: from: 1382912 to: 4568576 (joffset 0x202000)
+[   19.331945]: xnusys-var: strategy read offset=3488256 len=65536
+[   19.354871]: xnusys-var: strategy read offset=3553792 len=512
+[   19.356247]: xnusys-var: strategy read offset=3554304 len=8192
+[   19.360356]: xnusys-var: strategy read offset=3562496 len=8192
+[   19.364463]: xnusys-var: strategy read offset=3570688 len=8192
+[   19.368952]: nvt: step 1a, the function select was MI 1 CS 1 MO 1 CLK 1 IRQ 0
+[   19.426042]: nvt: step 2, the five pins are plain gpio and their directions are set
+[   19.428007]: nvt: step 3, page 0x22d00 is latched; the bus is GPIO109/110/111/112 driven by hand
+[   19.429852]: nvt: step 4, din of the bus pins' group reads 0x10526801
+[   19.431708]: nvt: step 5, about to read the interrupt line's group
+[   19.433577]: nvt: step 6, din of the interrupt line's group reads 0x40803e7e, so GPIO135 is 0
+[   19.435456]: nvt: the touch screen's interrupt line (GPIO135) is looked at every 4000 us
+[   19.440993]: nvt: probe 0 reads d8 a4 80 b7 de f8 6e f7, last 75, checksum bad
+[   19.448777]: nvt: probe 1 reads d8 a4 80 b7 de f8 6e f7, last 75, checksum bad
+[   19.456537]: nvt: probe 2 reads d8 a4 80 b7 de f8 6e f7, last 75, checksum bad
+[   19.464287]: nvt: probe 3 reads d8 a4 80 b7 de f8 6e f7, last 75, checksum bad
+[   19.468388]: nvt: the event buffer holds data at rest; reports are taken on the line only
+[   19.470422]: nvt: fw handshake reads d9 at page 0x22d51; firmware answers neither way
+[   19.472705]: nvt: reset state reads 3a 05 bc a6 76 (not in 0xA0..0xAF)
+[   19.527981]: usb: soft connect again (power mgmt 0x64e1)
+[   19.529862]: usb: dev ctl 0x99; otg sts 0x16c016c0 [vbus 1]; power mgmt 0x64e1
+[   19.531729]: usb: powered up; power mgmt 0x64e1 [softconn 1 suspendm 1 hs 1 lpm 1], waiting for the host
+[   19.533544]: usb: test mode 0x400 misc 0x1 opstate 0x3 host pdn 0x1
+[   19.535345]: usb: test mode 0x400, letting the phy chirp
+[   19.537135]: usb: watching; intr now 0 enable 0x3f
+[   19.541676]: usb: speed change; ep0 re-armed, speed 0 opstate 0x3
+[   19.546292]: usb: [0 us] opstate 0x3 ltssm 0xff0101 dev conf 0 power 0x64e1 ep0 0x40 lv1 0
+[   19.550785]: usb: the port is live at 0 us
+[   19.552570]: usb: [0 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x3
+[   19.598326]: usb: intr 0x4 reset
+[   19.600111]: usb: reset; ep0 csr 0x40 maxpacket 64 opstate 0x11 speed 3
+[   19.601879]: usb: speed change; ep0 re-armed, speed 3 opstate 0x11
+[   19.647674]: usb: setup 1: type 80 req 06 value 0100 index 0000 length 64
+[   19.650663]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.653610]: usb: setup 2: type 00 req 05 value 0005 index 0000 length 0
+[   19.655379]: usb: address 5
+[   19.667344]: usb: setup 3: type 80 req 06 value 0100 index 0000 length 18
+[   19.670330]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.673267]: usb: setup 4: type 80 req 06 value 0200 index 0000 length 255
+[   19.676270]: usb: ep0 tx done offset 0 chunk 64/80 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 0
+[   19.679263]: usb: ep0 tx done offset 64 chunk 16/80 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.682239]: usb: setup 5: type 80 req 06 value 0303 index 0409 length 255
+[   19.685273]: usb: ep0 tx done offset 0 chunk 22/22 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.688284]: usb: setup 6: type 80 req 06 value 0300 index 0000 length 255
+[   19.691339]: usb: ep0 tx done offset 0 chunk 4/4 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.694327]: usb: setup 7: type 80 req 06 value 0302 index 0409 length 255
+[   19.697375]: usb: ep0 tx done offset 0 chunk 26/26 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.743706]: usb: setup 8: type 80 req 06 value 0300 index 0000 length 255
+[   19.750347]: usb: ep0 tx done offset 0 chunk 4/4 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.756807]: usb: setup 9: type 80 req 06 value 0301 index 0409 length 255
+[   19.763359]: usb: ep0 tx done offset 0 chunk 14/14 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.769843]: usb: setup 10: type 80 req 06 value 0302 index 0409 length 255
+[   19.776467]: usb: ep0 tx done offset 0 chunk 26/26 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.861247]: usb: [200000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   19.898395]: usb: reset; ep0 csr 0x40 maxpacket 64 opstate 0x11 speed 3
+[   19.942394]: usb: setup 11: type 80 req 06 value 0100 index 0000 length 64
+[   19.949151]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   19.956947]: usb: reset; ep0 csr 0x40 maxpacket 64 opstate 0x11 speed 3
+[   20.002143]: usb: setup 12: type 00 req 05 value 0005 index 0000 length 0
+[   20.007496]: usb: address 5
+[   20.024253]: usb: setup 13: type 80 req 06 value 0100 index 0000 length 18
+[   20.030972]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.139659]: usb: [400000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   20.146261]: usb: setup 14: type 80 req 06 value 0100 index 0000 length 64
+[   20.153010]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.160824]: usb: reset; ep0 csr 0x40 maxpacket 64 opstate 0x11 speed 3
+[   20.202608]: usb: setup 15: type 80 req 06 value 0100 index 0000 length 64
+[   20.209451]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.216169]: usb: reset; ep0 csr 0x40 maxpacket 64 opstate 0x11 speed 3
+[   20.262575]: usb: setup 16: type 00 req 05 value 0005 index 0000 length 0
+[   20.268062]: usb: address 5
+[   20.284953]: usb: setup 17: type 80 req 06 value 0100 index 0000 length 18
+[   20.291886]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.416609]: usb: setup 18: type 80 req 06 value 0100 index 0000 length 18
+[   20.423583]: usb: ep0 tx done offset 0 chunk 18/18 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.430516]: usb: setup 19: type 80 req 06 value 0200 index 0000 length 9
+[   20.437556]: usb: ep0 tx done offset 0 chunk 9/9 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.444469]: usb: setup 20: type 80 req 06 value 0200 index 0000 length 80
+[   20.451550]: usb: ep0 tx done offset 0 chunk 64/80 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 0
+[   20.458650]: usb: ep0 tx done offset 64 chunk 16/80 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.465652]: usb: setup 21: type 80 req 06 value 0300 index 0000 length 255
+[   20.472785]: usb: ep0 tx done offset 0 chunk 4/4 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.479783]: usb: setup 22: type 80 req 06 value 0302 index 0409 length 255
+[   20.486974]: usb: ep0 tx done offset 0 chunk 26/26 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.494058]: usb: setup 23: type 80 req 06 value 0301 index 0409 length 255
+[   20.501236]: usb: ep0 tx done offset 0 chunk 14/14 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.508260]: usb: setup 24: type 80 req 06 value 0303 index 0409 length 255
+[   20.515391]: usb: ep0 tx done offset 0 chunk 22/22 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.522500]: usb: setup 25: type 00 req 09 value 0001 index 0000 length 0
+[   20.528406]: usb: ep1 enabled; tx1 0x1000010/0/0x7040000 epier 0x2
+[   20.534171]: usb: configuration 1
+[   20.541110]: usb: setup 26: type 01 req 0b value 0000 index 0001 length 0
+[   20.546896]: usb: interface 1 alternate 0
+[   20.558349]: usb: setup 27: type 01 req 0b value 0001 index 0001 length 0
+[   20.564396]: ifnet_attach: All kernel threads created for interface en0 have been scheduled at least once. Proceeding.
+[   20.570244]: net: en0 attached on usb-ecm, address 02:00:00:00:68:02, link down
+[   20.575984]: usb: ecm attached to en0, MAC 02:00:00:00:68:02
+[   20.581665]: net: en0's link (usb-ecm) is up
+[   20.587376]: usb: ecm link up
+[   20.593194]: usb: ep2 enabled; tx2 0x1000200/0/0x90020 rx2 0x20200/0/0x90000 epier 0x40004 ep_rst 0
+[   20.599069]: usb: ep2 fields; maxpkt tx 512 rx 512, type tx 0 rx 0, segsize tx 9 rx 9, dmareq tx 0 rx 0, reset released 1
+[   20.604793]: usb: interface 1 alternate 1
+[   20.610536]: usb: [600000 us] live 0 sofs 0 ep0 0x80040 epi 0 lv1 0 opstate 0x12
+[   20.617381]: usb: setup 28: type 21 req 43 value 000c index 0000 length 0
+[   20.623032]: usb: ecm packet filter 0xc
+[   20.629879]: usb: setup 29: type 80 req 06 value 0306 index 0409 length 255
+[   20.636891]: usb: ep0 tx done offset 0 chunk 26/26 pre 0x100040 write 0x140040 post 0x900040 csr 0x100040 epi 0x1 intr 0 tx_seen 0 dataend 1
+[   20.663924]: usb: setup 30: type 21 req 43 value 000e index 0000 length 0
+[   20.665942]: usb: ecm packet filter 0xe
+[   20.814333]: mt6895-ufs-twoblock: zone write 13803264+1 ocs=0 polls=36 restored=1 (cmds=1 blks=1)
+[   20.824976]: mt6895-ufs-twoblock: zone write 13803287+1 ocs=0 polls=38 restored=1 (cmds=2 blks=2)
+[   20.835556]: mt6895-ufs-twoblock: zone write 13803288+1 ocs=0 polls=39 restored=1 (cmds=3 blks=3)
+[   20.846133]: mt6895-ufs-twoblock: zone write 13803289+1 ocs=0 polls=39 restored=1 (cmds=4 blks=4)
+[   20.856727]: mt6895-ufs-twoblock: zone write 13803290+1 ocs=0 polls=39 restored=1 (cmds=5 blks=5)
+[   20.865102]: usb: [800000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   20.871428]: mt6895-ufs-twoblock: zone write 13803291+1 ocs=0 polls=39 restored=1 (cmds=6 blks=6)
+[   20.882003]: mt6895-ufs-twoblock: zone write 13803295+1 ocs=0 polls=39 restored=1 (cmds=7 blks=7)
+[   20.892556]: mt6895-ufs-twoblock: zone write 13803298+1 ocs=0 polls=39 restored=1 (cmds=8 blks=8)
+[   20.901773]: mt6895-ufs-twoblock: zone write 13803319+1 ocs=0 polls=39 restored=1 (cmds=9 blks=9)
+[   20.910882]: mt6895-ufs-twoblock: zone write 13803418+1 ocs=0 polls=39 restored=1 (cmds=10 blks=10)
+[   20.919982]: mt6895-ufs-twoblock: zone write 13805827+1 ocs=0 polls=39 restored=1 (cmds=11 blks=11)
+[   20.933675]: mt6895-ufs-twoblock: zone write 13807618+2 ocs=0 polls=52 restored=1 (cmds=12 blks=13)
+[   20.947326]: mt6895-ufs-twoblock: zone write 13807620+2 ocs=0 polls=52 restored=1 (cmds=13 blks=15)
+[   20.959747]: mt6895-ufs-twoblock: zone write 13807622+2 ocs=0 polls=49 restored=1 (cmds=14 blks=17)
+[   20.973429]: mt6895-ufs-twoblock: zone write 14120194+2 ocs=0 polls=52 restored=1 (cmds=15 blks=19)
+[   20.985685]: mt6895-ufs-twoblock: zone write 14120196+2 ocs=0 polls=52 restored=1 (cmds=16 blks=21)
+[   20.989208]: usb: setup 31: type 21 req 43 value 000e index 0000 length 0
+[   20.991120]: usb: ecm packet filter 0xe
+[   21.003223]: usb: setup 32: type 21 req 43 value 000e index 0000 length 0
+[   21.005105]: usb: ecm packet filter 0xe
+[   21.100815]: usb: [1000000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   21.325632]: mali: bus protect top axi md0 0 -> 0 (mask 0xf)
+[   21.326819]: usb: [1200000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   21.336187]: mali: bus protect mfgrpc 0xf000f -> 0xf (mask 0xf0000)
+[   21.341503]: mali: bus protect emisys0 0xc0000 -> 0 (mask 0xc0000)
+[   21.346755]: mali: bus protect emisys1 0xc0000 -> 0 (mask 0xc0000)
+[   21.351969]: mali: bus protect sta: md0 en 0 sta 0xffffffe0 (mask 0xf)
+[   21.357196]: mali: bus protect sta: emisys0 en 0 sta 0xff000020 (mask 0xc0000)
+[   21.362335]: mali: bus protect sta: emisys1 en 0 sta 0xff002020 (mask 0xc0000)
+[   21.367435]: mali: bp raw md0: en 0 set 0 clr 0 sta 0xffffffe0
+[   21.372591]: mali: bpverify md0: sta 0xffffffe0 -> 0xffffffe0 after 0 polls (OPENED)
+[   21.377763]: mali: bp raw emisys0: en 0 set 0 clr 0 sta 0xff000020
+[   21.382942]: mali: bpverify emisys0: sta 0xff000020 -> 0xff000020 after 0 polls (OPENED)
+[   21.388037]: mali: bp raw emisys1: en 0 set 0 clr 0 sta 0xff002020
+[   21.393203]: mali: bpverify emisys1: sta 0xff002020 -> 0xff002020 after 0 polls (OPENED)
+[   21.398318]: mali: bus protect sta: mfgrpc not read (mali_rpc=0)
+[   21.403463]: mali: bpverify md0: set 0 clr 0 en 0 sta 0xffffffe0 (mask 0xf)
+[   21.408707]: mali: bpverify md0: sta 0xffffffe0 -> 0xffffffe0 after 0 spins (CLEARED)
+[   21.413905]: mali: bpverify emisys0: set 0 clr 0 en 0 sta 0xff000020 (mask 0xc0000)
+[   21.419138]: mali: bpverify emisys0: sta 0xff000020 -> 0xff000020 after 0 spins (CLEARED)
+[   21.424341]: mali: bpverify emisys1: set 0 clr 0 en 0 sta 0xff002020 (mask 0xc0000)
+[   21.429619]: mali: bpverify emisys1: sta 0xff002020 -> 0xff002020 after 0 spins (CLEARED)
+[   21.434821]: mali: gpueb: asking GPUEB to power the GPU before the first read
+[   21.440417]: gpueb: bringup init: reply 00000000 00000000 00000000 00000000
+[   21.445684]: gpueb: bringup init: reply (cont) 00000000 00000000 00000000 00000000; ret 0
+[   21.450841]: mali: gpueb: INIT answered 0
+[   21.457467]: gpueb: bringup on: reply 00000006 00000000 00000001 00000000
+[   21.462796]: gpueb: bringup on: reply (cont) 00000000 00000000 00000000 00000000; ret 1
+[   21.462865]: gpueb: shared after bringup on:
+  +000: 00000003 0000001b 00000005 00000028 00068fb0 0005dfe8 0000ea60 0000d6d8
+  +020: 000124f8 000124f8 00000000 00000209 00000000 000006c0 00000000 000000f6
+  +040: 00000000 00000000 00000000 00000027 00000000 00000000 00000000 00000000
+  +060: 00000001 00000000 00130013 00000001 00000001 00000001 00000000 00000002
+[   21.500062]: gpueb: domains after bringup on: MFG0 0xc000224d (ack30 1 ack31 1) MFG1 0xc0000112 (rst_b 0 on 0 on2nd 0 clk_dis 1 ack30 1 ack31 1) F3C 0x7 (mfg0 1 mfg1 1 mfg0_1 0x6 mfg1_12 0x4) F40 0x7 (mfg1 1)
+[   21.505399]: mali: gpueb: POWER_ON answered 1, a reference is held for this run
+[   21.510789]: mali: gpu_id after the GPUEB request: 0xa8670004 (csf 0x40a0412)
+[   21.516167]: mali: gpu_id as the loader left it 0xa8670004
+[   21.521572]: mali: the loader left it powered and clocked; not touching the SPM
+[   21.526920]: mali: coherence 0xf gals0 0xffc855 gals4 0xffc055
+[   21.537867]: mali: interconnect before the firmware: dcm0 0xc03f->0xc03f async 0x3c00000->0x3c00000 async1 0x7->0x7 global 0x30e7201->0x30e7201 qchannel 0x10->0x10 rpc 0->0
+[   21.543432]: mali: i2m protector before the firmware: 0x20300317 0x1800000c 0x1010802 0x227f3
+[   21.548863]: mali: this is GPU 0xa8670004, CSF 0x40a0412
+[   21.552830]: usb: [1400000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   21.559697]: mali: mmu 0x2830 (va 48 bits, pa 40 bits) address spaces 0xff
+[   21.565276]: mali: shader 0x130013 tiler 0x1 l2 0x1 stack 0x33 thread_max 0x800
+[   21.570723]: mali: gpueb before the address spaces: not mapped
+[   21.570799]: mali: gmpu before the address spaces: 0x1c:0x11f00 0x48:0x1000 0x4c:0xff020f00 0x60:0x21800000 0xc0:0x30 (nonzero words above; the rest read 0)
+[   21.587294]: mali: AS2 parked, mmu irq 0x40000
+[   21.592674]: mali: AS3 parked, mmu irq 0x80000
+[   21.598092]: mali: AS4 parked, mmu irq 0x100000
+[   21.603545]: mali: AS5 parked, mmu irq 0x200000
+[   21.608923]: mali: AS6 parked, mmu irq 0x400000
+[   21.614242]: mali: AS7 parked, mmu irq 0x800000
+[   21.619641]: mali: address spaces 2 to 7 are unmapped, 1 is left for the firmware (present 0xff)
+[   21.624933]: mali: ipa armed; 0 0 0 0
+[   21.630288]: mali: protocol trial 740: features 0x1 before 0 after 0 wrote 0
+[   21.630371]: mali: l2_config before 0x7130000; asn_hash 0 0 0; left alone
+[   21.635681]: mali: l2_config after 0x7130000; asn_hash 0 0 0
+[   21.646161]: mali: L2 up: trans 0 active 0 ready 0x1
+[   21.777201]: mali: power settle: found 0x600 (all 1 single 1), now raw 0 status 0
+[   21.777213]: mali: the whole block settled, so power and clocks are not the problem
+[   21.777223]: mali: firmware 258048 bytes, header 0.1, entry table ends at 768
+[   21.777271]: mali: section 0: va 0-0x1000 flags 0x9 (r-- cached) 2836 bytes
+[   21.777284]: mali: section 0: memattr index 0
+[   21.777336]: mali: section 1: va 0x1000000-0x1010000 flags 0xd (r-x cached) 63560 bytes
+[   21.777347]: mali: section 1: memattr index 0
+[   21.777465]: mali: section 2: va 0x2000000-0x203e000 flags 0x8000000b (rw- cached) 180752 bytes
+[   21.777475]: mali: section 2: memattr index 0
+[   21.777489]: mali: section 3: va 0x203e000-0x203f000 flags 0x8000000b (rw- cached) 0 bytes
+[   21.777499]: mali: section 3: memattr index 0
+[   21.777512]: mali: section 4: va 0x203f000-0x2040000 flags 0x8000000b (rw- cached) 0 bytes
+[   21.777521]: mali: section 4: memattr index 0
+[   21.777632]: mali: section 5: va 0x2800000-0x2840000 flags 0x80000009 (r-- cached) 180752 bytes
+[   21.777642]: mali: section 5: memattr index 0
+[   21.777649]: mali: section 0x3000000-0x303e000 is protected-mode, mapped with ordinary memory
+[   21.777728]: mali: section 6: va 0x3000000-0x303e000 flags 0x2b (rw- cached) 0 bytes
+[   21.777737]: mali: section 6: memattr index 0
+[   21.777744]: mali: section 0x303e000-0x303f000 is protected-mode, mapped with ordinary memory
+[   21.777759]: mali: section 7: va 0x303e000-0x303f000 flags 0x2b (rw- cached) 0 bytes
+[   21.777768]: mali: section 7: memattr index 0
+[   21.777775]: mali: section 0x303f000-0x3040000 is protected-mode, mapped with ordinary memory
+[   21.777789]: mali: section 8: va 0x303f000-0x3040000 flags 0x2b (rw- cached) 0 bytes
+[   21.777798]: mali: section 8: memattr index 0
+[   21.777962]: mali: section 9: va 0x4000000-0x4094000 flags 0xc000001b (rw- nc shared) 8192 bytes
+[   21.777972]: mali: section 9: memattr index 5
+[   21.777979]: mali: reset vector says pc 0x10018ed; its page is the one that matters
+[   21.777986]: mali: walk 0: L0 0x50008403 L1 0x5000c403 L2 0x50010403 L3 0x40000050004fc3 page pa 0x50004000 (va+off 0x50004000)
+[   21.778018]: mali: walk 0x1001000: L0 0x50008403 L1 0x5000c403 L2 0x50024403 L3 0x50015fc3 page pa 0x50015000 (va+off 0x50015000)
+[   21.778048]: mali: walk 0x1000000: L0 0x50008403 L1 0x5000c403 L2 0x50024403 L3 0x50014fc3 page pa 0x50014000 (va+off 0x50014000)
+[   21.778076]: mali: walk 0x2000000: L0 0x50008403 L1 0x5000c403 L2 0x50068403 L3 0x40000050028f43 page pa 0x50028000 (va+off 0x50028000)
+[   21.778105]: mali: walk 0x4000000: L0 0x50008403 L1 0x5000c403 L2 0x50198403 L3 0x40000050104e57 page pa 0x50104000 (va+off 0x50104000)
+[   21.778134]: mali: walk 0x40000000: L0 0x50008403 L1 0 table unset
+[   21.778153]: mali: walk 0x40022000: L0 0x50008403 L1 0 table unset
+[   21.778171]: mali: walk 0x2002000: L0 0x50008403 L1 0x5000c403 L2 0x50068403 L3 0x4000005002af43 page pa 0x5002a000 (va+off 0x5002a000)
+[   21.778201]: mali: 10 sections, 9 page tables
+[   21.778283]: mali: coverage: every section fully mapped
+[   21.778290]: mali: reset vector: sp 0x2040000  pc 0x10018ed
+[   21.778299]: mali: entry words at VA 0x1000000: 0x10019b1 0x10019b1 0xd00cf8df 0xf832f002
+[   21.778308]: mali: firmware loaded; enabling the address spaces
+[   21.778336]: mali: bus idle before the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)
+[   21.778349]: mali: mmu irq 0 just after the clear, before AS0
+[   21.778359]: mali: AS0 step idle      mmu irq 0
+[   21.778369]: mali: AS0 step transtab  mmu irq 0
+[   21.778378]: mali: AS0 step memattr   mmu irq 0
+[   21.778387]: mali: AS0 step transcfg  mmu irq 0
+[   21.778397]: mali: AS0 readback: transtab 0x50000000 memattr 0x84c8d888d8f88 transcfg 0x42000006
+[   21.778408]: mali: AS0 step update    mmu irq 0x10000
+[   21.778419]: mali: round7 AS0 after UPDATE: raw 0x10000 status 0 fault 0 addr 0 gpu_fault 0 trial 740
+[   21.778430]: mali: AS0 enabled: root 0x50000000 transcfg 0x42000006
+[   21.778438]: mali: mmu irq 0x10000 just after AS0 took the update
+[   21.778463]: mali: bus idle after the table walk: qchannel 0x11 debug_sel 0x3 debug_top 0x4 (idle after 0 spins)
+[   21.778476]: mali: mmu irq 0x10000 before the start request (page faults 0, request completions 0x1)
+[   21.778485]: mali: address space 0 is live; starting the MCU
+[   21.778493]: mali: sentinel 0xff5aa5f0 written to the version word
+[   21.778508]: mali: bus protect sta before the start request: md0 en 0 sta 0xffffffe0, emisys0 en 0 sta 0xff000020, emisys1 en 0 sta 0xff002020
+[   21.778519]: mali: MCU status 0 before the start request
+[   21.778528]: mali: MCU control reads 0 before the start request (doorbell disable clear)
+[   21.778537]: mali: gpu irq status 0 before the start request (mcu attention quiet)
+[   21.778545]: mali: MCU control reads 0 before the start request
+[   21.778552]: mali: MCU window before the start request:
+  0x3020=0x600 0x3090=0x4229ea9
+[   21.778609]: mali: mmu irq 0 with the latch freshly cleared, just before the start request
+[   21.778618]: mali: glb req 0 -> 0 (halt was already clear)
+[   21.778629]: mali: jobirq probe trial 740 before AUTO spin 0: raw 0/0 stat 0 mask 0xffffffff raw_same 1
+[   21.778643]: mali: jobirq probe trial 740 sample spin 0: raw 0/0 stat 0 mask 0xffffffff raw_same 1
+[   21.778656]: mali: spin 0: status 1 job 0 mmu 0 fault 0 at 0 top 0x1b
+[   21.778708]: mali: jobirq probe trial 740 GLOBAL_IF observed by existing loop spin 3: raw 0x80000000/0x80000000 stat 0x80000000 mask 0xffffffff raw_same 1
+[   21.778722]: mali: the start loop ended after 3 spins (halt seen 0, fatal seen 0)
+[   21.778735]: mali: jobirq probe trial 740 loop end before any boot-success clear spin 3: raw 0x80000000/0x80000000 stat 0x80000000 mask 0xffffffff raw_same 1
+[   21.778751]: mali: trial 740 after AUTO (stores captured before AUTO): level 6 cold 1 low 1 preas0 0 freerun 0 parkattrs 0 trace 0 as0first 0 noapclear 0 nopwrclear 0 domainwait 0 fwnc 0 fwx 0
+[   21.778768]: mali: interrupts unmasked after the boot
+[   21.778777]: mali: MCU status 1 (raw state 1; boot unproven), job irq 0, gpu irq 0x200
+[   21.778790]: mali: after the start request: gpu status 0, gpu irq status 0, job irq status 0, mmu irq 0, as0 status 0 faultstatus 0 faultaddress 0
+[   21.778806]: mali: gpu irq raw 0x200 (reset 0 single 1 all 0 caches 0 mcu 0); shader trans 0 tiler trans 0 l2 trans 0
+[   21.778819]: mali: gpu fault 0 at 0; shader ready 0 tiler ready 0x1 l2 ready 0x1
+[   21.779962]: mali: clock check: cycle 0x423148f -> 0x42332f3, timestamp 0 -> 0
+[   21.779972]: mali: version word 0x1010000 (written by the firmware) trial 740
+[   21.779982]: mali: round7 GLB: version 0x1010000 in 0x4002000 out 0x4003000 groups 8 stride 0xa0
+[   21.779992]: mali: round7 CSG0: in 0x4004000 out 0x400c000 streams 8 stride 0xc
+[   21.780003]: mali: ipa after the start: 0 0 0 0 0 0 0 0
+[   21.780012]: mali: the MCU is up; talking to the global interface
+[   21.780023]: mali: CSF interface v1.1.0, features 0, 8 groups (stride 0xa0), instrumentation 0x71, input 0x4002000 output 0x4003000
+[   21.780036]: mali: group 0: 8 streams (stride 0xc), features 0, suspend 26112
+[   21.780087]: mali: global interface config + ping answered (req 0x10e ack 0x10e, job irq 0)
+[   21.780097]: mali: M1 done: the firmware is running and the global interface answered
+[   21.831839]: usb: [1600000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   22.057920]: usb: [1800000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   22.059357]: mt6895-ufs-twoblock: zone write 14120600+2 ocs=0 polls=52 restored=1 (cmds=128 blks=245)
+[   22.220638]: mt6895-ufs-twoblock: flush done, ocs=0 polls=709 restored=1
+[   22.240143]: jnl: xnuvar: journal replay done.
+[   22.289403]: usb: [2000000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   22.523324]: usb: [2200000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   22.751953]: usb: [2400000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   22.762332]: hfs: Removed 11 orphaned / unlinked files and 2 directories 
+[   22.767549]: hfs: mounted RedwoodVar on device xnuvar
+[   22.797875]: nvt: the image was accepted on attempt 1; the reset state reads a0
+[   22.798995]: nvt: crc flags 04 (done 1 ilm 0 dlm 0); ilm e970fade vs e970fade same; dlm f84356f1 vs f84356f1 same
+[   22.977989]: usb: [2600000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   23.204040]: usb: [2800000 us] live 0 sofs 0 ep0 0x40 epi 0 lv1 0 opstate 0x12
+[   23.355574]: mt6895-ufs-twoblock: zone write 14619310+1 ocs=0 polls=30 restored=1 (cmds=256 blks=396)
+[   23.357261]: nvt: the baseline is at a1 (round 0)
+[   23.445653]: mt6895-ufs-twoblock: zone write 14622564+1 ocs=0 polls=30 restored=1 (cmds=384 blks=524)
+[   23.487911]: usb: device conf 0x5000003 [speed 3 addr 5]; opstate 0x12
+[   23.644157]: vnode_create_internal: alias vnode 0xfffffff6211dfd30 is in state of change (start)
+[   23.644948]: vnode_create_internal: alias vnode 0xfffffff6211dfd30 is in state of change (end)
+[   23.873453]: apfs: pagein asks for 32768 bytes at a time (page size 16384)
+[   23.881315]: shared_region: 0x84d794657002d729 [1(launchd.ios)] check_np(0x16f0d7b30) vm_shared_region_start_address() failed
+[   23.883271]: minisandbox: request 2 (first seen from launchd.ios[1]): allowed
+[   23.913220]: shared_region: 0x84d794657002d729 [1(launchd.ios)] check_np(0x16f0d70c0) vm_shared_region_start_address() failed
+[   24.307814]: minisandbox: request 4 (first seen from launchd.ios[1]): answered
+[   24.337327]: skip attaching fsw to lo0 using legacy TX modelReinit'd ND information for interface lo0
+[   24.337405]: Reinit'd ND information for interface lo0
+[   24.349991]: mt6895-ufs-twoblock: flush done, ocs=0 polls=824 restored=1
+[   24.352334]: [System Event] [316580303] [INFO] [Subsystem: launchd] [Event: fsck] Skipping boot-task
+[   24.352427]: [System Event] [316581532] [INFO] [Subsystem: launchd] [Event: mount-phase-1] Skipping boot-task
+[   24.352509]: [System Event] [316582595] [INFO] [Subsystem: launchd] [Event: data-protection] Skipping boot-task
+[   24.352585]: [System Event] [316583584] [INFO] [Subsystem: launchd] [Event: finish-obliteration] Skipping boot-task
+[   24.352661]: [System Event] [316584583] [INFO] [Subsystem: launchd] [Event: detect-installed-roots] Skipping boot-task
+[   24.352735]: [System Event] [316585547] [INFO] [Subsystem: launchd] [Event: commit-boot-mode] Doing boot task
+[   24.352841]: [System Event] [316586920] [INFO] [Subsystem: launchd] [Event: restore-datapartition] Doing boot task
+[   24.352919]: [System Event] [316587928] [INFO] [Subsystem: launchd] [Event: restore-datapartition] optional boot task not present
+[   24.353005]: [System Event] [316589056] [INFO] [Subsystem: launchd] [Event: mount-phase-2] Skipping boot-task
+[   24.353080]: [System Event] [316590020] [INFO] [Subsystem: launchd] [Event: init-with-data-volume] Doing boot task
+[   24.353156]: [System Event] [316591012] [INFO] [Subsystem: launchd] [Event: MSUEarlyBootTask] Skipping boot-task
+[   24.353228]: [System Event] [316591948] [INFO] [Subsystem: launchd] [Event: fips] Skipping boot-task
+[   24.353301]: [System Event] [316592900] [INFO] [Subsystem: launchd] [Event: keybag] Skipping boot-task
+[   24.353373]: [System Event] [316593840] [INFO] [Subsystem: launchd] [Event: usermanagerd] Skipping boot-task
+[   24.353445]: [System Event] [316594775] [INFO] [Subsystem: launchd] [Event: dirs_cleaner] Skipping boot-task
+[   24.401091]: memorystatus_update(enter): pid 6, priority 160, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.401107]: memorystatus_update: init: limit on pid 6 (-1MB F ) targeting priority(160) dirty?=0x0 
+[   24.410864]: memorystatus_update(enter): pid 5, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.410880]: memorystatus_update: init: limit on pid 5 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.423935]: memorystatus_update(enter): pid 7, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.423948]: memorystatus_update: init: limit on pid 7 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.427522]: memorystatus_update(enter): pid 8, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.427539]: memorystatus_update: init: limit on pid 8 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.428194]: map_with_linking_np: [6(SpringBoard)]: region 0, not code signed
+[   24.434938]: memorystatus_update(enter): pid 9, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.434962]: memorystatus_update: init: limit on pid 9 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.435985]: [System Event] [317649452] [INFO] [Subsystem: launchd] [Event: xpcroleaccountd] Skipping boot-task
+[   24.438833]: [System Event] [317687376] [INFO] [Subsystem: launchd] [Event: init_featureflags] Skipping boot-task
+[   24.439261]: memorystatus_update(enter): pid 10, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.439274]: memorystatus_update: init: limit on pid 10 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.443781]: memorystatus_update(enter): pid 11, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.443796]: memorystatus_update: init: limit on pid 11 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.444936]: memorystatus_update(enter): pid 12, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.444950]: memorystatus_update: init: limit on pid 12 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.447212]: [System Event] [317766343] [INFO] [Subsystem: launchd] [Event: auearlyboot] Skipping boot-task
+[   24.447578]: memorystatus_update(enter): pid 13, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.447591]: memorystatus_update: init: limit on pid 13 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.450077]: memorystatus_update(enter): pid 14, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.450091]: memorystatus_update: init: limit on pid 14 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.451583]: [System Event] [317850196] [INFO] [Subsystem: launchd] [Event: tzinit] Skipping boot-task
+[   24.452044]: memorystatus_update(enter): pid 15, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.452059]: memorystatus_update: init: limit on pid 15 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.458070]: memorystatus_update(enter): pid 16, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.458111]: memorystatus_update: init: limit on pid 16 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.460153]: memorystatus_update(enter): pid 17, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.460165]: memorystatus_update: init: limit on pid 17 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.460875]: [System Event] [317943972] [INFO] [Subsystem: launchd] [Event: finish-restore] Skipping boot-task
+[   24.471302]: [System Event] [318067996] [INFO] [Subsystem: launchd] [Event: finish-demo-restore] Skipping boot-task
+[   24.485403]: [System Event] [318252600] [INFO] [Subsystem: launchd] [Event: sysstatuscheck] Skipping boot-task
+[   24.497732]: [System Event] [318418163] [INFO] [Subsystem: launchd] [Event: prng_seedctl] Skipping boot-task
+[   24.515206]: [System Event] [318674520] [INFO] [Subsystem: launchd] [Event: launchd_cache_loader] Skipping boot-task
+[   24.524191]: [System Event] [318791483] [INFO] [Subsystem: launchd] [Event: boot] Early boot complete. Continuing system boot.
+[   24.598149]: memorystatus_update(enter): pid 13, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.598169]: memorystatus_update: init: limit on pid 13 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   24.598447]: memorystatus_update(enter): pid 10, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.598460]: memorystatus_update: init: limit on pid 10 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   24.598574]: memorystatus_update(enter): pid 12, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.598588]: memorystatus_update: init: limit on pid 12 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   24.599693]: memorystatus_update(enter): pid 14, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.599706]: memorystatus_update: init: limit on pid 14 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   24.601121]: memorystatus_update(enter): pid 16, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.601134]: memorystatus_update: init: limit on pid 16 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   24.602399]: memorystatus_update(enter): pid 17, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.602411]: memorystatus_update: init: limit on pid 17 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   24.603025]: memorystatus_update(enter): pid 8, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.603039]: memorystatus_update: init: limit on pid 8 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   24.629123]: memorystatus_update(enter): pid 18, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.629164]: memorystatus_update: init: limit on pid 18 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.646630]: map_with_linking_np: [10(backboardd)]: region 0, not code signed
+[   24.649204]: map_with_linking_np: [12(containermanager)]: region 0, not code signed
+[   24.650480]: memorystatus_update(enter): pid 18, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.650519]: memorystatus_update: init: limit on pid 18 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   24.874754]: memorystatus_update(enter): pid 19, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.874770]: memorystatus_update: init: limit on pid 19 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   24.897609]: memorystatus_update(enter): pid 19, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   24.897638]: memorystatus_update: init: limit on pid 19 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   25.004826]: minisandbox: privilege 1002 refused to logd[17] (first time)
+[   25.111865]: memorystatus_update(enter): pid 11, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   25.111893]: memorystatus_update: init: limit on pid 11 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   25.246132]: memorystatus_update(enter): pid 5, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   25.246160]: memorystatus_update: init: limit on pid 5 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   25.349621]: backboardd[10] triggered unnest of range 0x222c00000->0x222e00000 of DYLD shared region in VM map 0x84d7946356bbfd39. While not abnormal for debuggers, this increases system memory footprint until the target exits.
+[   25.356439]: tcp listen: [0.0.0.0:2222<->0.0.0.0:0] interface:  (skipped: 0)
+so_gencnt: 10 t_state: LISTEN process: hakid:11 so_qlimit: 0 error: 0 so_error: 0 svc/tc: 0memorystatus_update(enter): pid 7, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   25.844802]: memorystatus_update: init: limit on pid 7 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   25.988866]: minisandbox: request 16 (first seen from containermanager[12]): allowed
+[   25.988971]: minisandbox: request 15 (first seen from containermanager[12]): allowed
+[   26.061415]: memorystatus_update(enter): pid 20, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.061433]: memorystatus_update: init: limit on pid 20 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   26.062463]: memorystatus_update(enter): pid 9, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.062478]: memorystatus_update: init: limit on pid 9 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   26.062496]: memorystatus_update(enter): pid 15, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.062539]: memorystatus_update: init: limit on pid 15 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   26.076322]: memorystatus_update(enter): pid 20, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.076341]: memorystatus_update: init: limit on pid 20 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   26.194716]: memorystatus_update(enter): pid 21, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.194739]: memorystatus_update: init: limit on pid 21 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   26.208518]: memorystatus_update(enter): pid 21, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.208546]: memorystatus_update: init: limit on pid 21 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   26.420313]: memorystatus_update(enter): pid 22, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.420340]: memorystatus_update: init: limit on pid 22 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   26.430496]: memorystatus_update(enter): pid 22, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.430518]: memorystatus_update: init: limit on pid 22 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   26.452990]: memorystatus_update(enter): pid 23, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.453003]: memorystatus_update: init: limit on pid 23 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   26.480392]: memorystatus_update(enter): pid 23, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.480411]: memorystatus_update: init: limit on pid 23 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   26.569107]: minisandbox: request 28 (first seen from distnoted[13]): allowed
+[   26.626735]: memorystatus_update(enter): pid 24, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.626785]: memorystatus_update: init: limit on pid 24 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   26.650008]: memorystatus_update(enter): pid 24, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   26.650035]: memorystatus_update: init: limit on pid 24 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   27.045367]: map_with_linking_np: [15(net_test)]: region 0, not code signed
+[   27.066759]: skip attaching fsw to en0 using legacy TX modelmt6895-ufs-twoblock: zone write 14655502+1 ocs=0 polls=37 restored=1 (cmds=512 blks=1067)
+[   27.653383]: MiniIOMobileFramebuffer: backboardd[10] selector 57 (scalars 0 in [0x0 0x0 0x0 0x0], 1 out; structure 0 in, 0 out)
+[   27.653495]: MiniIOMobileFramebuffer: selector 57 not implemented (scalars 0 in [0x0 0x0 0x0], 1 out; structure 0 in, 0 out)
+[   27.664444]: MiniIOMobileFramebuffer: backboardd[10] selector 15 (scalars 2 in [0x0 0x10 0x0 0x0], 1 out; structure 0 in, 0 out)
+[   27.664472]: MiniIOMobileFramebuffer: selector 15 not implemented (scalars 2 in [0x0 0x10 0x0], 1 out; structure 0 in, 0 out)
+[   27.664960]: MiniIOMobileFramebuffer: backboardd[10] selector 22 (scalars 1 in [0x0 0x0 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   27.664976]: MiniIOMobileFramebuffer: selector 22 not implemented (scalars 1 in [0x0 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   27.665005]: MiniIOMobileFramebuffer: backboardd[10] selector 8 (scalars 0 in [0x0 0x0 0x0 0x0], 2 out; structure 0 in, 0 out)
+[   27.665031]: MiniIOMobileFramebuffer: backboardd[10] selector 28 (scalars 0 in [0x0 0x0 0x0 0x0], 1 out; structure 0 in, 0 out)
+[   27.665048]: MiniIOMobileFramebuffer: backboardd[10] selector 29 (scalars 0 in [0x0 0x0 0x0 0x0], 0 out; structure 0 in, 8 out)
+[   27.665054]: MiniIOMobileFramebuffer: selector 29 not implemented (scalars 0 in [0x0 0x0 0x0], 0 out; structure 0 in, 8 out)
+[   27.665358]: MiniIOMobileFramebuffer: backboardd[10] selector 33 (scalars 1 in [0x0 0x0 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   27.665363]: MiniIOMobileFramebuffer: selector 33 not implemented (scalars 1 in [0x0 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   27.684931]: MiniIOMobileFramebuffer: backboardd[10] selector 79 (scalars 2 in [0x4d 0x0 0x0 0x0], 0 out; structure 0 in, 1580 out)
+[   27.779659]: PMRD: power event 4 args 0x84d794673c92b649 0x0
+[   27.780813]: PMRD: power event 6 args 0x84d794673c8b9bd9 0x0
+[   27.780865]: PMRD: power event 6 args 0x84d794673c8b9bd9 0x0
+[   27.780934]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x302) tag 0x70064
+[   27.781010]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   27.782418]: PMRD: power event 12 args 0x84d794665648ba41 0x0
+[   27.782440]: PMRD: SleepWake UUID queued: A23B474C-293E-48D9-BADD-FBD076B72B7F
+[   27.783823]: MiniIOMobileFramebuffer: backboardd[10] selector 74 (scalars 1 in [0x0 0x0 0x0 0x0], 1 out; structure 0 in, 64 out)
+[   27.796928]: PMRD: setAggressiveness(0) kPMMinutesToSleep = 2147483647
+[   27.797012]: PMRD: setAggressiveness(0) kPMMinutesToSpinDown = 10
+[   27.797044]: PMRD: setAggressiveness(0) kPMMinutesToDim = 10
+[   27.797061]: PMRD: aggressiveness changed: system 0->2147483647, display 10
+[   27.797076]: PMRD: idle time -> 0 ms (ena 1)
+[   27.797083]: PMRD: idle sleep timer enabled
+[   27.797087]: PMRD: setAggressiveness(0) kPMEthernetWakeOnLANSettings = 0
+[   27.797087]: PMRD: changePowerStateWithTagToPriv(ON_STATE, 8000a)
+[   27.797107]: PMRD: idle timer set for 0 milliseconds
+[   27.797114]: PMRD: aggressiveness changed: system 0->2147483647, display 10
+[   27.797119]: PMRD: idle time -> 0 ms (ena 1)
+[   27.797125]: PMRD: sleep timer expired
+[   27.797132]: PMRD: setAggressiveness(100) kPMMinutesToSpinDown = 0
+[   27.797140]: PMRD: adjustPowerState ON_STATE, asap 1, idleSleepEnabled 1
+[   27.797148]: PMRD: System sleep prevented by kPMConfigPreventSystemSleep
+[   27.797151]: PMRD: changePowerStateWithTagToPriv(ON_STATE, 90008)
+[   27.797162]: PMRD: disk spindown accelerated, was 10 min
+[   27.797187]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x2) tag 0x8000a
+[   27.797192]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   27.797200]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x2) tag 0x90008
+[   27.797203]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   27.798486]: PMRD: setAggressiveness(0) kPMPowerSource = 2
+[   27.837347]: memorystatus_update(enter): pid 25, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   27.837379]: memorystatus_update: init: limit on pid 25 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   27.850038]: memorystatus_update(enter): pid 25, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   27.850057]: memorystatus_update: init: limit on pid 25 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   27.957765]: PMRD: setAggressiveness(0) kPMMinutesToSleep = 0
+[   27.957826]: PMRD: aggressiveness changed: system 0->0, display 10
+[   27.957837]: PMRD: idle time -> 0 ms (ena 0)
+[   27.957842]: PMRD: idle sleep timer disabled
+[   27.957845]: PMRD: setAggressiveness(200) kPMMinutesToSpinDown = 0
+[   27.957853]: PMRD: adjustPowerState ON_STATE, asap 0, idleSleepEnabled 0
+[   27.957856]: PMRD: changePowerStateWithTagToPriv(ON_STATE, a0008)
+[   27.957865]: PMRD: disk spindown restored to 10 min
+[   27.957876]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x2) tag 0xa0008
+[   27.957882]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   28.233278]: memorystatus_update(enter): pid 26, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   28.233296]: memorystatus_update: init: limit on pid 26 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   28.247054]: memorystatus_update(enter): pid 26, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   28.247071]: memorystatus_update: init: limit on pid 26 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   28.272075]: minisandbox: request 5 (first seen from iconservicesagen[26]): allowed
+[   28.274312]: minisandbox: request 12 (first seen from cfprefsd[20]): allowed
+[   28.312808]: mt6895-ufs-twoblock: flush done, ocs=0 polls=836 restored=1
+[   28.331686]: mt6895-ufs-twoblock: flush done, ocs=0 polls=253 restored=1
+[   29.526776]: minisandbox: privilege 1015 refused to lsd[22] (first time)
+[   29.526806]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.546929]: minisandbox: request 7 (first seen from containermanager[12]): allowed
+[   29.573997]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.624125]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.662352]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.685329]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.711089]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.736655]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.761482]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.772025]: mt6895-keys: 0 changes so far; the keypad reads ffff ffff ffff ffff ffff
+[   29.789594]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.863279]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.884387]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.904117]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.933136]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   29.970927]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.009130]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.048540]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.089077]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.126061]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.156873]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.187814]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.212794]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.241912]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.286226]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.316026]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.347043]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.384576]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.417886]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.468534]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.570240]: mt6895-ufs-twoblock: flush done, ocs=0 polls=501 restored=1
+[   30.639421]: mt6895-ufs-twoblock: flush done, ocs=0 polls=538 restored=1
+[   30.661071]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.698316]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.728512]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.749931]: mt6895-ufs-twoblock: zone write 13805079+16 ocs=0 polls=106 restored=1 (cmds=640 blks=1926)
+[   30.755431]: mt6895-ufs-twoblock: flush done, ocs=0 polls=690 restored=1
+[   30.778614]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.804644]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.834866]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.863784]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.904926]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.939597]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.968487]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   30.999354]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.056716]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.093275]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.124399]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.165021]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.191442]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.239440]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.275286]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.305886]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.339353]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.364820]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.399641]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.422068]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.455724]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.485389]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.576372]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.599052]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.634673]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.664007]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.688142]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.723156]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.747196]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.775537]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.797931]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.822960]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.845562]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.867624]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.896948]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.952774]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   31.981746]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.004620]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.025452]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.058078]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.109744]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.209908]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.248635]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.288395]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.321255]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.350027]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.390962]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.446864]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.507955]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.533850]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.556020]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.612157]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.637703]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.700821]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.725500]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.762927]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.791290]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.813803]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.849610]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.876452]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.901474]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.938010]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   32.990288]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.014119]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.086801]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.121153]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.155821]: MiniIOMobileFramebuffer: backboardd[10] selector 12 (scalars 1 in [0x1 0x0 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   33.155905]: MiniIOMobileFramebuffer: backboardd[10] selector 79 (scalars 2 in [0x40 0x0 0x0 0x0], 0 out; structure 0 in, 40 out)
+[   33.156150]: MiniIOMobileFramebuffer: backboardd[10] selector 6 (scalars 3 in [0x0 0x80000003 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   33.156178]: MiniIOMobileFramebuffer: backboardd[10] selector 27 (scalars 0 in [0x0 0x0 0x0 0x0], 0 out; structure 0 in, 3084 out)
+[   33.156188]: MiniIOMobileFramebuffer: selector 27 not implemented (scalars 0 in [0x0 0x0 0x0], 0 out; structure 0 in, 3084 out)
+[   33.156242]: MiniIOMobileFramebuffer: backboardd[10] selector 17 (scalars 0 in [0x0 0x0 0x0 0x0], 0 out; structure 3084 in, 0 out)
+[   33.156260]: MiniIOMobileFramebuffer: selector 17 not implemented (scalars 0 in [0x0 0x0 0x0], 0 out; structure 3084 in, 0 out)
+[   33.156279]: MiniIOMobileFramebuffer: backboardd[10] selector 84 (scalars 0 in [0x0 0x0 0x0 0x0], 0 out; structure 4 in, 0 out)
+[   33.156285]: MiniIOMobileFramebuffer: selector 84 not implemented (scalars 0 in [0x0 0x0 0x0], 0 out; structure 4 in, 0 out)
+[   33.156301]: MiniIOMobileFramebuffer: backboardd[10] selector 50 (scalars 2 in [0x10000 0x0 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   33.156306]: MiniIOMobileFramebuffer: selector 50 not implemented (scalars 2 in [0x10000 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   33.175980]: MiniIOMobileFramebuffer: backboardd[10] selector 68 (scalars 1 in [0x7 0x0 0x0 0x0], 0 out; structure 8 in, 0 out)
+[   33.176006]: MiniIOMobileFramebuffer: selector 68 not implemented (scalars 1 in [0x7 0x0 0x0], 0 out; structure 8 in, 0 out)
+[   33.179257]: MiniIOSurface: backboardd[10] created surface 1: 1080x2460 'BGRA', 4352 bytes per row, 0 planes, 10715136 bytes
+[   33.188030]: MiniIOMobileFramebuffer: backboardd[10] selector 4 (scalars 0 in [0x0 0x0 0x0 0x0], 1 out; structure 0 in, 0 out)
+[   33.188235]: MiniIOMobileFramebuffer: backboardd[10] selector 68 (scalars 1 in [0x6 0x0 0x0 0x0], 0 out; structure 8 in, 0 out)
+[   33.188308]: MiniIOMobileFramebuffer: backboardd[10] selector 5 (scalars 0 in [0x0 0x0 0x0 0x0], 0 out; structure 1132 in, 0 out)
+[   33.188343]: MiniIOMobileFramebuffer: backboardd[10] selector 3 (scalars 2 in [0x0 0x0 0x0 0x0], 1 out; structure 0 in, 0 out)
+[   33.189802]: MiniIOMobileFramebuffer: swap 1 (#0): surfaces 1 0 0 0, layers set 0x80000007 cleared 0x80000006
+[   33.189835]: MiniIOMobileFramebuffer: fb_disp: ovl0 src_con 0x2 datapath 0x7000005
+[   33.189848]: MiniIOMobileFramebuffer: fb_disp:   ovl0 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88000
+[   33.189868]: MiniIOMobileFramebuffer: fb_disp: ovl1 src_con 0x2 datapath 0x7000005
+[   33.189874]: MiniIOMobileFramebuffer: fb_disp:   ovl1 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88870
+[   33.189884]: MiniIOMobileFramebuffer: fb_disp: ovl3 src_con 0 datapath 0x3000000
+[   33.189889]: MiniIOMobileFramebuffer: fb_disp: ovl4 src_con 0x1 datapath 0x7000001
+[   33.189893]: MiniIOMobileFramebuffer: fb_disp:   ovl4 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e000
+[   33.189899]: MiniIOMobileFramebuffer: fb_disp: ovl5 src_con 0 datapath 0x3000000
+[   33.189903]: MiniIOMobileFramebuffer: fb_disp: ovl6 src_con 0x1 datapath 0x7000001
+[   33.189906]: MiniIOMobileFramebuffer: fb_disp:   ovl6 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e870
+[   33.189912]: MiniIOMobileFramebuffer: fb_disp: dsi start        0x1
+[   33.189916]: MiniIOMobileFramebuffer: fb_disp: dsi size_con     0x99c0168
+[   33.189921]: MiniIOMobileFramebuffer: fb_disp: dsi vact_nl      0x99c
+[   33.189925]: MiniIOMobileFramebuffer: fb_disp: dsi hsa_wc       0x14
+[   33.189929]: MiniIOMobileFramebuffer: fb_disp: dsi hbp_wc       0x1c
+[   33.189933]: MiniIOMobileFramebuffer: fb_disp: dsi hfp_wc       0x3cc
+[   33.189935]: MiniIOMobileFramebuffer: fb_disp: panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080
+[   33.189940]: MiniIOMobileFramebuffer: swap 1 layer 0: surface 1 (1080x2460 'BGRA') from 0,0 1080x2460 to 0,0 1080x2460, layers set 0x80000007
+[   33.191419]: MiniIOMobileFramebuffer: backboardd[10] selector 6 (scalars 3 in [0x1 0x1 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   33.191647]: MiniIOMobileFramebuffer: swap #1: surfaces in layers 0x1 now (0x0 before): 1 0 0 0
+[   33.191690]: MiniIOMobileFramebuffer: backboardd[10] selector 55 (scalars 1 in [0x9 0x0 0x0 0x0], 0 out; structure 72 in, 0 out)
+[   33.191702]: MiniIOMobileFramebuffer: selector 55 not implemented (scalars 1 in [0x9 0x0 0x0], 0 out; structure 72 in, 0 out)
+[   33.191774]: MiniIOMobileFramebuffer: backboardd[10] selector 50 (scalars 2 in [0x10000 0x0 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   33.191967]: MiniIOMobileFramebuffer: backboardd[10] selector 6 (scalars 3 in [0x1 0x80000000 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   33.191995]: MiniIOMobileFramebuffer: backboardd[10] selector 4 (scalars 0 in [0x0 0x0 0x0 0x0], 1 out; structure 0 in, 0 out)
+[   33.192030]: MiniIOMobileFramebuffer: backboardd[10] selector 5 (scalars 0 in [0x0 0x0 0x0 0x0], 0 out; structure 1132 in, 0 out)
+[   33.205425]: MiniIOMobileFramebuffer: swap 2 (#1): surfaces 1 0 0 0, layers set 0x1 cleared 0x0
+[   33.205446]: MiniIOMobileFramebuffer: fb_disp: ovl0 src_con 0x2 datapath 0x7000005
+[   33.205453]: MiniIOMobileFramebuffer: fb_disp:   ovl0 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88000
+[   33.205461]: MiniIOMobileFramebuffer: fb_disp: ovl1 src_con 0x2 datapath 0x7000005
+[   33.205465]: MiniIOMobileFramebuffer: fb_disp:   ovl1 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88870
+[   33.205483]: MiniIOMobileFramebuffer: fb_disp: ovl3 src_con 0 datapath 0x3000000
+[   33.205488]: MiniIOMobileFramebuffer: fb_disp: ovl4 src_con 0x1 datapath 0x7000001
+[   33.205491]: MiniIOMobileFramebuffer: fb_disp:   ovl4 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e000
+[   33.205497]: MiniIOMobileFramebuffer: fb_disp: ovl5 src_con 0 datapath 0x3000000
+[   33.205501]: MiniIOMobileFramebuffer: fb_disp: ovl6 src_con 0x1 datapath 0x7000001
+[   33.205504]: MiniIOMobileFramebuffer: fb_disp:   ovl6 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e870
+[   33.205510]: MiniIOMobileFramebuffer: fb_disp: dsi start        0x1
+[   33.205516]: MiniIOMobileFramebuffer: fb_disp: dsi size_con     0x99c0168
+[   33.205520]: MiniIOMobileFramebuffer: fb_disp: dsi vact_nl      0x99c
+[   33.205533]: MiniIOMobileFramebuffer: fb_disp: dsi hsa_wc       0x14
+[   33.205538]: MiniIOMobileFramebuffer: fb_disp: dsi hbp_wc       0x1c
+[   33.205541]: MiniIOMobileFramebuffer: fb_disp: dsi hfp_wc       0x3cc
+[   33.205544]: MiniIOMobileFramebuffer: fb_disp: panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080
+[   33.205548]: MiniIOMobileFramebuffer: swap 2 layer 0: surface 1 (1080x2460 'BGRA') from 0,0 1080x2460 to 0,0 1080x2460, layers set 0x1
+[   33.222007]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.270507]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.297207]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.342525]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.376254]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.450174]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.487440]: usb: setup 33: type 21 req 43 value 000e index 0000 length 0
+[   33.487454]: usb: ecm packet filter 0xe
+[   33.493692]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.539799]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.582549]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.618538]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.635089]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.672730]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.701125]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.741131]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.789514]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.833030]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.875220]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.897500]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.923470]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   33.953894]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.235700]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.268274]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.305364]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.333515]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.368018]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.393040]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.418122]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.439910]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.461244]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.483015]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.505496]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.528422]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.550381]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.572152]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.592959]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.614937]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.636250]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.658727]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.681766]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.703104]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.725829]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.759224]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.785869]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.806796]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.828111]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.850796]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.871963]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.892974]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.914236]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.939026]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.967487]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   34.988338]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.009320]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.030705]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.051330]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.076007]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.099873]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.124298]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.147918]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.168502]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.191481]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.212546]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.233984]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.257385]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.291905]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.319428]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.342088]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.362884]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.384053]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.404518]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.425167]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.456499]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.489836]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.514397]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.521338]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:40748] interface: en0 (skipped: 0)
+so_gencnt: 14 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 0.0 ms rttvar: 250.0 ms base_rtt: 0 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:40748] interface: en0 (skipped: 0)
+so_gencnt: 14 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 0.0 ms rttvar: 250.0 ms base_rtt: 0 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:40748] interface: en0 (skipped: 0)
+so_gencnt: 14 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 5.0 ms rttvar: 2.500 ms base_rtt: 5 ms error: 0 so_error: 0 svc/tc: 0hlog: magic 0x63061 size 1048576 bufx 92619 bufr 0
+[   35.537690]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.561895]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.583947]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.614643]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.653583]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.692359]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.736566]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.774803]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.813287]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.853782]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   35.907256]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.027745]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.071491]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.110763]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.167038]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.219372]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.255472]: tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:40748] interface: en0 (skipped: 0)
+so_gencnt: 14 t_state: LAST_ACK process: hakid:11 Duration: 0.734 sec Conn_Time: 0.5 sec bytes in/out: 4/160930 pkts in/out: 2/115 pkt rxmit: 48 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 2.250 ms rttvar: 0.875 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:40748] interface: en0 (skipped: 0)
+so_gencnt: 14 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   36.256593]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.308422]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.381299]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.432489]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.470512]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.526393]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.617529]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.669460]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.716066]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.772712]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.842292]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.882121]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.931817]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   36.985983]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.050564]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.111470]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.167147]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.224086]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.279432]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.333966]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.391719]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.438114]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.493687]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.584828]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.624872]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.665662]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.704158]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.756213]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.842751]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.881999]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.928923]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   37.979916]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.035760]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.156577]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.199108]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.240311]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.283483]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.327617]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.381308]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.435776]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.497013]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.555243]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.608903]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.665152]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.710816]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.776834]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.828796]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.884502]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.938322]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   38.979457]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.040213]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.095796]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.151177]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.203502]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.262051]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.353139]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.390733]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.428130]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.469262]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.510207]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.557513]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.652704]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.698349]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.741916]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.793546]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.851246]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.908027]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   39.959866]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.014325]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.098443]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.140141]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.184253]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.200653]: mt6895-keys: 0 changes so far; the keypad reads ffff ffff ffff ffff ffff
+[   40.238077]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.293668]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.342236]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.377021]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.423294]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.458490]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.510959]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.557766]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.637043]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.680596]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.724998]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.767845]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.823274]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.870146]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.911671]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   40.963743]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.014611]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.072560]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.118680]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.173707]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.227242]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.281971]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.325350]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.342137]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:40754] interface: en0 (skipped: 0)
+so_gencnt: 16 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.875 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:40754] interface: en0 (skipped: 0)
+so_gencnt: 16 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.875 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:40754] interface: en0 (skipped: 0)
+so_gencnt: 16 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.562 ms rttvar: 1.125 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0mali: stop: enter (mcu status 1, tiler ready 0x1, l2 ready 0x1)
+[   41.350799]: mali: stop halt: req before 0x10e
+[   41.351247]: mali: stop halt: req after 0x10f, ringing the doorbell
+[   41.351714]: mali: stop halt: reads 0x2 after 1000 us
+[   41.352154]: mali: stop disabled: reads 0 after 0 us
+[   41.352588]: mali: stop: no soft reset needed
+[   41.353050]: mali: stop as0 parked: reads 0 after 0 us
+[   41.353535]: mali: stop l2 pwrtrans clear: reads 0 after 0 us
+[   41.354059]: mali: stop l2 pwrtrans after off: reads 0 after 1000 us
+[   41.354529]: mali: stop: l2 ready now 0
+[   41.355059]: mali: stop: irqs masked and cleared (raw 0 job 0 mmu 0)
+[   41.355584]: mali: stop: releasing the GPUEB reference
+[   41.356347]: gpueb: bringup off: reply 00000006 00000000 00000000 00000000
+[   41.356956]: gpueb: bringup off: reply (cont) 00000000 00000000 00000000 00000000; ret 0
+[   41.357010]: gpueb: shared after bringup off:
+  +000: 00000003 0000001b 00000005 00000028 00068fb0 0005dfe8 0000ea60 0000d6d8
+  +020: 000124f8 000124f8 00000000 00000209 00000000 000006c0 00000000 000000f6
+  +040: 00000000 00000000 00000000 00000027 00000000 00000000 00000000 00000000
+  +060: 00000001 00000002 00130013 00000000 00000001 00000001 00000000 00000002
+[   41.361873]: gpueb: domains after bringup off: MFG0 0xc000224d (ack30 1 ack31 1) MFG1 0x1112 (rst_b 0 on 0 on2nd 0 clk_dis 1 ack30 0 ack31 0) F3C 0x3 (mfg0 1 mfg1 0 mfg0_1 0x2 mfg1_12 0) F40 0x3 (mfg1 0)
+[   41.362660]: mali: gpueb: POWER_OFF answered 0; the reference is released
+[   41.363452]: mali: stop: done (mcu status 0, tiler ready 0, l2 ready 0)
+[   41.368319]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.435385]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.448001]: tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:40754] interface: en0 (skipped: 0)
+so_gencnt: 16 t_state: LAST_ACK process: hakid:11 Duration: 0.107 sec Conn_Time: 0.4 sec bytes in/out: 19/221 pkts in/out: 2/4 pkt rxmit: 0 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 6.187 ms rttvar: 8.187 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:40754] interface: en0 (skipped: 0)
+so_gencnt: 16 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   41.475341]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.523881]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.588199]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.634082]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.686541]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.747611]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.803536]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.851228]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.904320]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   41.973206]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.023057]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.088920]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.153880]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.208450]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.266910]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.320979]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.375199]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.438451]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.486594]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.598643]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.642266]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.690509]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.732227]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.775273]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.813734]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.866438]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.951714]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   42.989629]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.034429]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.084958]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.140455]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.191882]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.255317]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.307262]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.357539]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.410821]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.454839]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.513962]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.572717]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.625583]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.683602]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.857902]: mt6895-ufs-twoblock: flush done, ocs=0 polls=560 restored=1
+[   43.884720]: mt6895-ufs-twoblock: flush done, ocs=0 polls=512 restored=1
+[   43.903446]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   43.996365]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.039107]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.076380]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.131984]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.189909]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.245652]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.305584]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.356259]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.459767]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.503701]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.546493]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.597752]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.657049]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.713169]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.774391]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.830826]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   44.899241]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.059244]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.103163]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.148874]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.195222]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.236917]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.277159]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.319392]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.369791]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.406502]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.461128]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.516609]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.636424]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.678907]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.718890]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.766548]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.810752]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.859247]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.905514]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   45.960930]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.006397]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.050204]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.102490]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.161681]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.223092]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.313011]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.352896]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.389990]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.428174]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.473152]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.528629]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.578057]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.632460]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.682930]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.737855]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.872268]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.917947]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   46.963702]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.003269]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.047175]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.090602]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.138429]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.195970]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.218366]: cpu_start() cpu: 0
+[   47.218397]: GenericARMPE: the slower cores started too: 4 processors running
+[   47.295609]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.338432]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.383709]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.426618]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.476587]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.602041]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.644677]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.685351]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.736322]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.778213]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.815963]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.859572]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.916595]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   47.977692]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.030352]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.072912]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.123635]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.178016]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.217188]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.269453]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.327933]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.384778]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.425731]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.465919]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.537218]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.588670]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.642844]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.678399]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.720119]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.758730]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.800059]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.838467]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.881025]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.938346]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   48.981534]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.017214]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.070645]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.105001]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.152493]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.187391]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:40388] interface: en0 (skipped: 0)
+so_gencnt: 18 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.875 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:40388] interface: en0 (skipped: 0)
+so_gencnt: 18 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.875 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:40388] interface: en0 (skipped: 0)
+so_gencnt: 18 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.312 ms rttvar: 0.750 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.213570]: tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:40388] interface: en0 (skipped: 0)
+so_gencnt: 18 t_state: LAST_ACK process: hakid:11 Duration: 0.27 sec Conn_Time: 0.2 sec bytes in/out: 4/114518 pkts in/out: 2/82 pkt rxmit: 15 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 2.250 ms rttvar: 0.500 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:40388] interface: en0 (skipped: 0)
+so_gencnt: 18 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   49.255798]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.352750]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.393881]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.432933]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.473599]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.510714]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.548639]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.616529]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.675384]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.737858]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.777644]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.835459]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.897464]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   49.953478]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.016602]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.054816]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.118816]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.157198]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.216107]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.269631]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.327268]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.382687]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.437657]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.501304]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.564046]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.629691]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.639167]: mt6895-keys: 0 changes so far; the keypad reads ffff ffff ffff ffff ffff
+[   50.672893]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.736093]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.776417]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.833545]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.888546]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.955543]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   50.998286]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.080984]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.120448]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.156696]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.191688]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.246159]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.301021]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.362596]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.398592]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.479313]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.517525]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.554605]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.614715]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.673874]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.743398]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.779075]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.815734]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.871815]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   51.958082]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.027815]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.082688]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.139921]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.199738]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.256382]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.312096]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.383145]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.425108]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.469882]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.533783]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.589420]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.662281]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.706392]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.764276]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.841620]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.878404]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   52.945586]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.000893]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.056478]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.114372]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.181971]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.242598]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.298109]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.354636]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.409073]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.413646]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:40396] interface: en0 (skipped: 0)
+so_gencnt: 20 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.281 ms rttvar: 0.625 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:40396] interface: en0 (skipped: 0)
+so_gencnt: 20 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.281 ms rttvar: 0.625 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:40396] interface: en0 (skipped: 0)
+so_gencnt: 20 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.375 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:40396] interface: en0 (skipped: 0)
+so_gencnt: 20 t_state: LAST_ACK process: hakid:11 Duration: 0.27 sec Conn_Time: 0.3 sec bytes in/out: 4/114518 pkts in/out: 2/82 pkt rxmit: 15 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 2.312 ms rttvar: 0.812 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:40396] interface: en0 (skipped: 0)
+so_gencnt: 20 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   53.469415]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.522209]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.582113]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.617444]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.682309]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.725090]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.793780]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.853545]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.909881]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   53.982088]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.036689]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.111117]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.177578]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.290403]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.327464]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.364917]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.412743]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.443631]: mt6895-ufs-twoblock: flush done, ocs=0 polls=638 restored=1
+[   54.463905]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.465812]: mt6895-ufs-twoblock: zone write 14120530+2 ocs=0 polls=43 restored=1 (cmds=768 blks=4006)
+[   54.500833]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.540641]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.584687]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.639978]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.699897]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.775164]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.835217]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.891099]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.953884]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   54.992051]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.054954]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.094628]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.149738]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.218346]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.312271]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.360556]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.402263]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.443271]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.488285]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.546849]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.606223]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.679594]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.722573]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.759317]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.827437]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.868253]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.927624]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   55.934461]: nvt: the baseline never left a1 in thirty seconds
+[   55.935223]: nvt: the firmware is still starting (a1); the reports will come
+[   55.935971]: nvt: the chip is running the image this driver sent it
+[   55.987770]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.068268]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.105117]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.138420]: nvt: chip id reads 0e 00 00 72 66 03
+[   56.140424]: nvt: fw info ver 11 (~ee) xnum 16 ynum 36 xmax 1080 ymax 2460 buttons 0; consistent
+[   56.145427]: nvt: page 0x22d00 reads 77 77 77 77 77 77 6e f7, checksum bad
+[   56.147877]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.150517]: nvt: page 0x21c00 reads 18 5b 06 2b ae dd f9 37, checksum bad
+[   56.155604]: nvt: page 0x11e00 reads cf ed f0 0d 84 42 80 20, checksum bad
+[   56.160702]: nvt: page 0x11a00 reads 5a 08 01 07 44 02 d2 88, checksum bad
+[   56.189110]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.260100]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.303998]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.370210]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.432983]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.489210]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.560331]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.631707]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.695286]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.759708]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.802258]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.875684]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   56.940315]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.008675]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.092782]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.135354]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.175394]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.220277]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.314391]: nvt: over 2000000 spins the interrupt line saw 228 rising edges and was high 9731 times
+[   57.314446]: nvt: mode words 0x300..0x4f0: 11000000 00000011 11100066 11111111 11111111 11111101 11111111 11111111 11111111 34111331 11111111 37771111 77777333 00001177 00100010 01111004 01111110 00011110 11000000 00000001 00001100 00000000 00011000 00111100 11111111 11111111 00001111 11111110 00000111 00000000 00000000 00000000
+[   57.319327]: nvt: group 0 dir 00100c08 dout 00100c08 din ecf477c2
+[   57.319376]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.321778]: nvt: group 1 dir 00000200 dout 00000200 din 00f80e7f
+[   57.323013]: nvt: group 2 dir 00000000 dout 00000000 din 0f000000
+[   57.324264]: nvt: group 3 dir 06c1c000 dout 06c1c000 din 10526801
+[   57.325537]: nvt: group 4 dir 5e080001 dout 5e080001 din 40003e7e
+[   57.326799]: nvt: group 5 dir 00830011 dout 00830011 din 20000000
+[   57.328084]: nvt: group 6 dir 01d00000 dout 01d00000 din 0480075b
+[   57.329373]: nvt: group 7 dir 00000000 dout 00000000 din 00000006
+[   57.337168]: nvt: read 1 of the whole buffer: 77 77 77 77 77 77 ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+[   57.338556]: nvt:    ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+[   57.339933]: nvt:    ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+[   57.341308]: nvt:    ff ff ff ff 70 01 22 84 bf 5e 28 ae 39 30 30 63 29 7c 23 f3
+[   57.342646]: nvt:    00 00 00 00 3c 92 b5 f7 44 d6 f0 04 33 92 12 00 a3 0c bc a6
+[   57.344011]: nvt:    76 53 7b f9 db 83 d2 75  (checksum good)
+[   57.362559]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.402347]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.443791]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.481601]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.550572]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.581409]: nvt: read 2 of the whole buffer: 77 77 77 77 77 77 ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+[   57.583072]: nvt:    ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+[   57.584605]: nvt:    ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+[   57.586100]: nvt:    ff ff ff ff 70 01 22 84 bf 5e 28 ae 39 30 30 63 29 7c 23 f3
+[   57.587597]: nvt:    00 00 00 00 3c 92 b5 f7 44 d6 f0 04 33 92 12 00 a3 0c bc a6
+[   57.589114]: nvt:    76 53 7b f9 db 83 d2 75  (checksum good)
+[   57.612061]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.667885]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.727376]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.785357]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.817327]: nvt: read 3 of the whole buffer: 77 77 77 77 77 77 ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+[   57.819174]: nvt:    ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+[   57.820832]: nvt:    ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff
+[   57.822454]: nvt:    ff ff ff ff 70 01 22 84 bf 5e 28 ae 39 30 30 63 29 7c 23 f3
+[   57.824097]: nvt:    00 00 00 00 3c 92 b5 f7 44 d6 f0 04 33 92 12 00 a3 0c bc a6
+[   57.825753]: nvt:    76 53 7b f9 db 83 d2 75  (checksum good)
+[   57.846206]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.904147]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   57.979375]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.037083]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.097302]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.153196]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.217718]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.255412]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.312351]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.381468]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.427083]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.507632]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.548844]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.567428]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:56904] interface: en0 (skipped: 0)
+so_gencnt: 22 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:56904] interface: en0 (skipped: 0)
+so_gencnt: 22 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:56904] interface: en0 (skipped: 0)
+so_gencnt: 22 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.312 ms rttvar: 0.625 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:56904] interface: en0 (skipped: 0)
+so_gencnt: 22 t_state: LAST_ACK process: hakid:11 Duration: 0.10 sec Conn_Time: 0.2 sec bytes in/out: 5/65 pkts in/out: 2/2 pkt rxmit: 0 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 2.375 ms rttvar: 0.625 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:56904] interface: en0 (skipped: 0)
+so_gencnt: 22 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   58.599341]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:56916] interface: en0 (skipped: 0)
+so_gencnt: 23 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:56916] interface: en0 (skipped: 0)
+so_gencnt: 23 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:56916] interface: en0 (skipped: 0)
+so_gencnt: 23 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.437 ms rttvar: 0.750 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:56916] interface: en0 (skipped: 0)
+so_gencnt: 23 t_state: LAST_ACK process: hakid:11 Duration: 0.16 sec Conn_Time: 0.3 sec bytes in/out: 10/15694 pkts in/out: 2/13 pkt rxmit: 2 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 2.375 ms rttvar: 1.000 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:56916] interface: en0 (skipped: 0)
+so_gencnt: 23 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   58.615222]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.676999]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.735011]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.808150]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.847656]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.888472]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   58.945310]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.025603]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.097216]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.156572]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.215044]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.276508]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.380392]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.427028]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.477804]: nvt: 1 distinct buffer patterns so far: [0 x10 77 77 77 77 77]
+[   59.481463]: nvt: 10 reports, 0 positions, 10 edges on the line, 0 bad; line idle
+[   59.518151]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.558432]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.597553]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.636179]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.709419]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.764690]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   59.822028]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.122065]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.161406]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.200836]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.240073]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.279202]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.323536]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.363362]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.402870]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.442432]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.482947]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.525280]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.574379]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.614928]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.655775]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.696942]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.739004]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.780949]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.823438]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.869431]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.916848]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   60.956680]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.002659]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.045927]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.053329]: mt6895-keys: 0 changes so far; the keypad reads ffff ffff ffff ffff ffff
+[   61.089601]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.130167]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.169605]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.211815]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.249571]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.290158]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.330667]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.373012]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.432646]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.538861]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.600363]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.668012]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.712482]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.777220]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.860180]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.931523]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   61.993391]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.059773]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.099336]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.156227]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.222100]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.281725]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.340202]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.399139]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.457591]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.515004]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.584738]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.665868]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.712911]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.777062]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.837877]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.902031]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   62.971268]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.017676]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.092727]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.156814]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.228783]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.289145]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.347663]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.411059]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.464303]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:56920] interface: en0 (skipped: 0)
+so_gencnt: 26 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:56920] interface: en0 (skipped: 0)
+so_gencnt: 26 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:56920] interface: en0 (skipped: 0)
+so_gencnt: 26 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.437 ms rttvar: 0.750 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:56920] interface: en0 (skipped: 0)
+so_gencnt: 26 t_state: LAST_ACK process: hakid:11 Duration: 0.27 sec Conn_Time: 0.3 sec bytes in/out: 4/114518 pkts in/out: 2/82 pkt rxmit: 15 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 2.312 ms rttvar: 0.750 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:56920] interface: en0 (skipped: 0)
+so_gencnt: 26 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   63.494955]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.554445]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.624480]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.662480]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.729140]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.771391]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.834830]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.894947]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.953776]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   63.976547]: nvt: 1 distinct buffer patterns so far: [0 x20 77 77 77 77 77]
+[   63.978718]: nvt: 20 reports, 0 positions, 20 edges on the line, 0 bad; line idle
+[   64.011944]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.077683]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.119339]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.176775]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.234200]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.293304]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.380658]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.423751]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.489215]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.541177]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.605875]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.663883]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.724611]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.808884]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.849634]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.908155]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   64.980848]: process lsd[22] denied attempt to escape CPU monitor (missing required entitlement).
+[   65.067180]: mt6895-ufs-twoblock: flush done, ocs=0 polls=588 restored=1
+[   65.250786]: mt6895-ufs-twoblock: flush done, ocs=0 polls=580 restored=1
+[   65.263813]: mt6895-ufs-twoblock: flush done, ocs=0 polls=203 restored=1
+[   65.306200]: mt6895-ufs-twoblock: flush done, ocs=0 polls=606 restored=1
+[   66.275915]: MiniIOSurface: backboardd[10] created surface 3: 1080x2460 'BGRA', 4352 bytes per row, 0 planes, 10715136 bytes
+[   66.276013]: MiniIOSurface: 2 big surfaces made, 1703 us each: 1552 getting the memory and the surface, 51 mapping it for its maker; memory not kept as somebody else had it 0 times, a piece kept longer put out for it 0 times
+[   66.279742]: usb: setup 34: type 21 req 43 value 000e index 0000 length 0
+[   66.279771]: usb: ecm packet filter 0xe
+[   66.298950]: usb: setup 35: type 21 req 43 value 000e index 0000 length 0
+[   66.298971]: usb: ecm packet filter 0xe
+[   66.301070]: usb: setup 36: type 21 req 43 value 000e index 0000 length 0
+[   66.301077]: usb: ecm packet filter 0xe
+[   66.303198]: usb: setup 37: type 21 req 43 value 000e index 0000 length 0
+[   66.303204]: usb: ecm packet filter 0xe
+[   66.331910]: MiniIOMobileFramebuffer: backboardd[10] selector 4 (scalars 0 in [0x0 0x0 0x0 0x0], 1 out; structure 0 in, 0 out)
+[   66.332034]: MiniIOMobileFramebuffer: backboardd[10] selector 5 (scalars 0 in [0x0 0x0 0x0 0x0], 0 out; structure 1132 in, 0 out)
+[   66.332122]: MiniIOMobileFramebuffer: swap 3 (#2): surfaces 0 0 0 0, layers set 0x1 cleared 0x1
+[   66.332169]: MiniIOMobileFramebuffer: fb_disp: ovl0 src_con 0x2 datapath 0x7000005
+[   66.332184]: MiniIOMobileFramebuffer: fb_disp:   ovl0 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88000
+[   66.332233]: MiniIOMobileFramebuffer: fb_disp: ovl1 src_con 0x2 datapath 0x7000005
+[   66.332246]: MiniIOMobileFramebuffer: fb_disp:   ovl1 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88870
+[   66.332265]: MiniIOMobileFramebuffer: fb_disp: ovl3 src_con 0 datapath 0x3000000
+[   66.332279]: MiniIOMobileFramebuffer: fb_disp: ovl4 src_con 0x1 datapath 0x7000001
+[   66.332288]: MiniIOMobileFramebuffer: fb_disp:   ovl4 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e000
+[   66.332307]: MiniIOMobileFramebuffer: fb_disp: ovl5 src_con 0 datapath 0x3000000
+[   66.332319]: MiniIOMobileFramebuffer: fb_disp: ovl6 src_con 0x1 datapath 0x7000001
+[   66.332329]: MiniIOMobileFramebuffer: fb_disp:   ovl6 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e870
+[   66.332346]: MiniIOMobileFramebuffer: fb_disp: dsi start        0x1
+[   66.332357]: MiniIOMobileFramebuffer: fb_disp: dsi size_con     0x99c0168
+[   66.332368]: MiniIOMobileFramebuffer: fb_disp: dsi vact_nl      0x99c
+[   66.332377]: MiniIOMobileFramebuffer: fb_disp: dsi hsa_wc       0x14
+[   66.332387]: MiniIOMobileFramebuffer: fb_disp: dsi hbp_wc       0x1c
+[   66.332397]: MiniIOMobileFramebuffer: fb_disp: dsi hfp_wc       0x3cc
+[   66.332404]: MiniIOMobileFramebuffer: fb_disp: panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080
+[   66.333825]: MiniIOMobileFramebuffer: swap #3: surfaces in layers 0x0 now (0x1 before): 0 0 0 0
+[   66.335852]: MiniIOMobileFramebuffer: core 3 runs at 497 MHz
+[   66.335857]: MiniIOMobileFramebuffer: 3 frames in 33145 ms (0 a second), 2048 us each in the driver, after 0 us waiting for the GPU and, 1 of them, 13307 us for the next refresh; 0 swaps waited for the frame before, 0 gave up; 0 swaps came a refresh late themselves
+[   66.335882]: MiniIOMobileFramebuffer: from one frame to the next: 0 times under 10 ms, 1 under 18, 0 under 26, 0 under 35, 0 longer (the longest 16 ms); half under 17 ms, 95 in 100 under 17 ms; 1 pauses
+[   66.595547]: MiniIOMobileFramebuffer: swap 4 (#3): surfaces 0 0 0 0, layers set 0x80000007 cleared 0x80000007
+[   66.595624]: MiniIOMobileFramebuffer: fb_disp: ovl0 src_con 0x2 datapath 0x7000005
+[   66.595656]: MiniIOMobileFramebuffer: fb_disp:   ovl0 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88000
+[   66.595696]: MiniIOMobileFramebuffer: fb_disp: ovl1 src_con 0x2 datapath 0x7000005
+[   66.595707]: MiniIOMobileFramebuffer: fb_disp:   ovl1 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88870
+[   66.595727]: MiniIOMobileFramebuffer: fb_disp: ovl3 src_con 0 datapath 0x3000000
+[   66.595739]: MiniIOMobileFramebuffer: fb_disp: ovl4 src_con 0x1 datapath 0x7000001
+[   66.595742]: MiniIOMobileFramebuffer: backboardd[10] selector 12 (scalars 1 in [0x0 0x0 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   66.595771]: MiniIOMobileFramebuffer: fb_disp:   ovl4 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e000
+[   66.595787]: MiniIOMobileFramebuffer: fb_disp: ovl5 src_con 0 datapath 0x3000000
+[   66.595799]: MiniIOMobileFramebuffer: fb_disp: ovl6 src_con 0x1 datapath 0x7000001
+[   66.595807]: MiniIOMobileFramebuffer: fb_disp:   ovl6 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e870
+[   66.595823]: MiniIOMobileFramebuffer: fb_disp: dsi start        0x1
+[   66.595833]: MiniIOMobileFramebuffer: fb_disp: dsi size_con     0x99c0168
+[   66.595843]: MiniIOMobileFramebuffer: fb_disp: dsi vact_nl      0x99c
+[   66.595853]: MiniIOMobileFramebuffer: fb_disp: dsi hsa_wc       0x14
+[   66.595864]: MiniIOMobileFramebuffer: fb_disp: dsi hbp_wc       0x1c
+[   66.595873]: MiniIOMobileFramebuffer: fb_disp: dsi hfp_wc       0x3cc
+[   66.595880]: MiniIOMobileFramebuffer: fb_disp: panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080
+[   66.689792]: memorystatus_update(enter): pid 28, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   66.689823]: memorystatus_update: init: limit on pid 28 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   66.700704]: memorystatus_update(enter): pid 28, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   66.700727]: memorystatus_update: init: limit on pid 28 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   66.913437]: MiniIOSurface: selector 40 not implemented (scalars 0 in, 0 out; structure 0 in, 0 out)
+[   66.950986]: MiniIOSurface: selector 41 not implemented (scalars 1 in, 0 out; structure 0 in, 0 out)
+[   67.595809]: nvt: 1 distinct buffer patterns so far: [0 x30 77 77 77 77 77]
+[   67.595837]: nvt: 30 reports, 0 positions, 30 edges on the line, 0 bad; line idle
+[   68.241945]: usb: setup 38: type 21 req 43 value 000e index 0000 length 0
+[   68.241975]: usb: ecm packet filter 0xe
+[   68.265621]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:47886] interface: en0 (skipped: 0)
+so_gencnt: 29 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.375 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:47886] interface: en0 (skipped: 0)
+so_gencnt: 29 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.375 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:47886] interface: en0 (skipped: 0)
+so_gencnt: 29 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.625 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:47886] interface: en0 (skipped: 0)
+so_gencnt: 29 t_state: LAST_ACK process: hakid:11 Duration: 0.31 sec Conn_Time: 0.2 sec bytes in/out: 5/65 pkts in/out: 2/2 pkt rxmit: 0 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 2.187 ms rttvar: 0.625 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:47886] interface: en0 (skipped: 0)
+so_gencnt: 29 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   69.190010]: memory: free 767, files 711, programs 43, wired 2560 (3 surfaces 30, ramfs 0), compressor 0 (holding 0) MB; available 1479, kills below 159 (the idle) and 79 (anybody)
+[   69.807595]: memorystatus_update(enter): pid 29, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   69.807628]: memorystatus_update: init: limit on pid 29 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   69.828651]: memorystatus_update(enter): pid 29, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   69.828692]: memorystatus_update: init: limit on pid 29 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   71.326302]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:47902] interface: en0 (skipped: 0)
+so_gencnt: 33 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.375 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:47902] interface: en0 (skipped: 0)
+so_gencnt: 33 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.375 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:47902] interface: en0 (skipped: 0)
+so_gencnt: 33 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.343 ms rttvar: 0.625 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:47902] interface: en0 (skipped: 0)
+so_gencnt: 33 t_state: LAST_ACK process: hakid:11 Duration: 0.17 sec Conn_Time: 0.2 sec bytes in/out: 5/65 pkts in/out: 2/2 pkt rxmit: 0 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 2.281 ms rttvar: 0.500 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:47902] interface: en0 (skipped: 0)
+so_gencnt: 33 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   71.425534]: mt6895-keys: 0 changes so far; the keypad reads ffff ffff ffff ffff ffff
+[   71.657706]: nvt: 1 distinct buffer patterns so far: [0 x40 77 77 77 77 77]
+[   71.670363]: nvt: 40 reports, 0 positions, 40 edges on the line, 0 bad; line idle
+[   72.861814]: mt6895-ufs-twoblock: zone write 18837207+64 ocs=0 polls=1060 restored=1 (cmds=896 blks=7791)
+[   74.370399]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:36666] interface: en0 (skipped: 0)
+so_gencnt: 35 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.375 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:36666] interface: en0 (skipped: 0)
+so_gencnt: 35 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.375 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:36666] interface: en0 (skipped: 0)
+so_gencnt: 35 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.468 ms rttvar: 0.750 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0mali: stop: already stopped
+[   74.428619]: tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:36666] interface: en0 (skipped: 0)
+so_gencnt: 35 t_state: LAST_ACK process: hakid:11 Duration: 0.59 sec Conn_Time: 0.3 sec bytes in/out: 19/221 pkts in/out: 2/3 pkt rxmit: 0 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 6.968 ms rttvar: 9.187 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:36666] interface: en0 (skipped: 0)
+so_gencnt: 35 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   74.819883]: nvt: 1 distinct buffer patterns so far: [0 x50 77 77 77 77 77]
+[   74.837373]: nvt: 50 reports, 0 positions, 50 edges on the line, 0 bad; line idle
+[   77.781850]: MiniIOMobileFramebuffer: backboardd[10] selector 12 (scalars 1 in [0x1 0x0 0x0 0x0], 0 out; structure 0 in, 0 out)
+[   77.781937]: MiniIOMobileFramebuffer: backboardd[10] selector 79 (scalars 2 in [0x40 0x0 0x0 0x0], 0 out; structure 0 in, 40 out)
+[   77.925138]: MiniIOMobileFramebuffer: swap 5 (#4): surfaces 3 0 0 0, layers set 0x80000007 cleared 0x80000006
+[   77.925204]: MiniIOMobileFramebuffer: fb_disp: ovl0 src_con 0x2 datapath 0x7000005
+[   77.925233]: MiniIOMobileFramebuffer: fb_disp:   ovl0 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88000
+[   77.925276]: MiniIOMobileFramebuffer: fb_disp: ovl1 src_con 0x2 datapath 0x7000005
+[   77.925300]: MiniIOMobileFramebuffer: fb_disp:   ovl1 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88870
+[   77.925336]: MiniIOMobileFramebuffer: fb_disp: ovl3 src_con 0 datapath 0x3000000
+[   77.925352]: MiniIOMobileFramebuffer: fb_disp: ovl4 src_con 0x1 datapath 0x7000001
+[   77.925362]: MiniIOMobileFramebuffer: fb_disp:   ovl4 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e000
+[   77.925379]: MiniIOMobileFramebuffer: fb_disp: ovl5 src_con 0 datapath 0x3000000
+[   77.925390]: MiniIOMobileFramebuffer: fb_disp: ovl6 src_con 0x1 datapath 0x7000001
+[   77.925398]: MiniIOMobileFramebuffer: fb_disp:   ovl6 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e870
+[   77.925413]: MiniIOMobileFramebuffer: fb_disp: dsi start        0x1
+[   77.925423]: MiniIOMobileFramebuffer: fb_disp: dsi size_con     0x99c0168
+[   77.925433]: MiniIOMobileFramebuffer: fb_disp: dsi vact_nl      0x99c
+[   77.925442]: MiniIOMobileFramebuffer: fb_disp: dsi hsa_wc       0x14
+[   77.925452]: MiniIOMobileFramebuffer: fb_disp: dsi hbp_wc       0x1c
+[   77.925460]: MiniIOMobileFramebuffer: fb_disp: dsi hfp_wc       0x3cc
+[   77.925467]: MiniIOMobileFramebuffer: fb_disp: panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080
+[   77.925480]: MiniIOMobileFramebuffer: swap 5 layer 0: surface 3 (1080x2460 'BGRA') from 0,0 1080x2460 to 0,0 1080x2460, layers set 0x80000007
+[   77.927116]: MiniIOMobileFramebuffer: swap #5: surfaces in layers 0x1 now (0x0 before): 3 0 0 0
+[   77.928171]: MiniIOMobileFramebuffer: core 0 runs at 998 MHz
+[   77.928181]: MiniIOMobileFramebuffer: 2 frames in 11331 ms (0 a second), 1928 us each in the driver, after 0 us waiting for the GPU and, 0 of them, 0 us for the next refresh; 0 swaps waited for the frame before, 0 gave up; 0 swaps came a refresh late themselves
+[   77.928292]: MiniIOMobileFramebuffer: this frame on average red 1 green 1 blue 1; 0% of it not black
+[   78.763230]: MiniIOSurface: SpringBoard[6] created surface 4: 184x124 'BGRA', 736 bytes per row, 0 planes, 98304 bytes
+[   78.829983]: MiniIOSurface: SpringBoard[6] created surface 5: 230x186 'LA08', 480 bytes per row, 0 planes, 98304 bytes
+[   78.965038]: nvt: 1 distinct buffer patterns so far: [0 x60 77 77 77 77 77]
+[   78.982807]: nvt: 60 reports, 0 positions, 60 edges on the line, 0 bad; line idle
+[   79.657323]: memorystatus_update(enter): pid 31, priority 210, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   79.657344]: memorystatus_update: init: limit on pid 31 (-1MB F ) targeting priority(210) dirty?=0x0 
+[   79.686461]: memorystatus_update(enter): pid 31, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   79.686491]: memorystatus_update: init: limit on pid 31 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   81.264237]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:36680] interface: en0 (skipped: 0)
+so_gencnt: 37 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.375 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:36680] interface: en0 (skipped: 0)
+so_gencnt: 37 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.375 ms rttvar: 0.687 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:36680] interface: en0 (skipped: 0)
+so_gencnt: 37 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.593 ms rttvar: 1.0 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0mt6895-ufs-twoblock: flush done, ocs=0 polls=640 restored=1
+[   81.360298]: mt6895-ufs-twoblock: flush done, ocs=0 polls=650 restored=1
+[   81.618568]: tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:36680] interface: en0 (skipped: 0)
+so_gencnt: 37 t_state: LAST_ACK process: hakid:11 Duration: 0.356 sec Conn_Time: 0.4 sec bytes in/out: 4/140582 pkts in/out: 2/100 pkt rxmit: 33 ooo pkts: 0 dup bytes in: 0 ACKs delayed: 0 delayed ACKs sent: 0
+rtt: 2.250 ms rttvar: 1.000 ms base rtt: 1 ms so_error: 0 svc/tc: 0tcp_connection_summary [10.0.0.2:2222<->10.0.0.1:36680] interface: en0 (skipped: 0)
+so_gencnt: 37 t_state: LAST_ACK process: hakid:11 flowctl: 0 suspnd: 0 SYN in/out: 1/1 FIN in/out: 1/0 RST in/out: 0/0
+[   81.811552]: mt6895-keys: 0 changes so far; the keypad reads ffff ffff ffff ffff ffff
+[   82.056342]: nvt: 1 distinct buffer patterns so far: [0 x70 77 77 77 77 77]
+[   82.069409]: nvt: 70 reports, 0 positions, 70 edges on the line, 0 bad; line idle
+[   83.040612]: MiniIOMobileFramebuffer: swap 6 (#5): surfaces 2 0 0 0, layers set 0x1 cleared 0x0
+[   83.040688]: MiniIOMobileFramebuffer: fb_disp: ovl0 src_con 0x2 datapath 0x7000005
+[   83.040716]: MiniIOMobileFramebuffer: fb_disp:   ovl0 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88000
+[   83.040746]: MiniIOMobileFramebuffer: fb_disp: ovl1 src_con 0x2 datapath 0x7000005
+[   83.040757]: MiniIOMobileFramebuffer: fb_disp:   ovl1 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88870
+[   83.040777]: MiniIOMobileFramebuffer: fb_disp: ovl3 src_con 0 datapath 0x3000000
+[   83.040789]: MiniIOMobileFramebuffer: fb_disp: ovl4 src_con 0x1 datapath 0x7000001
+[   83.040798]: MiniIOMobileFramebuffer: fb_disp:   ovl4 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e000
+[   83.040815]: MiniIOMobileFramebuffer: fb_disp: ovl5 src_con 0 datapath 0x3000000
+[   83.040826]: MiniIOMobileFramebuffer: fb_disp: ovl6 src_con 0x1 datapath 0x7000001
+[   83.040834]: MiniIOMobileFramebuffer: fb_disp:   ovl6 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e870
+[   83.040849]: MiniIOMobileFramebuffer: fb_disp: dsi start        0x1
+[   83.040878]: MiniIOMobileFramebuffer: fb_disp: dsi size_con     0x99c0168
+[   83.040888]: MiniIOMobileFramebuffer: fb_disp: dsi vact_nl      0x99c
+[   83.040898]: MiniIOMobileFramebuffer: fb_disp: dsi hsa_wc       0x14
+[   83.040907]: MiniIOMobileFramebuffer: fb_disp: dsi hbp_wc       0x1c
+[   83.040917]: MiniIOMobileFramebuffer: fb_disp: dsi hfp_wc       0x3cc
+[   83.040923]: MiniIOMobileFramebuffer: fb_disp: panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080
+[   83.040936]: MiniIOMobileFramebuffer: swap 6 layer 0: surface 2 (1080x2460 'BGRA') from 0,0 1080x2460 to 0,0 1080x2460, layers set 0x1
+[   83.233075]: MiniIOMobileFramebuffer: swap 7 (#6): surfaces 3 0 0 0, layers set 0x1 cleared 0x0
+[   83.233124]: MiniIOMobileFramebuffer: fb_disp: ovl0 src_con 0x2 datapath 0x7000005
+[   83.233136]: MiniIOMobileFramebuffer: fb_disp:   ovl0 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88000
+[   83.233156]: MiniIOMobileFramebuffer: fb_disp: ovl1 src_con 0x2 datapath 0x7000005
+[   83.233165]: MiniIOMobileFramebuffer: fb_disp:   ovl1 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88870
+[   83.233182]: MiniIOMobileFramebuffer: fb_disp: ovl3 src_con 0 datapath 0x3000000
+[   83.233193]: MiniIOMobileFramebuffer: fb_disp: ovl4 src_con 0x1 datapath 0x7000001
+[   83.233200]: MiniIOMobileFramebuffer: fb_disp:   ovl4 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e000
+[   83.233212]: MiniIOMobileFramebuffer: fb_disp: ovl5 src_con 0 datapath 0x3000000
+[   83.233220]: MiniIOMobileFramebuffer: fb_disp: ovl6 src_con 0x1 datapath 0x7000001
+[   83.233226]: MiniIOMobileFramebuffer: fb_disp:   ovl6 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e870
+[   83.233237]: MiniIOMobileFramebuffer: fb_disp: dsi start        0x1
+[   83.233244]: MiniIOMobileFramebuffer: fb_disp: dsi size_con     0x99c0168
+[   83.233252]: MiniIOMobileFramebuffer: fb_disp: dsi vact_nl      0x99c
+[   83.233259]: MiniIOMobileFramebuffer: fb_disp: dsi hsa_wc       0x14
+[   83.233266]: MiniIOMobileFramebuffer: fb_disp: dsi hbp_wc       0x1c
+[   83.233272]: MiniIOMobileFramebuffer: fb_disp: dsi hfp_wc       0x3cc
+[   83.233277]: MiniIOMobileFramebuffer: fb_disp: panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080
+[   83.233287]: MiniIOMobileFramebuffer: swap 7 layer 0: surface 3 (1080x2460 'BGRA') from 0,0 1080x2460 to 0,0 1080x2460, layers set 0x1
+[   83.413973]: PMRD: power event 3 args 0 0x0
+[   83.414001]: PMRD: evaluatePolicy( 4, 0x0 )
+[   83.414014]: PMRD: changePowerStateWithTagToPriv(ON_STATE, b000b)
+[   83.414034]: PMRD: adjustPowerState ON_STATE, asap 0, idleSleepEnabled 0
+[   83.414048]: PMRD: changePowerStateWithTagToPriv(ON_STATE, c0008)
+[   83.414083]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x2) tag 0xb000b
+[   83.414101]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   83.414124]: PMRD: PowerChangeOverride (ON_STATE->ON_STATE, f, 0x2) tag 0xc0008
+[   83.414140]: PMRD: PowerChangeDone: ON_STATE->ON_STATE
+[   83.428087]: memorystatus_update(enter): pid 32, priority 30, dirty=0x0, Active(-1MB NF), Inactive(-1MB, NF)
+[   83.428143]: memorystatus_update: init: limit on pid 32 (-1MB F ) targeting priority(30) dirty?=0x0 
+[   83.614360]: MiniIOMobileFramebuffer: swap 8 (#7): surfaces 1 0 0 0, layers set 0x1 cleared 0x0
+[   83.614414]: MiniIOMobileFramebuffer: fb_disp: ovl0 src_con 0x2 datapath 0x7000005
+[   83.614431]: MiniIOMobileFramebuffer: fb_disp:   ovl0 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88000
+[   83.614448]: MiniIOMobileFramebuffer: fb_disp: ovl1 src_con 0x2 datapath 0x7000005
+[   83.614456]: MiniIOMobileFramebuffer: fb_disp:   ovl1 l1 con 0x21ff size 0x99c021c offset 0 pitch 0x10e0 addr 0xfeb88870
+[   83.614469]: MiniIOMobileFramebuffer: fb_disp: ovl3 src_con 0 datapath 0x3000000
+[   83.614479]: MiniIOMobileFramebuffer: fb_disp: ovl4 src_con 0x1 datapath 0x7000001
+[   83.614486]: MiniIOMobileFramebuffer: fb_disp:   ovl4 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e000
+[   83.614497]: MiniIOMobileFramebuffer: fb_disp: ovl5 src_con 0 datapath 0x3000000
+[   83.614504]: MiniIOMobileFramebuffer: fb_disp: ovl6 src_con 0x1 datapath 0x7000001
+[   83.614510]: MiniIOMobileFramebuffer: fb_disp:   ovl6 l0 con 0x21ff size 0x99c021c offset 0 pitch 0x1100 addr 0xfe14e870
+[   83.614521]: MiniIOMobileFramebuffer: fb_disp: dsi start        0x1
+[   83.614528]: MiniIOMobileFramebuffer: fb_disp: dsi size_con     0x99c0168
+[   83.614535]: MiniIOMobileFramebuffer: fb_disp: dsi vact_nl      0x99c
+[   83.614542]: MiniIOMobileFramebuffer: fb_disp: dsi hsa_wc       0x14
+[   83.614549]: MiniIOMobileFramebuffer: fb_disp: dsi hbp_wc       0x1c
+[   83.614556]: MiniIOMobileFramebuffer: fb_disp: dsi hfp_wc       0x3cc
+[   83.614560]: MiniIOMobileFramebuffer: fb_disp: panel 1080x2460 rowbytes 4352, picture 1080x2460 crop 0 fill 1080
+[   83.614570]: MiniIOMobileFramebuffer: swap 8 layer 0: surface 1 (1080x2460 'BGRA') from 0,0 1080x2460 to 0,0 1080x2460, layers set 0x1
+[   84.813259]: mt6895-ufs-twoblock: zone write 18838871+32 ocs=0 polls=148 restored=1 (cmds=1024 blks=10160)
+[   84.902125]: mt6895-ufs-twoblock: flush done, ocs=0 polls=74 restored=1
+[   85.442177]: nvt: 1 distinct buffer patterns so far: [0 x80 77 77 77 77 77]
+[   85.442205]: nvt: 80 reports, 0 positions, 80 edges on the line, 0 bad; line idle
+[   88.129616]: MiniIOMobileFramebuffer: core 2 runs at 699 MHz
+[   88.129632]: MiniIOMobileFramebuffer: 45 frames in 5081 ms (8 a second), 1460 us each in the driver, after 0 us waiting for the GPU and, 1 of them, 12213 us for the next refresh; 0 swaps waited for the frame before, 0 gave up; 0 swaps came a refresh late themselves
+[   88.141634]: MiniIOMobileFramebuffer: this frame on average red 57 green 59 blue 60; 29% of it not black
+[   88.187925]: MiniIOMobileFramebuffer: from one frame to the next: 0 times under 10 ms, 1 under 18, 0 under 26, 0 under 35, 0 longer (the longest 15 ms); half under 16 ms, 95 in 100 under 16 ms; 44 pauses
+[   88.748850]: nvt: 1 distinct buffer patterns so far: [0 x90 77 77 77 77 77]
+[   88.760318]: nvt: 90 reports, 0 positions, 90 edges on the line, 0 bad; line idle
+[   92.196641]: mt6895-keys: 0 changes so far; the keypad reads ffff ffff ffff ffff ffff
+[   92.449536]: nvt: 1 distinct buffer patterns so far: [0 x100 77 77 77 77 77]
+[   92.449577]: nvt: 100 reports, 0 positions, 100 edges on the line, 0 bad; line idle
+[   93.228277]: MiniIOMobileFramebuffer: core 1 runs at 699 MHz
+[   93.228293]: MiniIOMobileFramebuffer: 51 frames in 5000 ms (10 a second), 1431 us each in the driver, after 0 us waiting for the GPU and, 0 of them, 0 us for the next refresh; 0 swaps waited for the frame before, 0 gave up; 0 swaps came a refresh late themselves
+[   93.239264]: MiniIOMobileFramebuffer: this frame on average red 57 green 59 blue 60; 29% of it not black
+[   95.835089]: nvt: 1 distinct buffer patterns so far: [0 x110 77 77 77 77 77]
+[   95.845869]: nvt: 110 reports, 0 positions, 110 edges on the line, 0 bad; line idle
+[   98.328688]: MiniIOMobileFramebuffer: core 2 runs at 699 MHz
+[   98.328703]: MiniIOMobileFramebuffer: 51 frames in 5001 ms (10 a second), 1462 us each in the driver, after 0 us waiting for the GPU and, 0 of them, 0 us for the next refresh; 0 swaps waited for the frame before, 0 gave up; 0 swaps came a refresh late themselves
+[   98.339459]: MiniIOMobileFramebuffer: this frame on average red 57 green 59 blue 60; 29% of it not black
+[   99.218704]: nvt: 1 distinct buffer patterns so far: [0 x120 77 77 77 77 77]
+[   99.229850]: nvt: 120 reports, 0 positions, 120 edges on the line, 0 bad; line idle
+[  102.392155]: nvt: 1 distinct buffer patterns so far: [0 x130 77 77 77 77 77]
+[  102.406947]: nvt: 130 reports, 0 positions, 130 edges on the line, 0 bad; line idle
+[  102.564560]: mt6895-keys: 0 changes so far; the keypad reads ffff ffff ffff ffff ffff
+[  103.428106]: MiniIOMobileFramebuffer: core 2 runs at 699 MHz
+[  103.428122]: MiniIOMobileFramebuffer: 51 frames in 5000 ms (10 a second), 1451 us each in the driver, after 0 us waiting for the GPU and, 0 of them, 0 us for the next refresh; 0 swaps waited for the frame before, 0 gave up; 0 swaps came a refresh late themselves
+[  103.438627]: MiniIOMobileFramebuffer: this frame on average red 57 green 59 blue 60; 29% of it not black
+[  105.644763]: nvt: 1 distinct buffer patterns so far: [0 x140 77 77 77 77 77]
+[  105.655315]: nvt: 140 reports, 0 positions, 140 edges on the line, 0 bad; line idle
+[  107.680128]: net: en0 so far 421 frames sent (511063 bytes), 385 received (35829 bytes); dropped: 124 out, 0 in
+[  108.523079]: MiniIOMobileFramebuffer: core 0 runs at 999 MHz
+[  108.523108]: MiniIOMobileFramebuffer: 51 frames in 5001 ms (10 a second), 1427 us each in the driver, after 0 us waiting for the GPU and, 0 of them, 0 us for the next refresh; 0 swaps waited for the frame before, 0 gave up; 0 swaps came a refresh late themselves
+[  108.523228]: MiniIOMobileFramebuffer: this frame on average red 57 green 59 blue 60; 29% of it not black
+[  110.219306]: nvt: 1 distinct buffer patterns so far: [0 x150 77 77 77 77 77]
+[  110.229598]: nvt: 150 reports, 0 positions, 150 edges on the line, 0 bad; line idle
+[  111.289968]: usb: setup 39: type 21 req 43 value 000e index 0000 length 0
+[  111.296896]: usb: ecm packet filter 0xe
+[  111.307353]: usb: setup 40: type 21 req 43 value 000e index 0000 length 0
+[  111.314165]: usb: ecm packet filter 0xe
+[  112.911145]: mt6895-keys: 0 changes so far; the keypad reads ffff ffff ffff ffff ffff
+[  113.628659]: MiniIOMobileFramebuffer: core 2 runs at 699 MHz
+[  113.628675]: MiniIOMobileFramebuffer: 51 frames in 5001 ms (10 a second), 1449 us each in the driver, after 0 us waiting for the GPU and, 0 of them, 0 us for the next refresh; 0 swaps waited for the frame before, 0 gave up; 0 swaps came a refresh late themselves
+[  113.638874]: MiniIOMobileFramebuffer: this frame on average red 57 green 59 blue 60; 29% of it not black
+[  114.362999]: nvt: 1 distinct buffer patterns so far: [0 x160 77 77 77 77 77]
+[  114.373459]: nvt: 160 reports, 0 positions, 160 edges on the line, 0 bad; line idle
+[  114.406152]: mt6895-ufs-twoblock: flush done, ocs=0 polls=403 restored=1
+[  117.963196]: nvt: 1 distinct buffer patterns so far: [0 x170 77 77 77 77 77]
+[  117.977498]: nvt: 170 reports, 0 positions, 170 edges on the line, 0 bad; line idle
+[  118.721862]: MiniIOMobileFramebuffer: 51 frames in 5001 ms (10 a second), 1412 us each in the driver, after 0 us waiting for the GPU and, 0 of them, 0 us for the next refresh; 0 swaps waited for the frame before, 0 gave up; 0 swaps came a refresh late themselves
+[  118.749422]: MiniIOMobileFramebuffer: this frame on average red 57 green 59 blue 60; 29% of it not black
+[  119.235343]: usb: setup 41: type 21 req 43 value 000e index 0000 length 0
+[  119.240355]: usb: ecm packet filter 0xe
+[  119.255337]: tcp connect incoming: [10.0.0.2:2222<->10.0.0.1:35010] interface: en0 (skipped: 0)
+so_gencnt: 41 t_state: SYN_RCVD process: hakid:11 SYN in/out: 1/0 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.281 ms rttvar: 0.750 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp connected: [10.0.0.2:2222<->10.0.0.1:35010] interface: en0 (skipped: 0)
+so_gencnt: 41 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.281 ms rttvar: 0.750 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+so_qlimit: 4 so_qlen: 1 so_incqlen: 1 tcp accept: [10.0.0.2:2222<->10.0.0.1:35010] interface: en0 (skipped: 0)
+so_gencnt: 41 t_state: ESTABLISHED process: hakid:11 SYN in/out: 1/1 bytes in/out: 0/0 pkts in/out: 0/0 rtt: 2.500 ms rttvar: 1.0 ms base_rtt: 1 ms error: 0 so_error: 0 svc/tc: 0
+END 191427

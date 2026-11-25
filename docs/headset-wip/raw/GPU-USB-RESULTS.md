@@ -6,7 +6,99 @@
 
 ---
 
-## 一、GPU：硬件识别完成，MCU 未启动
+## 一、GPU：MCU 已启动（`boot-923g`）
+
+**2026-11-25 晚，MCU 第一次真正执行了固件。**
+
+### 关键：先让 GPUEB 上电，再问 GPU
+
+一次改动的效果，胜过此前所有在 `MCU_CONTROL` 上的尝试：
+
+```
+21.313221  mali: gpueb: asking GPUEB to power the GPU before the first read
+21.313608  mali: gpueb: INIT answered 0
+21.314924  mali: gpueb: POWER_ON answered 1, a reference is held for this run
+21.314927  mali: gpu_id after the GPUEB request: 0xa8670004 (csf 0x40a0412)
+```
+
+**`POWER_ON` 之后 `GPU_ID` 直接可读**，于是整个手动冷启动分支（SPM、VBUCK2、MFGPLL、
+十二个域）被跳过——这正是 panthor 的路径。
+
+```
+21.405227  mali: sentinel 0xff5aa5f0 written to the version word
+21.405355  jobirq probe GLOBAL_IF observed by existing loop spin 7: raw 0x80000000
+21.406456  mali: version word 0x1010000 (written by the firmware)
+21.406472  mali: the MCU is up; talking to the global interface
+21.406520  mali: global interface config + ping answered (req 0x10e ack 0x10e, job irq 0)
+21.406524  mali: M1 done: the firmware is running and the global interface answered
+```
+
+| 判据 | 结果 |
+|---|---|
+| 版本哨兵 `0xff5aa5f0` | 被改写为 **`0x1010000`** |
+| `GLOBAL_IF` bit31 | 第 **7** 次轮询置位 |
+| 全局接口 ping | `req 0x10e` / `ack 0x10e` 一致 |
+| 域状态 | `MFG1 0xc0000112`（ack 1/1）、`F3C 0x7`（MFG1 位） |
+| 共享页 | `power_count` 1、`dvfs_state` 0 |
+
+**此前的记录全部作废：** "MCU 从未执行"、"哨兵未被改写"、"12 个域没上电导致失败"
+都是缺少 GPUEB 上电这一步时的观察，不是根因。
+
+### 六步停机全部成功，RETURN 32 秒回 Android（`boot-924`）
+
+`gpuebctl stop` 在 XNU 活着时执行，六步实测：
+
+```
+41.350799  stop halt: req before 0x10e
+41.351247  stop halt: req after 0x10f, ringing the doorbell
+41.351714  stop halt: reads 0x2 after 1000 us          ← MCU_STATUS_HALT
+41.352154  stop disabled: reads 0 after 0 us           ← MCU_STATUS_DISABLED
+41.352588  stop: no soft reset needed
+41.353050  stop as0 parked: reads 0 after 0 us         ← AS0 已停
+41.353535  stop l2 pwrtrans clear: reads 0
+41.354059  stop l2 pwrtrans after off: reads 0
+41.354529  stop: l2 ready now 0                        ← L2 已断电
+41.355059  stop: irqs masked and cleared (raw 0 job 0 mmu 0)
+41.355584  stop: releasing the GPUEB reference
+41.356347  gpueb: bringup off: reply cmd=6 ret=0       ← POWER_OFF 成功
+41.361873  MFG1 0x1112 (ack30 0 ack31 0) F3C 0x3       ← 完全回基线
+41.363452  stop: done (mcu status 0, tiler ready 0, l2 ready 0)
+```
+
+**每一步都在 1 ms 内完成，没有一步超时，没有用到软复位锤。**
+
+关态与 `boot-919` 的 A 点逐位一致：`MFG1 0x1112`、`F3C 0x3`、`power_count 0`。
+
+**然后 `RETURN` → 32 秒回 Android。**
+
+此前 `mali=6` 要 5 分钟以上，而这一轮走的是完整的 panthor 路径
+（GPUEB 托管上电 + MCU 启动 + 六步停机 + GPUEB 撤电），
+退出反而回到了与 `mali=0` 相同的量级。
+
+### 上一轮为什么会卡（`boot-923g` ）
+
+`trial 923g` 发出 `RETURN` 后卡在苹果 logo。
+
+它的 `quiesce()` 只写了 `MCU_CONTROL=DISABLE` 就走了——那是"MCU 从没跑过"的时代留下的代码。
+MCU 真的在运行时，L2 还挂着脏缓存、AS0 还指着 `0x50000000`、三个中断块还开着，
+GPUEB 在这时候被要求撤电，它等一个永远不来的总线空闲。
+
+**`quiesce()` 从未处理过"MCU 真的在跑"的情况**——它此前只需写 `MCU_CONTROL=DISABLE`
+然后走开。按 panthor 的做法，正确的停止顺序是六步（`boot-924` 起实现）：
+
+| 步 | 动作 |
+|---|---|
+| 1 | `GLB_REQ.HALT` + `mem_flush` + 门铃，等 `MCU_STATUS == 2` |
+| 2 | `MCU_CONTROL=DISABLE`，等 `MCU_STATUS == 0` |
+| 3 | AS0 写 `TRANSTAB=0` / `MEMATTR=0` / `TRANSCFG=UNMAPPED` + `UPDATE` |
+| 4 | **L2 掉电**（`L2_PWROFF`），等 `PWRTRANS=0` 且 `L2_READY=0` |
+| 5 | 屏蔽并清三个中断块 |
+| 6 | 最后才释放 GPUEB 电源 |
+
+**第 4 步此前从未做过**，而它是让 AXI 端口安静下来的关键——L2 还挂着脏缓存时
+要求 GPUEB 撤电，GPUEB 会等一个永远不来的空闲。
+
+## 一·五、GPU 的历史数据（`boot-907` 及以前，MCU 未启动时）
 
 ### 芯片身份（实测，热路径）
 
