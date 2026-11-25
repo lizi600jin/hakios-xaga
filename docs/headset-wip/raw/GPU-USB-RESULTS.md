@@ -792,14 +792,52 @@ if (logbook_kernel_saved) {
 原来打开设备后先 `say("OK returning")` 再 `close`、再 `open` 一次才写。
 主机看到 `OK returning` 时内核里的 `stop()` 根本还没开始。
 
-### 结项状态（2026-11-25）
+### 固化完成：`mali_gpuebpower` 默认开启（`boot-929f`）
+
+**`mali=6` 一个参数，M1 启动 + 32 秒自动退出。**
+
+boot-args 里去掉了 `mali_gpuebpower=1`，驱动默认就走 GPUEB 上电路径：
+
+```
+21.548424  mali: gpueb: asking GPUEB to power the GPU before the first read
+21.552537  mali: gpueb: INIT answered 0
+21.566043  mali: gpueb: POWER_ON answered 1, a reference is held for this run
+21.819165  mali: version word 0x1010000 (written by the firmware)
+21.960187  mali: M1 done: the firmware is running and the global interface answered
+```
+
+然后 `RETURN` → **32 秒**回 Android。
+
+**两处改动**（`hakios.mali610.c`）：
+
+| 位置 | 改动 |
+|---|---|
+| `:610` | `static unsigned gMaliGpuebPower = 1;`（原来是 `;`，默认 0） |
+| `:6485` | `int gpuebpower = 1;`（原来是 `= 0;`） |
+
+显式传 `mali_gpuebpower=0` 仍会经 `PE_parse_boot_argn` 清回 `0u`，手动路径保留为回退。
+
+**`mali` 总开关没有动，默认仍是 0。** 两者是不同层：
+
+- `mali=N` 是显式开启 GPU 的总开关
+- `mali_gpuebpower` 是开启之后的子策略，和 `gMaliCold = 1`、`gMaliLowMem = 1`、
+  `gMaliGpm = 1`、`gMaliAsnHash = 1` 同构
+
+`mali=0`（零 GPU 干扰安全模式）和 `mali=0 mali_probe=1`（只读探针）都不受影响：
+
+- `mali=0` 不启动 `mali_thread`，`hakios_mali610_init()` 注册完 `/dev/hakios-gpueb` 就返回
+- `mali=0 mali_probe=1` 在 `mali_bring_up()` 首行 `mali_probe_read_only()` 处就返回，
+  那个调用在 `gMaliGpuebPower` 的判断（`:4619`）之前
+
+### 结项状态（2026-11-26）
 
 | 项 | 状态 |
 |---|---|
 | GPU M1 启动 | ✅ 实测 |
 | `gpuebctl stop` 六步停机 | ✅ 实测，12 ms |
 | 手动 `stop` + `RETURN` | ✅ 实测，32 秒 |
-| 自动退出（`quiesce`） | ✅ 实测，30 秒（`boot-928f`） |
+| 自动退出（`quiesce`） | ✅ 实测，30–32 秒（`boot-928f` / `929f`） |
+| 默认固化 | ✅ `mali=6` 单参数即可（`boot-929f`） |
 | loader 二次 fault | ✅ 已定位并修复，实测可用 |
 | 首轮复位原因（看门狗 vs 人工） | ⬜ 缺证据区分 |
 
