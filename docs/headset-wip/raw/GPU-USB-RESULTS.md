@@ -447,6 +447,36 @@ gpueb: shared before anything:
 （`CMD_GET_LEAKAGE_POWER`），是两次漏电查询，不是 `POWER_CONTROL`。
 `CMD_POWER_CONTROL` 是 `6`，已改，尚未上板。
 
+### Phase 1 验收（Neon 的 A0/A1/A2 全部通过）
+
+| 步 | 内容 | 结果 |
+|---|---|---|
+| A0 | 只读 mailbox + 共享页 | 通过：`tx 0 rx 0`，共享页 32 字可读 |
+| A1 | 仅 `INIT_SHARED_MEM` | 通过：`cmd 0x0 ret 0` |
+| A2 | `POWER_ON` → 采样 → `POWER_OFF` | 通过：`cmd 0x6 ret 1` / `ret 0`，域状态回基线 |
+
+**一处必须记住的坑：** `gpufreq_ipi.h:29-49` 里 `4` 是 `CMD_GET_LEAKAGE_POWER`，
+`CMD_POWER_CONTROL` 是 `6`。用错命令号时固件照样应答（返回常数 `30`），
+看起来像成功，实际是漏电查询。
+
+### bring-up 路径的接入（`mali_gpuebpower=1`，默认关闭）
+
+按 panthor 的顺序，把 GPUEB 上电放在 `load_firmware()` 之前：
+
+```
+mali_early_as0()
+    if (gMaliGpuebPower)
+        hakios_gpueb_bringup_power_on();     ← INIT + POWER_ON
+    load_firmware();
+    as_enable(0, gMcuRootPa);
+```
+
+退出侧在 `hakios_mali610_quiesce()` 里，**放在 `gGpu == 0` 提前返回之前**——
+上电发生在 `gGpu` 赋值之前，若在那里返回就会跳过释放，把上电状态带进 loader。
+
+引用由两条路径**各自记账**（`gpueb_held` 给设备节点，`gpueb_bringup_held` 给 bring-up）：
+它们不是同一个所有者，释放一方不能释放另一方。
+
 **剩下的方向，按优先级：**
 
 **① 同一次启动中验证 GPUEB 电源命令和 MFG 域状态**
