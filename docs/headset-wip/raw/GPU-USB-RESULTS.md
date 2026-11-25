@@ -6,7 +6,7 @@
 
 ---
 
-## 一、GPU：硬件识别完成，功能域未上电
+## 一、GPU：硬件识别完成，MCU 未启动
 
 ### 芯片身份（实测，热路径）
 
@@ -29,18 +29,70 @@ entry words at VA 0x1000000: 0x10019b1 0x10019b1 0xd00cf8df 0xf832f002
 AS0: root 0x50000000  transcfg 0x42000006
 ```
 
-固件完整装入并可映射，入口是真实的 ARM64 指令。
+固件完整装入并可映射。
 
-### 电源域（`boot-910b` 只读探针）
+**注意指令集：MCU 是 Cortex-M7，跑 Thumb，不是 ARM64。**
+`0x01000000` 段的实际入口是 `0x010018ec`（向量 `0x010018ed`，Thumb 位）。
+早先文档写的 ARM64 是错的。
+
+### 电源域
+
+**冷态（`boot-910b` 只读探针，`mali=0 mali_probe=1`，未映射 GPU、未发 AUTO）：**
 
 ```
-MFG0_PWR_CON   0xc000224d    pwr ack 3 (bits 31:30)   ← 顶层域已上电
-MFG1_PWR_CON   0x1112        pwr ack 0                ← MPU 未上电
-EMI1_PWR_CON   0xc000024d    pwr ack 3
-PWR_STATUS 0xF3C  0x3        & 0x3ffc = 0             ← MFG1-12 全部未上电
+MFG0_PWR_CON   0xc000224d    bit30/31 PWR_ACK=1, PWR_ACK_2ND=1, bit12 SRAM_PDN_ACK=0
+MFG1_PWR_CON   0x1112        PWR_ACK=0, 隔离与时钟禁用均置位
+EMI1_PWR_CON   0xc000024d
+XPU_PWR_STA(0xF3C)  0x3      & 0x3ffc = 0   ← MFG1-12 均未上电
 ```
 
-**结论：GPU 顶层域有电，12 个功能域（MPU、L2、八个着色器核）一个都没上电。**
+**热路径（`boot-907`，`mali=6`，带时间戳）：**
+
+```
+21.837s   GPU_ID = 0（冷）→ 走冷启动路径        [hlog-boot907.txt:465]
+21.872s   MFG1 = 0xc000000d（双 ACK）             [:470]
+35.078s   0xF3C & 0x3ffc = 0x4（只有 MFG1）       [:932]
+35.084s   GPU_ID = 0xa8670004                    [:933]
+35.152s   CSF = 0x040a0412                       [:943]
+45.787s   哨兵 0xff5aa5f0 未被改写                [:1247]
+45.802s   MFG1 仍是 0xc000000d                   [:1254]
+```
+
+### 一个更早的反例：trial695
+
+```
+33.690s   7 of twelve domains answered
+34.006s   0xF3C = 0x3ffc   ← 12 个域全开
+34.260s   哨兵写入
+44.279s   start loop 结束（halt seen 0, fatal seen 0）
+44.354s   版本字未改写
+44.357s   the global interface never raised
+```
+
+**34.006s 的 `0x3ffc` 是启动前的采样，44.354s 是到那时仍未看到版本发布。**
+
+可以排除的解释：**"12 个域始终全关"**。
+不能由此推出"一条指令都没执行"，也不能推出所有局部时钟和复位都正常。
+
+### 寄存器语义（关键，容易读错）
+
+`0xF34`（PWR_STA）和 `0xF3C`（XPU_PWR_STA）**不是同一组域的两份副本**：
+
+- `0xF34` 的 `0x20` 是 **AUDIO**（`mtk-pd-chk-mt6895.c:658`），不是 MFG4
+- MFG1–12 在 `XPU_PWR_STA`（`0xF3C`）里逐项对应 **bit 2 到 bit 13**（`:682-693`）
+- `gpufreq_mt6895.c:3580` 正是用 `0xF3C & 0x3ffc` 检查关电
+- `0xF38` / `0xF40` 是各自的第二状态字
+
+**所以 `0xF3C & 0x3ffc` 是判断 MFG 域的正确读数，`0xF34` 的低位与 MFG 无关。**
+
+### MFG0 / MFG1 的位定义
+
+`mt6895_spm_reg.h:2164-2187`：`bit30 = PWR_ACK`，`bit31 = PWR_ACK_2ND`，`bit12 = SRAM_PDN_ACK`。
+
+`0xEB8 = 0xc000224d` 确认 **MFG0 本域已上电**；
+`0xEBC = 0x1112` 则是 **MFG1 双 ACK = 0**，隔离和时钟禁用均置位。
+
+顶层 MFG0 的 ACK **不覆盖**中层子域，也不证明 MCU 的时钟或取指通。
 
 ### GPUEB
 
@@ -54,7 +106,9 @@ mbox sram 0 of 160 words non-zero
 ```
 
 `GPUEB-IPI-PROTOCOL.md` §1.4 记载：正常状态下 `TX_STS` 和 `RX_STS` 都应为 0。
-所以这是空闲态，不是不可达。PLL 使能只证明时钟路径通，不证明核在运行。
+
+**全零邮箱只与"空闲"相容**，不能证明可达，也不能证明不可达。
+**PLL 使能位只能证明这个位被置上了**，不证明核在执行，更不证明有过成功应答。
 
 ### MCU 启动失败的具体表现
 
@@ -66,7 +120,15 @@ mali: version word 0xff5aa5f0 (untouched; no firmware version published)
 mali: the global interface never raised; the MCU did not boot
 ```
 
-**哨兵未被改写 = 固件一指令都没执行。** `halt`/`fatal` 都没报，中断一条没来。
+**哨兵未被改写，到那时为止没有看到版本发布。** `halt`/`fatal` 都没报。
+
+**这不能推出"一条指令都没执行"**——纯 AP/GIC 漏中断也解释不了共享版本字，
+但反过来，版本字没变只说明这条可观测路径没有信号，不排除 MCU 在别处跑过。
+trial696 做过最小入口标记，三次均未观察到写回，**单靠这个阴性结果分不出
+取指失败与写入不可见**。
+
+`AUTO=2` 与原厂 `kbase_csf_firmware_init+0xb14` 的写法一致，`MCU_STATUS=1` 只表示 ENABLED，
+**没有理由先改这个写值。**
 
 ### 已核实的两个上游事实
 
@@ -170,6 +232,40 @@ cpu 3  phys 0x700  A78 大核（boot 核，最快）
 未启用：`0x100`、`0x200`、`0x300`（三个 A55）、`0x600`（一个 A78）。
 
 ---
+
+## 三·五、GPU 的结论边界
+
+**可以写入的结论：**
+
+> 热路径下 MFG1 有上电确认（`0xc000000d`），`AUTO` 之后未观察到版本发布，
+> 也未观察到 `GLOBAL_IF`。停止位置和根因待定。
+
+**已被证据排除的方向：**
+
+- 「12 个功能域没上电导致 MCU 失败」——trial695 里 `0xF3C = 0x3ffc` 全开，MCU 仍不执行
+- 「纯 AP/GIC 中断丢失」——907 的 JOB RAW/STAT 多次为 0、MASK 全 1，版本哨兵也没变
+
+**待核的方向，按优先级：**
+
+**① 同一次启动中、`AUTO` 之前的 GPUEB 握手（首要）**
+
+参考驱动（xaga Panthor）的做法：
+
+- `CMD_INIT_SHARED_MEM`：看传输层是否收到**本次**应答（`IPI_ACTION_DONE`）
+- `CMD_POWER_CONTROL(POWER_ON)`：除应答外，还检查 `u.return_value >= 0`
+
+**907 没有这次事务，应记为「未发起」。**
+现有记录里还没有出现过一次握手超时——也就是说这条路从来没被测过。
+
+**② 若两步都成功而启动仍超时，查 AS0 取指路径**
+
+- 向量页 VA 0
+- 实际取指 `0x010018ec` 所在的页
+- 版本字 `0x04000000` 对应的可写共享页
+- **AP 与 MCU 是否指向同一物理页**
+
+trial696 做过最小入口标记，三次均未观察到写回。
+**单靠这个阴性结果分不出「取指失败」与「写入不可见」。**
 
 ## 四、调试基建
 
