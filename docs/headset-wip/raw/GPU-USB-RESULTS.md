@@ -757,6 +757,47 @@ if (logbook_kernel_saved) {
 926 的日志证明 XNU 到 550 秒仍在运行，`MARK_RUNNING` 证明后来的 loader 进了救援分支，
 两条记录之间没有能区分看门狗与人工复位的证据。
 
+## 四·七、下次接手的第一件事
+
+**目标：验证自动退出。** 手动 `stop` + `RETURN` 已经 32 秒，差的是让 `quiesce` 自己完成。
+
+### 代码已经改好（未上板）
+
+工作树 `/home/lizi/IOS/hakios-mtk/logs/ufs-apfs-fstree-root-736/`：
+
+| 文件 | 改动 |
+|---|---|
+| `bsd/dev/hakios.mali610.c` | `hakios_mali610_stop()` 六步停机；`quiesce()` 瘦身为纯兜底（零 printf、原子认领）；`mali_gpuebpower` 开关 |
+| `bsd/dev/hakios.mt6895_usb.c` | `hakios_request_return()` 里 `loader_return()` 之前调 `stop()` |
+| `osfmk/arm64/loader_return.c` | `loader_return_timer()` / `loader_stop_poll()` 两处各加 `stop()`（都在 `if (!as_panic)` 内） |
+| `osfmk/arm64/machine_routines.c` | 已撤回（`PEHaltRestart` 不返回，是死代码） |
+| `loader-src/mtk/loader/mtkloader.c` | `rescue_state()` 前 `logbook_kernel_saved` 为真就返回 |
+
+### 验证步骤
+
+1. 打包：payload + 600 秒 loader + `mali=6 mali_gpuebpower=1`
+2. 刷入 `boot_a`
+3. `hakid` 拉 `/dev/hlog` 确认 `M1 done`（版本字 `0x1010000`、`GLOBAL_IF`、ping `0x10e/0x10e`）
+4. **不要**手动 `gpuebctl stop`，直接发 `RETURN`
+5. 计时回 Android，目标 32 秒
+
+### 如果还是卡住
+
+说明 `hakios_request_return()` 里的 `stop()` 没起作用，或者 `stop()` 在 USB 线程上下文里有问题。
+下一步是把 `stop()` 的每一步打印出来看走到哪里——`stop()` 里已有 14 行 printf，
+它们会进 `/dev/hlog`（在 `loader_return()` 之前，中断正常）。
+
+### 设备救急
+
+```bash
+# 如果卡在 loader 阶段（18d1:d00d 但 hakid 不通）
+# 长按电源 10 秒 → 音量下+电源 进 fastboot
+fastboot flash boot_a trial736/boot-919.img   # mali=0 基线，最稳
+```
+
+**已知的最稳镜像：** `boot-919.img`（`mali=0`，不碰 GPU）、
+`boot-924g.img`（手动 `stop` 32 秒验证过）。
+
 ## 五、当前镜像与回退
 
 | 镜像 | 配置 | 说明 |
