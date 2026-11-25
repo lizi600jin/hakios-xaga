@@ -675,34 +675,48 @@ trial696 做过最小入口标记，三次均未观察到写回。
 halting; the watchdog will restart the board
 ```
 
-**根因在 `mtkloader.c:2964-2980` 的旧 msgbuf 转储：**
+**根因：`rescue_state()` 跟着旧内核留在 DRAM 里的指针走。**
+
+屏幕的 `ELR 0x40003ecc` 对应这一行（`mtkloader.c:2965`）：
 
 ```c
-uint64_t mb   = xnu_rd64(xsyms.msgbufp);
-uint64_t w0   = xnu_rd64(mb), w1 = xnu_rd64(mb + 8), bufc = xnu_rd64(mb + 16);
-int32_t size  = (int32_t)(w0 >> 32), bufx = (int32_t)w1;
-if (size <= 0 || size > 1024*1024 || bufx < 0 || bufx > size) return;   /* 三个字段有检查 */
-...
-char c = xnu_rd8(bufc + i);        /* bufc 的地址范围从未检查 */
+uint64_t mb = xnu_rd64(xsyms.msgbufp);          /* ← 故障发生在这里 */
+uint64_t w0 = xnu_rd64(mb), w1 = xnu_rd64(mb + 8), bufc = xnu_rd64(mb + 16);
 ```
 
-`xnu_rd8` → `xnu_va_to_pa` → `pa ? *(volatile char *)pa : 0`
-只挡住 `pa == 0`，挡不住 `0x512000000000`。
+**故障发生在读 `struct msgbuf` 的第一个字时**，此时连 `bufc` 都还没取出来。
+上一次运行被复位后，`xsyms.msgbufp` 指向的内存已经不是那个结构了。
 
 **触发条件：** 上一次运行被看门狗复位（XNU 卡在退出路径没按时返回），
-DRAM 里留着垃圾指针，救援分支把它当可信数据用了。
+DRAM 里留着失效的指针，救援分支把它当可信数据用了。
 
-**修法**（`XNU_PHYS_BASE = 0xc0000000`，`XNU_MEM_SIZE = 0xfe000000`）：
+### 两次修法的区别（第一次是错的）
+
+第一版把 `bufc` 和物理窗口 `[0xc0000000, 0x1be000000)` 比较。两个问题：
+
+1. **检查加晚了**——fault 在 `xnu_rd64(mb)`，那时 `bufc` 还没被读出来，执行流到不了那个 `if`
+2. **地址空间比错了**——`bufc` 是 XNU 的**内核虚拟地址**（正常值形如
+   `0xfffffff007d1b89c`），要经页表翻译才是物理地址。本机 loader 实际使用的物理窗口是
+   `[0x100000000, 0x200000000)`（`board.h:122`），正常的 `bufc` 和它比也会被拒绝
+
+### 正确的修法
+
+`rescue_state()` 之前，HLOG 已经写进 flash 了（`mtkloader.c:3058`），
+后面那段是可选的旧内核诊断。所以保存成功就直接返回：
 
 ```c
-if (bufc < XNU_PHYS_BASE ||
-    bufc > XNU_PHYS_BASE + XNU_MEM_SIZE - (uint64_t)size) {
-        out("msgbuf pointer out of the DRAM window; not dumping\n");
-        return;
+logbook_kernel_saved = save_log_spans_to_flash(sp, n, XNU_LOGBOOK_RESCUE, 0, 0, 0);
+if (logbook_kernel_saved) {
+        xsyms = s;
+        xkernel = pi.kernel;
+        return;                 /* 调用方随后走 chain_android() */
 }
 ```
 
-HLOG 在这个函数之前已经保存成功，所以跳过转储不影响诊断数据。
+既留下校验过的故障日志，又绕开整段未经验证的页表遍历。
+
+**以后要恢复这项诊断**，需要在读每一级页表项和最终数据之前，
+校验**翻译后**的物理范围——虚拟地址不能直接和物理窗口比较。
 
 **分区完整性已独立核验：** 主备 GPT 与备份逐字节一致，APFS 根容器全量哈希比对通过，
 `xnusys` 2.50 GiB（`/dev/block/sdc88`）、`xnuvar` 64.0 GiB（`sdc89`）都正常。
@@ -728,6 +742,20 @@ HLOG 在这个函数之前已经保存成功，所以跳过转储不影响诊断
 
 **下次验证：** 刷入带这些改动的镜像，确认 `M1 done`，不手动 `stop` 直接发 `RETURN`，
 计时回 Android。目标是 32 秒。
+
+### 结项状态（2026-11-25）
+
+| 项 | 状态 |
+|---|---|
+| GPU M1 启动 | ✅ 实测 |
+| `gpuebctl stop` 六步停机 | ✅ 实测，12 ms |
+| 手动 `stop` + `RETURN` | ✅ 实测，32 秒 |
+| 自动退出（`quiesce`） | ⬜ 待验证 |
+| loader 二次 fault | ✅ 已定位，修复已改，待上板 |
+| 首轮复位原因（看门狗 vs 人工） | ⬜ 缺证据区分 |
+
+926 的日志证明 XNU 到 550 秒仍在运行，`MARK_RUNNING` 证明后来的 loader 进了救援分支，
+两条记录之间没有能区分看门狗与人工复位的证据。
 
 ## 五、当前镜像与回退
 
