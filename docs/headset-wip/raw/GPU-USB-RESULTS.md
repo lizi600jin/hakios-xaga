@@ -75,6 +75,35 @@
 （GPUEB 托管上电 + MCU 启动 + 六步停机 + GPUEB 撤电），
 退出反而回到了与 `mali=0` 相同的量级。
 
+### 自动停机路径的两个发现（`boot-925` / `926`）
+
+**一、`quiesce()` 会在每个 CPU 上执行，`printf` 在次级 CPU 上 panic。**
+
+panic 栈（`boot-925` 真机照片）：
+
+```
+_psci_smp_stop_here+0x58
+_loader_return+0x34
+_hakios_mali610_quiesce+0x38
+_printf+0x24
+```
+
+`loader_return()` 在每个处理器退出时都会走一遍，次级 CPU 到达 `quiesce()` 时
+控制台已经不在可用状态。修法是函数第一件事就用原子变量认领工作，没认领到的
+处理器直接返回，不打印也不碰寄存器——六步本来就是不可重入的，在这之前它可能
+连续跑四次。
+
+**二、自动路径的 `printf` 不出日志。**
+
+`psci_smp_stop_others()` 在 `psci_smp.c:297` 先执行 `DAIFSet DAIFSC_ALL`，
+之后才调 `quiesce()`。`boot-926` 的日志到 550.8 秒，`quiesce` / `stop` 一行都没有。
+
+**所以退出路径上的六步无法从 hlog 观察。** 这是这些 hook 的共同处境，
+`hakios_adreno_quiesce()` 也一样——它们静默工作，日志里看不到。
+
+**验证六步只能用手动入口**（`gpuebctl stop`，在 XNU 活着时执行），
+那条路径有完整的 14 行实测记录，就是上面 `boot-924` 的数据。
+
 ### 上一轮为什么会卡（`boot-923g` ）
 
 `trial 923g` 发出 `RETURN` 后卡在苹果 logo。
@@ -634,6 +663,71 @@ trial696 做过最小入口标记，三次均未观察到写回。
 **连得上 `hakid` 才是在 XNU 里。** 看 `lsusb` 会误判。
 
 ---
+
+## 四·五、loader 的救援分支有一个未检查的指针（2026-11-25 晚）
+
+**现象：** 刷完镜像后连 XNU 都进不去，屏幕显示：
+
+```
+=== mtkloader: XNU did not return before the reset ===
+...
+*** Loader fault: vector 0x200 ESR 0x96000000 ELR 0x40003ecc FAR 0x512000000000
+halting; the watchdog will restart the board
+```
+
+**根因在 `mtkloader.c:2964-2980` 的旧 msgbuf 转储：**
+
+```c
+uint64_t mb   = xnu_rd64(xsyms.msgbufp);
+uint64_t w0   = xnu_rd64(mb), w1 = xnu_rd64(mb + 8), bufc = xnu_rd64(mb + 16);
+int32_t size  = (int32_t)(w0 >> 32), bufx = (int32_t)w1;
+if (size <= 0 || size > 1024*1024 || bufx < 0 || bufx > size) return;   /* 三个字段有检查 */
+...
+char c = xnu_rd8(bufc + i);        /* bufc 的地址范围从未检查 */
+```
+
+`xnu_rd8` → `xnu_va_to_pa` → `pa ? *(volatile char *)pa : 0`
+只挡住 `pa == 0`，挡不住 `0x512000000000`。
+
+**触发条件：** 上一次运行被看门狗复位（XNU 卡在退出路径没按时返回），
+DRAM 里留着垃圾指针，救援分支把它当可信数据用了。
+
+**修法**（`XNU_PHYS_BASE = 0xc0000000`，`XNU_MEM_SIZE = 0xfe000000`）：
+
+```c
+if (bufc < XNU_PHYS_BASE ||
+    bufc > XNU_PHYS_BASE + XNU_MEM_SIZE - (uint64_t)size) {
+        out("msgbuf pointer out of the DRAM window; not dumping\n");
+        return;
+}
+```
+
+HLOG 在这个函数之前已经保存成功，所以跳过转储不影响诊断数据。
+
+**分区完整性已独立核验：** 主备 GPT 与备份逐字节一致，APFS 根容器全量哈希比对通过，
+`xnusys` 2.50 GiB（`/dev/block/sdc88`）、`xnuvar` 64.0 GiB（`sdc89`）都正常。
+
+## 四·六、还没有解决的：自动退出路径
+
+| 路径 | 结果 |
+|---|---|
+| `gpuebctl stop` + `RETURN` | ✅ **32 秒** |
+| 直接 `RETURN`（靠 `quiesce` 自动） | ❌ 卡住 |
+
+`quiesce()` 在 `psci_smp_stop_others()` 之后运行——其他 CPU 已停、`DAIF` 全关、
+`printf` 不进日志、`delay()` 没有时钟。六步停机需要能轮询的时钟和稳定的总线，
+在这个上下文里做不完。
+
+**已按 Adreno/Wi-Fi 的两层架构改（未验证）：**
+
+- 四个有序退出点各加 `hakios_mali610_stop()`：
+  `hakios_request_return()`、`loader_return_timer()`、`loader_stop_poll()`、`halt_all_cpus()`
+- `quiesce()` 瘦身为纯 panic 兜底：先查 `gMaliStopped`，已置位直接返回；
+  否则原子认领后只做裸 MMIO 写，零 `printf`、零锁
+- `halt_all_cpus()` 那处已撤回（`PEHaltRestart` 不返回，是死代码）
+
+**下次验证：** 刷入带这些改动的镜像，确认 `M1 done`，不手动 `stop` 直接发 `RETURN`，
+计时回 Android。目标是 32 秒。
 
 ## 五、当前镜像与回退
 
