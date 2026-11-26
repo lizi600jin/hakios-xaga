@@ -27,7 +27,7 @@ D=/home/lizi/IOS/repo/hakios-mt6895
    source/reproduction paths, artifact hashes, stock recovery, and limits. Describe kernel VFS,
    CRC32 agreement and fixed one-block/global3 budget precisely. No userland/full-disk claim.
    Keep old718 delivery intact and link it as predecessor, not a rewritten conclusion.
-5. Add a concise HANDOFF-719-CURRENT.md with source/evidence entry, hardware/current stock,
+5. Add a concise handoff note (removed in the 2026-11-26 cleanup) with source/evidence entry, hardware/current stock,
    outstanding userland/variable-LBA/whole-disk goals, exclusivity prerequisite, raw response
    observations and remaining CPU/GPU issues. Root will choose the next host-only step.
 6. Stage exact new docs paths only; GPUEB WIP9cdcb0da stays unstaged. Raw GPT/GUID/reference/

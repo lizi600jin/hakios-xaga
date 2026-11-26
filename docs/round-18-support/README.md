@@ -13,7 +13,6 @@ No adb, no fastboot, no MMIO, no driver change.
 | File | Why |
 |---|---|
 | `COLLAB-PROTOCOL.md` | **Appendices A–D are new.** Five classes of methodological error made this round, each with a mandatory rule. Written from 12 concrete mistakes. |
-| `HANDOFF-TO-CODEX-2026-11-14-0030.md` | Newest handoff. Splits findings into "confirmed", "not proven" and "closed". |
 | `PUBLIC-REF-CROSSCHECK-2026-11-13.md` | What three public references say, compared item by item against our firmware. |
 | `PDC-FINDING-2026-11-13.md` | PDC enable writes vs readback, including three self-corrections. |
 | `FINDING-version-word-path-2026-11-13.md` | Where the firmware publishes its interface version, and why the sentinel staying put is not proof that the MCU never ran. |

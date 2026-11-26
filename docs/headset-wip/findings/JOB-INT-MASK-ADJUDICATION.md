@@ -19,7 +19,7 @@
 |---|---|
 | **Codex**（2026-11-15 02:14） | mask 极性是「1=使能」。vendor `kbase_pm_enable_interrupts` 写 `0xffffffff`、`disable` 写 `0`；panthor `enable_events` 做 `mask \|= bits`。**我们写 `0xffffffff` 本来就对，改 0 反而屏蔽。** HALT/FATAL 读独立 `MCU_STATUS(704)`，不受 JOB mask 影响 |
 | **子代理 `db018236`**（R1） | `0x100c` 是 `RAWSTAT & ~MASK`。mask bit31=1 时 `STAT` 的 bit31 恒为 0。建议改 mask=0 并轮询 `RAWSTAT` |
-| **DSH 早先记录**（`MASTER-STATE.md:133` / `:234`） | 「`JOB_INT_MASK` = 使能集（写 1 = 开）」「『全屏蔽』→ 是使能集，全开」 |
+| **DSH 早先记录**（原状态记录 :133 / :234，已随 2026-11-26 清理移除） | 「`JOB_INT_MASK` = 使能集（写 1 = 开）」「『全屏蔽』→ 是使能集，全开」 |
 
 ## 2. 裁决依据（逐条核实）
 

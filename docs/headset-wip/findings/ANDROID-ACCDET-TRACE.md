@@ -432,7 +432,7 @@ sleep 5
 **(b) 抓开机 init（信息量最大）** —— 需要重启一次，**但要先确认不会启到 HakiOS**：
 
 ```sh
-# 只在确认 boot_a 是原厂时才做（MASTER-STATE.md 记录 md5 a63b2e35... 为原厂）
+# 只在确认 boot_a 是原厂时才做（记录 md5 a63b2e35... 为原厂）
 adb -s "$S" reboot
 # 立刻开始轮询，抓住 boot 后的 init 窗口
 for i in $(seq 1 60); do
@@ -623,7 +623,7 @@ write 26a9 / read 26a9   ← ...
 ```
 
 **注意**：`cur_AB` **不是**「已插入」布尔 —— `check_cable_type()` 有前态 + `eint_sync_flag` 门控，
-MIC_BIAS 下 `cur_AB==0` 表示**按键按下**而非三段耳机（`MASTER-STATE.md` §3.2）。
+MIC_BIAS 下 `cur_AB==0` 表示**按键按下**而非三段耳机（原状态记录 §3.2，已随 2026-11-26 清理移除）。
 解析时不要把它当布尔值。
 
 ---
