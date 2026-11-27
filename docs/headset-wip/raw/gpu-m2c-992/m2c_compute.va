@@ -1,0 +1,18 @@
+# Valhall v10 compute shader for Mali-G610 Task 2 (mali_m2c=2)
+# Assemble with:
+#   python3 xnu-deps/build/mesa/mesa-25.0.7/src/panfrost/compiler/valhall/asm.py m2c_compute.va m2c_compute.bin
+#
+# Inputs:
+#   u0:u1 = 64-bit output buffer VA in AS1 (out_va)
+#   u2    = 32-bit magic base (0xdead0000)
+#   r60   = preloaded global_invocation_id.x (Preload.R60 = bit 12)
+# Output:
+#   *(uint32_t *)(out_va + tid * 4) = 0xdead0000 + tid
+#
+# Expected 24-byte little-endian 64-bit words:
+#   word[0] = 0x01a3c00020273c80ull
+#   word[1] = 0x00a0c20000007c82ull
+#   word[2] = 0x7861420218000040ull
+SHADDX.u64 r0, u0, r60.w0, shift:0x2
+IADD.u32 r2, u2, ^r60
+STORE.i32.slot0.end @r2, ^r0, offset:0
