@@ -1,0 +1,39 @@
+# mtk/mt6895/drivers/net/conf: the MT6895's wireless and modem-side blocks.
+# CONFIG_HAKIOS_<NAME>=y in a defconfig builds a driver into the kernel (docs/drivers-config.md). MediaTek's drivers are
+# `default n`: a configuration has them only when it includes mt6895.config.
+#
+# These three are the only drivers in this tree that are expected to be switched on before the radio works, and that is
+# deliberate: each of them stops at a different, known seam, and prints where it stopped. A driver that reports "up" and
+# then transmits nothing is worse than one that reports "mapped, radio not started".
+
+driver MT6895_CONNSYS
+	file    bsd/dev/hakios.mt6895_connsys.c
+	requires MT6895_PMIF
+	default n
+	help    the Wi-Fi base of the Redmi Note 11T Pro (xaga): the four CONNSYS windows at 0x18400000 (wf-top), 0x184B0000
+	help    (wf-cfg), 0x184C0000 (wf-mcu) and 0x184F0000 (wf-misc), mapped and read once, plus the EMI physical-address
+	help    guard that decides whether the conn MCU can ever see its own memory. The phone has no separate Wi-Fi chip --
+	help    the MAC and PHY run on CONNSYS inside the die, and only the FEM is external -- so the stack to port is
+	help    MediaTek's wlan_drv_gen4m, not a Qualcomm WCN one. Boot-arg wifi=2, and consys_emi_pa= for the factory EMI
+	help    base, which cannot be guessed: read it from Android's /reserved-memory. With a mismatched base the firmware
+	help    loads and no AP is ever seen, so the driver refuses to start instead
+
+driver MT6895_BT
+	file    bsd/dev/hakios.mt6895_bt.c
+	requires MT6895_CONNSYS
+	default n
+	help    the Bluetooth base of the same phone: BTIF at 0x1100C000 and its two 0x11300Bxx aliases, probed read-only,
+	help    plus the WMT protocol that carries the ROM patch (vendor HCI 0xFC6F, five-byte header, sections paced one
+	help    acknowledgement at a time) and the enable-then-set-BD_ADDR order (0xFC1A only after FUNC_CTRL accepts).
+	help    Boot-arg bt=2. The protocol half needs no hardware and is tested on the host; the transport half is a single
+	help    callback that stays unwired until BTIF's register offsets are read off the phone or its LK -- btmtkuart.c
+	help    drives this interface as a serial port and contains no register offsets at all
+
+driver MT6895_CELL
+	file    bsd/dev/hakios.mt6895_cell.c
+	default n
+	help    en1, the cellular interface, presented as an Ethernet segment with one synthetic peer: it answers the DHCP
+	help    DISCOVER/REQUEST configd sends and the ARP for the gateway, and wraps every modem packet into an Ethernet
+	help    frame. Boot-arg cell=2. The DPMAIF AO page at 0x1022C000 is mapped and its interrupt mask read once, without
+	help    a write; CCCI and the DPMAIF data path are not wired, so the interface holds a lease and carries no traffic.
+	help    kern.hakios.cellular_bars comes from AT+CSQ once the modem answers it, and from the caller until then
