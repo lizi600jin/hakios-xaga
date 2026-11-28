@@ -35,6 +35,18 @@ refuse() {
 
 JOB=$(cd "$JOB" && pwd)
 JOB_JSON=$JOB/job.json
+
+# A job runs once. If this directory already carries a verdict, the watcher is
+# looking at a job it has already handled -- almost certainly because it polls on a
+# timer and the verdict has not been synced away yet. Running it again is not
+# harmless: apply_and_check would try to apply a patch that is already in the tree
+# and report exit 3, which reads like a broken patch rather than a duplicated job.
+# Re-running a job means giving it a new job-id, not deleting the old verdict.
+if [ -f "$JOB/status.json" ]; then
+	echo "already done: $(cat "$JOB/status.json")"
+	exit 0
+fi
+
 [ -f "$JOB_JSON" ] || refuse "job.json is missing"
 
 # Root is never acceptable here: the runner owns the repository and nothing else,
@@ -88,6 +100,12 @@ check_wireless)
 
 apply_and_check)
 	[ -n "$PATCH" ] || refuse "apply_and_check needs a patch"
+	# A symlink passes -f but points somewhere else, and the confinement below only
+	# canonicalises the parent directory -- so refuse links outright rather than
+	# trusting the resolution. The patch has to be a regular file inside the job.
+	if [ -L "$JOB/$PATCH" ]; then
+		refuse "symlink patch refused"
+	fi
 	[ -f "$JOB/$PATCH" ] || refuse "patch not present in the job directory"
 	inside_job "$JOB/$PATCH" || refuse "patch path escapes the job directory"
 	# --check first, and no apply if it fails: a half-applied patch is worse than a
