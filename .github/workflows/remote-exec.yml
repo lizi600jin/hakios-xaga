@@ -34,7 +34,7 @@ concurrency:
 
 jobs:
   exec:
-    runs-on: [self-hosted, linux, x64, xaga-vm]
+    runs-on: [self-hosted, Linux, X64, xaga-vm]
     timeout-minutes: 45
     steps:
       - name: checkout

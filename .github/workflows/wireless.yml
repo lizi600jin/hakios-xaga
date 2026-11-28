@@ -37,7 +37,7 @@ concurrency:
 
 jobs:
   check:
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, Linux]
     timeout-minutes: 60
 
     steps:
