@@ -1,7 +1,0 @@
-argv: ['python3', 'mtk/tools/chainboot.py', '/home/lizi/IOS/hakios-mtk/backup/boot_a_stock_real.img', 'logs/mt6895-cpu-baseline-20261116/trial713/loader.bin', 'logs/mt6895-cpu-baseline-20261116/trial713/boot.img', 'logs/mt6895-cpu-baseline-20261116/trial713/payload.bin', '--partition-size', '64M']
-native rc=0
-stdout: logs/mt6895-cpu-baseline-20261116/trial713/boot.img: 22994944 bytes (program 48768, Image 42201364, payload 19515800, kernel gz 21113258)
-
-  boot.img 22994944 B
-  sha256 127e48e9c7089e9845bfd0a3565ccacfb1b80acd3d84776b3946fa8a702b165c
-  md5    e91d1caf11378f98553cc51f6a771a46

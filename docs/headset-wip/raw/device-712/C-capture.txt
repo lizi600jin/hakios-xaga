@@ -1,6 +1,0 @@
-[host] 2026-11-16T20:09:06.563723
-  dd rc=0 timed_out=False  4198400 B  精确=True
-  sha256 d3434640a209afb616eabaf777c52d45fca57cf932705f2aac0408e55eea3e9b
-  header magic=0x474f4c48 ver=1 len=531977 reason=0x0 sum=0x295c0e4
-  body 531977 B  sha256 19ab2ed6544281ebe6626ffca45809cba024288a76e6ff1a7a3aba84ce61a2e3
-  完整 sum(body)=0x295c0e4  等于 header: True

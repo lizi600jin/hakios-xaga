@@ -1,7 +1,0 @@
-# PACK-711 产物（镜像留本地 /home/lizi/IOS/hakios-mtk/logs/profile4-tone-20261116/trial711/）
-boot.img    22994944 B  sha256 3f57a80680e1eb7952ed49f6a149ec61fb2ab97a88937390395305a4f3b88fa6
-                        md5    0810f7b33b17cbd5036890ce9d8e66ba
-payload.bin 19515720 B  sha256 51ff852c263858e77ca892ba4131aa92e7a14d7bfdc7cab87e8e5de9bcca0935
-loader.bin     48896 B  sha256 8762f81490b078745f4cc3dce738aa076b7c7f14582c08e18c2897ff00c318b7
-start.o         8648 B  sha256 e42598afd6c57632fa396ff21ef6961a9feb73b21bc560110add8e4fa84000e3
-mtkloader.o    91536 B  sha256 3cfd420ee7e3cb6308d81bdd9e469da3b6f9b42905602665df6a9815848ed20f

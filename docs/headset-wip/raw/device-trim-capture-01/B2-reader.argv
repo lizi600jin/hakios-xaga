@@ -1,1 +1,0 @@
-['adb', '-s', 'GAJZ4HIN99AQ69Y9', 'shell', '-T', '-n', 'su', '-c', '/data/local/tmp/regmap-reader-prep01-180239.aarch64']

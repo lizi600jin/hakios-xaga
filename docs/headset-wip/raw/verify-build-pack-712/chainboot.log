@@ -1,7 +1,0 @@
-argv: ['python3', 'mtk/tools/chainboot.py', '/home/lizi/IOS/hakios-mtk/backup/boot_a_stock_real.img', 'logs/profile4-low-output-20261116/trial712/loader.bin', 'logs/profile4-low-output-20261116/trial712/boot.img', 'logs/profile4-low-output-20261116/trial712/payload.bin', '--partition-size', '64M']
-native rc=0
-stdout: logs/profile4-low-output-20261116/trial712/boot.img: 22994944 bytes (program 48944, Image 42201364, payload 19515720, kernel gz 21112854)
-
-  boot.img 22994944 B
-  sha256 b97f96722c5c7961326dadbf36d8624320ee696ac299a89a9663e1897e3379ee
-  md5    337fe6900a93fd80bc1965d911526da0

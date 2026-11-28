@@ -1,8 +1,0 @@
-{
-  "trial": 730,
-  "base_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=730 headset=0 mtk_ufs_twoblock=1 mtk_ufs_vfs=4 mtk_ufs_byte_offset=4096 mtk_ufs_byte_length=4096 mtk_ufs_byte_capacity=4096 mtk_ufs_varread=0 mtk_ufs_probe=0 mtk_ufs_read=0 mtk_ufs_service=0 mtk_ufs_capacity=0 loader_return_after=150",
-  "full_arguments": "rd=md0 -v cpus=4 buttons=2 touchscreen=3 keylog=1 key_scan=1 fbwidth=1080 fbheight=2460 fb_disp=1 mali=0 mali_trial=730 headset=0 mtk_ufs_twoblock=1 mtk_ufs_vfs=4 mtk_ufs_byte_offset=4096 mtk_ufs_byte_length=4096 mtk_ufs_byte_capacity=4096 mtk_ufs_varread=0 mtk_ufs_probe=0 mtk_ufs_read=0 mtk_ufs_service=0 mtk_ufs_capacity=0 loader_return_after=150 hakios_kver=2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty",
-  "base_bytes": 349,
-  "nul_inclusive_bytes": 410,
-  "kernel_ver": "2.1.13-hakios-darwin22.5-mt6895-gdb08f63c-dirty"
-}

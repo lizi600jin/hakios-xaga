@@ -1,4 +1,0 @@
-argv: ['python3', 'xnuloader/mkpayload.py', '-o', 'logs/profile4-low-output-20261116/trial712/payload.bin', '--no-version', 'kernel=/home/lizi/IOS/hakios-mtk/logs/profile4-low-output-20261116/kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837', 'ramdisk=logs/profile4-device-20261116/trial710/revision2/ref-ramdisk.bin', 'kernel.ver=logs/profile4-device-20261116/trial710/revision2/ref-kernel.ver.bin']
-native rc=0
-stdout: logs/profile4-low-output-20261116/trial712/payload.bin: 19515720 bytes
-  payload 19515720 B  150dc130a237fa55606e98655618f65506c8309ebacea43a31598fb7f52c661e

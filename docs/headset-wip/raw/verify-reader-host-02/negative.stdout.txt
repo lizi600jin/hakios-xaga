@@ -1,4 +1,0 @@
-FAIL 60 ARM64 ELF syscall cases; 3 failed
-name close EIO ('exit', 0, False)
-range close EIO ('exit', 0, False)
-registers close EIO ('exit', 0, False)

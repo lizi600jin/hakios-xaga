@@ -10,3 +10,20 @@ __pycache__/
 
 # 反汇编临时工作区（下载的上游源码副本 + 固件二进制）
 .csf-re/
+
+# ---- 本地运维、AI 协作记录、厂商二进制与原始转储 ----
+.github/workflows/remote-exec.yml
+docs/ci/cloud-bridge.md
+docs/headset-wip/WEB-REPLY-REVIEW.md
+docs/headset-wip/ko/
+docs/headset-wip/raw/
+docs/headset-wip/research/
+docs/headset-wip/accdet-*.txt
+docs/headset-wip/tinymix-a.txt
+tools/onboard-runner.sh
+tools/cloud-job-runner.sh
+tools/preflight-b1.sh
+tools/runner-watchdog.sh
+tools/bridge-ntfy.sh
+*.ko
+*.fdt

@@ -1,6 +1,0 @@
-[host] 2026-11-16T19:38:09.093923
-  dd native rc=0 timed_out=False  4198400 B (期望 4198400)  精确=True
-  sha256 cb5222d7a02fdb2d733f8c0d537301f626584002f92984a7235eedc5e25303a1
-  header magic=0x474f4c48 ver=1 len=531234 reason=0x0 sum=0x294e40f
-  body 531234 B  sha256 d8a1df1c5b590f2dd4141b99cc17731d73de9a5a3359d138f612c0e6f965ea07
-  完整 sum(body)=0x294e40f  等于 header sum: True

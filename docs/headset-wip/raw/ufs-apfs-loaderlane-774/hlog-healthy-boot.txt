@@ -1,17 +1,0 @@
-# The HLOG of a boot that was called a hang and was not one.
-# 6667 lines, 19.0 s to 438.3 s, iOS home screen at 10 fps, lease 0 -> 2.
-
-Darwin Kernel Version 22.5.0: 2026e94 11f 22f% fff% 16:32:50 CST; lizi:kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837
-=== /redwood/etc/rc ===
-$ exec /sbin/launchd.ios
-[   19.020124]: Darwin Kernel Version 22.5.0: 2026å¹´ 11æ 22æ¥ æææ¥ 16:32:50 CST; lizi:kernel-src/BUILD/obj/DEVELOPMENT_ARM64_BCM2837
-[   19.209271]: mt6895-ufs-twoblock: guard magic=0x554c5345 version=1 trial=740 state=0
-mt6895-ufs-twoblock: return-gate magic=0x554c5345 version=1 trial=740 state=2 allowed=1
-
-# last 5 lines of the full log
-
-[  436.390172]: nvt: 1 distinct buffer patterns so far: [0 x1070 77 77 77 77 77]
-[  436.400710]: nvt: 1070 reports, 0 positions, 1070 edges on the line, 0 bad; line idle
-[  438.321837]: MiniIOMobileFramebuffer: 51 frames in 5001 ms (10 a second), 1474 us each in the driver, after 0 us waiting for the GPU and, 0 of them, 0 us for the next refresh; 0 swaps waited for the frame before, 0 gave up; 0 swaps came a refresh late themselves
-[  438.321884]: MiniIOMobileFramebuffer: this frame on average red 57 green 59 blue 60; 29% of it not black
-mt6895-ufs-twoblock: return-gate magic=0x554c5345 version=1 trial=740 state=2 allowed=1

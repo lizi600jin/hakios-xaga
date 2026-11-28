@@ -1,8 +1,0 @@
-boot_id        = 0ebf2d81-4822-47df-be3c-51916b1a7663  期望 0ebf2d81-4822-47df-be3c-51916b1a7663
-boot_completed = 1  期望 1
-getenforce     = Enforcing  期望 Enforcing
-uptime         = 68137.35 172683.52
-regmap-reader-prep01-180239.aarch64          MATCH
-reference-prep01-180239.wav                  MATCH
-
-PRECHECK: PASS

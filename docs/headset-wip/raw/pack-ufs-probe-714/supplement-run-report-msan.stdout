@@ -1,2 +1,0 @@
-PASS 2324 cases; 18 failure positions; valid masks and formatted diagnostics; dynamic IS; read-only mappings
-PASS 32 supplemental formatted-slot assertions; original fixture preserved

@@ -1,6 +1,0 @@
-  mCurrentFocus=Window{3e31ea5 u0 com.miui.mediaviewer/com.miui.musicplayer.activity.AudioActivity}
-  mFocusedApp=ActivityRecord{178633140 u0 com.miui.mediaviewer/com.miui.musicplayer.activity.AudioActivity t15}
-    isKeyguardShowing=false
-
-焦点是 AudioActivity: True
-keyguard=false      : True
