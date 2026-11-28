@@ -1,0 +1,97 @@
+name: wireless
+
+# The wireless/Bluetooth/modem work, run on a self-hosted runner inside the cloud
+# machine that owns the build tree. Two triggers, both deliberate:
+#
+#   workflow_dispatch  a human picks the action from a list. Nothing runs by itself.
+#   push to ci/wireless-*  the test branch a patch is pushed to, and only that prefix.
+#
+# There is no push-to-main trigger on purpose. This workflow executes commands from
+# the repository on a machine that is also the build host; letting a branch name
+# decide when that happens is how a CI runner becomes a foothold.
+#
+# What it does NOT do: fetch secrets, print environment, or run anything the
+# dispatch input did not name. The runner needs no credentials beyond its own
+# checkout token.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "what to run"
+        required: true
+        default: check_wireless
+        type: choice
+        options:
+          - check_wireless
+          - check_and_xnu
+          - qemu_smoke
+          - all
+  push:
+    branches:
+      - "ci/wireless-*"
+
+concurrency:
+  group: wireless-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 60
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          clean: true
+
+      - name: whoami
+        run: |
+          # Refuse to run as root. The runner is registered as a non-root user;
+          # if that ever changes, this stops the job before it writes anything.
+          if [ "$(id -u)" -eq 0 ]; then
+            echo "::error::this workflow must not run as root"
+            exit 1
+          fi
+
+      - name: wireless checks
+        if: >-
+          github.event_name == 'push' ||
+          inputs.action == 'check_wireless' ||
+          inputs.action == 'check_and_xnu' ||
+          inputs.action == 'all'
+        run: |
+          sh tools/check-wireless.sh
+
+      - name: xnu build
+        if: >-
+          inputs.action == 'check_and_xnu' ||
+          inputs.action == 'all'
+        run: |
+          # Only where a kernel tree exists. XNU_SRC is set on the runner itself,
+          # not here: a path in the repository would name somebody's machine.
+          if [ -z "${XNU_SRC:-}" ]; then
+            echo "::warning::XNU_SRC is not set on this runner; skipping the kernel build"
+            exit 0
+          fi
+          cd "$XNU_SRC"
+          timeout 1800 make -j"$(nproc)" BUILD_LOCK=1
+
+      - name: qemu smoke
+        if: >-
+          inputs.action == 'qemu_smoke' ||
+          inputs.action == 'all'
+        run: |
+          sh tools/qemu-smoke.sh
+
+      - name: logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wireless-${{ github.run_id }}
+          path: |
+            /tmp/hakios-wireless/
+            /tmp/hakios-qemu-smoke/
+          if-no-files-found: ignore
+          retention-days: 30
