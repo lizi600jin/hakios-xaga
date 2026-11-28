@@ -1,7 +1,11 @@
 /*
  * hakios_mt6895_wireless_addrs.h — 自动生成，勿手改。
- * 来源：Cyber-Mobile/xaga-qemu（hw/arm/mt6895.c、hw/misc/mtk_dpmaif.c、
- *       hw/misc/mtk_scpsys.c）
+ * 来源：XagaForge/android_kernel_xiaomi_mt6895 原厂 eccci（dpmaif_reg_v3.h、
+ *       dpmaif_drv_v3.c）、真机 xaga-live.dts、Cyber-Mobile/xaga-qemu
+ *       （hw/arm/mt6895.c、hw/misc/mtk_scpsys.c）
+ *
+ * DPMAIF 一律按原厂四窗口：AO 0x10014000 / PD 0x1022D000 / MD MISC 0x1022C000
+ * / PD SRAM 0x1022E000。qemu 建模的 0x1022F000 在原厂源码里不存在，已删除。
  * 生成器：tools/gen_xaga_wireless_addrs.py
  *
  * 这些地址是 MT6895 的板级事实，不是从别的机型抄的：qemu 里对它们做过
@@ -13,9 +17,10 @@
 
 /* ---- MMIO 窗口表（X-macro，展开成任意形状都不产生未用告警） ---- */
 #define XAGA_MMIO_WINDOWS(X) \
-    X(DPMAIF         , 0x1022C000ULL,  0x1000) /* dpmaif */ \
-    X(DPMAIF_2       , 0x1022E000ULL,  0x1000) /* dpmaif */ \
-    X(INFRA_DPMAIF   , 0x1022F000ULL,  0x1000) /* infra_dpmaif */ \
+    X(DPMAIF_AO      , 0x10014000ULL,  0x1000) /* dpmaif ao: ul/dl/md_dl */ \
+    X(DPMAIF_MD_MISC , 0x1022C000ULL,  0x1000) /* dpmaif pd md misc */ \
+    X(DPMAIF_PD      , 0x1022D000ULL,  0x1000) /* dpmaif pd: ul/dl/rdma/wdma/misc */ \
+    X(DPMAIF_PD_SRAM , 0x1022E000ULL,  0x1000) /* dpmaif pd sram */ \
     X(BTIF           , 0x1100C000ULL,   0x100) /* btif */ \
     X(BTIF_2         , 0x11300B00ULL,    0x80) /* btif */ \
     X(BTIF_3         , 0x11300B80ULL,    0x80) /* btif */ \
@@ -52,15 +57,17 @@
     X(GPS_2          , 0x18C00000ULL, 0x100000) /* gps */ \
     X(GPS_3          , 0x1C000000ULL,  0x1000) /* gps */
 
-#define XAGA_MMIO_WINDOW_COUNT 38
+#define XAGA_MMIO_WINDOW_COUNT 39
 
 /* ---- 同一批窗口的单值宏（X-macro 之外直取用） ---- */
-#define XAGA_WIN_DPMAIF_BASE 0x1022C000ULL
+#define XAGA_WIN_DPMAIF_BASE 0x10014000ULL   /* AO: 0x10014000 UL / 0x10014400 DL / 0x10014800 MD DL */
 #define XAGA_WIN_DPMAIF_SIZE 0x1000
-#define XAGA_WIN_DPMAIF_2_BASE 0x1022E000ULL
+#define XAGA_WIN_DPMAIF_MD_MISC_BASE 0x1022C000ULL
+#define XAGA_WIN_DPMAIF_MD_MISC_SIZE 0x1000
+#define XAGA_WIN_DPMAIF_PD_BASE 0x1022D000ULL       /* 0x1022D000 UL / D100 DL / D200 RDMA / D300 WDMA / D400 MISC */
+#define XAGA_WIN_DPMAIF_PD_SIZE 0x1000
+#define XAGA_WIN_DPMAIF_2_BASE 0x1022E000ULL        /* PD SRAM, DC00/DD00/DE00 sub-blocks */
 #define XAGA_WIN_DPMAIF_2_SIZE 0x1000
-#define XAGA_WIN_INFRA_DPMAIF_BASE 0x1022F000ULL
-#define XAGA_WIN_INFRA_DPMAIF_SIZE 0x1000
 #define XAGA_WIN_BTIF_BASE 0x1100C000ULL
 #define XAGA_WIN_BTIF_SIZE 0x100
 #define XAGA_WIN_BTIF_2_BASE 0x11300B00ULL
@@ -133,6 +140,7 @@
 #define XAGA_WIN_GPS_3_SIZE 0x1000
 
 /* ---- DPMAIF 寄存器（hw/misc/mtk_dpmaif.c） ---- */
+#define XAGA_DPMAIF_AO_UL_INIT_SET                     (0x000U)  /* AO UL+0x00 */
 #define XAGA_DPMAIF_AO_UL_INT_MASK                     (0x080U)
 #define XAGA_DPMAIF_AO_UL_INT_MASK_CLR                 (0x084U)
 #define XAGA_DPMAIF_AO_UL_INT_MASK_SET                 (0x088U)
@@ -148,9 +156,9 @@
 #define XAGA_DPMAIF_PD_DL_ADD_PIT_CNT                  (0x124U)
 #define XAGA_DPMAIF_PD_DL_IDLE_CHECK                   (0x1b4U)
 #define XAGA_DPMAIF_PD_MISC_AP_L2TISAR0                (0x400U)
-#define XAGA_DPMAIF_PD_MISC_AP_IP_BUSY                 (0x450U)
-#define XAGA_DPMAIF_PD_MISC_CG_EN_STATUS               (0x460U)
-#define XAGA_DPMAIF_PD_MISC_HW_INIT_DONE               (0x490U)
+#define XAGA_DPMAIF_PD_MISC_AP_IP_BUSY                 (0x460U)  /* AP MISC+0x60 */
+#define XAGA_DPMAIF_PD_MISC_CG_EN_STATUS               (0x468U)  /* AP MISC+0x68 */
+#define XAGA_DPMAIF_PD_MISC_HW_INIT_DONE               (0x490U)  /* same addr as vendor OVERWRITE_CFG */
 #define XAGA_DPMAIF_PD_MISC_SRAM_INIT                  (0x494U)
 #define XAGA_DPMAIF_PD_MISC_DL_RESTORE_SET             (0x498U)
 

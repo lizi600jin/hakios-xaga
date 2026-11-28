@@ -50,6 +50,14 @@
 #include <stdbool.h>
 #include <string.h>
 
+#if !defined(HAKIOS_HOST_TEST)
+#define HAKIOS_MT6895_CELL_EN1_IMPLEMENTATION
+#include <libkern/libkern.h>
+#include <mach/mach_types.h>
+#include <pexpert/pexpert.h>
+#include <sys/systm.h>
+#endif
+
 #include "hakios_mt6895_wireless_addrs.h"
 #include "hakios_mt6895_cell_en1.h"
 
@@ -247,12 +255,16 @@ hakios_mt6895_cell_start(void)
 	cell_apply_boot_args(&st->cfg);
 
 	/*
-	 * The AO page is the only DPMAIF window that is powered before the modem
-	 * is, so it is the only one safe to map here. A read of the interrupt mask
-	 * proves the block is there; nothing is written, because the mask the
-	 * loader programmed already describes which queues this AP expects, and
-	 * overwriting it before the queues exist is how a data path starts life
-	 * with its interrupts off.
+	 * The AO page (0x10014000, holding UL 0x10014000 / DL 0x10014400 / MD DL
+	 * 0x10014800 per the vendor dpmaif_reg_v3.h and the live dts) is the only
+	 * DPMAIF window powered before the modem, so it is the only one safe to
+	 * map here. A read of the interrupt mask proves the block is there;
+	 * nothing is written, because the mask the loader programmed already
+	 * describes which queues this AP expects, and overwriting it before the
+	 * queues exist is how a data path starts life with its interrupts off.
+	 *
+	 * PD (0x1022D000) and PD SRAM (0x1022E000) stay unmapped until the modem
+	 * is up; MD MISC (0x1022C000) belongs to the modem side.
 	 */
 	ao = ml_io_map((vm_offset_t)XAGA_WIN_DPMAIF_BASE, XAGA_WIN_DPMAIF_SIZE);
 	if (ao == 0) {

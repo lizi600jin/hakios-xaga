@@ -1,0 +1,285 @@
+diff --git a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/linux/hif/axi/include/hif.h b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/linux/hif/axi/include/hif.h
+index 4362eaf..2be7189 100644
+--- a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/linux/hif/axi/include/hif.h
++++ b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/linux/hif/axi/include/hif.h
+@@ -176,9 +176,11 @@ struct GL_HIF_INFO {
+ 	struct HIF_MEM_OPS rMemOps;
+ 
+ 	uint32_t u4IrqId;
+-#if (CFG_SUPPORT_CONNINFRA == 1)
++	/* Xaga's WFDMA carries a second interrupt line regardless of whether a
++	 * conninfra daemon is present; chips/common/cmm_asic_connac2x.c:857
++	 * disables it unconditionally.
++	 */
+ 	uint32_t u4IrqId_1;
+-#endif
+ 	int32_t u4HifCnt;
+ 
+ 	/* AXI MMIO Base Address, all access will use */
+diff --git a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_ate_agent.h b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_ate_agent.h
+index 81b2de9..9733f2d 100644
+--- a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_ate_agent.h
++++ b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_ate_agent.h
+@@ -129,6 +129,8 @@ struct ATE_OPS_T {
+ 				 uint32_t u4WFNum);
+ 	void (*getRbistDataDumpEvent)(struct ADAPTER *prAdapter,
+ 				      uint8_t *pucEventBuf);
++	void (*icapRiseVcoreClockRate)(void);
++	void (*icapDownVcoreClockRate)(void);
+ };
+ 
+ 
+diff --git a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_dependent.h b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_dependent.h
+index 8c6fc16..6ba1407 100644
+--- a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_dependent.h
++++ b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_dependent.h
+@@ -232,6 +232,8 @@ struct net_device {
+ 	unsigned char *dev_addr;
+ 	/* needed by nic/nic_cmd_event.c */
+ 	struct wireless_dev	*ieee80211_ptr;
++	/* Linux netdev 的能力位图；XNU 侧由 ifnet 能力映射 */
++	uint64_t features;
+ };
+ 
+ struct device {
+@@ -252,6 +254,8 @@ struct sk_buff {
+ 	unsigned char *data;
+ 	unsigned int len;
+ 	struct net_device *dev;
++	/* mgmt/mscs.c 用 skb->mark 打优先级标记（Linux 侧该字段在 sk_buff 里） */
++	unsigned int mark;
+ };
+ 
+ /*
+diff --git a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_kal.h b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_kal.h
+index dba7497..bb468e9 100644
+--- a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_kal.h
++++ b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_kal.h
+@@ -143,6 +143,7 @@ extern int g_u4WlanInitFlag;
+  *******************************************************************************
+  */
+ /* Lock for process */
++
+ enum ENUM_SPIN_LOCK_CATEGORY_E {
+ 	SPIN_LOCK_FSM = 0,
+ 
+@@ -158,6 +159,9 @@ enum ENUM_SPIN_LOCK_CATEGORY_E {
+ 	SPIN_LOCK_RX_QUE,
+ 	SPIN_LOCK_RX_FREE_QUE,
+ 	SPIN_LOCK_TX_QUE,
++#if CFG_SUPPORT_TPENHANCE_MODE
++	SPIN_LOCK_TXACK_QUE,
++#endif /* CFG_SUPPORT_TPENHANCE_MODE */
+ 	SPIN_LOCK_CMD_QUE,
+ 	SPIN_LOCK_TX_RESOURCE,
+ 	SPIN_LOCK_CMD_RESOURCE,
+@@ -187,10 +191,16 @@ enum ENUM_SPIN_LOCK_CATEGORY_E {
+ 	SPIN_LOCK_MAILBOX,
+ 	SPIN_LOCK_TIMER,
+ 
+-	/* SPIN_LOCK_BOW_TABLE,*/
++	SPIN_LOCK_BOW_TABLE,
+ 
+ 	SPIN_LOCK_EHPI_BUS,	/* only for EHPI */
+ 	SPIN_LOCK_NET_DEV,
++
++	SPIN_LOCK_BSSLIST_FW,
++	SPIN_LOCK_BSSLIST_CFG,
++#if CFG_SUPPORT_NAN
++	SPIN_LOCK_NAN_NEGO_CRB,
++#endif
+ 	SPIN_LOCK_PMKID,
+ 	SPIN_LOCK_NUM
+ };
+@@ -945,7 +955,7 @@ kalRemainOnChannelExpired(IN struct GLUE_INFO *prGlueInfo,
+ void
+ kalIndicateChannelSwitch(IN struct GLUE_INFO *prGlueInfo,
+ 			IN enum ENUM_CHNL_EXT eSco,
+-			IN uint8_t ucChannelNum);
++			IN uint8_t ucChannelNum, IN enum ENUM_BAND eBand);
+ #endif
+ 
+ void
+@@ -1280,7 +1290,8 @@ uint32_t kalGetTxPendingFrameCount(IN struct GLUE_INFO
+ uint32_t kalGetTxPendingCmdCount(IN struct GLUE_INFO
+ 				 *prGlueInfo);
+ 
+-void kalClearCommandQueue(IN struct GLUE_INFO *prGlueInfo);
++void kalClearCommandQueue(IN struct GLUE_INFO *prGlueInfo,
++	IN u_int8_t fgIsNeedHandler);
+ 
+ u_int8_t kalSetTimer(IN struct GLUE_INFO *prGlueInfo,
+ 		     IN uint32_t u4Interval);
+@@ -1490,7 +1501,8 @@ int32_t kalRequestFirmware(const uint8_t *pucPath,
+ void
+ kalIndicateBssInfo(IN struct GLUE_INFO *prGlueInfo,
+ 		   IN uint8_t *pucFrameBuf, IN uint32_t u4BufLen,
+-		   IN uint8_t ucChannelNum, IN int32_t i4SignalStrength);
++		   IN uint8_t ucChannelNum, IN enum ENUM_BAND eBand,
++		   IN int32_t i4SignalStrength);
+ #endif
+ /*----------------------------------------------------------------------------*/
+ /* Net device                                                                 */
+@@ -1684,8 +1696,8 @@ int32_t kalCheckTputLoad(IN struct ADAPTER *prAdapter,
+ 			 IN uint32_t u4Used);
+ void kalSetRpsMap(IN struct GLUE_INFO *glue, IN unsigned long value);
+ #if CFG_MTK_ANDROID_EMI
+-void kalSetEmiMpuProtection(phys_addr_t emiPhyBase, uint32_t offset,
+-			    uint32_t size, bool enable);
++/* os/linux/include/gl_kal.h:1715: 2 args */
++void kalSetEmiMpuProtection(phys_addr_t emiPhyBase, bool enable);
+ void kalSetDrvEmiMpuProtection(phys_addr_t emiPhyBase, uint32_t offset,
+ 			       uint32_t size);
+ #endif
+diff --git a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_os.h b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_os.h
+index 595a63d..4a36c03 100644
+--- a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_os.h
++++ b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_os.h
+@@ -330,6 +330,7 @@ enum ENUM_P2P_REG_STATE {
+ };
+ #endif
+ 
++
+ enum ENUM_PKT_FLAG {
+ 	ENUM_PKT_802_11,	/* 802.11 or non-802.11 */
+ 	ENUM_PKT_802_3,		/* 802.3 or ethernetII */
+@@ -342,7 +343,11 @@ enum ENUM_PKT_FLAG {
+ 	ENUM_PKT_ICMP,		/* ICMP */
+ 	ENUM_PKT_TDLS,		/* TDLS */
+ 	ENUM_PKT_DNS,		/* DNS */
+-
++#if CFG_SUPPORT_TPENHANCE_MODE
++	ENUM_PKT_TCP_ACK,
++#endif /* CFG_SUPPORT_TPENHANCE_MODE */
++	ENUM_PKT_ICMPV6,		/* ICMPV6 */
++	ENUM_PKT_UDP,
+ 	ENUM_PKT_FLAG_NUM
+ };
+ 
+@@ -398,6 +403,12 @@ struct GL_SCAN_CACHE_INFO {
+ 
+ 	/* Scan period time */
+ 	OS_SYSTIME u4LastScanTime;
++
++	/* Bss index, as os/linux/include/gl_os.h:578 */
++	uint8_t ucBssIndex;
++
++	/* scan request flags, as os/linux/include/gl_os.h:581 */
++	uint32_t u4Flags;
+ /* TODO: os-related */
+ #if 0
+ 	/* for cfg80211 scan done indication */
+@@ -406,6 +417,10 @@ struct GL_SCAN_CACHE_INFO {
+ };
+ #endif /* CFG_SUPPORT_SCAN_CACHE_RESULT */
+ 
++/* gl_os.h:297-298，定义在 os/linux/gl_init.c:108-109 */
++extern uint8_t g_aucNvram[];
++extern uint8_t g_aucNvram_OnlyPreCal[];
++
+ struct FT_IES {
+ 	uint16_t u2MDID;
+ 	struct IE_MOBILITY_DOMAIN *prMDIE;
+@@ -422,12 +437,53 @@ struct FT_IES {
+ struct GL_P2P_INFO;	/* declare GL_P2P_INFO_T */
+ struct GL_P2P_DEV_INFO;	/* declare GL_P2P_DEV_INFO_T */
+ 
++/* Performance indicator cache, mirrored from os/linux/include/gl_os.h:586 */
++struct GL_PERF_IND_INFO {
++	uint32_t u4CurTxBytes[BSSID_NUM];	/* Byte */
++	uint32_t u4CurRxBytes[BSSID_NUM];	/* Byte */
++	uint16_t u2CurRxRate[BSSID_NUM];	/* Unit 500 Kbps */
++	uint8_t ucCurRxRCPI0[BSSID_NUM];
++	uint8_t ucCurRxRCPI1[BSSID_NUM];
++	uint8_t ucCurRxNss[BSSID_NUM];	/* 1NSS Data Counter */
++	uint8_t ucCurRxNss2[BSSID_NUM];	/* 2NSS Data Counter */
++};
++
+ struct GLUE_INFO {
+ 	/* Pointer to ADAPTER_T - main data structure of internal protocol
+ 	 * stack
+ 	 */
+ 	struct ADAPTER *prAdapter;
+ 
++	/* HIF runtime state. The os/none copy of this field sits inside a
++	 * disabled "#if 0" block further down, while soc7_0 needs it live:
++	 * keep the AXI-shaped struct GL_HIF_INFO here.
++	 */
++	struct GL_HIF_INFO rHifInfo;
++
++	/* for cfg80211 scan done indication; the os/none copy sits inside
++	 * the "#if 0" block at gl_os.h:741, mgmt/ais_fsm.c:596 uses it.
++	 */
++	struct cfg80211_scan_request *prScanRequest;
++
++	/* CFG_SUPPORT_MULTITHREAD: thread tids, gl_os.h:661 (inside #if 0) */
++	uint32_t u4TxThreadPid;
++
++	/* for cfg80211 scheduled scan, gl_os.h:744 (inside #if 0) */
++	struct cfg80211_sched_scan_request *prSchedScanRequest;
++
++	/* device index, gl_os.h:569 (inside #if 0) */
++	int32_t i4DevIdx;
++
++	/* NVRAM 两份全局缓冲：定义在 os/linux/gl_init.c:108-109，
++	 * XNU 侧由宿主（gl_kal_xnu.c）持有；pre_cal.c:341/389 只取址与下标，
++	 * 因此这里用不完整数组类型，和 os/linux/include/gl_os.h:297 一致。
++	 */
++	/* 注意：不是成员，见本行下方的文件级 extern */
++
++	/* fields soc7_0/core units touch but the os/none copy lost */
++	struct GL_PERF_IND_INFO PerfIndCache;
++	unsigned long ulFlag;		/* GLUE_FLAG_XXX, as os/linux gl_os.h:651 */
++
+ 	/* OID related */
+ 	struct QUE rCmdQueue;
+ 
+@@ -1226,6 +1282,16 @@ extern struct net_device *gPrP2pDev[KAL_P2P_NUM];
+ extern struct net_device *gPrDev;
+ extern struct wireless_dev *gprWdev[KAL_AIS_NUM];
+ extern uint32_t g_u4DevIdx[KAL_P2P_NUM];
++/* as os/linux/include/gl_os.h:501 — mirrored here because the os/none copy
++ * only has the extern below (common/wlan_lib.c:5436 compares against it).
++ */
++enum ENUM_NVRAM_STATE {
++	NVRAM_STATE_INIT = 0,
++	NVRAM_STATE_READY,
++	NVRAM_STATE_SEND_TO_FW,
++	NVRAM_STATE_NUM
++};
++
+ extern enum ENUM_NVRAM_STATE g_NvramFsm;
+ 
+ #ifdef CFG_DRIVER_INF_NAME_CHANGE
+@@ -1319,4 +1385,18 @@ extern void connectivity_arch_setup_dma_ops(
+ #define ARRAY_SIZE(arr) \
+ 	(sizeof(arr) / sizeof(((typeof(arr)){})[0]))
+ #endif
++
++/* 从 os/linux 同名头并入：os/none 版缺这一组枚举，驱动却无条件使用 */
++
++enum ENUM_WMM_UP {
++	WMM_UP_BE_INDEX = 0,
++	WMM_UP_BK_INDEX,
++	WMM_UP_RESV_INDEX,
++	WMM_UP_EE_INDEX,
++	WMM_UP_CL_INDEX,
++	WMM_UP_VI_INDEX,
++	WMM_UP_VO_INDEX,
++	WMM_UP_NC_INDEX,
++	WMM_UP_INDEX_NUM
++};
+ #endif /* _GL_OS_H */
+diff --git a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_rst.h b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_rst.h
+index 1881257..6851dde 100644
+--- a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_rst.h
++++ b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_rst.h
+@@ -223,7 +223,7 @@ int32_t glIsWmtCodeDump(void);
+ void glSetRstReason(enum _ENUM_CHIP_RESET_REASON_TYPE_T
+ 		    eReason);
+ 
+-int glSetRstReason(void);
++int glGetRstReason(void);
+ u_int8_t glResetTrigger(struct ADAPTER *prAdapter,
+ 			uint32_t u4RstFlag, const uint8_t *pucFile,
+ 			uint32_t u4Line);

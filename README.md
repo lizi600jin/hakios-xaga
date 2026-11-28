@@ -15,7 +15,7 @@
 
 </details>
 
-> 实验性的 bring-up 工作，不能日用。触控、电源键、显示已可用：**144 Hz 面板跑到 126 fps**，双缓冲零撕裂，彩色壁纸正常渲染。USB、Wi-Fi、音频还在修，重启后不保存任何设置。
+> 实验性的 bring-up 工作，不能日用。触控、电源键、显示已可用：**144 Hz 面板跑到 126 fps**，双缓冲零撕裂，彩色壁纸正常渲染。无线侧已经走到「CONN 电源域上电 + D-die POS Part 3 全部通过 + A-die **MT6637E2** 芯片 ID 读到 `0x66378a01`」，卡在固件还没载入——详见 [WIRELESS.md](docs/WIRELESS.md)。USB、音频还在修，重启后不保存任何设置。
 >
 > GPU 的 kernel 侧已经推进到「CSF 固件装好、页表建好、MCU 收到启动请求」这一步，卡在 MCU 一个指令都不执行——细节见 [Mali-G610：CSF 固件与 MCU](#mali-g610csf-固件与-mcu)。最近一轮推翻了一个用了十几轮的归因（那一位不是 bus error，是命令完成回执），并补上了厂商九步里唯一漏掉的 `MFG_I2M_PROTECTOR`。
 
@@ -46,13 +46,14 @@
 | UFS 读盘 | ✅ | HS-G4 双通道，2.32 GiB 的 `system.apfs` 读进内存 |
 | 分屏与显示 | ✅ | 1080×2460 全屏可写，60 fps；画面右移已修 |
 | iOS 用户态 | ✅ | SpringBoard 起来了，状态栏、小组件、Dock 全部渲染 |
-| 触控（Novatek NT36672E） | ✅ | 单点/多点、长按、点击图标都对得上，落点误差 < 100 px |
+| 触控（Novatek NT36672E） | ✅ | 单点/多点、长按、点击图标都对得上，落点误差 < 100 px；芯片看门狗复位后能自动重载固件（`nvt_wdt_fw_recovery`，实测 4/4 成功，每次约 3.3 秒） |
 | 按键（keypad + MT6363） | 🟡 | 电源键可用；音量上/下**内核与 HID 都通了**，卡在音频子系统没有输出路由 |
 | USB（MTU3） | 🚧 | 控制器配置已与 Android 工作态逐位对齐，PHY 侧 D+ 仍不上拉 |
 | GPU（Mali-G610） | 🟡 | 上电、时钟、识别、固件装载、AS0 页表、I2M 保护器全部在真机跑通；CSF MCU 仍未开始执行（`JOB_INT_STATUS` bit31 不升） |
 | 显示 / 刷新率 | ✅ | **126 fps**（面板 144 Hz 的 88%），滑动中位 110 fps，双缓冲零撕裂；详见 [DISPLAY.md](docs/DISPLAY.md) |
 | 壁纸（WallpaperKit） | ✅ | `7400`（WWDC 2022）彩色渲染；`display-scale=3` + 清 `MobileGestalt` 缓存后恢复 |
-| Wi-Fi / 基带 / 音频 / 相机 | ⬜ | 未开始 |
+| 无线（CONNSYS / MT6637） | 🟡 | CONN 电源域上电（`PWR_CON=0xc000000d`）、D-die POS Part 3 五步全过、PMIC 双芯确认（MT6363+MT6368）、A-die **MT6637E2** ID `0x66378a01` 读到；**固件还没载入**，所以 iOS 里开关仍不可点——详见 [WIRELESS.md](docs/WIRELESS.md) |
+| 基带 / 音频 / 相机 | ⬜ | 未开始 |
 
 画面右移已修（引擎 plane 地址对齐 kernel 写入地址），见[画面右移](#画面右移引擎的-plane-地址比-kernel-写入地址高一页)。
 

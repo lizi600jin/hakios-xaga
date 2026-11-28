@@ -884,6 +884,88 @@ nvt_download_firmware(void)
 	return false;
 }
 
+static void
+nvt_release_all_fingers(void)
+{
+	for (unsigned which = 0; which < MAX_FINGERS; which++) {
+		if (down[which]) {
+			hakios_touch_post(HAKIOS_TOUCH_UP, which,
+			    picture_x(last_x[which]), picture_y(last_y[which]));
+			down[which] = false;
+		}
+	}
+}
+
+/*
+ * nvt_sw_reset_idle(): vendor nt36xxx.c:503-509.
+ * Called on 0xFE WDT pattern before re-downloading SRAM firmware.
+ */
+static void
+nvt_sw_reset_idle(void)
+{
+	nvt_write_addr(NVT_SWRST_N8_ADDR, 0xAA);
+	delay(1000);
+}
+
+/*
+ * nvt_wdt_pattern(): vendor nt36xxx.c:1413-1435 (NVT_TOUCH_WDT_RECOVERY).
+ * NT36672E is a flashless host-download IC: after an internal WDT/ESD reset it
+ * fills event buffer bytes [0..5] with 0xFE or 0xFD and pulses IRQ to ask the
+ * host to re-download the SRAM firmware.
+ */
+static bool
+nvt_wdt_pattern(const uint8_t *data)
+{
+	for (unsigned i = 0; i < 6; i++) {
+		if (data[i] != 0xFDu && data[i] != 0xFEu) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/*
+ * nvt_reload_firmware_fast(): fast WDT recovery reload without the 30-second
+ * boot baseline wait. Matches vendor nvt_update_firmware() (~3.5 s total).
+ */
+static bool
+nvt_reload_firmware_fast(uint32_t page, uint8_t trigger_byte, unsigned count)
+{
+	uint8_t state = 0, raw[5] = { 0 };
+
+	nvt_release_all_fingers();
+	printf("nvt: WDT recovery #%u: trigger 0x%02x, %sreloading firmware...\n",
+	    count, trigger_byte, trigger_byte == 0xFEu ? "sw_reset_idle, " : "");
+	if (trigger_byte == 0xFEu) {
+		nvt_sw_reset_idle();
+	}
+
+	for (unsigned attempt = 1; attempt <= 3; attempt++) {
+		nvt_bootloader_reset();
+		nvt_write_firmware();
+		nvt_set_bld_hw_crc();
+		nvt_bld_crc_enable();
+		nvt_fw_crc_enable();
+		nvt_boot_ready();
+		if (nvt_check_fw_reset_state(NVT_RESET_STATE_INIT, &state, raw)) {
+			nvt_read_bld_hw_crc();
+			(void)nvt_check_fw_reset_state(NVT_RESET_STATE_REK, &state, raw);
+			nvt_set_page(page);
+			printf("nvt: WDT recovery #%u succeeded (attempt %u, state %02x), resuming reports\n",
+			    count, attempt, state);
+			return true;
+		}
+		printf("nvt: WDT recovery #%u attempt %u failed (state %02x)\n",
+		    count, attempt, state);
+		nvt_read_bld_hw_crc();
+	}
+
+	nvt_set_page(page);
+	printf("nvt: WDT recovery #%u failed after 3 attempts (last state %02x)\n",
+	    count, state);
+	return false;
+}
+
 /* ---- the thread that watches the line ---- */
 
 
@@ -1288,6 +1370,9 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 	bool was_high = pin_in(PIN_IRQ);
 	uint32_t since_stats = 0;
 	uint32_t quiet_ticks = 0;
+	unsigned wdt_hits = 0;
+	unsigned wdt_recoveries = 0;
+	unsigned consec_bad = 0;
 
 	/*
 	 * The read budget has to live here and not inside the loop: it was declared in the body
@@ -1297,6 +1382,7 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 	unsigned taken = 0;
 
 	for (unsigned tick = 1;; tick++) {
+		bool fast_touch = false;
 
 		/*
 		 * The line is active high: the vendor driver registers its handler with
@@ -1410,8 +1496,27 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 					patterns++;
 				}
 			}
+			if (nvt_wdt_pattern(data)) {
+				wdt_hits++;
+				if (wdt_hits >= 10u) {
+					wdt_hits = 0;
+					consec_bad = 0;
+					wdt_recoveries++;
+					(void)nvt_reload_firmware_fast(page, data[0], wdt_recoveries);
+					was_high = pin_in(PIN_IRQ);
+					continue;
+				}
+			} else {
+				wdt_hits = 0;
+			}
 			if (!report_ok(data)) {
 				bad++;
+				consec_bad++;
+				if (wdt_hits == 0 && consec_bad >= 10u && (consec_bad % 10u) == 0u) {
+					nvt_set_page(page);
+					printf("nvt: %u consecutive bad reports; re-latched page 0x%x\n",
+					    consec_bad, page);
+				}
 				/*
 				 * The chip fills its event buffer with 0x77 until the firmware finishes its
 				 * baseline, and this thread polls every four milliseconds, so an unbounded
@@ -1435,6 +1540,7 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 				 * one that must be slowest, and it was the fastest.
 				 */
 			} else {
+				consec_bad = 0;
 				idle_ok++;
 				/*
 				 * Every report, not the first eight. The window was there to keep a busy log
@@ -1482,6 +1588,7 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 					printf("\n");
 				}
 				report(data);
+				fast_touch = asserted;
 			}
 		}
 		/*
@@ -1501,7 +1608,7 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 		 * writing and whose framing this driver still has wrong. The first eight bytes are
 		 * enough to tell those apart, and keeping a small table of them costs nothing.
 		 */
-		if (++since_stats >= 10u) {
+		if (fast_touch ? (++since_stats >= 500u) : (++since_stats >= 10u)) {
 			since_stats = 0;
 			printf("nvt: %u distinct buffer patterns so far:", patterns);
 			for (unsigned k = 0; k < patterns && k < 6; k++) {
@@ -1520,12 +1627,19 @@ nvt_thread(__unused void *parameter, __unused wait_result_t result)
 			    reports, touches, edges, bad, pin_in(PIN_IRQ) ? "asserted" : "idle");
 		}
 		/*
-		 * Two hundred milliseconds between reads, not the four this loop started with. The
-		 * number is not a tuning knob: it is what makes the read rate lower than the report
-		 * rate by two orders of magnitude, so a read that finds 0x77 means the chip has
-		 * nothing rather than that this thread took the report away.
+		 * Only pace slow (200 ms) on bad reports or un-asserted fallback reads so empty
+		 * reads never advance the chip's SPI state machine. On a genuine IRQ-gated valid
+		 * report, wait only for the IRQ pulse to drop (up to 2 ms) before returning to
+		 * the edge-wait loop, preserving the chip's full ~143 Hz native report rate.
 		 */
-		delay(200000);
+		if (fast_touch) {
+			for (unsigned drop = 0; drop < 40u && pin_in(PIN_IRQ); drop++) {
+				delay(NVT_IRQ_STEP_US);
+			}
+			was_high = pin_in(PIN_IRQ);
+		} else {
+			delay(200000);
+		}
 	}
 }
 

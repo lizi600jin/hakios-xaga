@@ -1,0 +1,248 @@
+diff -ruN a/include/nic/adapter.h b/include/nic/adapter.h
+--- a/include/nic/adapter.h	2026-11-28 18:50:39.035479000 +0800
++++ b/include/nic/adapter.h	2026-11-28 20:26:13.640976000 +0800
+@@ -2258,6 +2258,26 @@
+  * Major ADAPTER structure
+  * Major data structure for driver operation
+  */
++/* Android V 版把 DFS 的入口表放进了 ADAPTER，而 enum 与结构只在
++ * os/linux/include/gl_os.h:1405/1412 定义。这条 include 链上 adapter.h 会
++ * 早于 os/none 的 gl_os.h 到达，所以定义搬到这里：wlan_def.h 里的
++ * struct RF_CHANNEL_INFO 在本文件前面已经可见。值与 os/linux 完全一致。 */
++#ifndef _XAGA_DFS_CTRL_SOURCE_DEFINED
++#define _XAGA_DFS_CTRL_SOURCE_DEFINED
++enum DFS_CHANNEL_CTRL_SOURCE {
++	DFS_CHANNEL_CTRL_SOURCE_STA,
++	DFS_CHANNEL_CTRL_SOURCE_SAP,
++	DFS_CHANNEL_CTRL_SOURCE_DBG,
++	DFS_CHANNEL_CTRL_SOURCE_NUM
++};
++#endif
++
++struct WLAN_DFS_CHANNEL_REQ_ENTRY {
++	enum DFS_CHANNEL_CTRL_SOURCE eSource;
++	u_int8_t fgValid;
++	struct RF_CHANNEL_INFO rRfChnlInfo;
++};
++
+ struct ADAPTER {
+ 	struct mt66xx_chip_info *chip_info;
+ 	uint8_t ucRevID;
+diff -ruN a/os/none/hif/none/include/hif.h b/os/none/hif/none/include/hif.h
+--- a/os/none/hif/none/include/hif.h	2026-11-28 18:50:40.150977000 +0800
++++ b/os/none/hif/none/include/hif.h	2026-11-28 20:10:15.170860000 +0800
+@@ -125,6 +125,11 @@
+  ** layer info structure.
+  */
+ struct GL_HIF_INFO {
++	/* Android V 版 os/linux/hif/axi/include/hif.h:145 有第二路中断号，
++	 * cmm_asic_connac2x.c:1033 直接读 u4IrqId_1（多 MSI 的 SER/FW log 通道）。
++	 * os/none 这份虚拟 HIF 结构里一直没有，按 axi 版的类型补上。 */
++	uint32_t u4IrqId;
++	uint32_t u4IrqId_1;
+ 	uint32_t u4MawdL2TblCnt;
+ 	uint32_t u4IntStatus;
+ #if (CFG_SUPPORT_HOST_OFFLOAD == 1)
+diff -ruN a/os/none/include/gl_ate_agent.h b/os/none/include/gl_ate_agent.h
+--- a/os/none/include/gl_ate_agent.h	2026-11-28 18:50:40.158937000 +0800
++++ b/os/none/include/gl_ate_agent.h	2026-11-28 20:10:04.744697000 +0800
+@@ -67,7 +67,104 @@
+ 	uint32_t au4MemCol[4];
+ };
+ 
++/* Android V 版 chips/soc7_0/soc7_0.c:541 在 CFG_SUPPORT_QA_TOOL +
++ * CONFIG_WLAN_SERVICE==1 下定义 struct test_capability soc7_0_toolCapability，
++ * 而该类型与两个子结构只存在于 wlan_service/glue/osal/include/net_adaption.h
++ * （不在本编译链上）。以下三结构逐字段照搬，尺寸必须一致（soc7_0_toolCapability
++ * 是全局对象，ATe ops 会按 sizeof 回给 QA 工具）。 */
++struct test_capability_ph_cap {
++	/* header */
++	unsigned int tag;		/* GET_CAPABILITY_TAG_PHY */
++	unsigned int tag_len;	/* GET_CAPABILITY_TAG_PHY_LEN */
++
++	/* content: GET_CAPABILITY_TAG_PHY_LEN */
++
++	/* BIT0: 11 a/b/g, BIT1: 11n, BIT2: 11ac, BIT3: 11ax */
++	unsigned int protocol;
++
++	/* 1:1x1, 2:2x2, ... */
++	unsigned int max_ant_num;
++
++	/* BIT0: DBDC support */
++	unsigned int dbdc;
++
++	/* BIT0: TxLDPC, BTI1: RxLDPC, BIT2: TxSTBC, BIT3: RxSTBC */
++	unsigned int coding;
++
++	/* BIT0: 2.4G, BIT1: 5G, BIT2: 6G */
++	unsigned int channel_band;
++
++	/* BIT0: BW20, BIT1: BW40, BIT2: BW80 */
++	/* BIT3: BW160C, BIT4: BW80+80(BW160NC) */
++	/* BIT5: BW320 */
++	unsigned int max_bandwidth;
++
++	/* BIT0: Band0 2.4G, BIT1: Band0 5G, BIT2: Band0 6G */
++	/* BIT16: Band1 2.4G, BIT17: Band1 5G, BIT18: Band1 6G */
++	unsigned int channel_band_dbdc;
++
++	/* BIT0: Band2 2.4G, BIT1: Band2 5G, BIT2: Band2 6G */
++	/* BIT16: Band3 2.4G, BIT17: Band3 5G, BIT18: Band3 6G */
++	unsigned int channel_band_dbdc_ext;	/* CFG_SUPPORT_CONNAC3X */
++
++	/* BIT[7:0]: PHY index (bitwise) */
++	/* BIT[15:8]: Adie index (bitwise) */
++	unsigned int phy_adie_index; /* phy_adie_index CFG_SUPPORT_CONNAC3X */
++
++	/* BIT[7:0]: Band0 TX path num */
++	/* BIT[15:8]: Band0 RX path num */
++	/* BIT[23:16]: Band1 TX path num */
++	/* BIT[31:24]: Band1 RX path num */
++	unsigned int band_0_1_wf_path_num;
++
++	/* BIT[7:0]: Band2 TX path num */
++	/* BIT[15:8]: Band2 RX path num */
++	/* BIT[23:16]: Band3 TX path num */
++	/* BIT[31:24]: Band3 RX path num */
++	unsigned int band_2_3_wf_path_num;
++
++	/* BIT[7:0]: Band0 system bandwidth */
++	/* BIT[15:8]: Band1 system bandwidth */
++	/* BIT[23:16]: Band2 system bandwidth */
++	/* BIT[31:24]: Band3 system bandwidth */
++	unsigned int band_bandwidth;
++
++	unsigned int reserved[4];
++};
++
++
++struct test_capability_ext_cap {
++	/* header */
++	unsigned int tag;		/* GET_CAPABILITY_TAG_PHY_EXT */
++	unsigned int tag_len;	/* GET_CAPABILITY_TAG_PHY_EXT_LEN */
++
++	/* content: GET_CAPABILITY_TAG_PHY_EXT_LEN */
++
++	/* BIT0: AntSwap */
++	/* BIT1: HW TX support */
++	/* BIT2: Little core support */
++	/* BIT3: XTAL trim support */
++	/* BIT4: DBDC/MIMO switch support */
++	/* BIT5: eMLSR support */
++	/* BIT6: MLR+, ALR support */
++	/* BIT7: Bandwidth duplicated debug support */
++	/* BIT8: dRU support */
++
++	unsigned int feature1;
++	unsigned int reserved[15];
++};
++
++struct test_capability {
++	unsigned int version;
++	unsigned int tag_num;
++	struct test_capability_ph_cap ph_cap;
++	struct test_capability_ext_cap ext_cap;
++};
++
+ struct ATE_OPS_T {
++	/* Android V 版 os/linux/include/gl_ate_agent.h:120 的同一成员：
++	 * soc7_0.c:645 填 &soc7_0_toolCapability，QA 工具靠它读能力位图。 */
++	struct test_capability *tool_capability;
+ 	int32_t (*setICapStart)(struct GLUE_INFO *prGlueInfo,
+ 				uint32_t fgTrigger,
+ 				uint32_t fgRingCapEn,
+diff -ruN a/os/none/include/gl_os.h b/os/none/include/gl_os.h
+--- a/os/none/include/gl_os.h	2026-11-28 18:50:40.190297000 +0800
++++ b/os/none/include/gl_os.h	2026-11-28 20:26:13.634857000 +0800
+@@ -19,6 +19,21 @@
+ #ifndef _GL_OS_H
+ #define _GL_OS_H
+ 
++/* 这颗枚举必须在本文档第一次用到它之前就完整定义：wlanDfsChannelsReqAdd
++ * 的原型（本文件 11xx 行）第 2 参就是 enum DFS_CHANNEL_CTRL_SOURCE，而
++ * C 里枚举没定义完就只是 incomplete type，做参数是非法的。定义在其他地方
++ * 都赶不上这个位置，所以放在 guard 之后。值与 os/linux/include/gl_os.h:1405 一致。 */
++#ifndef _XAGA_DFS_CTRL_SOURCE_DEFINED
++#define _XAGA_DFS_CTRL_SOURCE_DEFINED
++enum DFS_CHANNEL_CTRL_SOURCE {
++	DFS_CHANNEL_CTRL_SOURCE_STA,
++	DFS_CHANNEL_CTRL_SOURCE_SAP,
++	DFS_CHANNEL_CTRL_SOURCE_DBG,
++	DFS_CHANNEL_CTRL_SOURCE_NUM
++};
++#endif
++
++
+ /* Standard C, for implementation on differenct OS
+  * the following include files needs to be refined
+  */
+@@ -411,6 +426,13 @@
+ struct GL_P2P_DEV_INFO;	/* declare GL_P2P_DEV_INFO_T */
+ 
+ struct GLUE_INFO {
++#if CFG_CHIP_RESET_SUPPORT && !CFG_WMT_RESET_API_SUPPORT
++	/* Android V 版 os/linux/include/gl_os.h:1152 的同一成员：nic.c:6236
++	 * 用它 INIT_WORK，nicSerDeInit 用 cancel_work_sync 取消。os/none 这份
++	 * 旧版 GLUE_INFO 里一直没有，所以先按真位置补上（仅编译期形状，
++	 * 运行期由 XNU 的 work 队列承担）。 */
++	struct work_struct rWfsysResetWork;
++#endif
+ 	/* Pointer to ADAPTER_T - main data structure of internal protocol
+ 	 * stack
+ 	 */
+diff -ruN a/os/none/include/gl_qa_agent.h b/os/none/include/gl_qa_agent.h
+--- a/os/none/include/gl_qa_agent.h	2026-11-28 18:50:40.210058000 +0800
++++ b/os/none/include/gl_qa_agent.h	2026-11-28 19:58:27.490963000 +0800
+@@ -395,6 +395,27 @@
+ 	} u;
+ };
+ 
++/* Android V 版 nic/nic_cmd_event.c:7394 对这个类型做 sizeof，只 extern 声明
++ * 不够（incomplete type）。定义在 wlan_service/glue/osal/include/net_adaption.h:1417，
++ * 那条 include 路径不在这条编译链上，所以按原样搬过来（值一字未改）。 */
++#define	LIST_SEG_MAX 100
++struct list_mode_rx_status {
++	unsigned int	u4RXOK;
++	unsigned int	u4FCSErr;
++	unsigned int	u4RSSI0;
++	unsigned int	u4RSSI1;
++};
++struct list_mode_event {
++	unsigned short	u2Status;
++	unsigned int u4ExtId;
++	unsigned int u4SegNumTotal;
++	unsigned int u4SegNumRead;
++	union {
++		unsigned int u4TxStatus[LIST_SEG_MAX];
++		struct list_mode_rx_status tRxStatus[LIST_SEG_MAX];
++	};
++};
++
+ extern struct list_mode_event g_HqaListModeStatus;
+ #endif
+ /*******************************************************************************
+diff -ruN a/os/none/include/gl_rst.h b/os/none/include/gl_rst.h
+--- a/os/none/include/gl_rst.h	2026-11-28 18:50:40.213210000 +0800
++++ b/os/none/include/gl_rst.h	2026-11-28 20:10:15.176542000 +0800
+@@ -93,6 +93,8 @@
+ 	RST_CMD_TRIGGER,
+ 	RST_REQ_CHL_FAIL,
+ 	RST_FW_DL_FAIL,
++	RST_CMD_EVT_FAIL,   /* Android V 版 os/linux/include/gl_rst.h:110 的同一档：
++			     * cmd_buf.c:242 用它标"复位期命令失败" */
+ 	RST_SER_TIMEOUT,
+ 	RST_SLP_PROT_TIMEOUT,
+ 	RST_REG_READ_DEADFEED,
+@@ -215,7 +217,11 @@
+ void glSetRstReason(enum _ENUM_CHIP_RESET_REASON_TYPE_T
+ 		    eReason);
+ 
+-int glSetRstReason(void);
++int glGetRstReason(void);
++
++/* Android V 版 os/linux/include/gl_rst.h:195 声明了这个全局，
++ * cmm_asic_connac2x.c:2842 会写它，os/none 这份没有。定义由 os/xnu 侧给。 */
++extern enum COREDUMP_SOURCE_TYPE g_Coredump_source;
+ 
+ uint32_t glResetSelectAction(struct ADAPTER *prAdapter);
+ 

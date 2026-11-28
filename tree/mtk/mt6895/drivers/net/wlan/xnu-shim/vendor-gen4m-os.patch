@@ -1,0 +1,69 @@
+diff --git a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/linux/hif/axi/include/hif.h b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/linux/hif/axi/include/hif.h
+index 4362eaf..2be7189 100644
+--- a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/linux/hif/axi/include/hif.h
++++ b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/linux/hif/axi/include/hif.h
+@@ -176,9 +176,11 @@ struct GL_HIF_INFO {
+ 	struct HIF_MEM_OPS rMemOps;
+ 
+ 	uint32_t u4IrqId;
+-#if (CFG_SUPPORT_CONNINFRA == 1)
++	/* Xaga's WFDMA carries a second interrupt line regardless of whether a
++	 * conninfra daemon is present; chips/common/cmm_asic_connac2x.c:857
++	 * disables it unconditionally.
++	 */
+ 	uint32_t u4IrqId_1;
+-#endif
+ 	int32_t u4HifCnt;
+ 
+ 	/* AXI MMIO Base Address, all access will use */
+diff --git a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_ate_agent.h b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_ate_agent.h
+index 81b2de9..9733f2d 100644
+--- a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_ate_agent.h
++++ b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_ate_agent.h
+@@ -129,6 +129,8 @@ struct ATE_OPS_T {
+ 				 uint32_t u4WFNum);
+ 	void (*getRbistDataDumpEvent)(struct ADAPTER *prAdapter,
+ 				      uint8_t *pucEventBuf);
++	void (*icapRiseVcoreClockRate)(void);
++	void (*icapDownVcoreClockRate)(void);
+ };
+ 
+ 
+diff --git a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_os.h b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_os.h
+index 595a63d..8d66a6c 100644
+--- a/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_os.h
++++ b/drivers/misc/mediatek/connectivity/wlan_drv_gen4m/os/none/include/gl_os.h
+@@ -422,12 +422,33 @@ struct FT_IES {
+ struct GL_P2P_INFO;	/* declare GL_P2P_INFO_T */
+ struct GL_P2P_DEV_INFO;	/* declare GL_P2P_DEV_INFO_T */
+ 
++/* Performance indicator cache, mirrored from os/linux/include/gl_os.h:586 */
++struct GL_PERF_IND_INFO {
++	uint32_t u4CurTxBytes[BSSID_NUM];	/* Byte */
++	uint32_t u4CurRxBytes[BSSID_NUM];	/* Byte */
++	uint16_t u2CurRxRate[BSSID_NUM];	/* Unit 500 Kbps */
++	uint8_t ucCurRxRCPI0[BSSID_NUM];
++	uint8_t ucCurRxRCPI1[BSSID_NUM];
++	uint8_t ucCurRxNss[BSSID_NUM];	/* 1NSS Data Counter */
++	uint8_t ucCurRxNss2[BSSID_NUM];	/* 2NSS Data Counter */
++};
++
+ struct GLUE_INFO {
+ 	/* Pointer to ADAPTER_T - main data structure of internal protocol
+ 	 * stack
+ 	 */
+ 	struct ADAPTER *prAdapter;
+ 
++	/* HIF runtime state. The os/none copy of this field sits inside a
++	 * disabled "#if 0" block further down, while soc7_0 needs it live:
++	 * keep the AXI-shaped struct GL_HIF_INFO here.
++	 */
++	struct GL_HIF_INFO rHifInfo;
++
++	/* fields soc7_0/core units touch but the os/none copy lost */
++	struct GL_PERF_IND_INFO PerfIndCache;
++	unsigned long ulFlag;		/* GLUE_FLAG_XXX, as os/linux gl_os.h:651 */
++
+ 	/* OID related */
+ 	struct QUE rCmdQueue;
+ 

@@ -37,3 +37,31 @@ driver MT6895_CELL
 	help    frame. Boot-arg cell=2. The DPMAIF AO page at 0x1022C000 is mapped and its interrupt mask read once, without
 	help    a write; CCCI and the DPMAIF data path are not wired, so the interface holds a lease and carries no traffic.
 	help    kern.hakios.cellular_bars comes from AT+CSQ once the modem answers it, and from the caller until then
+
+driver MT6895_WIRELESS
+	file    bsd/dev/hakios.mt6895_wireless.c
+	requires MT6895_CONNSYS
+	default n
+	help    the one call the kernel's driver start path makes for the wireless side: CONNSYS, then BTIF, then en1, in
+	help    that order and once. The order cannot live in the integration's init list -- a driver started before CONNSYS
+	help    has mapped its windows reads an unmapped address and aborts the kernel rather than returning -- so it is
+	help    kept here, beside the three drivers it orders, and the integration calls hakios_mt6895_wireless_init().
+	help    Each of the three still answers to its own argument (wifi=2, bt=2, cell=2) and returns 0 for "not asked
+	help    for", so building this in changes nothing until one of those is passed
+
+# NOT a driver, and deliberately not declared with a "driver" stanza above: the
+# three wireless entries are already separate drivers, each with its own boot
+# argument, and the kernel integration already calls each one's start. What is
+# shipped here is the order they must run in, as one function, so the integration
+# can call it once instead of keeping three lines in its init list in sync:
+#
+#     hakios_mt6895_wireless_init()      -- bsd/dev/hakios.mt6895_wireless.c
+#
+# CONNSYS first (the 0x184x windows and the EMI base guard), then BTIF (it owns
+# the 0x11300Bxx aliases of the same conn MCU), then en1 (the DPMAIF AO page is
+# powered before the modem, so it can be last). Each start still returns 0 for
+# "not asked for"; the chain hands back the first non-zero return, and is a no-op
+# on a second call because every start maps windows once.
+#
+# Why this is a plain comment and not a driver stanza: a fourth driver would make
+# the integration call both it and the three starts, mapping every window twice.

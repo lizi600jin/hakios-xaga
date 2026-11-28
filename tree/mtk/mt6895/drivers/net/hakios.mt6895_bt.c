@@ -62,6 +62,14 @@
 #include <stdbool.h>
 #include <string.h>
 
+#if !defined(HAKIOS_HOST_TEST)
+#define HAKIOS_MT6895_BT_WMT_IMPLEMENTATION
+#include <libkern/libkern.h>
+#include <mach/mach_types.h>
+#include <pexpert/pexpert.h>
+#include <sys/systm.h>
+#endif
+
 #include "hakios_mt6895_wireless_addrs.h"
 #include "hakios_mt6895_bt_wmt.h"
 #include "hakios_mt6895_connsys_nvdata.h"
@@ -74,23 +82,271 @@ extern int PE_parse_boot_argn(const char *arg_string, void *arg_ptr, int max_len
 #endif
 extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
 
-/* Wired by the kernel once the BTIF transport exists; NULL on a fresh port. */
+/*
+ * BTIF PIO transport. The register map and the two write rules it enforces
+ * (read-back after every write, read-modify-write on the shared 0x08 window)
+ * come from MT6895-Mainline/linux btif_plat.c / btif_priv.h; the base
+ * 0x1100C000 is corroborated by xaga-qemu hw/arm/mt6895.c and xaga-live.dts.
+ */
+#define XAGA_BTIF_IMPLEMENTATION
+#include "hakios_mt6895_bt_pio.h"
+
+/* 睡眠原语：XNU 与主机 stub 都以 delay(int usec) 为准，不用 IODelay（仅 XNU 有）。 */
+extern void delay(int microseconds);
+
+struct hakios_bt_state {
+	bool               mapped;
+	vm_offset_t        btif;
+	vm_offset_t        btif2;
+	vm_offset_t        btif3;
+	uint8_t            bdaddr[6];
+	bool               bdaddr_valid;
+	uint32_t           sections;
+	struct xaga_btif   pio;
+};
+
+static struct hakios_bt_state gBt;
+
+#define XAGA_BTIF_SPINS 200000u
+#define XAGA_BTIF_EVT_MAX 128u
+
+static uint32_t
+bt_mmio_rd32(void *ctx, uint32_t off)
+{
+	vm_offset_t base = (vm_offset_t)ctx;
+
+	return *(volatile uint32_t *)(base + (vm_offset_t)off);
+}
+
+static void
+bt_mmio_wr32(void *ctx, uint32_t off, uint32_t val)
+{
+	vm_offset_t base = (vm_offset_t)ctx;
+
+	*(volatile uint32_t *)(base + (vm_offset_t)off) = val;
+}
+
+static void
+bt_mmio_msleep(void *ctx, uint32_t ms)
+{
+	(void)ctx;
+	while (ms-- != 0) {
+		delay(1000);
+	}
+}
+
+/*
+ * The ops contract, read off mtk_bt_wmt_sync(): tx_data is already a WMT
+ * payload without an H4 header, and rx_buf must receive something that starts
+ * at struct mtk_wmt_hdr. So we add the H4 command header on the way out and
+ * strip the H4 event header on the way in.
+ *
+ * Two event shapes exist on this port:
+ *   0xFF vendor event  -> payload after [04 FF LEN] is the WMT header
+ *   0x0E cmd complete  -> payload is [ncmd][oplo][ophi][status] then the WMT
+ *                         header, so we skip four more bytes
+ * The 0x0E offset is the one thing here that could not be checked against a
+ * source tree; it is written so that a wrong guess fails loudly (the parser
+ * rejects it) rather than silently returning a bogus status.
+ */
+/* 以上 mmio 在主机侧同样成立：stub 的 ml_io_map 返回真实可读写内存，
+   所以这段与真机共用同一份代码，不为测试另写实现。 */
+
+/*
+ * hci_cmd_sync 与平台无关：它只经 struct xaga_btif_bus 说话，因此主机侧单测
+ * 能把同一段代码跑在模拟寄存器组上，而不是另写一份测试专用实现。
+ */
+static int
+bt_hci_cmd_sync(void *ctx, uint16_t opcode, const uint8_t *tx_data,
+                uint16_t tx_len, uint8_t *rx_buf, uint16_t rx_cap)
+{
+	struct hakios_bt_state *st = (struct hakios_bt_state *)ctx;
+	uint8_t frame[XAGA_BTIF_EVT_MAX];
+	int rc;
+	int attempt;
+	size_t payload_off = 0;
+	size_t payload_len;
+
+	if (st == NULL || rx_buf == NULL || rx_cap < 6) {
+		return -22;
+	}
+
+	/* Wake the BB side, then drop anything stale before the command goes out. */
+	xaga_btif_wake(&st->pio);
+	(void)xaga_btif_clear_fifo(&st->pio, 0, 1);
+
+	rc = xaga_btif_h4_send_cmd(&st->pio, opcode, tx_data, tx_len,
+	                           XAGA_BTIF_SPINS);
+	if (rc < 0) {
+		printf("bt: H4 command 0x%04x did not go out (rc=%d)\n",
+		       (unsigned)opcode, rc);
+		return rc;
+	}
+
+	for (attempt = 0; attempt < 3; attempt++) {
+		rc = xaga_btif_h4_recv_evt(&st->pio, frame, sizeof(frame),
+		                           XAGA_BTIF_SPINS);
+		if (rc < 3) {
+			continue;
+		}
+
+		if (frame[1] == 0xFFu) {
+			payload_off = 3;
+		} else if (frame[1] == 0x0Eu) {
+			payload_off = 7;
+		} else {
+			/* Not a response to us; keep reading. */
+			continue;
+		}
+
+		if ((size_t)rc <= payload_off) {
+			continue;
+		}
+		payload_len = (size_t)rc - payload_off;
+		if (payload_len > (size_t)rx_cap) {
+			return -7;
+		}
+
+		memcpy(rx_buf, frame + payload_off, payload_len);
+		return (int)payload_len;
+	}
+
+	return -11;   /* the controller answered with nothing we recognise */
+}
+
+/*
+ * 骨架要的五个函数。power_on 认为 BTIF 已映射就是"芯片起来了"—— 真正的
+ * 上电、ROM patch 与 WMT 脚本属于 connsys，Wi-Fi 通之后这一步就是等它。
+ */
+#include "hakios_mt6895_bt_plat.h"
+
+static int
+bt_plat_power_on(void *ctx)
+{
+	struct hakios_bt_state *st = (struct hakios_bt_state *)ctx;
+
+	if (st == NULL || !st->mapped) {
+		return -1;
+	}
+	return 0;
+}
+
+/* WMT_FUNC_CTRL，type 0 (BT)，param 1 = on / 0 = off。上游文档的命令形状：
+ * 01 06 02 00 00 01 -> 02 06 01 00 00
+ */
+static int
+bt_plat_function(void *ctx, uint8_t on)
+{
+	struct hakios_bt_state *st = (struct hakios_bt_state *)ctx;
+	struct mtk_bt_hci_ops ops;
+	uint8_t param = on ? 1u : 0u;
+	uint8_t sts = 0xFF;
+	int rc;
+
+	if (st == NULL) {
+		return -22;
+	}
+	ops.ctx          = st;
+	ops.hci_cmd_sync = bt_hci_cmd_sync;
+	ops.msleep       = NULL;
+
+	rc = mtk_bt_wmt_sync(&ops, MTK_WMT_FUNC_CTRL, 0, &param, 1, &sts);
+	if (rc < 0) {
+		return rc;
+	}
+	return (sts == MTK_WMT_ON_DONE || sts == MTK_WMT_ON_PROGRESS) ? 0 : -5;
+}
+
+static int
+bt_plat_function_on(void *ctx)
+{
+	return bt_plat_function(ctx, 1);
+}
+
+static int
+bt_plat_function_off(void *ctx)
+{
+	return bt_plat_function(ctx, 0);
+}
+
+static int
+bt_plat_send(void *ctx, const uint8_t *h4, size_t len)
+{
+	struct hakios_bt_state *st = (struct hakios_bt_state *)ctx;
+	int rc;
+
+	if (st == NULL || h4 == NULL || len == 0 || len > 0xFFFFu) {
+		return -22;
+	}
+	xaga_btif_wake(&st->pio);
+	rc = xaga_btif_tx(&st->pio, h4, len, XAGA_BTIF_SPINS);
+	return (rc == (int)len) ? (int)len : ((rc < 0) ? rc : -6);
+}
+
+static int
+bt_plat_receive(void *ctx, uint8_t *h4, size_t cap)
+{
+	struct hakios_bt_state *st = (struct hakios_bt_state *)ctx;
+
+	if (st == NULL || h4 == NULL || cap < 3 || cap > 0xFFFFu) {
+		return -22;
+	}
+	return xaga_btif_h4_recv_evt(&st->pio, h4, (uint16_t)cap, XAGA_BTIF_SPINS);
+}
+
+const struct xaga_bt_platform *
+hakios_mt6895_bt_platform(void)
+{
+	static const struct xaga_bt_platform plat = {
+		.power_on     = bt_plat_power_on,
+		.function_on  = bt_plat_function_on,
+		.function_off = bt_plat_function_off,
+		.send         = bt_plat_send,
+		.receive      = bt_plat_receive,
+		.ctx          = &gBt,
+		/* 蓝牙地址 = Wi-Fi 地址 +1，交给 Wi-Fi 驱动学到后补；NULL 时骨架
+		 * 会用 RedwoodBluetoothAddress()。
+		 */
+		.wifi_address = NULL,
+	};
+
+	return &plat;
+}
+
+#if !defined(HAKIOS_HOST_TEST)
+
+static void
+bt_msleep(void *ctx, uint32_t ms)
+{
+	bt_mmio_msleep(ctx, ms);
+}
+
+static struct mtk_bt_hci_ops gBtOps = {
+	.ctx           = NULL,
+	.hci_cmd_sync  = bt_hci_cmd_sync,
+	.msleep        = bt_msleep,
+};
+
+const struct mtk_bt_hci_ops *
+hakios_mt6895_bt_transport(void)
+{
+	struct hakios_bt_state *st = &gBt;
+
+	if (!st->mapped) {
+		return NULL;
+	}
+	gBtOps.ctx = st;
+	return &gBtOps;
+}
+#else
 extern const struct mtk_bt_hci_ops *hakios_mt6895_bt_transport(void);
+#endif
 
 #define BT_ARG      "bt"
 #define BT_FW_ARG   "bt_fw"
 
-struct hakios_bt_state {
-	bool        mapped;
-	vm_offset_t btif;
-	vm_offset_t btif2;
-	vm_offset_t btif3;
-	uint8_t     bdaddr[6];
-	bool        bdaddr_valid;
-	uint32_t    sections;
-};
-
-static struct hakios_bt_state gBt;
+/* struct hakios_bt_state 与 gBt 已上移到 transport 实现之前： */
+/* hakios_mt6895_bt_transport() 需要读 gBt.mapped 并回填 gBt.pio 的 ctx。 */
 
 /*
  * Reading the first word of each BTIF window is a liveness test, not a
@@ -269,8 +525,21 @@ hakios_mt6895_bt_start(void)
 	bt_probe_window("btif-2", st->btif2);
 	bt_probe_window("btif-3", st->btif3);
 
+	/* Liveness probe said the window answers, so it is safe to program it. */
+	st->pio.bus.ctx    = (void *)st->btif;
+	st->pio.bus.rd32   = bt_mmio_rd32;
+	st->pio.bus.wr32   = bt_mmio_wr32;
+	st->pio.bus.msleep = bt_mmio_msleep;
+
+	if (xaga_btif_init(&st->pio) != 0) {
+		printf("bt: BTIF init rejected its bus; controller left untouched\n");
+		return -1;
+	}
+
 	st->mapped = true;
-	printf("bt: BTIF mapped. Controller NOT started: transport and ROM patch "
-	       "are the two pieces left, in that order.\n");
+	printf("bt: BTIF programmed (FAKELCR normal, FIFOs flushed, TRI_LVL "
+	       "TX%d/RX%d, handshake on). Transport is live; ROM patch is the "
+	       "piece still missing.\n",
+	       XAGA_BTIF_TX_FIFO_THRE, XAGA_BTIF_RX_FIFO_THRE);
 	return 0;
 }
