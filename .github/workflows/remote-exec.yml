@@ -1,0 +1,89 @@
+name: remote-exec
+
+# 远程受控执行：由持有写权限的调用方（另一个 AI 或人）通过 workflow_dispatch
+# 下发一条 shell 命令，在本仓库注册的自托管 runner（即 cloud VM）上执行，
+# 完整 stdout/stderr 进入 job 日志，并以 artifact 形式归档。
+#
+# 安全边界：
+#   - 仅 workflow_dispatch 触发，GitHub 天然要求触发者对仓库有写权限；
+#   - 命令通过 env 传递，不做模板插值，避免 YAML 层注入；
+#   - 单次执行受 timeout_sec 与 job 级 timeout-minutes 双重约束；
+#   - 不挂载任何 secrets；需要凭据的命令请由调用方自行决定是否放入仓库 secrets。
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "要执行的 shell 命令"
+        required: true
+        type: string
+      timeout_sec:
+        description: "命令超时（秒）"
+        required: false
+        default: "600"
+        type: string
+      cwd:
+        description: "工作目录（相对仓库根，留空表示仓库根）"
+        required: false
+        default: ""
+        type: string
+
+concurrency:
+  group: remote-exec
+  cancel-in-progress: false
+
+jobs:
+  exec:
+    runs-on: [self-hosted, linux, x64, xaga-vm]
+    timeout-minutes: 45
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: 环境信息
+        run: |
+          echo "host=$(hostname)"
+          echo "user=$(id -un) uid=$(id -u)"
+          echo "kernel=$(uname -rm)"
+          echo "disk:"; df -h . | tail -1
+          echo "load:"; cat /proc/loadavg
+          nproc
+
+      - name: 执行
+        env:
+          CMD: ${{ inputs.command }}
+          TMO: ${{ inputs.timeout_sec }}
+          SUB: ${{ inputs.cwd }}
+        shell: bash
+        run: |
+          set -o pipefail
+          workdir="${GITHUB_WORKSPACE}"
+          if [ -n "${SUB}" ]; then
+            workdir="${GITHUB_WORKSPACE}/${SUB}"
+          fi
+          [ -d "${workdir}" ] || { echo "cwd not found: ${workdir}"; exit 2; }
+          cd "${workdir}"
+
+          echo "=== command ==="
+          printf '%s\n' "${CMD}"
+          echo "=== output ==="
+          set +e
+          timeout "${TMO}" bash -lc "${CMD}" 2>&1 | tee exec.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "=== exit code: ${rc} ==="
+          echo "${rc}" > exec.rc
+          exit 0
+
+      - name: 归档输出
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exec-output
+          path: |
+            exec.log
+            exec.rc
+          if-no-files-found: warn
+          retention-days: 7
