@@ -50,8 +50,13 @@
  * watcher runs on; with the loader's default XNU_CORES=4 that is core 1, an A55, which is what the
  * watcher wants.
  */
+/*
+ * All four Cortex-A78 big cores (4, 5, 6, 7) immediately follow the A55 boot core (0),
+ * then the remaining three Cortex-A55 small cores (1, 2, 3) last -- so even if a watcher
+ * is ever enabled on core_order[7], it lands on an A55 (core 3), not on an A78 (core 6).
+ */
 #ifndef BOARD_CORE_ORDER
-#define BOARD_CORE_ORDER        { 0, 4, 5, 7, 1, 2, 3, 6 }
+#define BOARD_CORE_ORDER        { 0, 4, 5, 6, 7, 1, 2, 3 }
 #endif
 #ifndef BOARD_SMALL_CORE
 #define BOARD_SMALL_CORE(core)  ((core) < 4)    /* 0..3 are the Cortex-A55s, 4..7 the Cortex-A78s */

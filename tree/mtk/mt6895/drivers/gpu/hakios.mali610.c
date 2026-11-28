@@ -33,11 +33,19 @@
  * block always has some clock, and the PLL brought up beside it before the mux is moved.
  */
 #include <kern/clock.h>
+#include <kern/locks.h>
 #include <kern/thread.h>
 #include <libkern/libkern.h>
 #include <mach/mach_types.h>
+#include <mach/mach_time.h>
 #include <pexpert/pexpert.h>
+#include <miscfs/devfs/devfs.h>
 #include <sys/systm.h>
+/* Trial912: what the /dev/hakios-gpueb character device needs. */
+#include <sys/conf.h>
+#include <sys/errno.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
 #include <vm/vm_kern.h>
 
 #include "hakios.mali610_fw.h"
@@ -49,6 +57,15 @@
 #include <sys/hakios.pmif.h>
 
 extern vm_offset_t ml_io_map(vm_offset_t phys_addr, vm_size_t size);
+/*
+ * Trial908: declared here for the same reason the three-argument form below is -- osfmk's
+ * machine_routines.h is not on this subtree's include path. VM_PROT_READ is 0x01
+ * (osfmk/mach/vm_prot.h), restated so a read-only mapping can be asked for by name.
+ */
+extern vm_offset_t ml_io_map_with_prot(vm_offset_t phys_addr, vm_size_t size, int prot);
+#ifndef VM_PROT_READ
+#define VM_PROT_READ    0x01
+#endif
 extern uint64_t kvtophys(vm_offset_t va);
 extern vm_offset_t phystokv(uint64_t pa);
 /* osfmk/arm/machine_routines.h is not on this subtree's include path either, so the three-argument
@@ -104,6 +121,8 @@ extern void FlushPoC_DcacheRegion(vm_offset_t va, size_t length);
 #define MALI_SPM_PWR_STATUS     0x0f34u
 #define MALI_SPM_PWR_STATUS2    0x0f38u
 #define MALI_SPM_PWR_STATUS_GF  0x0f3cu
+/* Trial919: the second word of the gpufreq copy, which gpufreq reads alongside 0xF3C. */
+#define MALI_SPM_PWR_STATUS_GF2 0x0f40u
 #define MALI_MFG_PWR_MASK       0x3ffcu
 /* The word's bits (mtk-scpsys.c, the only place they are written down). */
 #define SPM_PWR_RST_B           (1u << 0)
@@ -343,6 +362,77 @@ static const uint16_t kPdcGroups[] = { 0xc0, 0x98, 0x100, 0x118, 0x120, 0x140, 0
 #define MALI_MFGPLL_CON0        0x0008u
 #define MALI_MFGPLL_CON1        0x000cu
 #define MALI_MFGPLL_CON3        0x0014u
+/*
+ * Trial906: the two words the vendor boot chain uses to decide whether GPUEB is alive.
+ *
+ * The engineering preloader sets bit 0 of 0x13fa0808 (MFGPLL + 0x808) and then measures
+ * 0x13fa0840/0x844; the original LK refuses to go on unless MFG0 shows up in the SPM. Neither
+ * value exists anywhere in this driver yet, and reading them costs nothing -- both blocks are
+ * already mapped on the path that runs here.
+ */
+#define MALI_MFGPLL_GPUEB_EN    0x0808u         /* bit 0: the GPUEB PLL enable the preloader sets */
+#define MALI_MFGPLL_GPUEB_CTRL  0x0840u         /* gpueb_pll_ctrl the preloader polls */
+
+/* SPM words the LK checks before it starts the GPU: MFG0 status, and the control word. */
+#define MALI_SPM_MFG0_PWR_CON   0x0eb8u   /* the GPU domain proper */
+#define MALI_SPM_MFG1_PWR_CON   0x0ebcu   /* MPU, the domain the vendor powers by hand */
+#define MALI_SPM_EMI1_PWR_CON   0x0eb0u   /* the memory interconnect, not a GPU domain */
+/*
+ * Trial908: what the bits in a *_PWR_CON word mean.
+ *
+ * PWR ACK is bits 31:30 -- both must be set before a domain is really powered. Bit 12 is the
+ * SRAM power-down ACK, a separate question that was mistaken for the power ACK in the run that
+ * produced the wrong conclusion about the GPU domain.
+ */
+#define MALI_SPM_PWR_ACK(word)      (((word) >> 30) & 0x3u)
+
+/*
+ * Trial910: the GPUEB mailbox, as mainline's mtk-gpueb-mailbox.c lays it out.
+ *
+ * Three separate blocks, and they are not adjacent -- 0x13c5fd80 + 0x280 ends at 0x13c60000
+ * while the control bank starts at 0x13c62000, so the gap between them must not be computed.
+ *
+ *   0x13c5fd80  message SRAM, 160 four-byte slots. Not registers: reading it as one gives junk.
+ *   0x13c62000  control bank, four one-bit-per-channel bitmaps.
+ *
+ * Which bit is ours: channel 1. Which slot: TX is slot 4 (byte 0x10), RX is slot 47 (byte 0xbc)
+ * -- the two are not the same slot number, which is the easiest thing to get wrong here.
+ */
+#define MALI_GPUEB_MBOX_SRAM_PHYS   0x13c5fd80u
+#define MALI_GPUEB_MBOX_SRAM_SIZE   0x280u
+#define MALI_GPUEB_MBOX_CTL_PHYS    0x13c62000u
+#define MALI_GPUEB_MBOX_CTL_SIZE    0x80u
+#define MALI_GPUEB_CTL_TX_STS       0x00u       /* RO: the previous message is still there */
+#define MALI_GPUEB_CTL_IRQ_SET      0x04u       /* WO: write BIT(chan) to raise */
+#define MALI_GPUEB_CTL_IRQ_CLR      0x74u       /* WO: write BIT(chan) to clear / answer */
+#define MALI_GPUEB_CTL_RX_STS       0x78u       /* RO: the other side has sent us something */
+#define MALI_GPUEB_CHAN             1u          /* GPUFREQ */
+#define MALI_GPUEB_TX_OFF           0x010u      /* slot 4 */
+#define MALI_GPUEB_RX_OFF           0x0bcu      /* slot 47, not 4 */
+#define MALI_GPUEB_MSG_WORDS        8u
+#define MALI_GPUEB_CMD_INIT_SHARED  0u
+/*
+ * Trial918: the command numbers, from the vendor's own enum.
+ *
+ * gpufreq_ipi.h:29-49:
+ *   0 CMD_INIT_SHARED_MEM   1 CMD_GET_FREQ_BY_IDX   2 CMD_GET_POWER_BY_IDX
+ *   3 CMD_GET_OPPIDX_BY_FREQ   4 CMD_GET_LEAKAGE_POWER   5 CMD_SET_LIMIT
+ *   6 CMD_POWER_CONTROL   7 CMD_COMMIT
+ *
+ * The power command is 6. This file said 4, which is the leakage-power query, so the two
+ * writes recorded as power on and power off were two queries that answered 30 -- a reading, not
+ * a reference. Both transactions were real; neither did what the label said.
+ */
+#define MALI_GPUEB_CMD_POWER        6u          /* CMD_POWER_CONTROL */
+#define MALI_GPUEB_CMD_COMMIT       7u          /* CMD_COMMIT */
+#define MALI_GPUEB_TARGET_STACK     2u          /* TARGET_STACK (Shader Stack: opp 0=852..39=219 MHz) */
+#define MALI_GPUEB_POWER_OFF        0u          /* gpufreq_v2.h:85-88 */
+#define MALI_GPUEB_POWER_ON         1u
+#define MALI_GPUEB_SHARED_PHYS      0x7c600000u
+#define MALI_GPUEB_SHARED_SIZE      0x200000u
+#define MALI_GPUFREQ_MEM_SIZE       0x1000u
+#define MALI_GPUFREQ_STATUS_MEM_SZ  0x400u
+#define MALI_SPM_SRAM_PDN_ACK(word) (((word) >> 12) & 0x1u)
 #define MALI_PLL_PWR_ON         (1u << 0)
 #define MALI_PLL_ISO_EN         (1u << 1)
 #define MALI_PLL_EN             (1u << 0)
@@ -500,6 +590,54 @@ static unsigned gMaliScClk;                     /* mali_scclk=1 un-gates CLK_CFG
 static unsigned gMaliScUpd;                     /* mali_scupd=1 enables and commits the MFGSC mux */
 static unsigned gMaliSc26;                      /* with scupd, select the known-live 26 MHz parent */
 static unsigned gMaliMcuWin;                    /* mali_mcuwin=1 prints the whole 0x3000..0x3100 block */
+/* Trial922: the bring-up handshake, defined next to the device node further down. */
+bool hakios_gpueb_bringup_power_on(void);
+void hakios_gpueb_bringup_power_off(void);
+bool hakios_mali610_stop(void);
+void HakiosMali610Start(void);
+static void mali_uapi_stop_groups(void);
+static void mali_uapi_park_all_vms(void);
+struct m2c_trial;
+static bool m2_try_group_zero(struct m2c_trial *trial);
+static void m2c_run(void);
+
+/*
+ * Trial922/929: mali_gpuebpower asks GPUEB to power the GPU before the MCU is started.
+ *
+ * On by default now that the bring-up and the orderly six-step stop are proven together
+ * (boot-928f: M1 done, then 30 s back to Android without a hand-run stop). Panthor reaches the
+ * same point through mt6895_gpueb_power_on() before mcufw_init; this is the equivalent step.
+ *
+ * mali_gpuebpower=0 falls back to the manual path -- the twelve domains driven by this driver,
+ * which is what every run before trial 922 did.
+ *
+ * Only consulted inside mali_bring_up() and only after mali_probe_read_only() has returned, so
+ * neither mali=0 nor mali=0 mali_probe=1 reaches it: those two stay the ways to run this driver
+ * without touching the GPU's power at all.
+ */
+static bool gpueb_bringup_held;                  /* Trial922: this run holds a GPUEB reference */
+static unsigned gMaliStopped;                    /* Trial927: the clean stop has run */
+static unsigned gMaliGpuebPower = 1;
+/*
+ * Trial931/936: mali_m2 builds a command stream group and runs two short instruction sequences
+ * through it after the firmware starts.
+ *
+ * On by default now that the whole chain has been proven end to end (boot-935: NOPs fetched, then
+ * a real MOV48/STORE_STATE/SYNC_ADD64 sequence that wrote 0xCAFEBABE and a live cycle count into
+ * DRAM, with RETURN still 34 s). Pass mali_m2=0 to skip it.
+ *
+ * Separate from mali=N on purpose: M2 changes what the GPU is told to do rather than whether it is
+ * powered, and a run that wants only the firmware started should not have a group built underneath
+ * it. Neither mali=0 nor mali=0 mali_probe=1 reaches this -- they return before mali_bring_up().
+ */
+static unsigned gMaliM2 = 1;
+static unsigned gMaliM2c;                       /* 1: AS1 high-PA; 2: + RUN_COMPUTE shader */
+static lck_mtx_t m2c_lock; /* Initialized only for the AS1 boot probe. */
+static unsigned gMaliGpu;                       /* mali_gpu=1: start HakiosGPU Panthor service */
+static int gMaliOpp = -1;                       /* mali_opp=0..39: GPUEB TARGET_STACK OPP commit (-1=default) */
+static volatile unsigned gMaliStopping;         /* set first in stop() to reject new UAPI calls */
+static lck_mtx_t gMaliApiLock;                  /* serialises UAPI MMIO, AS1..7 PTs, CSGs & stop */
+static bool gMaliApiLockInit;
 static unsigned gMaliMcuSeq;                    /* mali_mcuseq=1 writes ENABLE before AUTO */
 static unsigned gMaliEarlyAs0;                  /* set once the early path has already done it */
 /*
@@ -967,6 +1105,92 @@ pt_map(uint64_t *root, uint64_t va, uint64_t pa, uint64_t leaf)
 	return true;
 }
 
+/* Private tables for a single, offline-built user VM. The first 4 KiB of a
+ * wired 16 KiB XNU page is the hardware table; ownership metadata lives after it.
+ * All pages in this pool are cacheable kmem pages, independent of the AS0 pool. */
+struct mali_vm_table {
+	uint64_t entry[512];
+	struct mali_vm_table *next;
+	uint64_t pa;
+};
+
+struct mali_vm {
+	struct mali_vm_table *root, *tables;
+	unsigned slot;
+};
+
+static bool
+mali_vm_pa_valid(uint64_t pa)
+{
+	return pa && (pa & (PT_LEAF_GRANULE - 1)) == 0 && pa < (1ull << 40);
+}
+
+static struct mali_vm_table *
+mali_vm_new_table(struct mali_vm *vm)
+{
+	vm_offset_t kva = 0;
+	if (sizeof(struct mali_vm_table) > PAGE_SIZE ||
+	    kmem_alloc(kernel_map, &kva, PAGE_SIZE, KMA_KOBJECT | KMA_DATA | KMA_ZERO,
+	    VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) {
+		return NULL;
+	}
+	struct mali_vm_table *table = (struct mali_vm_table *)kva;
+	table->pa = kvtophys(kva);
+	if (!mali_vm_pa_valid(table->pa)) {
+		kmem_free(kernel_map, kva, PAGE_SIZE);
+		return NULL;
+	}
+	table->next = vm->tables;
+	vm->tables = table;
+	return table;
+}
+
+/* Map only a wired page owned by this probe. Never accept a caller-supplied PA. */
+static bool
+mali_vm_map_page(struct mali_vm *vm, uint64_t va, vm_offset_t kva, uint64_t access)
+{
+	if (!vm->root || (va & PAGE_MASK) || (kva & PAGE_MASK) || va >= (1ull << 48)) {
+		return false;
+	}
+	for (size_t off = 0; off < PAGE_SIZE; off += PT_LEAF_GRANULE) {
+		uint64_t addr = va + off, pa = kvtophys(kva + off);
+		struct mali_vm_table *table = vm->root;
+		if (!mali_vm_pa_valid(pa) || pa < (1ull << 32)) {
+			return false;
+		}
+		for (int shift = 39; shift > 12; shift -= 9) {
+			uint64_t *desc = &table->entry[(addr >> shift) & 511u];
+			if (*desc == 0) {
+				table = mali_vm_new_table(vm);
+				if (!table) {
+					return false;
+				}
+				*desc = table->pa | PTE_TABLE | PTE_AF;
+			} else {
+				uint64_t child = *desc & PTE_ADDRESS;
+				for (table = vm->tables; table && table->pa != child; table = table->next) {
+				}
+				if (!table) {
+					return false;
+				}
+			}
+		}
+		uint64_t *leaf = &table->entry[(addr >> 12) & 511u];
+		if (*leaf) {
+			return false;
+		}
+		/* Same non-cacheable policy as the board's existing mapper.
+		 * Caller supplies PTE_XN in `access` for non-executable pages;
+		 * shader binary pages omit PTE_XN so shader cores can fetch. */
+		uint64_t attrs = PTE_PAGE | PTE_AF | (IDX_NC << 2) | access;
+		if (!gMaliPtVendor) {
+			attrs |= PTE_NG | PTE_SH_OS;
+		}
+		*leaf = pa | attrs;
+	}
+	return true;
+}
+
 /* ------------------------------------------------------------------ the firmware container */
 
 static void *sect_at(uint64_t va);
@@ -1225,11 +1449,40 @@ load_firmware(void)
 	 * VA zero is the firmware's vector table and is the first thing the MCU fetches.
 	 */
 	{
-		static const uint64_t vaList[] = { 0ull, 0x1000000ull, 0x2000000ull,
-		    MALI_SHARED_VA, 0x40000000ull, 0x40022000ull };
+		/*
+		 * Trial911: the vector page, the page the reset vector actually jumps to, and the
+		 * shared page the version word lives in -- the three the next run has to compare.
+		 *
+		 * 0x01000000 was in this list and 0x01001000 was not, so every log so far printed the
+		 * descriptor for the page *before* the entry point. The reset vector is read here rather
+		 * than later on this path for exactly that reason: the address worth walking is the one
+		 * in the image, not the one a comment assumed.
+		 */
+		uint64_t entry_va = 0ull;
+		uint64_t vaList[8];
+		unsigned vaCount = 0;
 		unsigned n;
 
-		for (n = 0; n < sizeof(vaList) / sizeof(vaList[0]); n++) {
+		{
+			volatile uint32_t *vector = (volatile uint32_t *)sect_at(0ull);
+
+			/* The hardware takes the reset address from VA 4; bit 0 is the Thumb bit. */
+			if (vector != NULL && vector[1] != 0u) {
+				printf("mali: reset vector says pc %#x; its page is the one that matters\n",
+				    vector[1]);
+				entry_va = (uint64_t)(vector[1] & ~1u) & ~0xfffull;
+			}
+		}
+		vaList[vaCount++] = 0ull;                       /* vector table */
+		vaList[vaCount++] = entry_va;                   /* actual entry page */
+		vaList[vaCount++] = 0x1000000ull;               /* section 1, first page */
+		vaList[vaCount++] = 0x2000000ull;
+		vaList[vaCount++] = MALI_SHARED_VA;             /* version word */
+		vaList[vaCount++] = 0x40000000ull;
+		vaList[vaCount++] = 0x40022000ull;
+		vaList[vaCount++] = 0x2000000ull + 0x2000ull;   /* second page of the rw section */
+
+		for (n = 0; n < vaCount; n++) {
 			uint64_t va = vaList[n];
 			uint64_t *table = gMcuRoot;
 			unsigned shift;
@@ -1248,8 +1501,23 @@ load_firmware(void)
 				entry = table[(unsigned)((va >> shift) & 0x1ffu)];
 				printf(" L%d %#llx", level, (unsigned long long)entry);
 				if (level == 3) {
-					/* The leaf: low two bits 11 means a valid page. */
-					printf("%s", (entry & 3u) == 3u ? " page" : " INVALID");
+					/*
+					 * The leaf: low two bits 11 means a valid page.
+					 *
+					 * Trial911: the physical address is the part that answers "does the MCU
+					 * read what this kernel wrote". A descriptor word alone says a page is
+					 * there; the PA beside the VA says whether the two sides of the handover
+					 * are looking at the same memory, which is the question the next run has
+					 * to settle. Shared memory is the one that matters most: the version word
+					 * at 0x04000000 is written by firmware and read here.
+					 */
+					if ((entry & 3u) == 3u) {
+						printf(" page pa %#llx (va+off %#llx)",
+						    (unsigned long long)(entry & PTE_ADDRESS),
+						    (unsigned long long)((entry & PTE_ADDRESS) | (va & 0xfffull)));
+					} else {
+						printf(" INVALID");
+					}
 					break;
 				}
 				if (!(entry & 1)) {
@@ -2692,6 +2960,145 @@ struct csg_control {
 	uint32_t features, input_va, output_va, suspend_size, protm_suspend_size;
 	uint32_t stream_num, stream_stride;
 };
+
+/*
+ * Trial931: the group and stream interfaces, as the firmware lays them out.
+ *
+ * panthor_fw.h:127-180 for the group, the same file above it for the stream, and the offsets
+ * from panthor_fw.c:214-215:
+ *
+ *   group control   shared + 0x1000 + group_idx * group_stride
+ *   stream control  that    + 0x40   + stream_idx * stream_stride
+ *
+ * Each control block carries input_va and output_va pointing back into the same shared page,
+ * so the request goes into a different offset than the control block itself.
+ *
+ * Only the fields this trial writes are named. The rest is padding that has to keep its place,
+ * because the firmware reads the whole structure.
+ */
+struct csg_input {
+	uint32_t req;
+	uint32_t ack_irq_mask;
+	uint32_t doorbell_req;
+	uint32_t cs_irq_ack;
+	uint32_t reserved1[4];
+	uint64_t allow_compute;
+	uint64_t allow_fragment;
+	uint32_t allow_other;
+	uint32_t endpoint_req;
+	uint64_t endpoint_req2;
+	uint64_t suspend_buf;
+	uint64_t protm_suspend_buf;
+	uint32_t config;
+	uint32_t iter_trace_config;
+};
+
+/* panthor_fw.h:181-192, field for field. */
+struct csg_output {
+	uint32_t ack;                       /* 0x00 */
+	uint32_t reserved1;                 /* 0x04 */
+	uint32_t doorbell_ack;              /* 0x08 */
+	uint32_t cs_irq_req;                /* 0x0c */
+	uint32_t status_endpoint_current;   /* 0x10 */
+	uint32_t status_endpoint_req;       /* 0x14 */
+	uint32_t status_state;              /* 0x18: bit 0 = idle */
+	uint32_t resource_dep;              /* 0x1c */
+};
+
+/*
+ * The stream structures, exactly as panthor_fw.h:25-42 has them.
+ *
+ * The first version of this guessed, and guessed wrong in a way that would have written the
+ * ring address into a field that is not the ring address: cs_control has three fields, not
+ * five, and cs_input puts config second, ringbuf_base at 0x10 and the ring input/output pair
+ * down at 0x30. Both were corrected against the header before anything was submitted.
+ */
+struct cs_control {
+	uint32_t features;
+	uint32_t input_va;
+	uint32_t output_va;
+};
+
+struct cs_input {
+	uint32_t req;                   /* 0x00 */
+	uint32_t config;                /* 0x04: CS_CONFIG_PRIORITY(0-3), CS_CONFIG_DOORBELL(8-15) */
+	uint32_t reserved1;             /* 0x08 */
+	uint32_t ack_irq_mask;          /* 0x0c */
+	uint64_t ringbuf_base;          /* 0x10 */
+	uint32_t ringbuf_size;          /* 0x18 */
+	uint32_t reserved2;             /* 0x1c */
+	uint64_t heap_start;            /* 0x20 */
+	uint64_t heap_end;              /* 0x28 */
+	uint64_t ringbuf_input;         /* 0x30 */
+	uint64_t ringbuf_output;        /* 0x38 */
+	uint32_t instr_config;          /* 0x40 */
+	uint32_t instrbuf_size;         /* 0x44 */
+	uint64_t instrbuf_base;         /* 0x48 */
+	uint64_t instrbuf_offset_ptr;   /* 0x50 */
+};
+
+struct cs_output {
+	uint32_t ack;                   /* 0x00 */
+	uint32_t reserved0[15];         /* 0x04..0x3c */
+	uint64_t status_cmd_ptr;        /* 0x40 */
+	uint32_t status_wait;           /* 0x48 */
+	uint32_t status_req_res;        /* 0x4c */
+	uint64_t status_wait_ptr;       /* 0x50 */
+	uint32_t status_wait_val;       /* 0x58 */
+	uint32_t status_scoreboards;    /* 0x5c */
+	uint32_t status_blocked;        /* 0x60 */
+	uint32_t reserved1[7];          /* 0x64..0x7c */
+	uint32_t fault;                 /* 0x80 */
+	uint32_t fatal;                 /* 0x84 */
+	uint64_t fault_info;            /* 0x88 */
+	uint64_t fatal_info;            /* 0x90 */
+	uint32_t reserved2[10];         /* 0x98..0xbc */
+	uint32_t heap_vt_start;         /* 0xc0 */
+	uint32_t heap_vt_end;           /* 0xc4 */
+	uint32_t reserved3;             /* 0xc8 */
+	uint32_t heap_frag_end;         /* 0xcc */
+	uint64_t heap_address;          /* 0xd0 */
+};
+
+/* The group request word, from panthor_fw.h:138-148. */
+#define kCsgStateMask       0x7u
+#define kCsgStateStart      1u
+#define kCsgEndpointConfig  (1u << 4)
+#define kCsgStatusUpdate    (1u << 5)
+#define kCsgSyncUpdate      (1u << 28)
+#define kCsgIdle            (1u << 29)
+#define kCsgDoorbell        (1u << 30)
+/* The stream request word, from panthor_fw.h:37-50. */
+#define kCsStateMask        0x7u
+#define kCsStateStart       1u
+#define kCsExtractEvent     (1u << 4)
+#define kCsIdleSyncWait     (1u << 8)
+#define kCsIdleEmpty        (1u << 10)
+/* CS_CONFIG_DOORBELL(x) = ((x) << 8) & 0xff00, from panthor_fw.h:56. */
+#define kCsConfigDoorbell(x) (((uint32_t)(x) << 8) & 0xff00u)
+#define kCsFatalBit         (1u << 30)
+
+/*
+ * The two pages the firmware and the driver share for a stream's ring positions.
+ * Layout from mali_gpu_csf_registers.h:138-145 (CS_INSERT_LO at 0, CS_EXTRACT at 8) and
+ * the output side at 0x38 in cs_input. Offsets are in BYTES, not instructions.
+ */
+struct cs_user_input {
+	uint64_t insert;
+	uint64_t extract_init;
+};
+
+struct cs_user_output {
+	uint64_t extract;
+	uint32_t active;
+	uint32_t pad;
+};
+#define kCsConfigPriority(x) ((uint32_t)(x) & 0x0fu)
+
+#define kCsfGroupControlOffset   0x1000u
+#define kCsfStreamControlOffset  0x40u
+#define kCsfDoorbellBase         0x80000u
+#define kCsfDoorbellStride       0x10000u
 
 enum {
 	kGlbCfgProgress = 1u << 1,
@@ -4261,10 +4668,140 @@ mali_early_as0(void)
 	return true;
 }
 
+/*
+ * Trial908: the read-only probe, and the reason it comes first.
+ *
+ * Everything below this point changes the GPU's state: it maps the block, releases the bus
+ * protections, powers MFG domains, moves the muxes and finally asks the MCU to start. A run that
+ * does any of that ends with a GPU the loader did not leave in that state, and the last few runs
+ * took minutes to come back to Android rather than half a minute.
+ *
+ * This function answers the same question -- what does the SPM and the GPUEB PLL say about this
+ * board -- by reading only, through mappings made for the purpose, and then returning before
+ * gGpu is ever assigned. Nothing is written, no domain is powered, and quiesce() finds gGpu zero
+ * and keeps its hands off the block on the way out.
+ *
+ * The mapping is made here rather than reused from the globals because those are filled in later
+ * on this same path, and using them would mean this probe could not run before them.
+ */
+/*
+ * Trial910: is the GPUEB mailbox reachable at all?
+ *
+ * Before asking GPUEB to power the GPU on, the two things worth knowing are whether the message
+ * SRAM answers and whether the control bank says anything is in flight. Both are reads. A write
+ * here would be a message sent to a coprocessor whose firmware this kernel has never spoken to,
+ * and the plan is to send exactly two of those, deliberately, once the path is known good.
+ *
+ * The values are printed with their names rather than as a blob because the interesting answers
+ * are boolean: a TX bit set means the previous message was never taken, an RX bit set means
+ * GPUEB has already answered something nobody asked for.
+ */
+static void
+mali_probe_gpueb(void)
+{
+	vm_offset_t sram, ctl;
+	uint32_t tx = 0, rx = 0, first = 0, last = 0;
+
+	sram = ml_io_map_with_prot(MALI_GPUEB_MBOX_SRAM_PHYS, MALI_GPUEB_MBOX_SRAM_SIZE,
+	    VM_PROT_READ);
+	ctl = ml_io_map_with_prot(MALI_GPUEB_MBOX_CTL_PHYS, MALI_GPUEB_MBOX_CTL_SIZE,
+	    VM_PROT_READ);
+	if (sram == 0 || ctl == 0) {
+		printf("mali: gpueb probe: the mailbox will not map read-only "
+		    "(sram %p ctl %p)\n", (void *)sram, (void *)ctl);
+		return;
+	}
+
+	tx = reg_rd(ctl, MALI_GPUEB_CTL_TX_STS);
+	rx = reg_rd(ctl, MALI_GPUEB_CTL_RX_STS);
+	first = reg_rd(sram, 0u);
+	last = reg_rd(sram, MALI_GPUEB_MBOX_SRAM_SIZE - 4u);
+
+	printf("mali: gpueb probe: ctl tx %#x (chan %u %s) rx %#x (chan %u %s)\n",
+	    tx, MALI_GPUEB_CHAN, (tx & (1u << MALI_GPUEB_CHAN)) ? "BUSY" : "idle",
+	    rx, MALI_GPUEB_CHAN, (rx & (1u << MALI_GPUEB_CHAN)) ? "PENDING" : "empty");
+	printf("mali: gpueb probe: sram slot0 %#x slot159 %#x; tx slot %#x rx slot %#x\n",
+	    first, last,
+	    reg_rd(sram, MALI_GPUEB_TX_OFF), reg_rd(sram, MALI_GPUEB_RX_OFF));
+	/*
+	 * Zeroes in the control bank are the documented idle state, not proof of unreachability:
+	 * TX_STS is zero when nothing is in flight and RX_STS is zero when nothing is waiting. To
+	 * tell "idle" from "the bus does not answer", scan the message SRAM for any non-zero word.
+	 *
+	 * The firmware LK loaded sits in GPUEB's own SRAM, not here, so this buffer can legitimately
+	 * be empty -- but a word that is neither zero nor all ones proves the window is read at all,
+	 * and the count of non-zero words says how much traffic this run has seen.
+	 */
+	{
+		uint32_t at, nonzero = 0, last_nonzero = 0, last_at = 0;
+
+		for (at = 0; at < MALI_GPUEB_MBOX_SRAM_SIZE; at += 4u) {
+			uint32_t word = reg_rd(sram, at);
+
+			if (word != 0u) {
+				nonzero++;
+				last_nonzero = word;
+				last_at = at;
+			}
+		}
+		printf("mali: gpueb probe: sram %u of %u words non-zero",
+		    nonzero, MALI_GPUEB_MBOX_SRAM_SIZE / 4u);
+		if (nonzero != 0u) {
+			printf(" (last %#x at +%#x)", last_nonzero, last_at);
+		}
+		printf("; nothing written\n");
+	}
+}
+
+static bool
+mali_probe_read_only(void)
+{
+	unsigned which = 0;
+	vm_offset_t spm, pll;
+	uint32_t mfg0, mfg1, emi1, enable, status4;
+
+	if (!PE_parse_boot_argn("mali_probe", &which, sizeof(which)) || which == 0) {
+		return false;
+	}
+
+	spm = ml_io_map_with_prot(MALI_SPM_PHYS, MALI_SPM_SIZE, VM_PROT_READ);
+	pll = ml_io_map_with_prot(MALI_MFGPLL_PHYS, MALI_MFGPLL_SIZE, VM_PROT_READ);
+	if (spm == 0 || pll == 0) {
+		printf("mali: probe: the SPM or the MFGPLL will not map read-only\n");
+		return true;                    /* the probe was asked for; it just could not run */
+	}
+
+	mfg0 = reg_rd(spm, MALI_SPM_MFG0_PWR_CON);
+	mfg1 = reg_rd(spm, MALI_SPM_MFG1_PWR_CON);
+	emi1 = reg_rd(spm, MALI_SPM_EMI1_PWR_CON);
+	enable = reg_rd(pll, MALI_MFGPLL_GPUEB_EN);
+
+	printf("mali: probe MFG0_PWR_CON %#x (pwr ack %u sram pdn ack %u) "
+	    "MFG1_PWR_CON %#x (pwr ack %u) EMI1_PWR_CON %#x\n",
+	    mfg0, MALI_SPM_PWR_ACK(mfg0), MALI_SPM_SRAM_PDN_ACK(mfg0),
+	    mfg1, MALI_SPM_PWR_ACK(mfg1), emi1);
+	printf("mali: probe MFGPLL+0x808 %#x (gpueb pll enable %u) +0x840 %#x "
+	    "con0 %#x con1 %#x con3 %#x\n",
+	    enable, enable & 1u, reg_rd(pll, MALI_MFGPLL_GPUEB_CTRL),
+	    reg_rd(pll, MALI_MFGPLL_CON0), reg_rd(pll, MALI_MFGPLL_CON1),
+	    reg_rd(pll, MALI_MFGPLL_CON3));
+	printf("mali: probe PWR_STATUS 0xF34 %#x 0xF38 %#x 0xF3C %#x (MFG1_12 %#x)\n",
+	    reg_rd(spm, MALI_SPM_PWR_STATUS), reg_rd(spm, MALI_SPM_PWR_STATUS2),
+	    reg_rd(spm, MALI_SPM_PWR_STATUS_GF),
+	    reg_rd(spm, MALI_SPM_PWR_STATUS_GF) & 0x3ffcu);
+	mali_probe_gpueb();
+	printf("mali: probe done; gGpu is still 0, so quiesce() will not touch the block\n");
+	return true;
+}
+
 static void
 mali_bring_up(void)
 {
 	unsigned up;
+
+	if (mali_probe_read_only()) {
+		return;                         /* Trial908: read only, and leave gGpu at zero */
+	}
 
 	gGpu = ml_io_map(MALI_GPU_PHYS, MALI_GPU_SIZE);
 	if (gGpu == 0) {
@@ -4325,7 +4862,32 @@ mali_bring_up(void)
 	 * written while their own clock is off, and a bus fault with no vector taken stops the core
 	 * where it stands, so a mistake there costs a boot loop and says nothing at all.
 	 */
+	/*
+	 * Trial923: the GPUEB power request, before this function asks the block anything.
+	 *
+	 * This is where panthor does it (mt6895_gpueb_power_on() before mcufw_init), and the
+	 * position matters for a reason that is not stylistic: the three branches below decide what
+	 * to do by reading GPU_ID. If letting GPUEB power the block makes that read answer, the
+	 * whole manual cold-start branch -- SPM, VBUCK2, MFGPLL, the twelve domains -- is skipped,
+	 * and the run measures the coprocessor's path alone instead of a mixture of both.
+	 *
+	 * If GPU_ID still reads zero afterwards, nothing is lost: the cold-start branch runs as it
+	 * always has, with a GPUEB reference held, and the log says which one it took.
+	 *
+	 * A refusal does not abort. The point of the run is to find out what changes, and stopping
+	 * at a refused power request would answer nothing.
+	 */
+	if (gMaliGpuebPower) {
+		printf("mali: gpueb: asking GPUEB to power the GPU before the first read\n");
+		if (!hakios_gpueb_bringup_power_on()) {
+			printf("mali: gpueb: the request did not succeed; continuing so the rest of "
+			    "the sequence still reports what it finds\n");
+		}
+		printf("mali: gpu_id after the GPUEB request: %#x (csf %#x)\n",
+		    mrd(kGpuId), mrd(kCsfId));
+	}
 	printf("mali: gpu_id as the loader left it %#x\n", mrd(kGpuId));
+
 	if (mrd(kGpuId) == MALI_GPU_ID && mrd(kCsfId) == 0) {
 		printf("mali: the firmware has not been loaded yet, as expected\n");
 	}
@@ -5045,7 +5607,3824 @@ mali_bring_up(void)
 	gMaliProgress = 2;
 	gMaliDone = true;
 	printf("mali: M1 done: the firmware is running and the global interface answered\n");
+
+	/*
+	 * Trial931: and then, only if asked, one group with one stream on a ring.
+	 *
+	 * A failure here does not undo M1: the firmware is running either way, and a run that
+	 * cannot build a group still says so in the log rather than taking the whole bring-up down
+	 * with it. That distinction is the point of putting M2 behind its own switch.
+	 */
+	if (gMaliGpu) {
+		printf("mali: mali_gpu=1: leaving CSG slots and AS1..AS7 clean for HakiosGPU\n");
+	} else if (gMaliM2c) {
+		m2c_run(); /* Claim group zero before any AS0 M2 submission. */
+	} else if (gMaliM2) {
+		if (!m2_try_group_zero(NULL)) {
+			printf("mali: m2: the group was not built; M1 stands\n");
+		}
+	}
 }
+
+/* The command ring uses the second 4 KiB leaf, the output/descriptors the fourth,
+ * and (for mali_m2c=2) the executable shader binary the third leaf of a separate page.
+ * Neither VA belongs to the firmware. Queue interfaces and suspend storage
+ * remain in the firmware VM, just as in panthor_fw_alloc_queue_iface_mem(). */
+#define M2C_RING_PAGE_VA   0x200000000ull
+#define M2C_RESULT_PAGE_VA 0x200004000ull
+#define M2C_SHADER_PAGE_VA 0x200008000ull
+#define M2C_RING_OFFSET    0x1000u
+#define M2C_RESULT_OFFSET  0x3000u
+#define M2C_SHADER_OFFSET  0x2000u
+
+struct m2c_trial {
+	struct mali_vm vm;
+	struct mali_mem candidates;
+	vm_offset_t ring, result, shader;
+	volatile struct csg_input *group_in;
+	volatile struct csg_output *group_out;
+	volatile struct glb_input *global_in;
+	volatile struct glb_output *global_out;
+	bool programmed, terminate_sent;
+};
+
+static struct m2c_trial gM2c;
+
+/* The aperture is one permanent ml_io_map. Check the actual translations for
+ * every register page this probe will touch before writing. M2c and orderly
+ * power-off hold the same lock for the lifetime of each such check. */
+static bool
+m2c_mmio_ready(void)
+{
+	const uint32_t offsets[] = { kGpuCmd, kJobIntRaw, kMmuIntRaw,
+	    asReg(1u, kAsTranscfg) + 4, kCsfDoorbellBase, kCsfDoorbellBase + kCsfDoorbellStride };
+	if (!gGpu || !gpueb_bringup_held || gMaliStopped) {
+		return false;
+	}
+	for (unsigned i = 0; i < sizeof(offsets) / sizeof(offsets[0]); i++) {
+		if (offsets[i] > MALI_GPU_SIZE - sizeof(uint32_t) ||
+		    kvtophys(gGpu + offsets[i]) != MALI_GPU_PHYS + offsets[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+static void
+m2c_free(struct m2c_trial *t)
+{
+	while (t->vm.tables) {
+		struct mali_vm_table *table = t->vm.tables;
+		t->vm.tables = table->next;
+		kmem_free(kernel_map, (vm_offset_t)table, PAGE_SIZE);
+	}
+	if (t->candidates.kva) {
+		kmem_free(kernel_map, t->candidates.kva, t->candidates.size);
+	}
+	memset(t, 0, sizeof(*t));
+}
+
+static bool
+m2c_shared_fits(uint64_t va, size_t size)
+{
+	if (!gShared || (va & 3u) || va < gShared->va_start || va > gShared->va_end) {
+		return false;
+	}
+	return size <= gShared->va_end - va && size <= gShared->mem.size &&
+	    va - gShared->va_start <= gShared->mem.size - size;
+}
+
+static bool
+m2c_prepare(struct m2c_trial *t)
+{
+	const unsigned as = 1;
+	if (PAGE_SIZE != 4 * PT_LEAF_GRANULE || !m2c_mmio_ready() ||
+	    (mrd(kAsPresent) & (1u << as)) == 0 || (mrd(kMmuFeatures) & 0xffff) != 0x2830) {
+		printf("mali: m2c: AS1, page geometry, power or MMIO unavailable\n");
+		return false;
+	}
+	uint64_t root = gpu_rd64(asReg(as, kAsTranstab));
+	uint64_t cfg = gpu_rd64(asReg(as, kAsTranscfg));
+	uint32_t status = mrd(asReg(as, kAsStatus));
+	printf("mali: m2c: AS1 before root %#llx attr %#llx cfg %#llx status %#x\n",
+	    (unsigned long long)root, (unsigned long long)gpu_rd64(asReg(as, kAsMemattr)),
+	    (unsigned long long)cfg, status);
+	if ((status & 1u) || root || (cfg & 15u) > 1u) {
+		return false;
+	}
+
+	/* Keep a bounded batch wired while selecting two distinct high pages.
+	 * Repeated free/allocate can otherwise return the same low page. */
+	if (!mem_alloc_high(&t->candidates, 8 * PAGE_SIZE)) {
+		return false;
+	}
+	for (unsigned i = 0; i < t->candidates.pages; i++) {
+		vm_offset_t kva = t->candidates.kva + (vm_offset_t)i * PAGE_SIZE;
+		uint64_t pa = kvtophys(kva);
+		if (pa < (1ull << 32) || !mali_vm_pa_valid(pa)) {
+			continue;
+		}
+		if (!t->ring) {
+			t->ring = kva;
+		} else if (!t->result) {
+			t->result = kva;
+			if (gMaliM2c < 2u) {
+				break;
+			}
+		} else {
+			t->shader = kva;
+			break;
+		}
+	}
+	if (!t->result || (gMaliM2c >= 2u && !t->shader)) {
+		printf("mali: m2c: insufficient high physical pages in %u candidates; skipping submission\n",
+		    t->candidates.pages);
+		return false;
+	}
+	t->vm.slot = as;
+	t->vm.root = mali_vm_new_table(&t->vm);
+	if (!mali_vm_map_page(&t->vm, M2C_RING_PAGE_VA, t->ring, PTE_RDONLY | PTE_XN) ||
+	    !mali_vm_map_page(&t->vm, M2C_RESULT_PAGE_VA, t->result, PTE_UNPRIV | PTE_XN) ||
+	    (gMaliM2c >= 2u && !mali_vm_map_page(&t->vm, M2C_SHADER_PAGE_VA, t->shader, PTE_RDONLY))) {
+		printf("mali: m2c: cannot build AS1 page tables\n");
+		return false;
+	}
+	t->ring += M2C_RING_OFFSET;
+	t->result += M2C_RESULT_OFFSET;
+	if (gMaliM2c >= 2u) {
+		t->shader += M2C_SHADER_OFFSET;
+	}
+	for (struct mali_vm_table *p = t->vm.tables; p; p = p->next) {
+		FlushPoC_DcacheRegion((vm_offset_t)p->entry, sizeof(p->entry));
+	}
+	__asm__ volatile ("dsb sy" ::: "memory");
+	/* Unlike the AS0 bring-up diagnostic, never clear global fault latches. */
+	if (!as_ready(as)) {
+		return false;
+	}
+	t->programmed = true; /* A timed-out UPDATE may still complete. */
+	gpu_wr64(asReg(as, kAsTranstab), t->vm.root->pa);
+	gpu_wr64(asReg(as, kAsMemattr), MALI_MEMATTR);
+	gpu_wr64(asReg(as, kAsTranscfg), 0x42000006ull);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	if (!as_command(as, kAsCmdUpdate) ||
+	    gpu_rd64(asReg(as, kAsTranstab)) != t->vm.root->pa ||
+	    gpu_rd64(asReg(as, kAsMemattr)) != MALI_MEMATTR ||
+	    gpu_rd64(asReg(as, kAsTranscfg)) != 0x42000006ull ||
+	    (mrd(kMmuIntRaw) & 0xffffu) || (mrd(asReg(as, kAsFaultStatus)) & 0xffu)) {
+		return false;
+	}
+	printf("mali: m2c: AS1 enabled root PA %#llx ring PA %#llx result PA %#llx shader PA %#llx\n",
+	    (unsigned long long)t->vm.root->pa, (unsigned long long)kvtophys(t->ring),
+	    (unsigned long long)kvtophys(t->result),
+	    (unsigned long long)(t->shader ? kvtophys(t->shader) : 0ull));
+	return true;
+}
+
+static bool
+m2c_terminate(struct m2c_trial *t)
+{
+	if (!t->group_in) {
+		return true;
+	}
+	if (!m2c_mmio_ready()) {
+		return false;
+	}
+	if (!t->terminate_sent) {
+		/* Zero is also the reset ACK. Drain START before accepting TERMINATE. */
+		for (unsigned i = 0; ; i++) {
+			FlushPoC_DcacheRegion((vm_offset_t)t->group_out, sizeof(*t->group_out));
+			FlushPoC_DcacheRegion((vm_offset_t)t->global_out, sizeof(*t->global_out));
+			if ((t->group_out->ack & kCsgStateMask) == kCsgStateStart &&
+			    !((t->global_out->doorbell_ack ^ t->global_in->doorbell_req) & 1u)) {
+				break;
+			}
+			if (i == 200) {
+				return false;
+			}
+			delay(1000);
+		}
+		t->group_in->req &= ~kCsgStateMask;
+		t->global_in->doorbell_req ^= 1u;
+		mem_flush(&gShared->mem);
+		mwr(kCsfDoorbellBase, 1u);
+		t->terminate_sent = true;
+	}
+	for (unsigned i = 0; i < 200; i++) {
+		FlushPoC_DcacheRegion((vm_offset_t)t->group_out, sizeof(*t->group_out));
+		FlushPoC_DcacheRegion((vm_offset_t)t->global_out, sizeof(*t->global_out));
+		if (!(t->group_out->ack & kCsgStateMask) &&
+		    !((t->global_out->doorbell_ack ^ t->global_in->doorbell_req) & 1u)) {
+			t->group_in = NULL;
+			return true;
+		}
+		delay(1000);
+	}
+	return false;
+}
+
+/* Even if termination failed, RETURN may park AS1 after disabling the MCU.
+ * Only release storage with positive evidence for all three cleanup steps. */
+static bool
+m2c_park(struct m2c_trial *t)
+{
+	unsigned as = t->vm.slot;
+	if (!m2c_mmio_ready() || !as_ready(as)) {
+		printf("mali: m2c: AS1 park refused; MMIO unavailable or AS busy\n");
+		return false;
+	}
+	if (!gpu_flush_caches()) {
+		return false;
+	}
+	gpu_wr64(asReg(as, kAsTranstab), 0);
+	gpu_wr64(asReg(as, kAsMemattr), 0);
+	gpu_wr64(asReg(as, kAsTranscfg), kAsTranscfgUnmapped);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	if (!as_command(as, kAsCmdUpdate) || gpu_rd64(asReg(as, kAsTranstab)) ||
+	    gpu_rd64(asReg(as, kAsMemattr)) ||
+	    gpu_rd64(asReg(as, kAsTranscfg)) != kAsTranscfgUnmapped) {
+		printf("mali: m2c: AS1 park not confirmed\n");
+		return false;
+	}
+	t->programmed = false;
+	return true;
+}
+
+static void
+m2c_run(void)
+{
+	struct m2c_trial *t = &gM2c;
+	bool passed = m2c_prepare(t) && m2_try_group_zero(t);
+	if (t->programmed) {
+		printf("mali: m2c: AS1 faultstatus %#x faultaddr %#llx mmu_raw %#x gpu_fault %#x\n",
+		    mrd(asReg(1u, kAsFaultStatus)), (unsigned long long)gpu_rd64(asReg(1u, kAsFaultAddress)),
+		    mrd(kMmuIntRaw), mrd(kGpuFaultStatus));
+		if (!m2c_terminate(t)) {
+			printf("mali: m2c_as1_high_pa: FAIL group 0 TERMINATE unconfirmed; keeping pages for RETURN\n");
+			return;
+		}
+		if (!m2c_park(t)) {
+			printf("mali: m2c_as1_high_pa: FAIL AS1 cleanup incomplete; keeping pages for RETURN\n");
+			return;
+		}
+		uint32_t raw = mrd(kMmuIntRaw), fs = mrd(asReg(t->vm.slot, kAsFaultStatus));
+		printf("mali: m2c: AS1 parked mmu_raw %#x faultstatus %#x\n", raw, fs);
+		passed = passed && !(raw & 0xffffu) && !(fs & 0xffu) && !(mrd(kIntRaw) & 1u);
+	}
+	m2c_free(t);
+	printf("mali: %s: %s\n", gMaliM2c >= 2u ? "m2c_compute" : "m2c_as1_high_pa",
+	    passed ? "PASS" : "FAIL");
+}
+
+/*
+ * M2a: give one group one stream, and see whether the firmware accepts them.
+ *
+ * This is the step between "the firmware runs" and "the firmware does work". M1 proved the
+ * global interface answers; a command stream group with a command stream bound to a ring is what
+ * a job is later submitted through, so it is the next thing that either works or does not.
+ *
+ * The group is built from four writes and one doorbell:
+ *
+ *   1. the group's own control block (shared + 0x1000 + group_stride * 0) already carries
+ *      input_va and output_va, put there by the firmware; read them rather than assume them
+ *   2. the same for stream 0 inside that group (control + 0x40 + stream_stride * 0)
+ *   3. the ring is allocated on this side and its address goes into the stream's input
+ *   4. CSG_REQ then CS_REQ, each with the state bits the firmware expects
+ *   5. ring doorbell 0
+ *
+ * Every value read from the firmware is printed before it is used, so a run that fails says
+ * which offset was unexpected instead of only that the doorbell went unanswered.
+ */
+#define MALI_CS_RING_SIZE       0x1000u         /* one page: room for the NOPs a later trial needs */
+
+static bool
+m2_try_group_zero(struct m2c_trial *trial)
+{
+	volatile struct glb_control *glb_control;
+	volatile struct glb_input *glb_in;
+	volatile struct glb_output *glb_out;
+	volatile struct csg_control *csg_control;
+	volatile struct csg_input *csg_in;
+	volatile struct csg_output *csg_out;
+	volatile struct cs_control *cs_control;
+	volatile struct cs_input *cs_in;
+	volatile struct cs_output *cs_out;
+	void *ring;
+	uint64_t ring_va;
+	uint64_t user_in_va;
+	uint64_t user_out_va;
+	uint64_t sus_va;
+	uint32_t waited;
+	uint32_t ack;
+	uint32_t core_count;
+	uint32_t tiler_count;
+
+	if (gShared == NULL || gShared->mem.kva == 0) {
+		printf("mali: m2: no shared page; nothing to build a group from\n");
+		return false;
+	}
+	if (trial && (gShared->va_start != MALI_SHARED_VA ||
+	    !m2c_shared_fits(MALI_SHARED_VA, sizeof(*glb_control)) ||
+	    !m2c_shared_fits(MALI_SHARED_VA + kCsfGroupControlOffset, sizeof(*csg_control)) ||
+	    !m2c_shared_fits(MALI_SHARED_VA + kCsfGroupControlOffset +
+	    kCsfStreamControlOffset, sizeof(*cs_control)))) {
+		return false;
+	}
+	glb_control = (volatile struct glb_control *)gShared->mem.kva;
+	printf("mali: m2: glb groups %u stride %#x\n",
+	    glb_control->group_num, glb_control->group_stride);
+	if (glb_control->group_num == 0u || glb_control->group_stride == 0u) {
+		printf("mali: m2: the firmware reports no groups; stopping here\n");
+		return false;
+	}
+
+	csg_control = (volatile struct csg_control *)shared_at(MALI_SHARED_VA +
+	    kCsfGroupControlOffset);
+	if (csg_control == NULL) {
+		printf("mali: m2: group 0 control is outside the shared section\n");
+		return false;
+	}
+	csg_in = (volatile struct csg_input *)shared_at(csg_control->input_va);
+	csg_out = (volatile struct csg_output *)shared_at(csg_control->output_va);
+	if (csg_in == NULL || csg_out == NULL) {
+		printf("mali: m2: group 0 input/output is outside the shared section\n");
+		return false;
+	}
+
+	cs_control = (volatile struct cs_control *)shared_at(MALI_SHARED_VA +
+	    kCsfGroupControlOffset + kCsfStreamControlOffset);
+	if (cs_control == NULL) {
+		printf("mali: m2: stream 0 control is outside the shared section\n");
+		return false;
+	}
+	cs_in = (volatile struct cs_input *)shared_at(cs_control->input_va);
+	cs_out = (volatile struct cs_output *)shared_at(cs_control->output_va);
+	if (cs_in == NULL || cs_out == NULL) {
+		printf("mali: m2: stream 0 input/output is outside the shared section\n");
+		return false;
+	}
+
+	glb_in = (volatile struct glb_input *)shared_at(glb_control->input_va);
+	glb_out = (volatile struct glb_output *)shared_at(glb_control->output_va);
+	if (glb_in == NULL || glb_out == NULL) {
+		printf("mali: m2: no global input/output block\n");
+		return false;
+	}
+
+	/*
+	 * Where the ring and the suspend buffer go.
+	 *
+	 * shared + 0x1000 is the group and stream control page, so the ring cannot go there -- an
+	 * earlier version of this put it exactly there and memset() the descriptors it was about
+	 * to read. The firmware's own structures end at 0x54000 (CS0's output); the space after
+	 * that, up to the section's end at 0x94000, is unused.
+	 */
+#define MALI_CS_RING_OFFSET     0x60000u
+#define MALI_CS_USER_IN_OFFSET  (MALI_CS_RING_OFFSET + MALI_CS_RING_SIZE)
+#define MALI_CS_USER_OUT_OFFSET (MALI_CS_USER_IN_OFFSET + 0x1000u)
+#define MALI_CS_SUSPEND_OFFSET  (MALI_CS_USER_OUT_OFFSET + 0x1000u)
+#define MALI_CS_SUSPEND_SIZE    0x7000u
+	if (trial && (!m2c_shared_fits(glb_control->input_va, sizeof(*glb_in)) ||
+	    !m2c_shared_fits(glb_control->output_va, sizeof(*glb_out)) ||
+	    !m2c_shared_fits(csg_control->input_va, sizeof(*csg_in)) ||
+	    !m2c_shared_fits(csg_control->output_va, sizeof(*csg_out)) ||
+	    !m2c_shared_fits(cs_control->input_va, sizeof(*cs_in)) ||
+	    !m2c_shared_fits(cs_control->output_va, sizeof(*cs_out)) ||
+	    !m2c_shared_fits(MALI_SHARED_VA + MALI_CS_USER_IN_OFFSET,
+	    MALI_CS_SUSPEND_OFFSET + MALI_CS_SUSPEND_SIZE - MALI_CS_USER_IN_OFFSET))) {
+		printf("mali: m2c: firmware interface out of bounds\n");
+		return false;
+	}
+	if (MALI_CS_SUSPEND_OFFSET + MALI_CS_SUSPEND_SIZE >
+	    (gShared->va_end - gShared->va_start)) {
+		printf("mali: m2: the shared section is too small for a ring\n");
+		return false;
+	}
+	if (trial) {
+		FlushPoC_DcacheRegion((vm_offset_t)csg_out, sizeof(*csg_out));
+		if ((csg_out->ack & kCsgStateMask) || (csg_in->req & kCsgStateMask) ||
+		    csg_control->suspend_size > MALI_CS_SUSPEND_SIZE) {
+			printf("mali: m2c: group 0 occupied or suspend buffer too small\n");
+			return false;
+		}
+		ring = (void *)trial->ring;
+		ring_va = M2C_RING_PAGE_VA + M2C_RING_OFFSET;
+	} else {
+		ring = (void *)(gShared->mem.kva + MALI_CS_RING_OFFSET);
+		ring_va = MALI_SHARED_VA + MALI_CS_RING_OFFSET;
+	}
+	user_in_va = MALI_SHARED_VA + MALI_CS_USER_IN_OFFSET;
+	user_out_va = MALI_SHARED_VA + MALI_CS_USER_OUT_OFFSET;
+	sus_va = MALI_SHARED_VA + MALI_CS_SUSPEND_OFFSET;
+	memset(ring, 0, MALI_CS_RING_SIZE);
+	if (trial) {
+		FlushPoC_DcacheRegion((vm_offset_t)ring, MALI_CS_RING_SIZE);
+	}
+	memset((void *)(gShared->mem.kva + MALI_CS_USER_IN_OFFSET), 0, 0x1000u);
+	memset((void *)(gShared->mem.kva + MALI_CS_USER_OUT_OFFSET), 0, 0x1000u);
+	memset((void *)(gShared->mem.kva + MALI_CS_SUSPEND_OFFSET), 0, MALI_CS_SUSPEND_SIZE);
+
+	/*
+	 * The order matters, and it is the order panthor_sched.c uses: the stream is programmed
+	 * first, then the group's endpoint request, then the group is started, and only then does
+	 * the stream's own start take effect.
+	 *
+	 * cs_slot_prog_locked() is called from inside csg_slot_prog_locked() (sched.c:1441), which
+	 * is why the stream's fields are set before the group is asked to start. A group told to
+	 * start before its stream exists acknowledges the request and reports an endpoint count of
+	 * zero, which is exactly what trials 931g-931k showed: ack 0x11 with status_endpoint_current
+	 * 0, and a stream that never left state zero.
+	 */
+
+	/* 1. the stream: its ring, its doorbell, its idle policy. */
+	cs_in->config = kCsConfigPriority(0) | kCsConfigDoorbell(1);
+	cs_in->ack_irq_mask = 0xffffffffu;
+	cs_in->ringbuf_base = ring_va;
+	cs_in->ringbuf_size = MALI_CS_RING_SIZE;
+	/*
+	 * These two are not optional, and zero is not a value they can have.
+	 *
+	 * ringbuf_input points at a { insert, extract } pair and ringbuf_output at an
+	 * { extract, active } pair (panthor_fw.h:15-23). The firmware keeps the ring's producer and
+	 * consumer positions there, so it dereferences both addresses. Left at zero they would name
+	 * VA 0 in AS0 -- the firmware's own vector table -- and a stream that cannot record its
+	 * position has no reason to leave state zero.
+	 */
+	cs_in->ringbuf_input = user_in_va;
+	cs_in->ringbuf_output = user_out_va;
+	cs_in->heap_start = 0ull;
+	cs_in->heap_end = 0ull;
+	cs_in->instr_config = 0u;
+	cs_in->instrbuf_size = 0u;
+	cs_in->instrbuf_base = 0ull;
+	cs_in->instrbuf_offset_ptr = 0ull;
+	cs_in->req = kCsStateStart | kCsIdleSyncWait | kCsIdleEmpty;
+
+	/* 2. the group: which cores it may use, and how many it asks for. */
+	core_count = (uint32_t)__builtin_popcountll(mrd(kShaderPresent));
+	tiler_count = (uint32_t)__builtin_popcountll(mrd(kTilerPresent));
+	csg_in->allow_compute = mrd(kShaderPresent);
+	csg_in->allow_fragment = mrd(kShaderPresent);
+	csg_in->allow_other = (uint32_t)mrd(kTilerPresent);
+	csg_in->endpoint_req = (core_count & 0xffu) | ((core_count & 0xffu) << 8) |
+	    ((tiler_count & 0xfu) << 16);
+	csg_in->endpoint_req2 = 0ull;
+	csg_in->suspend_buf = sus_va;
+	csg_in->protm_suspend_buf = 0ull;
+	csg_in->config = trial ? trial->vm.slot : 0u;
+	csg_in->ack_irq_mask = 0xffffffffu;
+	printf("mali: m2: cs cfg %#x base %#llx size %#x | csg ep_req %#x cores %u tiler %u\n",
+	    cs_in->config, (unsigned long long)cs_in->ringbuf_base, cs_in->ringbuf_size,
+	    csg_in->endpoint_req, core_count, tiler_count);
+
+	/*
+	 * 3. one doorbell, and it starts both.
+	 *
+	 * mali_kbase_csf_scheduler.c:2187-2251 does not ring twice. The stream's request is written
+	 * first, the group's request second, both doorbell words are flipped once, and a single
+	 * write to DOORBELL(0) wakes the firmware to look at all of it. Ringing again for the
+	 * stream afterwards is not what the vendor driver does -- and the second ring cannot even
+	 * be expressed in this protocol, since a toggle that flips to the value already there is
+	 * not a request.
+	 *
+	 * DOORBELL(0) is the kernel's own doorbell and stays the kernel's: doorbell 1 is what the
+	 * stream's config names for user submissions, which is a different doorbell rung at a
+	 * different time.
+	 *
+	 * Both output words are read after being invalidated -- they live in cacheable memory on
+	 * this side, and a stale read here is what made an earlier version think it had to ring
+	 * again.
+	 */
+	if (trial) {
+		trial->group_in = csg_in;
+		trial->group_out = csg_out;
+		trial->global_in = glb_in;
+		trial->global_out = glb_out;
+	}
+	csg_in->req = kCsgStateStart | kCsgEndpointConfig;
+	FlushPoC_DcacheRegion((vm_offset_t)csg_out, sizeof(*csg_out));
+	FlushPoC_DcacheRegion((vm_offset_t)glb_out, sizeof(*glb_out));
+	__asm__ volatile ("dsb sy" ::: "memory");
+	csg_in->doorbell_req = (csg_in->doorbell_req & ~1u) |
+	    ((csg_out->doorbell_ack ^ 1u) & 1u);
+	glb_in->doorbell_req = (glb_in->doorbell_req & ~1u) |
+	    ((glb_out->doorbell_ack ^ 1u) & 1u);
+	mem_flush(&gShared->mem);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	mwr(kCsfDoorbellBase, 1u);
+
+	for (waited = 0; waited < 200; waited++) {
+		FlushPoC_DcacheRegion((vm_offset_t)csg_out, sizeof(*csg_out));
+		FlushPoC_DcacheRegion((vm_offset_t)cs_out, sizeof(*cs_out));
+		__asm__ volatile ("dsb sy" ::: "memory");
+		if ((csg_out->ack & kCsgStateMask) == kCsgStateStart &&
+		    (cs_out->ack & kCsStateMask) == kCsStateStart) {
+			break;
+		}
+		delay(1000);
+	}
+	printf("mali: m2: after one doorbell, %u ms: csg ack %#x cs ack %#x\n",
+	    waited, csg_out->ack, cs_out->ack);
+	printf("mali: m2: glb db req %#x ack %#x | csg db req %#x ack %#x\n",
+	    glb_in->doorbell_req, glb_out->doorbell_ack,
+	    csg_in->doorbell_req, csg_out->doorbell_ack);
+	printf("mali: m2: csg cs_irq_req %#x state %#x ep_cur %#x ep_req %#x\n",
+	    csg_out->cs_irq_req, csg_out->status_state,
+	    csg_out->status_endpoint_current, csg_out->status_endpoint_req);
+	printf("mali: m2: cs fault %#x fatal %#x cmd_ptr %#llx\n",
+	    cs_out->fault, cs_out->fatal, (unsigned long long)cs_out->status_cmd_ptr);
+	printf("mali: m2: irq raw %#x job %#x mmu %#x\n",
+	    mrd(kIntRaw), mrd(kJobIntRaw), mrd(kMmuIntRaw));
+
+	if ((csg_out->ack & kCsgStateMask) != kCsgStateStart) {
+		printf("mali: m2: the group did not start (ack %#x)\n", csg_out->ack);
+		return false;
+	}
+	if ((cs_out->ack & kCsStateMask) != kCsStateStart) {
+		printf("mali: m2: the stream did not start (ack %#x)\n", cs_out->ack);
+		return false;
+	}
+	if ((cs_out->ack & kCsFatalBit) || cs_out->fatal != 0u) {
+		printf("mali: m2: the stream started but the firmware reported a fatal (ack %#x "
+		    "fatal %#x); the ring contents are the next thing to look at\n",
+		    cs_out->ack, cs_out->fatal);
+		if (trial) {
+			return false;
+		}
+	}
+
+	printf("mali: m2: group 0 stream 0 running, ring %#llx\n",
+	    (unsigned long long)ring_va);
+
+	/*
+	 * M2b: put instructions in the ring and see whether the CEU fetches them.
+	 *
+	 * Everything up to here proved the firmware accepted a group and a stream. None of it
+	 * proved anything reads the ring. These two steps do, and they are separate on purpose:
+	 *
+	 *   A. eight NOPs. Nothing can go wrong inside a NOP, so if the ring's extract pointer
+	 *      moves, the fetch path works -- decode, prefetch, the lot.
+	 *   B. a short real sequence that writes the GPU's own cycle counter to memory and then
+	 *      adds a constant to a second word. If those two addresses in DRAM change, the GPU
+	 *      executed instructions and wrote to memory.
+	 *
+	 * The encoding is the one panthor_sched.c:3218-3265 builds, verified field by field:
+	 * every instruction is one 64-bit little-endian word with its opcode in bits [63:56],
+	 * and a submission is padded with NOPs to a 64-byte boundary because the prefetcher
+	 * reads in cache lines.
+	 */
+	{
+		struct cs_user_input *uin;
+		struct cs_user_output *uout;
+		volatile uint64_t *sync;
+		volatile uint64_t *cycles;
+		uint64_t *cmds;
+		uint64_t seq_before;
+		uint64_t cyc_before;
+
+#define MALI_CS_SCRATCH_OFFSET  0x6a000u
+#define MALI_CS_USER_IN_VA      (MALI_SHARED_VA + MALI_CS_USER_IN_OFFSET)
+#define MALI_CS_USER_OUT_VA     (MALI_SHARED_VA + MALI_CS_USER_OUT_OFFSET)
+#define MALI_CS_SCRATCH_VA      (MALI_SHARED_VA + MALI_CS_SCRATCH_OFFSET)
+#define MALI_M2_SYNC_VA         (MALI_CS_SCRATCH_VA)
+
+#define M2_OP_MOV48         1ull
+#define M2_OP_MOV32         2ull
+#define M2_OP_STORE_STATE   40ull
+#define M2_OP_SYNC_ADD64    51ull
+#define M2_OP_ERROR_BARRIER 47ull
+
+		if (!trial && MALI_CS_SCRATCH_OFFSET + 0x1000u > (gShared->va_end - gShared->va_start)) {
+			printf("mali: m2b: no room for a scratch page\n");
+			return true;
+		}
+		vm_offset_t scratch = trial ? trial->result : gShared->mem.kva + MALI_CS_SCRATCH_OFFSET;
+		uint64_t sync_va = trial ? M2C_RESULT_PAGE_VA + M2C_RESULT_OFFSET : MALI_M2_SYNC_VA;
+		memset((void *)scratch, 0, 0x1000u);
+		uin = (struct cs_user_input *)(gShared->mem.kva + MALI_CS_USER_IN_OFFSET);
+		uout = (struct cs_user_output *)(gShared->mem.kva + MALI_CS_USER_OUT_OFFSET);
+		sync = (volatile uint64_t *)scratch;
+		cycles = (volatile uint64_t *)(scratch + 0x40);
+		cmds = (uint64_t *)ring;
+
+		*sync = 0x1000000000000000ull;
+		*cycles = 0ull;
+		mem_flush(&gShared->mem);
+		__asm__ volatile ("dsb sy" ::: "memory");
+
+		/* ---- Step A: eight NOPs, nothing but a fetch ---- */
+		memset(cmds, 0, 64);
+		if (trial) {
+			FlushPoC_DcacheRegion(scratch, 0x1000u);
+			FlushPoC_DcacheRegion((vm_offset_t)cmds, 64);
+		}
+		mem_flush(&gShared->mem);
+		__asm__ volatile ("dsb sy" ::: "memory");
+		uin->extract_init = 0ull;
+		uin->insert = 64ull;
+		FlushPoC_DcacheRegion((vm_offset_t)uin, sizeof(*uin));
+		__asm__ volatile ("dsb sy" ::: "memory");
+		mwr(kCsfDoorbellBase + kCsfDoorbellStride, 1u);   /* DOORBELL(1): the stream's own */
+
+		for (waited = 0; waited < 100; waited++) {
+			FlushPoC_DcacheRegion((vm_offset_t)uout, sizeof(*uout));
+			FlushPoC_DcacheRegion((vm_offset_t)cs_out, sizeof(*cs_out));
+			__asm__ volatile ("dsb sy" ::: "memory");
+			if (uout->extract == 64ull) {
+				break;
+			}
+			delay(1000);
+		}
+		printf("mali: m2b: step A: extract %llu (want 64) active %u after %u ms; "
+		    "cs ack %#x fault %#x fatal %#x cmd_ptr %#llx\n",
+		    (unsigned long long)uout->extract, uout->active, waited,
+		    cs_out->ack, cs_out->fault, cs_out->fatal,
+		    (unsigned long long)cs_out->status_cmd_ptr);
+		printf("mali: m2b: step A: irq raw %#x job %#x mmu %#x\n",
+		    mrd(kIntRaw), mrd(kJobIntRaw), mrd(kMmuIntRaw));
+		if (uout->extract != 64ull) {
+			printf("mali: m2b: the ring was not read; stopping before the real sequence\n");
+			return trial == NULL;
+		}
+
+		/*
+		 * ---- Step B: two real writes to DRAM ----
+		 *
+		 * The instructions go at ring + 64, not at ring. Step A consumed the first 64 bytes,
+		 * and writing there again would leave the second cache line as the NOPs memset() put
+		 * there -- the CEU would execute those, advance extract to 128, and this would look
+		 * exactly like a job that ran and did nothing. Which is what boot-934 was.
+		 */
+		cmds = (uint64_t *)((uintptr_t)ring + 64);
+		cmds[0] = (M2_OP_MOV48 << 56) | (0ull << 48) | ((sync_va + 0x40) & 0xffffffffffffull);
+		cmds[1] = (M2_OP_STORE_STATE << 56) | (0ull << 40) | (1ull << 32);
+		cmds[2] = (M2_OP_MOV48 << 56) | (0ull << 48) | (sync_va & 0xffffffffffffull);
+		cmds[3] = (M2_OP_MOV48 << 56) | (2ull << 48) | 0x0000cafebabeull;
+		cmds[4] = (M2_OP_SYNC_ADD64 << 56) | (0ull << 48) | (0ull << 40) |
+		    (2ull << 32) | (0ull << 16) | 1ull;
+		cmds[5] = (M2_OP_ERROR_BARRIER << 56);
+		cmds[6] = 0ull;
+		cmds[7] = 0ull;
+		if (trial) {
+			FlushPoC_DcacheRegion((vm_offset_t)cmds, 64);
+		}
+		mem_flush(&gShared->mem);
+		__asm__ volatile ("dsb sy" ::: "memory");
+
+		seq_before = *sync;
+		cyc_before = *cycles;
+		printf("mali: m2b: before step B: sync %#llx cycles %#llx\n",
+		    (unsigned long long)seq_before, (unsigned long long)cyc_before);
+
+		uin->extract_init = 64ull;
+		uin->insert = 128ull;
+		FlushPoC_DcacheRegion((vm_offset_t)uin, sizeof(*uin));
+		__asm__ volatile ("dsb sy" ::: "memory");
+		mwr(kCsfDoorbellBase + kCsfDoorbellStride, 1u);
+
+		for (waited = 0; waited < 100; waited++) {
+			FlushPoC_DcacheRegion((vm_offset_t)uout, sizeof(*uout));
+			FlushPoC_DcacheRegion((vm_offset_t)cs_out, sizeof(*cs_out));
+			FlushPoC_DcacheRegion((vm_offset_t)sync, 0x80);
+			__asm__ volatile ("dsb sy" ::: "memory");
+			if (uout->extract == 128ull && *sync == 0x10000000cafebabeull) {
+				break;
+			}
+			delay(1000);
+		}
+		printf("mali: m2b: step B: extract %llu (want 128) active %u after %u ms\n",
+		    (unsigned long long)uout->extract, uout->active, waited);
+		printf("mali: m2b: step B: sync %#llx (want 0x10000000cafebabe) cycles %#llx "
+		    "(hardware %#llx)\n",
+		    (unsigned long long)*sync, (unsigned long long)*cycles,
+		    (unsigned long long)reg_rd(gMfgcfg, MALI_MFG_TIMESTAMP));
+		printf("mali: m2b: step B: cs ack %#x fault %#x fatal %#x cmd_ptr %#llx\n",
+		    cs_out->ack, cs_out->fault, cs_out->fatal,
+		    (unsigned long long)cs_out->status_cmd_ptr);
+		printf("mali: m2b: step B: irq raw %#x job %#x mmu %#x\n",
+		    mrd(kIntRaw), mrd(kJobIntRaw), mrd(kMmuIntRaw));
+
+		if (trial) {
+			uint32_t mmu = mrd(kMmuIntRaw), fs = mrd(asReg(trial->vm.slot, kAsFaultStatus));
+			bool step_b_ok = uout->extract == 128ull && *sync == 0x10000000cafebabeull &&
+			    !cs_out->fault && !cs_out->fatal &&
+			    !((cs_out->ack ^ cs_in->req) & (3u << 30)) &&
+			    !(mmu & 0xffffu) && !(fs & 0xffu) && !(mrd(kIntRaw) & 1u);
+			if (!step_b_ok || gMaliM2c < 2u) {
+				return step_b_ok;
+			}
+
+			/*
+			 * ---- Step C (mali_m2c=2): Valhall v10 RUN_COMPUTE on Shader Cores ----
+			 *
+			 * 3-instruction shader assembled by Mesa 25.0.7 valhall/asm.py:
+			 *   SHADDX.u64 r0, u0, r60.w0, shift:0x2     ; r0:r1 = out_va + tid * 4
+			 *   IADD.u32   r2, u2, ^r60                  ; r2 = 0xdead0000 + tid
+			 *   STORE.i32.slot0.end @r2, ^r0, offset:0   ; out[tid] = r2; wait+end
+			 *
+			 * Dispatches 4 workgroups x (4,1,1) threads = 16 lanes writing
+			 * out[0..15] = 0xdead0000..0xdead000f, then FLUSH_CACHE2 + SYNC_ADD64.
+			 */
+#define M2_OP_WAIT          3ull
+#define M2_OP_RUN_COMPUTE   4ull
+#define M2_OP_SET_SB_ENTRY  23ull
+#define M2_OP_REQ_RESOURCE  34ull
+#define M2_OP_FLUSH_CACHE2  36ull
+#define M2C_COMPUTE_THREADS 16u
+#define M2C_COMPUTE_MAGIC   0xdead0000u
+#define M2C_COMPUTE_SYNC_INC 0x000012345678ull
+#define M2C_COMPUTE_SYNC_END (0x10000000cafebabeull + M2C_COMPUTE_SYNC_INC)
+
+			uint64_t shader_va = M2C_SHADER_PAGE_VA + M2C_SHADER_OFFSET;
+			uint64_t spd_va = sync_va + 0x100ull;
+			uint64_t tsd_va = sync_va + 0x140ull;
+			uint64_t fau_va = sync_va + 0x180ull;
+			uint64_t out_va = sync_va + 0x200ull;
+			uint64_t fau_reg = (fau_va & 0xffffffffffffull) | (2ull << 56);
+			uint64_t *code = (uint64_t *)trial->shader;
+			uint32_t *spd = (uint32_t *)(scratch + 0x100u);
+			uint32_t *tsd = (uint32_t *)(scratch + 0x140u);
+			uint64_t *fau = (uint64_t *)(scratch + 0x180u);
+			volatile uint32_t *out = (volatile uint32_t *)(scratch + 0x200u);
+			unsigned n = 0, matched = 0;
+
+			memset(code, 0, 64);
+			code[0] = 0x01a3c00020273c80ull;
+			code[1] = 0x00a0c20000007c82ull;
+			code[2] = 0x7861420218000040ull;
+
+			/* v10.xml Shader Program (32 B, 32 B aligned):
+			 * word0: Type=8(Shader) | Stage=1(Compute) | RegAlloc=0(64/thread)
+			 * word1: Preload.R60 (bit 12 = 0x1000) for global_invocation_id.x */
+			memset(spd, 0, 32);
+			spd[0] = 8u | (1u << 4) | (0u << 30);
+			spd[1] = 1u << 12;
+			spd[2] = (uint32_t)shader_va;
+			spd[3] = (uint32_t)(shader_va >> 32);
+
+			/* v10.xml Local Storage (32 B, 64 B aligned):
+			 * word1[4:0]: WLS Instances = log2(0x80000000) = 31 (NO_WORKGROUP_MEM) */
+			memset(tsd, 0, 32);
+			tsd[1] = 31u;
+
+			/* FAU: u0:u1 = out_va, u2 = M2C_COMPUTE_MAGIC, u3 = 0 */
+			fau[0] = out_va;
+			fau[1] = (uint64_t)M2C_COMPUTE_MAGIC;
+
+			for (unsigned i = 0; i < M2C_COMPUTE_THREADS; i++) {
+				out[i] = 0x55555555u;
+			}
+			FlushPoC_DcacheRegion(trial->shader, 64);
+			FlushPoC_DcacheRegion(scratch, 0x1000u);
+
+			cmds = (uint64_t *)((uintptr_t)ring + 128);
+			memset(cmds, 0, 256);
+			cmds[n++] = (M2_OP_REQ_RESOURCE << 56) | 1ull;                    /* Compute=1 */
+			cmds[n++] = (M2_OP_SET_SB_ENTRY << 56) | (2ull << 0) | (0ull << 4);
+			cmds[n++] = (M2_OP_MOV48 << 56) | (0ull << 48) | 0ull;            /* SRT=0 */
+			cmds[n++] = (M2_OP_MOV32 << 56) | (8ull << 48) | (fau_reg & 0xffffffffull);
+			cmds[n++] = (M2_OP_MOV32 << 56) | (9ull << 48) | (fau_reg >> 32);
+			cmds[n++] = (M2_OP_MOV48 << 56) | (16ull << 48) | (spd_va & 0xffffffffffffull);
+			cmds[n++] = (M2_OP_MOV48 << 56) | (24ull << 48) | (tsd_va & 0xffffffffffffull);
+			cmds[n++] = (M2_OP_MOV32 << 56) | (32ull << 48) | 0ull;           /* attr_off=0 */
+			cmds[n++] = (M2_OP_MOV32 << 56) | (33ull << 48) | (3ull | (1ull << 31)); /* wg(4,1,1) */
+			cmds[n++] = (M2_OP_MOV32 << 56) | (34ull << 48) | 0ull;           /* offset X */
+			cmds[n++] = (M2_OP_MOV32 << 56) | (35ull << 48) | 0ull;           /* offset Y */
+			cmds[n++] = (M2_OP_MOV32 << 56) | (36ull << 48) | 0ull;           /* offset Z */
+			cmds[n++] = (M2_OP_MOV32 << 56) | (37ull << 48) | 4ull;           /* grid X=4 wg */
+			cmds[n++] = (M2_OP_MOV32 << 56) | (38ull << 48) | 1ull;           /* grid Y=1 */
+			cmds[n++] = (M2_OP_MOV32 << 56) | (39ull << 48) | 1ull;           /* grid Z=1 */
+			cmds[n++] = (M2_OP_RUN_COMPUTE << 56) | (0ull << 14) | 4ull;      /* inc=4 axis=X */
+			cmds[n++] = (M2_OP_WAIT << 56) | (0xffull << 16);                 /* wait all sb */
+			cmds[n++] = (M2_OP_MOV32 << 56) | (74ull << 48) | 0ull;           /* flush_id=0 */
+			cmds[n++] = (M2_OP_FLUSH_CACHE2 << 56) | (0ull << 48) | (74ull << 40) |
+			    (1ull << 9) | (3ull << 4) | 3ull;                             /* L2+LSC CI */
+			cmds[n++] = (M2_OP_WAIT << 56) | (1ull << 16);                    /* wait slot 0 */
+			cmds[n++] = (M2_OP_MOV48 << 56) | (0ull << 48) | (sync_va & 0xffffffffffffull);
+			cmds[n++] = (M2_OP_MOV48 << 56) | (2ull << 48) | M2C_COMPUTE_SYNC_INC;
+			cmds[n++] = (M2_OP_SYNC_ADD64 << 56) | (0ull << 48) | (0ull << 40) |
+			    (2ull << 32) | (0ull << 16) | 1ull;
+			cmds[n++] = (M2_OP_ERROR_BARRIER << 56);
+			FlushPoC_DcacheRegion((vm_offset_t)cmds, 256);
+			mem_flush(&gShared->mem);
+			__asm__ volatile ("dsb sy" ::: "memory");
+
+			uin->extract_init = 128ull;
+			uin->insert = 384ull;
+			FlushPoC_DcacheRegion((vm_offset_t)uin, sizeof(*uin));
+			__asm__ volatile ("dsb sy" ::: "memory");
+			mwr(kCsfDoorbellBase + kCsfDoorbellStride, 1u);
+
+			for (waited = 0; waited < 200; waited++) {
+				FlushPoC_DcacheRegion((vm_offset_t)uout, sizeof(*uout));
+				FlushPoC_DcacheRegion((vm_offset_t)cs_out, sizeof(*cs_out));
+				FlushPoC_DcacheRegion((vm_offset_t)csg_out, sizeof(*csg_out));
+				FlushPoC_DcacheRegion(scratch, 0x300u);
+				__asm__ volatile ("dsb sy" ::: "memory");
+				if (uout->extract == 384ull && *sync == M2C_COMPUTE_SYNC_END) {
+					break;
+				}
+				delay(1000);
+			}
+			for (unsigned i = 0; i < M2C_COMPUTE_THREADS; i++) {
+				if (out[i] == M2C_COMPUTE_MAGIC + i) {
+					matched++;
+				}
+			}
+			mmu = mrd(kMmuIntRaw);
+			fs = mrd(asReg(trial->vm.slot, kAsFaultStatus));
+			printf("mali: m2c: step C compute: extract %llu (want 384) after %u ms | "
+			    "shader_ready %#x ep_cur %#x\n",
+			    (unsigned long long)uout->extract, waited,
+			    mrd(kShaderReady), csg_out->status_endpoint_current);
+			printf("mali: m2c: step C sync %#llx (want %#llx) matched %u/%u | "
+			    "out[0..3]=%#x %#x %#x %#x out[12..15]=%#x %#x %#x %#x\n",
+			    (unsigned long long)*sync, (unsigned long long)M2C_COMPUTE_SYNC_END,
+			    matched, M2C_COMPUTE_THREADS,
+			    out[0], out[1], out[2], out[3],
+			    out[12], out[13], out[14], out[15]);
+			printf("mali: m2c: step C cs ack %#x fault %#x fatal %#x cmd_ptr %#llx | "
+			    "irq raw %#x job %#x mmu %#x fs %#x\n",
+			    cs_out->ack, cs_out->fault, cs_out->fatal,
+			    (unsigned long long)cs_out->status_cmd_ptr,
+			    mrd(kIntRaw), mrd(kJobIntRaw), mmu, fs);
+			return uout->extract == 384ull && *sync == M2C_COMPUTE_SYNC_END &&
+			    matched == M2C_COMPUTE_THREADS &&
+			    !cs_out->fault && !cs_out->fatal &&
+			    !((cs_out->ack ^ cs_in->req) & (3u << 30)) &&
+			    !(mmu & 0xffffu) && !(fs & 0xffu) && !(mrd(kIntRaw) & 1u);
+		}
+		if (*sync == 0x10000000cafebabeull) {
+			printf("mali: m2b: PASS -- the GPU executed instructions and wrote memory\n");
+		} else if (uout->extract == 128ull) {
+			printf("mali: m2b: the ring was consumed but the writes did not land "
+			    "(sync %#llx)\n", (unsigned long long)*sync);
+		} else {
+			printf("mali: m2b: the ring was not consumed at all\n");
+		}
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------ M3: Panthor UAPI backend */
+
+/*
+ * Kernel backend for the IOKit HakiosGPU service (iokit/Kernel/hakios.mali610.cpp).
+ *
+ * Activated only when boot-arg mali_gpu=1 is set. AS0 stays untouched for the CSF MCU firmware;
+ * user VMs bind to AS1..AS7 (first VM always gets AS1) with dynamic 4 KiB page tables, region
+ * locking (AS_LOCKADDR + AS_COMMAND_LOCK + GPU_FLUSH_CACHES(3,3,2) + AS_COMMAND_UNLOCK), and
+ * automatic reclamation of empty page tables. User command streams execute via kernel-owned CS
+ * ringbuffers that emit FLUSH_CACHE2 + CALL + scoreboard WAIT + FLUSH_CACHE2 + SYNC_ADD64 +
+ * ERROR_BARRIER using the top unpreserved CS registers reported by the firmware.
+ */
+
+struct mali610_gpu_info {
+	uint32_t gpu_id;
+	uint32_t gpu_rev;
+	uint32_t csf_id;
+	uint32_t l2_features;
+	uint32_t tiler_features;
+	uint32_t mem_features;
+	uint32_t mmu_features;
+	uint32_t thread_features;
+	uint32_t max_threads;
+	uint32_t thread_max_workgroup_size;
+	uint32_t thread_max_barrier_size;
+	uint32_t coherency_features;
+	uint32_t texture_features[4];
+	uint32_t as_present;
+	uint32_t selected_coherency;
+	uint64_t shader_present;
+	uint64_t l2_present;
+	uint64_t tiler_present;
+	uint32_t core_features;
+	uint32_t pad;
+	uint64_t gpu_features;
+};
+
+struct mali610_csif_info {
+	uint32_t csg_slot_count;
+	uint32_t cs_slot_count;
+	uint32_t cs_reg_count;
+	uint32_t scoreboard_slot_count;
+	uint32_t unpreserved_cs_reg_count;
+	uint32_t pad;
+};
+
+struct mali610_timestamp_info {
+	uint64_t timestamp_frequency;
+	uint64_t current_timestamp;
+	uint64_t timestamp_offset;
+	uint32_t flags;
+	uint32_t duration_nsec;
+	uint64_t cycle_count;
+	uint64_t cpu_timestamp_sec;
+	uint64_t cpu_timestamp_nsec;
+};
+
+struct mali610_queue_spec {
+	uint8_t priority;
+	uint8_t pad[3];
+	uint32_t ringbuf_size;
+};
+
+struct mali610_group_create_args {
+	uint32_t vm_id;
+	uint8_t max_compute;
+	uint8_t max_fragment;
+	uint8_t max_tiler;
+	uint8_t priority;
+	uint64_t compute_mask;
+	uint64_t fragment_mask;
+	uint64_t tiler_mask;
+	uint32_t queue_count;
+	const struct mali610_queue_spec *queues;
+};
+
+bool hakios_mali610_ready(void);
+uint32_t hakios_mali610_bump_flush_id(void);
+bool hakios_mali610_query_gpu_info(struct mali610_gpu_info *out);
+bool hakios_mali610_query_csif_info(struct mali610_csif_info *out);
+bool hakios_mali610_query_timestamp_info(struct mali610_timestamp_info *inout);
+void hakios_mali610_flush_dcache(void *kva, size_t size);
+void hakios_mali610_report_fault(const char *why);
+int hakios_mali610_vm_create(uint64_t *inout_user_va_range, uint32_t *out_vm_id);
+int hakios_mali610_vm_destroy(uint32_t vm_id);
+int hakios_mali610_vm_get_state(uint32_t vm_id, uint32_t *out_state);
+int hakios_mali610_vm_map_pas(uint32_t vm_id, uint64_t va, const uint64_t *pas,
+    uint32_t count_4k, uint32_t map_flags);
+int hakios_mali610_vm_unmap(uint32_t vm_id, uint64_t va, uint64_t size);
+int hakios_mali610_vm_alloc_kernel_va(uint32_t vm_id, uint64_t size, uint64_t align,
+    uint64_t *out_va);
+void hakios_mali610_vm_free_kernel_va(uint32_t vm_id, uint64_t va, uint64_t size);
+int hakios_mali610_group_create(const struct mali610_group_create_args *args,
+    uint32_t *out_hw_group);
+int hakios_mali610_group_destroy(uint32_t hw_group);
+int hakios_mali610_group_get_state(uint32_t hw_group, uint32_t *out_state,
+    uint32_t *out_fatal_queues);
+int hakios_mali610_queue_submit(uint32_t hw_group, uint32_t queue_idx,
+    uint64_t stream_addr, uint32_t stream_size, uint32_t latest_flush, uint64_t *out_seq);
+int hakios_mali610_queue_poll(uint32_t hw_group, uint32_t queue_idx,
+    uint64_t target_seq, bool *out_done);
+void hakios_mali610_group_mark_timedout(uint32_t hw_group);
+extern bool hakios_mali610_tiler_oom_grow(uint32_t vm_id, uint64_t heap_ctx_va,
+    uint64_t *out_encoded_va, uint32_t *out_chunk_count);
+
+#define kGpuTimestampOffset     0x088u
+#define kThreadMaxWorkgroup     0x0a4u
+#define kThreadMaxBarrier       0x0a8u
+#define kTextureFeatures0       0x0b0u
+#define kGpuRevId               0x280u
+#define kGpuCmdFlushAllCaches   0x23304u        /* GPU_FLUSH_CACHES(L2=CI, LSC=CI, OTH=INV) */
+#define kAsCmdUnlock            3u              /* panthor_mmu_regs.h: AS_COMMAND_UNLOCK */
+
+#define kCsTilerOomBit          (1u << 26)
+#define kCsProTmPendingBit      (1u << 27)
+#define kCsFaultBit             (1u << 31)
+#define kCsEvtMask              (kCsTilerOomBit | kCsProTmPendingBit | kCsFatalBit | kCsFaultBit)
+
+#define MALI_UVM_SLOTS          7u              /* AS1..AS7 */
+#define MALI_UVM_DEFAULT_USER   (1ull << 47)
+#define MALI_UVM_FULL_VA        (1ull << 48)
+#define MALI_UVM_KVA_HOLES      64u
+
+#define MALI_UAPI_MAX_CSGS      4u              /* MAX_CSG_PRIO + 1 */
+#define MALI_UAPI_MAX_QUEUES    4u
+#define MALI_UAPI_JOB_WORDS     16u             /* 16 * 8 = 128 B (2 cache lines) per submit */
+#define MALI_UAPI_JOB_BYTES     (MALI_UAPI_JOB_WORDS * sizeof(uint64_t))
+
+#define MALI_UAPI_SHARED_BASE   0x58000u        /* free region in AS0 shared section [0x58000, 0x94000) */
+#define MALI_UAPI_SHARED_END    0x94000u
+#define MALI_UAPI_SHARED_PAGES  ((MALI_UAPI_SHARED_END - MALI_UAPI_SHARED_BASE) >> 12)
+
+#define MALI_MAP_RDONLY         (1u << 0)
+#define MALI_MAP_NOEXEC         (1u << 1)
+#define MALI_MAP_UNCACHED       (1u << 2)
+
+struct mali_uvm_pt {
+	uint64_t entry[512];
+	struct mali_uvm_pt *next;
+	uint64_t pa;
+	uint16_t live_entries;
+};
+
+struct mali_kva_hole {
+	uint64_t va;
+	uint64_t size;
+};
+
+struct mali_uvm {
+	bool active;
+	bool unusable;
+	bool hw_parked;
+	unsigned as_slot;                       /* 1..7 */
+	struct mali_uvm_pt *root;
+	struct mali_uvm_pt *tables;
+	uint64_t user_va_range;
+	uint64_t kva_base;
+	uint64_t kva_next;
+	uint64_t kva_end;
+	struct mali_kva_hole holes[MALI_UVM_KVA_HOLES];
+};
+
+struct mali_uapi_queue {
+	bool active;
+	bool oom_handling;
+	uint8_t priority;
+	uint8_t doorbell_id;                    /* 1..15 */
+	uint32_t ring_size;
+	struct mali_mem ring_mem;
+	uint64_t ring_gpu_va;
+	uint32_t shared_off;                    /* 1 x 4 KiB page in gShared: +0 in, +0x800 out */
+	uint64_t user_in_va;
+	uint64_t user_out_va;
+	volatile struct cs_user_input *uin;
+	volatile struct cs_user_output *uout;
+	volatile struct cs_input *cs_in;
+	volatile struct cs_output *cs_out;
+	uint64_t insert_pos;
+	uint64_t submitted_seq;
+	uint64_t completed_seq;
+};
+
+struct mali_uapi_group {
+	bool active;
+	bool terminated;
+	bool timedout;
+	uint32_t fatal_queues;
+	unsigned csg_slot;                      /* 0..3 */
+	uint32_t vm_id;                         /* 1..7 */
+	uint32_t queue_count;
+	struct mali_uapi_queue queues[MALI_UAPI_MAX_QUEUES];
+	struct mali_mem sync_mem;               /* 64 B per queue at sync_mem.kva + q * 64 */
+	uint64_t sync_gpu_va;
+	uint32_t sus_off;
+	uint32_t sus_pages;
+	uint32_t protm_off;
+	uint32_t protm_pages;
+	volatile struct csg_input *csg_in;
+	volatile struct csg_output *csg_out;
+	volatile struct glb_input *glb_in;
+	volatile struct glb_output *glb_out;
+};
+
+static struct mali_uvm gUserVms[MALI_UVM_SLOTS];
+static struct mali_uapi_group gUserGroups[MALI_UAPI_MAX_CSGS];
+static uint64_t gSharedPageMask;
+static uint32_t gDoorbellMask = 0x1u;           /* bit 0 reserved for CSF_GLB_DOORBELL_ID */
+static volatile uint32_t gMaliLatestFlushId = 1u;
+
+static bool
+mali_uapi_hw_live_locked(void)
+{
+	return gMaliGpu && gMaliDone && !gMaliStopped &&
+	    !__atomic_load_n(&gMaliStopping, __ATOMIC_ACQUIRE) &&
+	    gGpu != 0 && gpueb_bringup_held && gShared != NULL && gShared->mem.kva != 0;
+}
+
+bool
+hakios_mali610_ready(void)
+{
+	return gMaliGpu && gMaliDone && !gMaliStopped &&
+	    !__atomic_load_n(&gMaliStopping, __ATOMIC_ACQUIRE);
+}
+
+uint32_t
+hakios_mali610_bump_flush_id(void)
+{
+	uint32_t next = __atomic_add_fetch(&gMaliLatestFlushId, 1u, __ATOMIC_ACQ_REL);
+	if (next == 0u) {
+		next = __atomic_add_fetch(&gMaliLatestFlushId, 1u, __ATOMIC_ACQ_REL);
+	}
+	return next;
+}
+
+void
+hakios_mali610_flush_dcache(void *kva, size_t size)
+{
+	if (kva != NULL && size != 0) {
+		FlushPoC_DcacheRegion((vm_offset_t)kva, size);
+	}
+	__asm__ volatile ("dsb sy" ::: "memory");
+}
+
+static uint64_t
+gpu_rd64_counter(uint32_t at)
+{
+	uint32_t hi1, lo, hi2;
+
+	do {
+		hi1 = mrd(at + 4u);
+		lo = mrd(at);
+		hi2 = mrd(at + 4u);
+	} while (hi1 != hi2);
+	return ((uint64_t)hi2 << 32) | (uint64_t)lo;
+}
+
+static bool
+mali_gpu_flush_all_caches_locked(void)
+{
+	unsigned spins;
+
+	mwr(kIntClear, kGpuIrqCleanCaches);
+	mwr(kGpuCmd, kGpuCmdFlushAllCaches);
+	for (spins = 0; spins < 100000u; spins++) {
+		if (mrd(kIntRaw) & kGpuIrqCleanCaches) {
+			mwr(kIntClear, kGpuIrqCleanCaches);
+			return true;
+		}
+		delay(1);
+	}
+	printf("mali: uapi: cache flush timed out (status %#x raw %#x)\n",
+	    mrd(kGpuStatus), mrd(kIntRaw));
+	return false;
+}
+
+static uint64_t
+mali_pack_lock_region(uint64_t start, uint64_t size)
+{
+	uint64_t end = start + size;
+	uint64_t diff = start ^ (end - 1ull);
+	unsigned fls = diff ? (64u - (unsigned)__builtin_clzll(diff)) : 0u;
+	unsigned width = (fls > 15u ? fls : 15u) - 1u;
+
+	if (width > 47u) {
+		width = 47u;
+	}
+	uint64_t mask = (width >= 63u) ? 0ull : ~((1ull << (width + 1u)) - 1ull);
+	return (start & mask) | (uint64_t)width;
+}
+
+static bool
+mali_as_lock_region_locked(unsigned as, uint64_t va, uint64_t size)
+{
+	if (size == 0 || !as_ready(as)) {
+		return false;
+	}
+	gpu_wr64(asReg(as, kAsLockaddr), mali_pack_lock_region(va, size));
+	__asm__ volatile ("dsb sy" ::: "memory");
+	return as_command(as, kAsCmdLock);
+}
+
+static bool
+mali_as_unlock_region_locked(unsigned as)
+{
+	bool flushed = mali_gpu_flush_all_caches_locked();
+	bool unlocked = as_command(as, kAsCmdUnlock);
+
+	(void)hakios_mali610_bump_flush_id();
+	return flushed && unlocked;
+}
+
+static bool
+mali_uvm_pa_valid(uint64_t pa)
+{
+	return pa >= 0x40000000ull && (pa & (PT_LEAF_GRANULE - 1ull)) == 0ull && pa < (1ull << 40);
+}
+
+static struct mali_uvm_pt *
+mali_uvm_alloc_pt(struct mali_uvm *vm)
+{
+	vm_offset_t kva = 0;
+
+	if (sizeof(struct mali_uvm_pt) > PAGE_SIZE ||
+	    kmem_alloc(kernel_map, &kva, PAGE_SIZE, KMA_KOBJECT | KMA_DATA | KMA_ZERO,
+	    VM_KERN_MEMORY_IOKIT) != KERN_SUCCESS) {
+		return NULL;
+	}
+	struct mali_uvm_pt *pt = (struct mali_uvm_pt *)kva;
+	pt->pa = kvtophys(kva);
+	if (!mali_uvm_pa_valid(pt->pa)) {
+		kmem_free(kernel_map, kva, PAGE_SIZE);
+		return NULL;
+	}
+	FlushPoC_DcacheRegion((vm_offset_t)pt->entry, sizeof(pt->entry));
+	__asm__ volatile ("dsb sy" ::: "memory");
+	pt->next = vm->tables;
+	vm->tables = pt;
+	return pt;
+}
+
+static struct mali_uvm_pt *
+mali_uvm_find_pt(struct mali_uvm *vm, uint64_t pa)
+{
+	for (struct mali_uvm_pt *pt = vm->tables; pt != NULL; pt = pt->next) {
+		if (pt->pa == pa) {
+			return pt;
+		}
+	}
+	return NULL;
+}
+
+static void
+mali_uvm_unlink_pt(struct mali_uvm *vm, struct mali_uvm_pt *target, struct mali_uvm_pt **retired)
+{
+	struct mali_uvm_pt **pp = &vm->tables;
+
+	while (*pp != NULL) {
+		if (*pp == target) {
+			*pp = target->next;
+			target->next = *retired;
+			*retired = target;
+			return;
+		}
+		pp = &(*pp)->next;
+	}
+}
+
+static struct mali_uvm *
+mali_uvm_by_id_locked(uint32_t vm_id)
+{
+	if (vm_id < 1u || vm_id > MALI_UVM_SLOTS) {
+		return NULL;
+	}
+	struct mali_uvm *vm = &gUserVms[vm_id - 1u];
+	return vm->active ? vm : NULL;
+}
+
+static int
+mali_uvm_map_pas_locked(struct mali_uvm *vm, uint64_t va, const uint64_t *pas,
+    uint32_t count_4k, uint32_t map_flags)
+{
+	uint64_t size = (uint64_t)count_4k * PT_LEAF_GRANULE;
+
+	if (!vm || !vm->active || vm->unusable || !vm->root || count_4k == 0u) {
+		return EINVAL;
+	}
+	if ((va & (PT_LEAF_GRANULE - 1ull)) != 0ull || va >= MALI_UVM_FULL_VA ||
+	    size > MALI_UVM_FULL_VA - va) {
+		return EINVAL;
+	}
+	for (uint32_t i = 0; i < count_4k; i++) {
+		if (!mali_uvm_pa_valid(pas[i])) {
+			printf("mali: uapi: invalid PA %#llx at index %u\n",
+			    (unsigned long long)pas[i], i);
+			return EINVAL;
+		}
+	}
+	if (!mali_as_lock_region_locked(vm->as_slot, va, size)) {
+		vm->unusable = true;
+		return EIO;
+	}
+
+	uint64_t idx = (map_flags & MALI_MAP_UNCACHED) ? IDX_NC : IDX_CACHE;
+	uint64_t sh = (idx == IDX_CACHE) ? PTE_SH_IS : PTE_SH_OS;
+	uint64_t ap = (map_flags & MALI_MAP_RDONLY) ? PTE_RDONLY : PTE_UNPRIV;
+	uint64_t xn = (map_flags & MALI_MAP_NOEXEC) ? PTE_XN : 0ull;
+	uint64_t attrs = PTE_PAGE | PTE_AF | PTE_NG | sh | (idx << 2) | ap | xn;
+
+	int err = 0;
+	for (uint32_t i = 0; i < count_4k; i++) {
+		uint64_t cur_va = va + (uint64_t)i * PT_LEAF_GRANULE;
+		struct mali_uvm_pt *tbl = vm->root;
+
+		for (int shift = 39; shift > 12; shift -= 9) {
+			unsigned slot = (unsigned)((cur_va >> shift) & 511u);
+			uint64_t *desc = &tbl->entry[slot];
+
+			if ((*desc & 1ull) == 0ull) {
+				struct mali_uvm_pt *child = mali_uvm_alloc_pt(vm);
+				if (child == NULL) {
+					err = ENOMEM;
+					break;
+				}
+				*desc = child->pa | PTE_TABLE | PTE_AF;
+				tbl->live_entries++;
+				FlushPoC_DcacheRegion((vm_offset_t)desc, sizeof(*desc));
+				tbl = child;
+			} else {
+				tbl = mali_uvm_find_pt(vm, *desc & PTE_ADDRESS);
+				if (tbl == NULL) {
+					err = EIO;
+					break;
+				}
+			}
+		}
+		if (err != 0) {
+			break;
+		}
+		unsigned l3_slot = (unsigned)((cur_va >> 12) & 511u);
+		uint64_t *leaf = &tbl->entry[l3_slot];
+		if ((*leaf & 3ull) == 0ull) {
+			tbl->live_entries++;
+		}
+		*leaf = (pas[i] & PTE_ADDRESS) | attrs;
+		FlushPoC_DcacheRegion((vm_offset_t)leaf, sizeof(*leaf));
+	}
+	__asm__ volatile ("dsb sy" ::: "memory");
+	if (!mali_as_unlock_region_locked(vm->as_slot)) {
+		vm->unusable = true;
+		if (err == 0) {
+			err = EIO;
+		}
+	}
+	if (err != 0) {
+		vm->unusable = true;
+	}
+	return err;
+}
+
+static int
+mali_uvm_unmap_locked(struct mali_uvm *vm, uint64_t va, uint64_t size)
+{
+	if (!vm || !vm->active || !vm->root || size == 0ull) {
+		return EINVAL;
+	}
+	if ((va & (PT_LEAF_GRANULE - 1ull)) != 0ull ||
+	    (size & (PT_LEAF_GRANULE - 1ull)) != 0ull ||
+	    va >= MALI_UVM_FULL_VA || size > MALI_UVM_FULL_VA - va) {
+		return EINVAL;
+	}
+	bool locked = !vm->hw_parked && mali_uapi_hw_live_locked() &&
+	    mali_as_lock_region_locked(vm->as_slot, va, size);
+	struct mali_uvm_pt *retired = NULL;
+	uint64_t end = va + size;
+	uint64_t cur = va;
+
+	while (cur < end) {
+		unsigned i0 = (unsigned)((cur >> 39) & 511u);
+		uint64_t e0 = vm->root->entry[i0];
+		if ((e0 & 1ull) == 0ull) {
+			uint64_t next0 = (cur & ~((1ull << 39) - 1ull)) + (1ull << 39);
+			cur = (next0 > cur && next0 < end) ? next0 : end;
+			continue;
+		}
+		struct mali_uvm_pt *t1 = mali_uvm_find_pt(vm, e0 & PTE_ADDRESS);
+		if (t1 == NULL) {
+			break;
+		}
+		unsigned i1 = (unsigned)((cur >> 30) & 511u);
+		uint64_t e1 = t1->entry[i1];
+		if ((e1 & 1ull) == 0ull) {
+			uint64_t next1 = (cur & ~((1ull << 30) - 1ull)) + (1ull << 30);
+			cur = (next1 > cur && next1 < end) ? next1 : end;
+			continue;
+		}
+		struct mali_uvm_pt *t2 = mali_uvm_find_pt(vm, e1 & PTE_ADDRESS);
+		if (t2 == NULL) {
+			break;
+		}
+		unsigned i2 = (unsigned)((cur >> 21) & 511u);
+		uint64_t e2 = t2->entry[i2];
+		if ((e2 & 1ull) == 0ull) {
+			uint64_t next2 = (cur & ~((1ull << 21) - 1ull)) + (1ull << 21);
+			cur = (next2 > cur && next2 < end) ? next2 : end;
+			continue;
+		}
+		struct mali_uvm_pt *t3 = mali_uvm_find_pt(vm, e2 & PTE_ADDRESS);
+		if (t3 == NULL) {
+			break;
+		}
+		unsigned i3 = (unsigned)((cur >> 12) & 511u);
+		if ((t3->entry[i3] & 3ull) != 0ull) {
+			t3->entry[i3] = 0ull;
+			FlushPoC_DcacheRegion((vm_offset_t)&t3->entry[i3], sizeof(uint64_t));
+			if (t3->live_entries > 0u) {
+				t3->live_entries--;
+			}
+			if (t3->live_entries == 0u) {
+				t2->entry[i2] = 0ull;
+				FlushPoC_DcacheRegion((vm_offset_t)&t2->entry[i2], sizeof(uint64_t));
+				mali_uvm_unlink_pt(vm, t3, &retired);
+				if (t2->live_entries > 0u) {
+					t2->live_entries--;
+				}
+				if (t2->live_entries == 0u) {
+					t1->entry[i1] = 0ull;
+					FlushPoC_DcacheRegion((vm_offset_t)&t1->entry[i1], sizeof(uint64_t));
+					mali_uvm_unlink_pt(vm, t2, &retired);
+					if (t1->live_entries > 0u) {
+						t1->live_entries--;
+					}
+					if (t1->live_entries == 0u) {
+						vm->root->entry[i0] = 0ull;
+						FlushPoC_DcacheRegion((vm_offset_t)&vm->root->entry[i0], sizeof(uint64_t));
+						mali_uvm_unlink_pt(vm, t1, &retired);
+						if (vm->root->live_entries > 0u) {
+							vm->root->live_entries--;
+						}
+					}
+				}
+			}
+		}
+		cur += PT_LEAF_GRANULE;
+	}
+	__asm__ volatile ("dsb sy" ::: "memory");
+	bool safe_to_free = vm->hw_parked;
+	if (locked) {
+		safe_to_free = mali_as_unlock_region_locked(vm->as_slot);
+		if (!safe_to_free) {
+			vm->unusable = true;
+		}
+	}
+	while (retired != NULL) {
+		struct mali_uvm_pt *next = retired->next;
+		if (safe_to_free) {
+			kmem_free(kernel_map, (vm_offset_t)retired, PAGE_SIZE);
+		} else {
+			/* Retain page tables if AS unlock failed while MMU may still walk them. */
+			retired->next = vm->tables;
+			vm->tables = retired;
+		}
+		retired = next;
+	}
+	return 0;
+}
+
+static int
+mali_uvm_alloc_kva_locked(struct mali_uvm *vm, uint64_t size, uint64_t align, uint64_t *out_va)
+{
+	if (!vm || !vm->active || size == 0ull) {
+		return EINVAL;
+	}
+	size = (size + PT_LEAF_GRANULE - 1ull) & ~(PT_LEAF_GRANULE - 1ull);
+	if (align < PT_LEAF_GRANULE || (align & (align - 1ull)) != 0ull) {
+		align = PT_LEAF_GRANULE;
+	}
+	for (unsigned i = 0; i < MALI_UVM_KVA_HOLES; i++) {
+		if (vm->holes[i].size == 0ull) {
+			continue;
+		}
+		uint64_t aligned = (vm->holes[i].va + align - 1ull) & ~(align - 1ull);
+		uint64_t pad = aligned - vm->holes[i].va;
+		if (vm->holes[i].size >= pad && vm->holes[i].size - pad >= size) {
+			*out_va = aligned;
+			if (pad == 0ull) {
+				vm->holes[i].va += size;
+				vm->holes[i].size -= size;
+			} else {
+				uint64_t rem = vm->holes[i].size - pad - size;
+				vm->holes[i].size = pad;
+				if (rem > 0ull) {
+					for (unsigned j = 0; j < MALI_UVM_KVA_HOLES; j++) {
+						if (vm->holes[j].size == 0ull) {
+							vm->holes[j].va = aligned + size;
+							vm->holes[j].size = rem;
+							break;
+						}
+					}
+				}
+			}
+			return 0;
+		}
+	}
+	uint64_t aligned = (vm->kva_next + align - 1ull) & ~(align - 1ull);
+	if (aligned < vm->kva_base || aligned > vm->kva_end || size > vm->kva_end - aligned) {
+		return ENOMEM;
+	}
+	*out_va = aligned;
+	vm->kva_next = aligned + size;
+	return 0;
+}
+
+static void
+mali_uvm_free_kva_locked(struct mali_uvm *vm, uint64_t va, uint64_t size)
+{
+	if (!vm || size == 0ull) {
+		return;
+	}
+	size = (size + PT_LEAF_GRANULE - 1ull) & ~(PT_LEAF_GRANULE - 1ull);
+	if (va + size == vm->kva_next) {
+		vm->kva_next = va;
+		return;
+	}
+	for (unsigned i = 0; i < MALI_UVM_KVA_HOLES; i++) {
+		if (vm->holes[i].size != 0ull && vm->holes[i].va + vm->holes[i].size == va) {
+			vm->holes[i].size += size;
+			return;
+		}
+		if (vm->holes[i].size != 0ull && va + size == vm->holes[i].va) {
+			vm->holes[i].va = va;
+			vm->holes[i].size += size;
+			return;
+		}
+	}
+	for (unsigned i = 0; i < MALI_UVM_KVA_HOLES; i++) {
+		if (vm->holes[i].size == 0ull) {
+			vm->holes[i].va = va;
+			vm->holes[i].size = size;
+			return;
+		}
+	}
+}
+
+static int
+mali_uvm_map_kmem_locked(struct mali_uvm *vm, const struct mali_mem *mem,
+    uint64_t map_bytes, uint64_t align, uint32_t map_flags, uint64_t *out_gpu_va)
+{
+	uint64_t gpu_va = 0;
+	uint32_t count_4k = (uint32_t)(map_bytes >> 12);
+	int err;
+
+	if (map_bytes == 0 || (map_bytes & (PT_LEAF_GRANULE - 1ull)) != 0ull ||
+	    map_bytes > mem->size) {
+		return EINVAL;
+	}
+	err = mali_uvm_alloc_kva_locked(vm, map_bytes, align, &gpu_va);
+	if (err != 0) {
+		return err;
+	}
+	/* Map in 64-leaf (256 KiB) chunks to keep stack footprint tiny on 16 KiB XNU stacks. */
+	uint64_t pas[64];
+	uint32_t done = 0;
+	while (done < count_4k) {
+		uint32_t batch = count_4k - done > 64u ? 64u : count_4k - done;
+		for (uint32_t i = 0; i < batch; i++) {
+			pas[i] = kvtophys(mem->kva + (size_t)(done + i) * (size_t)PT_LEAF_GRANULE);
+		}
+		err = mali_uvm_map_pas_locked(vm, gpu_va + (uint64_t)done * PT_LEAF_GRANULE,
+		    pas, batch, map_flags);
+		if (err != 0) {
+			if (done > 0u) {
+				(void)mali_uvm_unmap_locked(vm, gpu_va,
+				    (uint64_t)done * PT_LEAF_GRANULE);
+			}
+			mali_uvm_free_kva_locked(vm, gpu_va, map_bytes);
+			return err;
+		}
+		done += batch;
+	}
+	*out_gpu_va = gpu_va;
+	return 0;
+}
+
+static bool
+mali_uvm_park_hw_locked(struct mali_uvm *vm)
+{
+	if (!vm || !vm->active || vm->hw_parked) {
+		return true;
+	}
+	if (!gGpu || !gpueb_bringup_held || !as_ready(vm->as_slot)) {
+		return false;
+	}
+	(void)mali_gpu_flush_all_caches_locked();
+	gpu_wr64(asReg(vm->as_slot, kAsTranstab), 0ull);
+	gpu_wr64(asReg(vm->as_slot, kAsMemattr), 0ull);
+	gpu_wr64(asReg(vm->as_slot, kAsTranscfg), kAsTranscfgUnmapped);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	if (!as_command(vm->as_slot, kAsCmdUpdate) ||
+	    gpu_rd64(asReg(vm->as_slot, kAsTranstab)) != 0ull ||
+	    gpu_rd64(asReg(vm->as_slot, kAsTranscfg)) != kAsTranscfgUnmapped) {
+		printf("mali: uapi: AS%u park not confirmed\n", vm->as_slot);
+		return false;
+	}
+	mwr(kMmuIntClear, (1u << vm->as_slot) | (1u << (vm->as_slot + 16u)));
+	vm->hw_parked = true;
+	return true;
+}
+
+static bool
+mali_shared_alloc_pages_locked(unsigned count, uint32_t *out_offset)
+{
+	if (count == 0u || count > MALI_UAPI_SHARED_PAGES || !gShared || !gShared->mem.kva) {
+		return false;
+	}
+	if (MALI_UAPI_SHARED_END > (gShared->va_end - gShared->va_start) ||
+	    MALI_UAPI_SHARED_END > gShared->mem.size) {
+		return false;
+	}
+	for (unsigned start = 0; start + count <= MALI_UAPI_SHARED_PAGES; start++) {
+		uint64_t mask = ((count == 64u) ? ~0ull : ((1ull << count) - 1ull)) << start;
+		if ((gSharedPageMask & mask) == 0ull) {
+			gSharedPageMask |= mask;
+			uint32_t off = MALI_UAPI_SHARED_BASE + start * 0x1000u;
+			memset((void *)(gShared->mem.kva + off), 0, (size_t)count * 0x1000u);
+			if (!gShared->mem.uncached) {
+				FlushPoC_DcacheRegion(gShared->mem.kva + off,
+				    (size_t)count * 0x1000u);
+			}
+			__asm__ volatile ("dsb sy" ::: "memory");
+			*out_offset = off;
+			return true;
+		}
+	}
+	return false;
+}
+
+static void
+mali_shared_free_pages_locked(uint32_t offset, unsigned count)
+{
+	if (count == 0u || offset < MALI_UAPI_SHARED_BASE || offset >= MALI_UAPI_SHARED_END) {
+		return;
+	}
+	unsigned start = (offset - MALI_UAPI_SHARED_BASE) >> 12;
+	if (start + count > MALI_UAPI_SHARED_PAGES) {
+		return;
+	}
+	uint64_t mask = ((count == 64u) ? ~0ull : ((1ull << count) - 1ull)) << start;
+	gSharedPageMask &= ~mask;
+}
+
+static bool
+mali_uapi_group_terminate_locked(struct mali_uapi_group *grp)
+{
+	if (!grp || !grp->active || grp->terminated) {
+		return true;
+	}
+	if (!gGpu || !gpueb_bringup_held || !grp->csg_in || !grp->csg_out ||
+	    !grp->glb_in || !grp->glb_out) {
+		return false;
+	}
+	uint32_t slot_bit = 1u << grp->csg_slot;
+
+	for (unsigned q = 0; q < grp->queue_count; q++) {
+		if (grp->queues[q].active && grp->queues[q].cs_in != NULL) {
+			grp->queues[q].cs_in->req &= ~kCsStateMask;
+		}
+	}
+	FlushPoC_DcacheRegion((vm_offset_t)grp->csg_out, sizeof(*grp->csg_out));
+	FlushPoC_DcacheRegion((vm_offset_t)grp->glb_out, sizeof(*grp->glb_out));
+	__asm__ volatile ("dsb sy" ::: "memory");
+
+	grp->csg_in->req &= ~kCsgStateMask;     /* CSG_STATE_TERMINATE = 0 */
+	uint32_t qmask = (1u << grp->queue_count) - 1u;
+	grp->csg_in->doorbell_req = (grp->csg_in->doorbell_req & ~qmask) |
+	    ((grp->csg_out->doorbell_ack ^ qmask) & qmask);
+	grp->glb_in->doorbell_req = (grp->glb_in->doorbell_req & ~slot_bit) |
+	    ((grp->glb_out->doorbell_ack ^ slot_bit) & slot_bit);
+	mem_flush(&gShared->mem);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	mwr(kCsfDoorbellBase, 1u);
+
+	for (unsigned i = 0; i < 200u; i++) {
+		FlushPoC_DcacheRegion((vm_offset_t)grp->csg_out, sizeof(*grp->csg_out));
+		FlushPoC_DcacheRegion((vm_offset_t)grp->glb_out, sizeof(*grp->glb_out));
+		__asm__ volatile ("dsb sy" ::: "memory");
+		if ((grp->csg_out->ack & kCsgStateMask) == 0u &&
+		    ((grp->glb_out->doorbell_ack ^ grp->glb_in->doorbell_req) & slot_bit) == 0u) {
+			grp->terminated = true;
+			return true;
+		}
+		delay(1000);
+	}
+	printf("mali: uapi: CSG%u terminate timed out (ack %#x glb_db %#x/%#x)\n",
+	    grp->csg_slot, grp->csg_out->ack,
+	    grp->glb_in->doorbell_req, grp->glb_out->doorbell_ack);
+	return false;
+}
+
+static void
+mali_uapi_group_release_locked(struct mali_uapi_group *grp)
+{
+	if (!grp || !grp->active) {
+		return;
+	}
+	bool term_ok = mali_uapi_group_terminate_locked(grp);
+	bool mcu_off = gMaliStopped || (gGpu != 0 && (mrd(kMcuStatus) & 0xfu) == 0u);
+	bool can_free_dma = term_ok || mcu_off;
+	struct mali_uvm *vm = mali_uvm_by_id_locked(grp->vm_id);
+
+	for (unsigned q = 0; q < grp->queue_count; q++) {
+		struct mali_uapi_queue *qu = &grp->queues[q];
+		if (!qu->active) {
+			continue;
+		}
+		if (qu->doorbell_id > 0u && qu->doorbell_id < 32u) {
+			gDoorbellMask &= ~(1u << qu->doorbell_id);
+		}
+		if (vm != NULL && qu->ring_gpu_va != 0ull) {
+			(void)mali_uvm_unmap_locked(vm, qu->ring_gpu_va, qu->ring_size);
+			mali_uvm_free_kva_locked(vm, qu->ring_gpu_va, qu->ring_size);
+		}
+		if (can_free_dma) {
+			if (qu->ring_mem.kva != 0) {
+				kmem_free(kernel_map, qu->ring_mem.kva, qu->ring_mem.size);
+			}
+			mali_shared_free_pages_locked(qu->shared_off, 1u);
+		}
+	}
+	if (vm != NULL && grp->sync_gpu_va != 0ull) {
+		(void)mali_uvm_unmap_locked(vm, grp->sync_gpu_va, PT_LEAF_GRANULE);
+		mali_uvm_free_kva_locked(vm, grp->sync_gpu_va, PT_LEAF_GRANULE);
+	}
+	if (can_free_dma) {
+		if (grp->sync_mem.kva != 0) {
+			kmem_free(kernel_map, grp->sync_mem.kva, grp->sync_mem.size);
+		}
+		if (grp->sus_pages != 0u) {
+			mali_shared_free_pages_locked(grp->sus_off, grp->sus_pages);
+		}
+		if (grp->protm_pages != 0u) {
+			mali_shared_free_pages_locked(grp->protm_off, grp->protm_pages);
+		}
+	} else {
+		printf("mali: uapi: retaining CSG%u DMA pages across unconfirmed terminate\n",
+		    grp->csg_slot);
+	}
+	memset(grp, 0, sizeof(*grp));
+}
+
+static void
+mali_uapi_stop_groups(void)
+{
+	for (unsigned i = 0; i < MALI_UAPI_MAX_CSGS; i++) {
+		if (gUserGroups[i].active) {
+			(void)mali_uapi_group_terminate_locked(&gUserGroups[i]);
+		}
+	}
+}
+
+static void
+mali_uapi_park_all_vms(void)
+{
+	for (unsigned i = 0; i < MALI_UVM_SLOTS; i++) {
+		if (gUserVms[i].active) {
+			(void)mali_uvm_park_hw_locked(&gUserVms[i]);
+		}
+	}
+}
+
+bool
+hakios_mali610_query_gpu_info(struct mali610_gpu_info *out)
+{
+	if (out == NULL || !gMaliApiLockInit) {
+		return false;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	if (!mali_uapi_hw_live_locked()) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return false;
+	}
+	memset(out, 0, sizeof(*out));
+	out->gpu_id = mrd(kGpuId);
+	out->gpu_rev = mrd(kGpuRevId);
+	out->csf_id = mrd(kCsfId);
+	out->l2_features = mrd(kL2Features);
+	out->tiler_features = mrd(kTilerFeatures);
+	out->mem_features = mrd(kMemFeatures);
+	out->mmu_features = mrd(kMmuFeatures);
+	out->thread_features = mrd(kThreadFeatures);
+	out->max_threads = mrd(kThreadMax);
+	out->thread_max_workgroup_size = mrd(kThreadMaxWorkgroup);
+	out->thread_max_barrier_size = mrd(kThreadMaxBarrier);
+	out->coherency_features = mrd(kCoherencyFeatures);
+	for (unsigned i = 0; i < 4u; i++) {
+		out->texture_features[i] = mrd(kTextureFeatures0 + i * 4u);
+	}
+	out->as_present = mrd(kAsPresent);
+	out->selected_coherency = kCoherencyNone;
+	out->shader_present = gpu_rd64(kShaderPresent);
+	out->l2_present = gpu_rd64(kL2Present);
+	out->tiler_present = gpu_rd64(kTilerPresent);
+	out->core_features = mrd(kCoreFeatures);
+	out->pad = 0u;
+	out->gpu_features = 0ull;
+	lck_mtx_unlock(&gMaliApiLock);
+	return true;
+}
+
+static bool
+mali_get_csif_locked(struct mali610_csif_info *out)
+{
+	if (!gShared || !gShared->mem.kva) {
+		return false;
+	}
+	volatile struct glb_control *glb = (volatile struct glb_control *)gShared->mem.kva;
+	volatile struct csg_control *csg =
+	    (volatile struct csg_control *)shared_at(MALI_SHARED_VA + kCsfGroupControlOffset);
+	volatile struct cs_control *cs =
+	    (volatile struct cs_control *)shared_at(MALI_SHARED_VA + kCsfGroupControlOffset +
+	    kCsfStreamControlOffset);
+	if (csg == NULL || cs == NULL) {
+		return false;
+	}
+	uint32_t groups = glb->group_num;
+	if (groups > MALI_UAPI_MAX_CSGS) {
+		groups = MALI_UAPI_MAX_CSGS;
+	}
+	uint32_t regs = (cs->features & 0xffu) + 1u;
+	uint32_t sbs = (cs->features >> 8) & 0xffu;
+	if (sbs == 0u) {
+		sbs = 8u;
+	}
+	memset(out, 0, sizeof(*out));
+	out->csg_slot_count = groups;
+	out->cs_slot_count = csg->stream_num;
+	out->cs_reg_count = regs;
+	out->scoreboard_slot_count = sbs;
+	out->unpreserved_cs_reg_count = 4u;
+	out->pad = 0u;
+	return regs >= 8u && (regs & 1u) == 0u && groups >= 1u && csg->stream_num >= 1u;
+}
+
+bool
+hakios_mali610_query_csif_info(struct mali610_csif_info *out)
+{
+	if (out == NULL || !gMaliApiLockInit) {
+		return false;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	bool ok = mali_uapi_hw_live_locked() && mali_get_csif_locked(out);
+	lck_mtx_unlock(&gMaliApiLock);
+	return ok;
+}
+
+bool
+hakios_mali610_query_timestamp_info(struct mali610_timestamp_info *inout)
+{
+	if (inout == NULL || !gMaliApiLockInit) {
+		return false;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	if (!mali_uapi_hw_live_locked()) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return false;
+	}
+	uint32_t flags = inout->flags;
+	if (flags == 0u) {
+		flags = (1u << 0) | (1u << 4) | (1u << 6);      /* GPU | OFFSET | FREQ */
+	}
+	uint64_t cntfrq = 0ull;
+	__asm__ volatile ("mrs %0, cntfrq_el0" : "=r"(cntfrq));
+
+	uint64_t t0 = mach_absolute_time();
+	uint64_t gpu_ts = (flags & (1u << 0)) ? gpu_rd64_counter(kGpuTimestamp) : 0ull;
+	uint64_t cpu_abs = mach_continuous_time();
+	uint64_t cycles = (flags & (1u << 5)) ? gpu_rd64_counter(kGpuCycleCount) : 0ull;
+	uint64_t t1 = mach_absolute_time();
+	uint64_t dur_ns = 0ull, cpu_ns = 0ull;
+	absolutetime_to_nanoseconds(t1 - t0, &dur_ns);
+	absolutetime_to_nanoseconds(cpu_abs, &cpu_ns);
+
+	inout->timestamp_frequency = (flags & (1u << 6)) ? cntfrq : 0ull;
+	inout->current_timestamp = gpu_ts;
+	inout->timestamp_offset = (flags & (1u << 4)) ? gpu_rd64(kGpuTimestampOffset) : 0ull;
+	inout->duration_nsec = (flags & (1u << 7)) ? (uint32_t)dur_ns : 0u;
+	inout->cycle_count = cycles;
+	if (flags & (7u << 1)) {
+		inout->cpu_timestamp_sec = cpu_ns / NSEC_PER_SEC;
+		inout->cpu_timestamp_nsec = cpu_ns % NSEC_PER_SEC;
+	} else {
+		inout->cpu_timestamp_sec = 0ull;
+		inout->cpu_timestamp_nsec = 0ull;
+	}
+	lck_mtx_unlock(&gMaliApiLock);
+	return true;
+}
+
+void
+hakios_mali610_report_fault(const char *why)
+{
+	if (!gMaliApiLockInit) {
+		return;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	if (!gGpu || !gpueb_bringup_held || gMaliStopped) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return;
+	}
+	printf("mali: fault report (%s): gpu_status %#x gpu_fault %#x addr %#llx "
+	    "irq raw %#x job %#x mmu %#x\n",
+	    why ? why : "unknown", mrd(kGpuStatus), mrd(kGpuFaultStatus),
+	    (unsigned long long)gpu_rd64(kGpuFaultAddress),
+	    mrd(kIntRaw), mrd(kJobIntRaw), mrd(kMmuIntRaw));
+	for (unsigned i = 0; i < MALI_UVM_SLOTS; i++) {
+		if (gUserVms[i].active) {
+			unsigned as = gUserVms[i].as_slot;
+			printf("mali: fault AS%u: status %#x faultstatus %#x faultaddr %#llx\n",
+			    as, mrd(asReg(as, kAsStatus)), mrd(asReg(as, kAsFaultStatus)),
+			    (unsigned long long)gpu_rd64(asReg(as, kAsFaultAddress)));
+		}
+	}
+	for (unsigned g = 0; g < MALI_UAPI_MAX_CSGS; g++) {
+		struct mali_uapi_group *grp = &gUserGroups[g];
+		if (!grp->active || !grp->csg_out) {
+			continue;
+		}
+		FlushPoC_DcacheRegion((vm_offset_t)grp->csg_out, sizeof(*grp->csg_out));
+		printf("mali: fault CSG%u (vm %u): req %#x ack %#x state %#x ep_cur %#x\n",
+		    grp->csg_slot, grp->vm_id, grp->csg_in->req, grp->csg_out->ack,
+		    grp->csg_out->status_state, grp->csg_out->status_endpoint_current);
+		for (unsigned q = 0; q < grp->queue_count; q++) {
+			struct mali_uapi_queue *qu = &grp->queues[q];
+			if (!qu->active || !qu->cs_out || !qu->uout) {
+				continue;
+			}
+			FlushPoC_DcacheRegion((vm_offset_t)qu->cs_out, sizeof(*qu->cs_out));
+			FlushPoC_DcacheRegion((vm_offset_t)qu->uout, sizeof(*qu->uout));
+			volatile uint64_t *seqp =
+			    (volatile uint64_t *)(grp->sync_mem.kva + q * 64u);
+			FlushPoC_DcacheRegion((vm_offset_t)seqp, 64u);
+			printf("mali: fault CSG%u.Q%u: ins %llu ext %llu seq %llu/%llu "
+			    "cs_ack %#x fault %#x (%#llx) fatal %#x (%#llx) cmd_ptr %#llx "
+			    "wait %#x sb %#x blk %#x\n",
+			    grp->csg_slot, q,
+			    (unsigned long long)qu->insert_pos,
+			    (unsigned long long)qu->uout->extract,
+			    (unsigned long long)*seqp,
+			    (unsigned long long)qu->submitted_seq,
+			    qu->cs_out->ack, qu->cs_out->fault,
+			    (unsigned long long)qu->cs_out->fault_info,
+			    qu->cs_out->fatal,
+			    (unsigned long long)qu->cs_out->fatal_info,
+			    (unsigned long long)qu->cs_out->status_cmd_ptr,
+			    qu->cs_out->status_wait, qu->cs_out->status_scoreboards,
+			    qu->cs_out->status_blocked);
+		}
+	}
+	lck_mtx_unlock(&gMaliApiLock);
+}
+
+int
+hakios_mali610_vm_create(uint64_t *inout_user_va_range, uint32_t *out_vm_id)
+{
+	if (!inout_user_va_range || !out_vm_id || !gMaliApiLockInit) {
+		return EINVAL;
+	}
+	uint64_t uva = *inout_user_va_range;
+	if (uva == 0ull) {
+		uva = MALI_UVM_DEFAULT_USER;
+	}
+	if ((uva & (PAGE_SIZE - 1ull)) != 0ull || uva > MALI_UVM_DEFAULT_USER ||
+	    uva < (1ull << 32)) {
+		return EINVAL;
+	}
+
+	lck_mtx_lock(&gMaliApiLock);
+	if (!mali_uapi_hw_live_locked()) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return ENXIO;
+	}
+	uint32_t as_present = mrd(kAsPresent);
+	struct mali_uvm *vm = NULL;
+	unsigned slot = 0;
+	for (unsigned i = 0; i < MALI_UVM_SLOTS; i++) {
+		unsigned candidate = i + 1u;
+		if (!gUserVms[i].active && (as_present & (1u << candidate)) != 0u) {
+			vm = &gUserVms[i];
+			slot = candidate;
+			break;
+		}
+	}
+	if (vm == NULL) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return ENOSPC;
+	}
+	memset(vm, 0, sizeof(*vm));
+	vm->as_slot = slot;
+	vm->root = mali_uvm_alloc_pt(vm);
+	if (vm->root == NULL) {
+		memset(vm, 0, sizeof(*vm));
+		lck_mtx_unlock(&gMaliApiLock);
+		return ENOMEM;
+	}
+	if (!as_ready(slot)) {
+		kmem_free(kernel_map, (vm_offset_t)vm->root, PAGE_SIZE);
+		memset(vm, 0, sizeof(*vm));
+		lck_mtx_unlock(&gMaliApiLock);
+		return EIO;
+	}
+	mwr(kMmuIntClear, (1u << slot) | (1u << (slot + 16u)));
+	gpu_wr64(asReg(slot, kAsTranstab), vm->root->pa);
+	gpu_wr64(asReg(slot, kAsMemattr), MALI_MEMATTR);
+	gpu_wr64(asReg(slot, kAsTranscfg), 0x42000006ull);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	if (!as_command(slot, kAsCmdUpdate) ||
+	    gpu_rd64(asReg(slot, kAsTranstab)) != vm->root->pa ||
+	    gpu_rd64(asReg(slot, kAsMemattr)) != MALI_MEMATTR ||
+	    gpu_rd64(asReg(slot, kAsTranscfg)) != 0x42000006ull ||
+	    (mrd(asReg(slot, kAsFaultStatus)) & 0xffu) != 0u) {
+		(void)mali_uvm_park_hw_locked(vm);
+		kmem_free(kernel_map, (vm_offset_t)vm->root, PAGE_SIZE);
+		memset(vm, 0, sizeof(*vm));
+		lck_mtx_unlock(&gMaliApiLock);
+		return EIO;
+	}
+	vm->active = true;
+	vm->unusable = false;
+	vm->hw_parked = false;
+	vm->user_va_range = uva;
+	vm->kva_base = uva;
+	vm->kva_next = uva;
+	vm->kva_end = MALI_UVM_FULL_VA;
+	*inout_user_va_range = uva;
+	*out_vm_id = slot;
+	lck_mtx_unlock(&gMaliApiLock);
+	return 0;
+}
+
+int
+hakios_mali610_vm_destroy(uint32_t vm_id)
+{
+	if (!gMaliApiLockInit) {
+		return EINVAL;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	struct mali_uvm *vm = mali_uvm_by_id_locked(vm_id);
+	if (vm == NULL) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EINVAL;
+	}
+	/* Ensure any group still referencing this VM is terminated first. */
+	for (unsigned g = 0; g < MALI_UAPI_MAX_CSGS; g++) {
+		if (gUserGroups[g].active && gUserGroups[g].vm_id == vm_id) {
+			mali_uapi_group_release_locked(&gUserGroups[g]);
+		}
+	}
+	bool parked = mali_uvm_park_hw_locked(vm) || gMaliStopped ||
+	    (gGpu != 0 && (mrd(kMcuStatus) & 0xfu) == 0u);
+	if (parked) {
+		while (vm->tables != NULL) {
+			struct mali_uvm_pt *pt = vm->tables;
+			vm->tables = pt->next;
+			kmem_free(kernel_map, (vm_offset_t)pt, PAGE_SIZE);
+		}
+	} else {
+		printf("mali: uapi: retaining AS%u PT pages across unconfirmed park\n",
+		    vm->as_slot);
+	}
+	memset(vm, 0, sizeof(*vm));
+	lck_mtx_unlock(&gMaliApiLock);
+	return 0;
+}
+
+int
+hakios_mali610_vm_get_state(uint32_t vm_id, uint32_t *out_state)
+{
+	if (!out_state || !gMaliApiLockInit) {
+		return EINVAL;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	struct mali_uvm *vm = mali_uvm_by_id_locked(vm_id);
+	if (vm == NULL) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EINVAL;
+	}
+	if (!vm->hw_parked && gGpu != 0 && gpueb_bringup_held &&
+	    (mrd(asReg(vm->as_slot, kAsFaultStatus)) & 0xffu) != 0u) {
+		vm->unusable = true;
+	}
+	*out_state = vm->unusable ? 1u : 0u;
+	lck_mtx_unlock(&gMaliApiLock);
+	return 0;
+}
+
+int
+hakios_mali610_vm_map_pas(uint32_t vm_id, uint64_t va, const uint64_t *pas,
+    uint32_t count_4k, uint32_t map_flags)
+{
+	if (!pas || count_4k == 0u || !gMaliApiLockInit) {
+		return EINVAL;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	if (!mali_uapi_hw_live_locked()) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return ENXIO;
+	}
+	struct mali_uvm *vm = mali_uvm_by_id_locked(vm_id);
+	int err = mali_uvm_map_pas_locked(vm, va, pas, count_4k, map_flags);
+	lck_mtx_unlock(&gMaliApiLock);
+	return err;
+}
+
+int
+hakios_mali610_vm_unmap(uint32_t vm_id, uint64_t va, uint64_t size)
+{
+	if (!gMaliApiLockInit) {
+		return EINVAL;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	struct mali_uvm *vm = mali_uvm_by_id_locked(vm_id);
+	int err = mali_uvm_unmap_locked(vm, va, size);
+	lck_mtx_unlock(&gMaliApiLock);
+	return err;
+}
+
+int
+hakios_mali610_vm_alloc_kernel_va(uint32_t vm_id, uint64_t size, uint64_t align,
+    uint64_t *out_va)
+{
+	if (!out_va || !gMaliApiLockInit) {
+		return EINVAL;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	struct mali_uvm *vm = mali_uvm_by_id_locked(vm_id);
+	int err = mali_uvm_alloc_kva_locked(vm, size, align, out_va);
+	lck_mtx_unlock(&gMaliApiLock);
+	return err;
+}
+
+void
+hakios_mali610_vm_free_kernel_va(uint32_t vm_id, uint64_t va, uint64_t size)
+{
+	if (!gMaliApiLockInit) {
+		return;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	struct mali_uvm *vm = mali_uvm_by_id_locked(vm_id);
+	if (vm != NULL) {
+		mali_uvm_free_kva_locked(vm, va, size);
+	}
+	lck_mtx_unlock(&gMaliApiLock);
+}
+
+int
+hakios_mali610_group_create(const struct mali610_group_create_args *args,
+    uint32_t *out_hw_group)
+{
+	if (!args || !out_hw_group || !args->queues || args->queue_count == 0u ||
+	    args->queue_count > MALI_UAPI_MAX_QUEUES || args->priority > 3u ||
+	    !gMaliApiLockInit) {
+		return EINVAL;
+	}
+	for (uint32_t q = 0; q < args->queue_count; q++) {
+		uint32_t rsz = args->queues[q].ringbuf_size;
+		if (args->queues[q].pad[0] || args->queues[q].pad[1] ||
+		    args->queues[q].pad[2] || args->queues[q].priority > 15u ||
+		    rsz < 4096u || rsz > 65536u || (rsz & (rsz - 1u)) != 0u) {
+			return EINVAL;
+		}
+	}
+
+	lck_mtx_lock(&gMaliApiLock);
+	if (!mali_uapi_hw_live_locked()) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return ENXIO;
+	}
+	struct mali_uvm *vm = mali_uvm_by_id_locked(args->vm_id);
+	if (vm == NULL || vm->unusable) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EINVAL;
+	}
+	uint64_t shader_pres = gpu_rd64(kShaderPresent);
+	uint64_t tiler_pres = gpu_rd64(kTilerPresent);
+	if ((args->compute_mask & ~shader_pres) != 0ull ||
+	    (args->fragment_mask & ~shader_pres) != 0ull ||
+	    (args->tiler_mask & ~tiler_pres) != 0ull ||
+	    (uint32_t)__builtin_popcountll(args->compute_mask) < args->max_compute ||
+	    (uint32_t)__builtin_popcountll(args->fragment_mask) < args->max_fragment ||
+	    (uint32_t)__builtin_popcountll(args->tiler_mask) < args->max_tiler) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EINVAL;
+	}
+
+	volatile struct glb_control *glb_ctl = (volatile struct glb_control *)gShared->mem.kva;
+	volatile struct glb_input *glb_in =
+	    (volatile struct glb_input *)shared_at(glb_ctl->input_va);
+	volatile struct glb_output *glb_out =
+	    (volatile struct glb_output *)shared_at(glb_ctl->output_va);
+	if (!glb_in || !glb_out || glb_ctl->group_num == 0u || glb_ctl->group_stride == 0u) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EIO;
+	}
+	uint32_t max_slots = glb_ctl->group_num < MALI_UAPI_MAX_CSGS
+	    ? glb_ctl->group_num : MALI_UAPI_MAX_CSGS;
+	struct mali_uapi_group *grp = NULL;
+	unsigned csg_slot = 0;
+	for (unsigned i = 0; i < max_slots; i++) {
+		if (!gUserGroups[i].active) {
+			grp = &gUserGroups[i];
+			csg_slot = i;
+			break;
+		}
+	}
+	if (grp == NULL) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return ENOSPC;
+	}
+
+	uint64_t csg_ctl_va = MALI_SHARED_VA + kCsfGroupControlOffset +
+	    (uint64_t)csg_slot * glb_ctl->group_stride;
+	volatile struct csg_control *csg_ctl =
+	    (volatile struct csg_control *)shared_at(csg_ctl_va);
+	if (!csg_ctl || args->queue_count > csg_ctl->stream_num) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EINVAL;
+	}
+	volatile struct csg_input *csg_in =
+	    (volatile struct csg_input *)shared_at(csg_ctl->input_va);
+	volatile struct csg_output *csg_out =
+	    (volatile struct csg_output *)shared_at(csg_ctl->output_va);
+	if (!csg_in || !csg_out) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EIO;
+	}
+
+	memset(grp, 0, sizeof(*grp));
+	grp->active = true;
+	grp->csg_slot = csg_slot;
+	grp->vm_id = args->vm_id;
+	grp->queue_count = args->queue_count;
+	grp->csg_in = csg_in;
+	grp->csg_out = csg_out;
+	grp->glb_in = glb_in;
+	grp->glb_out = glb_out;
+
+	int err = 0;
+	if (csg_ctl->suspend_size > 0u) {
+		grp->sus_pages = (csg_ctl->suspend_size + 0xfffu) >> 12;
+		if (!mali_shared_alloc_pages_locked(grp->sus_pages, &grp->sus_off)) {
+			grp->sus_pages = 0u;
+			err = ENOMEM;
+			goto fail;
+		}
+	}
+	if (csg_ctl->protm_suspend_size > 0u && csg_ctl->protm_suspend_size <= 0x8000u) {
+		grp->protm_pages = (csg_ctl->protm_suspend_size + 0xfffu) >> 12;
+		if (!mali_shared_alloc_pages_locked(grp->protm_pages, &grp->protm_off)) {
+			grp->protm_pages = 0u;
+		}
+	}
+	if (!mem_alloc_high(&grp->sync_mem, PAGE_SIZE)) {
+		err = ENOMEM;
+		goto fail;
+	}
+	memset((void *)grp->sync_mem.kva, 0, PAGE_SIZE);
+	FlushPoC_DcacheRegion(grp->sync_mem.kva, PAGE_SIZE);
+	err = mali_uvm_map_kmem_locked(vm, &grp->sync_mem, PT_LEAF_GRANULE,
+	    PT_LEAF_GRANULE, MALI_MAP_NOEXEC | MALI_MAP_UNCACHED, &grp->sync_gpu_va);
+	if (err != 0) {
+		goto fail;
+	}
+
+	for (uint32_t q = 0; q < args->queue_count; q++) {
+		struct mali_uapi_queue *qu = &grp->queues[q];
+		uint64_t cs_ctl_va = csg_ctl_va + kCsfStreamControlOffset +
+		    (uint64_t)q * csg_ctl->stream_stride;
+		volatile struct cs_control *cs_ctl =
+		    (volatile struct cs_control *)shared_at(cs_ctl_va);
+		if (!cs_ctl) {
+			err = EIO;
+			goto fail;
+		}
+		qu->cs_in = (volatile struct cs_input *)shared_at(cs_ctl->input_va);
+		qu->cs_out = (volatile struct cs_output *)shared_at(cs_ctl->output_va);
+		if (!qu->cs_in || !qu->cs_out) {
+			err = EIO;
+			goto fail;
+		}
+		uint8_t db = 0u;
+		for (uint8_t cand = 1u; cand < 16u; cand++) {
+			if ((gDoorbellMask & (1u << cand)) == 0u) {
+				gDoorbellMask |= (1u << cand);
+				db = cand;
+				break;
+			}
+		}
+		if (db == 0u) {
+			err = ENOSPC;
+			goto fail;
+		}
+		qu->active = true;
+		qu->doorbell_id = db;
+		qu->priority = args->queues[q].priority;
+		qu->ring_size = args->queues[q].ringbuf_size;
+		if (!mali_shared_alloc_pages_locked(1u, &qu->shared_off)) {
+			qu->shared_off = 0u;
+			err = ENOMEM;
+			goto fail;
+		}
+		qu->user_in_va = MALI_SHARED_VA + qu->shared_off;
+		qu->user_out_va = MALI_SHARED_VA + qu->shared_off + 0x800u;
+		qu->uin = (volatile struct cs_user_input *)(gShared->mem.kva + qu->shared_off);
+		qu->uout = (volatile struct cs_user_output *)(gShared->mem.kva + qu->shared_off + 0x800u);
+
+		size_t ring_alloc = ((size_t)qu->ring_size + PAGE_MASK) & ~(size_t)PAGE_MASK;
+		if (!mem_alloc_high(&qu->ring_mem, ring_alloc)) {
+			err = ENOMEM;
+			goto fail;
+		}
+		memset((void *)qu->ring_mem.kva, 0, ring_alloc);
+		FlushPoC_DcacheRegion(qu->ring_mem.kva, ring_alloc);
+		err = mali_uvm_map_kmem_locked(vm, &qu->ring_mem, qu->ring_size,
+		    qu->ring_size, MALI_MAP_NOEXEC | MALI_MAP_UNCACHED, &qu->ring_gpu_va);
+		if (err != 0) {
+			goto fail;
+		}
+
+		FlushPoC_DcacheRegion((vm_offset_t)qu->cs_out, sizeof(*qu->cs_out));
+		__asm__ volatile ("dsb sy" ::: "memory");
+		qu->cs_in->config = kCsConfigPriority(qu->priority) |
+		    kCsConfigDoorbell(qu->doorbell_id);
+		qu->cs_in->ack_irq_mask = 0xffffffffu;
+		qu->cs_in->ringbuf_base = qu->ring_gpu_va;
+		qu->cs_in->ringbuf_size = qu->ring_size;
+		qu->cs_in->heap_start = 0ull;
+		qu->cs_in->heap_end = 0ull;
+		qu->cs_in->ringbuf_input = qu->user_in_va;
+		qu->cs_in->ringbuf_output = qu->user_out_va;
+		qu->cs_in->instr_config = 0u;
+		qu->cs_in->instrbuf_size = 0u;
+		qu->cs_in->instrbuf_base = 0ull;
+		qu->cs_in->instrbuf_offset_ptr = 0ull;
+		qu->cs_in->req = (qu->cs_out->ack & kCsEvtMask) |
+		    kCsStateStart | kCsIdleSyncWait | kCsIdleEmpty;
+	}
+
+	FlushPoC_DcacheRegion((vm_offset_t)csg_out, sizeof(*csg_out));
+	FlushPoC_DcacheRegion((vm_offset_t)glb_out, sizeof(*glb_out));
+	__asm__ volatile ("dsb sy" ::: "memory");
+
+	csg_in->allow_compute = args->compute_mask;
+	csg_in->allow_fragment = args->fragment_mask;
+	csg_in->allow_other = (uint32_t)args->tiler_mask;
+	uint64_t ep_req = ((uint64_t)args->max_compute & 0xffull) |
+	    (((uint64_t)args->max_fragment & 0xffull) << 8) |
+	    (((uint64_t)args->max_tiler & 0xfull) << 16) |
+	    (((uint64_t)(csg_slot & 0xfu)) << 28);
+	if (glb_ctl->version >= 0x04000000u) {
+		csg_in->endpoint_req2 = ep_req;
+		csg_in->endpoint_req = 0u;
+	} else {
+		csg_in->endpoint_req = (uint32_t)ep_req;
+		csg_in->endpoint_req2 = 0ull;
+	}
+	csg_in->suspend_buf = grp->sus_pages ? (MALI_SHARED_VA + grp->sus_off) : 0ull;
+	csg_in->protm_suspend_buf = grp->protm_pages ? (MALI_SHARED_VA + grp->protm_off) : 0ull;
+	csg_in->config = vm->as_slot;
+	csg_in->ack_irq_mask = 0xffffffffu;
+	csg_in->cs_irq_ack = csg_out->cs_irq_req;
+
+	uint32_t want_ep = (csg_out->ack ^ kCsgEndpointConfig) & kCsgEndpointConfig;
+	csg_in->req = (csg_out->ack & ~(kCsgStateMask | kCsgEndpointConfig)) |
+	    kCsgStateStart | want_ep;
+	uint32_t qmask = (1u << args->queue_count) - 1u;
+	uint32_t slot_bit = 1u << csg_slot;
+	csg_in->doorbell_req = (csg_in->doorbell_req & ~qmask) |
+	    ((csg_out->doorbell_ack ^ qmask) & qmask);
+	glb_in->doorbell_req = (glb_in->doorbell_req & ~slot_bit) |
+	    ((glb_out->doorbell_ack ^ slot_bit) & slot_bit);
+	mem_flush(&gShared->mem);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	mwr(kCsfDoorbellBase, 1u);
+
+	bool started = false;
+	for (unsigned waited = 0; waited < 200u; waited++) {
+		FlushPoC_DcacheRegion((vm_offset_t)csg_out, sizeof(*csg_out));
+		__asm__ volatile ("dsb sy" ::: "memory");
+		if ((csg_out->ack & kCsgStateMask) == kCsgStateStart &&
+		    (csg_out->ack & kCsgEndpointConfig) == want_ep) {
+			bool all_cs = true;
+			for (uint32_t q = 0; q < args->queue_count; q++) {
+				FlushPoC_DcacheRegion((vm_offset_t)grp->queues[q].cs_out,
+				    sizeof(*grp->queues[q].cs_out));
+				__asm__ volatile ("dsb sy" ::: "memory");
+				if ((grp->queues[q].cs_out->ack & kCsStateMask) != kCsStateStart) {
+					all_cs = false;
+					break;
+				}
+			}
+			if (all_cs) {
+				started = true;
+				break;
+			}
+		}
+		delay(1000);
+	}
+	if (!started) {
+		printf("mali: uapi: CSG%u failed to start (ack %#x want_ep %#x)\n",
+		    csg_slot, csg_out->ack, want_ep);
+		err = EIO;
+		goto fail;
+	}
+	*out_hw_group = csg_slot + 1u;
+	lck_mtx_unlock(&gMaliApiLock);
+	return 0;
+
+fail:
+	grp->terminated = true;
+	mali_uapi_group_release_locked(grp);
+	lck_mtx_unlock(&gMaliApiLock);
+	return err;
+}
+
+int
+hakios_mali610_group_destroy(uint32_t hw_group)
+{
+	if (hw_group < 1u || hw_group > MALI_UAPI_MAX_CSGS || !gMaliApiLockInit) {
+		return EINVAL;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	struct mali_uapi_group *grp = &gUserGroups[hw_group - 1u];
+	if (!grp->active) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EINVAL;
+	}
+	mali_uapi_group_release_locked(grp);
+	lck_mtx_unlock(&gMaliApiLock);
+	return 0;
+}
+
+int
+hakios_mali610_group_get_state(uint32_t hw_group, uint32_t *out_state,
+    uint32_t *out_fatal_queues)
+{
+	if (!out_state || !out_fatal_queues || hw_group < 1u ||
+	    hw_group > MALI_UAPI_MAX_CSGS || !gMaliApiLockInit) {
+		return EINVAL;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	struct mali_uapi_group *grp = &gUserGroups[hw_group - 1u];
+	if (!grp->active) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EINVAL;
+	}
+	for (uint32_t q = 0; q < grp->queue_count; q++) {
+		struct mali_uapi_queue *qu = &grp->queues[q];
+		if (qu->active && qu->cs_out != NULL) {
+			FlushPoC_DcacheRegion((vm_offset_t)qu->cs_out, sizeof(*qu->cs_out));
+			__asm__ volatile ("dsb sy" ::: "memory");
+			if (qu->cs_out->fatal != 0u ||
+			    ((qu->cs_out->ack ^ qu->cs_in->req) & kCsFatalBit) != 0u) {
+				grp->fatal_queues |= (1u << q);
+			}
+		}
+	}
+	uint32_t st = 0u;
+	if (grp->timedout) {
+		st |= (1u << 0);                /* DRM_PANTHOR_GROUP_STATE_TIMEDOUT */
+	}
+	if (grp->fatal_queues != 0u) {
+		st |= (1u << 1);                /* DRM_PANTHOR_GROUP_STATE_FATAL_FAULT */
+	}
+	*out_state = st;
+	*out_fatal_queues = grp->fatal_queues;
+	lck_mtx_unlock(&gMaliApiLock);
+	return 0;
+}
+
+void
+hakios_mali610_group_mark_timedout(uint32_t hw_group)
+{
+	if (hw_group < 1u || hw_group > MALI_UAPI_MAX_CSGS || !gMaliApiLockInit) {
+		return;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	if (gUserGroups[hw_group - 1u].active) {
+		gUserGroups[hw_group - 1u].timedout = true;
+	}
+	lck_mtx_unlock(&gMaliApiLock);
+}
+
+int
+hakios_mali610_queue_submit(uint32_t hw_group, uint32_t queue_idx,
+    uint64_t stream_addr, uint32_t stream_size, uint32_t latest_flush, uint64_t *out_seq)
+{
+	if (!out_seq || hw_group < 1u || hw_group > MALI_UAPI_MAX_CSGS ||
+	    (latest_flush & 0x7f000000u) != 0u || !gMaliApiLockInit) {
+		return EINVAL;
+	}
+	if (stream_size == 0u) {
+		if (stream_addr != 0ull) {
+			return EINVAL;
+		}
+	} else {
+		if (stream_addr == 0ull || (stream_size & 7u) != 0u ||
+		    (stream_addr & 63ull) != 0ull || stream_addr >= MALI_UVM_FULL_VA) {
+			return EINVAL;
+		}
+	}
+
+	lck_mtx_lock(&gMaliApiLock);
+	if (!mali_uapi_hw_live_locked()) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return ENXIO;
+	}
+	struct mali_uapi_group *grp = &gUserGroups[hw_group - 1u];
+	if (!grp->active || grp->terminated || grp->timedout || grp->fatal_queues != 0u ||
+	    queue_idx >= grp->queue_count || !grp->queues[queue_idx].active) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EINVAL;
+	}
+	struct mali_uvm *vm = mali_uvm_by_id_locked(grp->vm_id);
+	if (!vm || vm->unusable) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EINVAL;
+	}
+	struct mali_uapi_queue *qu = &grp->queues[queue_idx];
+	if (stream_size == 0u) {
+		*out_seq = qu->submitted_seq;
+		lck_mtx_unlock(&gMaliApiLock);
+		return 0;
+	}
+
+	struct mali610_csif_info csif;
+	if (!mali_get_csif_locked(&csif) || csif.cs_reg_count < 8u ||
+	    (csif.cs_reg_count & 1u) != 0u) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EIO;
+	}
+	uint64_t addr_reg = (uint64_t)((csif.cs_reg_count - 4u) & ~1u);
+	uint64_t val_reg = addr_reg + 2ull;
+	uint64_t waitall_mask = (csif.scoreboard_slot_count >= 16u)
+	    ? 0xffffull : ((1ull << csif.scoreboard_slot_count) - 1ull);
+
+	/* Ensure space in the circular CS ring before writing 128 bytes. */
+	for (unsigned w = 0; w < 1000u; w++) {
+		FlushPoC_DcacheRegion((vm_offset_t)qu->uout, sizeof(*qu->uout));
+		__asm__ volatile ("dsb sy" ::: "memory");
+		if ((qu->insert_pos + MALI_UAPI_JOB_BYTES) - qu->uout->extract <= qu->ring_size) {
+			break;
+		}
+		if (w == 999u) {
+			lck_mtx_unlock(&gMaliApiLock);
+			return EBUSY;
+		}
+		delay(1000);
+	}
+
+	uint64_t sync_va = grp->sync_gpu_va + (uint64_t)queue_idx * 64ull;
+	uint64_t cmds[MALI_UAPI_JOB_WORDS];
+	unsigned n = 0u;
+
+	/* Pre-CALL cache clean+invalidate + CALL into user command stream */
+	cmds[n++] = (2ull << 56) | (val_reg << 48) | (uint64_t)latest_flush;
+	cmds[n++] = (36ull << 56) | (0ull << 48) | (val_reg << 40) | 0x233ull;
+	cmds[n++] = (1ull << 56) | (addr_reg << 48) | (stream_addr & 0xffffffffffffull);
+	cmds[n++] = (2ull << 56) | (val_reg << 48) | (uint64_t)stream_size;
+	cmds[n++] = (3ull << 56) | (1ull << 16);
+	cmds[n++] = (32ull << 56) | (addr_reg << 40) | (val_reg << 32);
+	/* Post-CALL scoreboard barrier + unconditional L2+LSC clean+inv before SYNC_ADD64 */
+	cmds[n++] = (3ull << 56) | (waitall_mask << 16);
+	cmds[n++] = (2ull << 56) | (val_reg << 48) | 0ull;
+	cmds[n++] = (36ull << 56) | (0ull << 48) | (val_reg << 40) | 0x233ull;
+	cmds[n++] = (3ull << 56) | (1ull << 16);
+	cmds[n++] = (1ull << 56) | (addr_reg << 48) | (sync_va & 0xffffffffffffull);
+	cmds[n++] = (1ull << 56) | (val_reg << 48) | 1ull;
+	cmds[n++] = (51ull << 56) | (0ull << 48) | (addr_reg << 40) | (val_reg << 32) | 1ull;
+	cmds[n++] = (47ull << 56);
+	while (n < MALI_UAPI_JOB_WORDS) {
+		cmds[n++] = 0ull;
+	}
+
+	uint32_t ring_off = (uint32_t)(qu->insert_pos & (uint64_t)(qu->ring_size - 1u));
+	uint32_t first = qu->ring_size - ring_off;
+	if (first >= MALI_UAPI_JOB_BYTES) {
+		memcpy((void *)(qu->ring_mem.kva + ring_off), cmds, MALI_UAPI_JOB_BYTES);
+		FlushPoC_DcacheRegion(qu->ring_mem.kva + ring_off, MALI_UAPI_JOB_BYTES);
+	} else {
+		memcpy((void *)(qu->ring_mem.kva + ring_off), cmds, first);
+		memcpy((void *)qu->ring_mem.kva, (const uint8_t *)cmds + first,
+		    MALI_UAPI_JOB_BYTES - first);
+		FlushPoC_DcacheRegion(qu->ring_mem.kva + ring_off, first);
+		FlushPoC_DcacheRegion(qu->ring_mem.kva, MALI_UAPI_JOB_BYTES - first);
+	}
+	__asm__ volatile ("dsb sy" ::: "memory");
+
+	qu->insert_pos += MALI_UAPI_JOB_BYTES;
+	qu->submitted_seq++;
+	qu->uin->extract_init = qu->uout->extract;
+	qu->uin->insert = qu->insert_pos;
+	if (!gShared->mem.uncached) {
+		FlushPoC_DcacheRegion((vm_offset_t)qu->uin, sizeof(*qu->uin));
+	}
+	__asm__ volatile ("dsb sy" ::: "memory");
+	mwr(kCsfDoorbellBase + (uint32_t)qu->doorbell_id * kCsfDoorbellStride, 1u);
+
+	(void)hakios_mali610_bump_flush_id();
+	*out_seq = qu->submitted_seq;
+	lck_mtx_unlock(&gMaliApiLock);
+	return 0;
+}
+
+int
+hakios_mali610_queue_poll(uint32_t hw_group, uint32_t queue_idx,
+    uint64_t target_seq, bool *out_done)
+{
+	if (!out_done || hw_group < 1u || hw_group > MALI_UAPI_MAX_CSGS || !gMaliApiLockInit) {
+		return EINVAL;
+	}
+	if (target_seq == 0ull) {
+		*out_done = true;
+		return 0;
+	}
+	lck_mtx_lock(&gMaliApiLock);
+	struct mali_uapi_group *grp = &gUserGroups[hw_group - 1u];
+	if (!grp->active || queue_idx >= grp->queue_count || !grp->queues[queue_idx].active) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return EINVAL;
+	}
+	struct mali_uapi_queue *qu = &grp->queues[queue_idx];
+	if (qu->completed_seq >= target_seq) {
+		*out_done = true;
+		lck_mtx_unlock(&gMaliApiLock);
+		return 0;
+	}
+	if (!mali_uapi_hw_live_locked()) {
+		lck_mtx_unlock(&gMaliApiLock);
+		return ENXIO;
+	}
+
+	volatile uint64_t *seqp = (volatile uint64_t *)(grp->sync_mem.kva + queue_idx * 64u);
+	FlushPoC_DcacheRegion((vm_offset_t)seqp, 64u);
+	FlushPoC_DcacheRegion((vm_offset_t)qu->uout, sizeof(*qu->uout));
+	FlushPoC_DcacheRegion((vm_offset_t)qu->cs_out, sizeof(*qu->cs_out));
+	FlushPoC_DcacheRegion((vm_offset_t)grp->csg_out, sizeof(*grp->csg_out));
+	__asm__ volatile ("dsb sy" ::: "memory");
+
+	uint64_t cur_seq = *seqp;
+	if (cur_seq > qu->completed_seq) {
+		qu->completed_seq = cur_seq;
+	}
+	if (cur_seq >= target_seq) {
+		*out_done = true;
+		lck_mtx_unlock(&gMaliApiLock);
+		return 0;
+	}
+
+	/*
+	 * Check stream IRQ events. CS_TILER_OOM (bit 26) is a toggle bit: once OOM #1 sets
+	 * req bit 26 to 1, OR-ing with cs_req would falsely re-trigger on every subsequent
+	 * CS IRQ while heap_address remains non-zero. Because this driver never suspends or
+	 * resumes CSGs, the MT6895 suspend/resume mirror erratum cannot fire here, so XOR
+	 * detects genuine OOM toggles cleanly without leaking chunks.
+	 */
+	uint32_t qbit = 1u << queue_idx;
+	if (((grp->csg_out->cs_irq_req ^ grp->csg_in->cs_irq_ack) & qbit) != 0u &&
+	    !qu->oom_handling) {
+		uint32_t cs_req = qu->cs_in->req;
+		uint32_t cs_ack = qu->cs_out->ack;
+		if (((cs_req ^ cs_ack) & kCsTilerOomBit) != 0u &&
+		    qu->cs_out->heap_address != 0ull) {
+			uint32_t oom_vm = grp->vm_id;
+			unsigned oom_csg = grp->csg_slot;
+			uint64_t oom_heap_va = qu->cs_out->heap_address;
+			uint32_t oom_vt_start = qu->cs_out->heap_vt_start;
+			uint32_t oom_vt_end = qu->cs_out->heap_vt_end;
+			uint32_t oom_frag_end = qu->cs_out->heap_frag_end;
+			uint64_t encoded_va = 0ull;
+			uint32_t chunk_cnt = 0u;
+
+			qu->oom_handling = true;
+			/*
+			 * Strict lock order: gPanthorLock -> gMaliApiLock.
+			 * Drop gMaliApiLock before calling hakios_mali610_tiler_oom_grow(),
+			 * which takes gPanthorLock and maps the new chunk under gMaliApiLock.
+			 */
+			lck_mtx_unlock(&gMaliApiLock);
+			bool grown = hakios_mali610_tiler_oom_grow(oom_vm, oom_heap_va,
+			    &encoded_va, &chunk_cnt);
+			lck_mtx_lock(&gMaliApiLock);
+
+			if (!grp->active || queue_idx >= grp->queue_count ||
+			    !grp->queues[queue_idx].active) {
+				qu->oom_handling = false;
+				lck_mtx_unlock(&gMaliApiLock);
+				return EINVAL;
+			}
+			qu->oom_handling = false;
+			if (!mali_uapi_hw_live_locked()) {
+				lck_mtx_unlock(&gMaliApiLock);
+				return ENXIO;
+			}
+
+			FlushPoC_DcacheRegion((vm_offset_t)qu->cs_out, sizeof(*qu->cs_out));
+			FlushPoC_DcacheRegion((vm_offset_t)grp->csg_out, sizeof(*grp->csg_out));
+			if (grp->glb_out != NULL) {
+				FlushPoC_DcacheRegion((vm_offset_t)grp->glb_out,
+				    sizeof(*grp->glb_out));
+			}
+			__asm__ volatile ("dsb sy" ::: "memory");
+
+			cs_req = qu->cs_in->req;
+			cs_ack = qu->cs_out->ack;
+			qu->cs_in->heap_start = grown ? encoded_va : 0ull;
+			qu->cs_in->heap_end = grown ? encoded_va : 0ull;
+			qu->cs_in->req = (cs_req & ~kCsTilerOomBit) | (cs_ack & kCsTilerOomBit);
+			if (grown) {
+				printf("mali: uapi: CSG%u.Q%u CS_TILER_OOM grown chunk #%u "
+				    "encoded=%#llx (heap %#llx vt %u..%u frag %u)\n",
+				    oom_csg, queue_idx, chunk_cnt,
+				    (unsigned long long)encoded_va,
+				    (unsigned long long)oom_heap_va,
+				    oom_vt_start, oom_vt_end, oom_frag_end);
+			} else {
+				printf("mali: uapi: CSG%u.Q%u CS_TILER_OOM declined "
+				    "(heap %#llx vt %u..%u frag %u)\n",
+				    oom_csg, queue_idx,
+				    (unsigned long long)oom_heap_va,
+				    oom_vt_start, oom_vt_end, oom_frag_end);
+			}
+		} else if (grp->glb_out != NULL) {
+			FlushPoC_DcacheRegion((vm_offset_t)grp->glb_out, sizeof(*grp->glb_out));
+			__asm__ volatile ("dsb sy" ::: "memory");
+		}
+		if (((qu->cs_in->req ^ cs_ack) & kCsFaultBit) != 0u) {
+			qu->cs_in->req = (qu->cs_in->req & ~kCsFaultBit) | (cs_ack & kCsFaultBit);
+		}
+		grp->csg_in->cs_irq_ack =
+		    (grp->csg_in->cs_irq_ack & ~qbit) | (grp->csg_out->cs_irq_req & qbit);
+		grp->csg_in->doorbell_req =
+		    (grp->csg_in->doorbell_req & ~qbit) |
+		    ((grp->csg_out->doorbell_ack ^ qbit) & qbit);
+		if (grp->glb_in != NULL && grp->glb_out != NULL) {
+			uint32_t slot_bit = 1u << grp->csg_slot;
+			grp->glb_in->doorbell_req =
+			    (grp->glb_in->doorbell_req & ~slot_bit) |
+			    ((grp->glb_out->doorbell_ack ^ slot_bit) & slot_bit);
+		}
+		mem_flush(&gShared->mem);
+		__asm__ volatile ("dsb sy" ::: "memory");
+		mwr(kCsfDoorbellBase, 1u);
+	}
+
+	struct mali_uvm *vm = mali_uvm_by_id_locked(grp->vm_id);
+	uint32_t as_fs = vm ? mrd(asReg(vm->as_slot, kAsFaultStatus)) : 0u;
+	if (qu->cs_out->fatal != 0u ||
+	    ((qu->cs_out->ack ^ qu->cs_in->req) & kCsFatalBit) != 0u ||
+	    (as_fs & 0xffu) != 0u || (mrd(kIntRaw) & 1u) != 0u) {
+		grp->fatal_queues |= qbit;
+		if (vm && (as_fs & 0xffu) != 0u) {
+			vm->unusable = true;
+		}
+		lck_mtx_unlock(&gMaliApiLock);
+		return EIO;
+	}
+	*out_done = false;
+	lck_mtx_unlock(&gMaliApiLock);
+	return 0;
+}
+
+/*
+ * Trial907: put the GPU back the way the loader expects to find it.
+ *
+ * The run ends with whatever this driver did still in effect: the MCU asked to start, twelve MFG
+ * domains powered, and the bus protections released. The loader then boots Android around a GPU
+ * it did not leave in that state, and the last few runs took minutes to come back rather than
+ * half a minute -- the difference between this being called and not.
+ *
+ * Only what this driver turned on is turned off, and each step is best-effort: this runs on the
+ * way out with no console to report to, so a step that does not take must not stop the rest.
+ */
+void
+hakios_mali610_quiesce(void)
+{
+	/*
+	 * Trial927: the panic-time fallback, and nothing else.
+	 *
+	 * Every orderly way out of this kernel -- the return device node, the return timer, the stop
+	 * poll, halt_all_cpus -- now calls hakios_mali610_stop() while there is still a machine to
+	 * call it from. By the time this function runs, loader_return() has stopped the other
+	 * processors and masked every interrupt, so the console is not usable, locks may be held by
+	 * a processor that is already off, and delay() has no clock behind it.
+	 *
+	 * That is why the old body of this function had to go. It printed, it polled, and it ran the
+	 * six steps -- and run from here the six steps do not finish: trial 925 panicked inside
+	 * printf from a secondary processor, and trial 926 reached the return with the GPU stopped
+	 * in a context that could not stop it.
+	 *
+	 * What is left is a fallback for the case the orderly paths never saw: a kernel that panics
+	 * with the GPU running. It checks the flag the orderly path sets, and if that is clear it
+	 * does the least that makes the hardware safe -- no printing, no locks, no waiting on a
+	 * clock, just a bounded number of register reads.
+	 */
+	if (__atomic_load_n(&gMaliStopped, __ATOMIC_ACQUIRE)) {
+		return;                         /* the orderly path already did it, or is doing it */
+	}
+	if (gGpu == 0) {
+		return;                         /* nothing was ever mapped */
+	}
+	/*
+	 * Trial928: and if the power may already be gone, do not touch the block at all.
+	 *
+	 * gGpu is only an address that was mapped once; it says nothing about whether a domain is
+	 * still powered behind it. Writing MMIO into a block whose clock has stopped does not fail
+	 * politely on this interconnect -- it can hang, and it can hang in the middle of a write or
+	 * a dsb, which is the one place a panic handler cannot recover from.
+	 *
+	 * The orderly stop sets gMaliStopped before it releases the power and clears
+	 * gpueb_bringup_held only after the release has been acknowledged. So a clear flag beside a
+	 * clear reference means the power is gone but stop() never finished -- by far the most
+	 * likely moment for a panic to be caught here, and the one case where the safest thing to
+	 * do with this hardware is nothing.
+	 *
+	 * A power reference still held (or one that was never taken) means the block answers, and
+	 * the six writes below are what a panic needs.
+	 */
+	if (!gpueb_bringup_held) {
+		return;                         /* no reference: the block is not ours to touch */
+	}
+	{
+		static volatile int claim;
+
+		if (!__atomic_compare_exchange_n(&claim, &(int){ 0 }, 1, false,
+		    __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE)) {
+			return;                 /* another processor is already here */
+		}
+	}
+	mwr(kMcuControl, kMcuControlDisable);
+	mwr(kJobIntMask, 0u);
+	mwr(kJobIntClear, 0xffffffffu);
+	mwr(kMmuIntMask, 0u);
+	mwr(kMmuIntClear, 0xffffffffu);
+	mwr(kIntMask, 0u);
+	mwr(kIntClear, 0xffffffffu);
+	mwr(kL2PwrOff, 1u);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	gMaliStopped = 1u;
+	/* The GPUEB release is the one thing that talks to another block; it is left to the
+	 * orderly path, which runs while that block can still be reached. */
+}
+
+
+/* ------------------------------------------------------------------ /dev/hakios-gpueb */
+
+/*
+ * Trial912: a knob for the GPUEB handshake, deliberately separate from the bring-up path.
+ *
+ * The question this answers is narrow and the risk of asking it wrongly is high: GPUEB is a
+ * coprocessor this kernel has never spoken to, and a transaction that is sent at the wrong
+ * moment or to a block whose clock is off hangs the board rather than failing. So the node
+ * exists, opening it does nothing at all, and every step is a separate write from user space
+ * that can be repeated or abandoned without another flash cycle.
+ *
+ * Four commands, one per write:
+ *
+ *   probe    read the mailbox and the shared page; writes nothing
+ *   init     CMD_INIT_SHARED_MEM, once per boot; remembered so a second one is refused
+ *   on       CMD_POWER_CONTROL(POWER_ON); paired with a reference this driver took
+ *   off      CMD_POWER_CONTROL(POWER_OFF); only for a reference this driver took
+ *
+ * A command that gets no answer within the vendor's ten-second budget is reported as unknown
+ * and is NOT retried: the reply may still arrive, and a second send would make the first
+ * reply impossible to attribute.
+ */
+/*
+ * The message the GPUFREQ channel carries: eight words, the first the command.
+ *
+ * The layout is the vendor's gpufreq_ipi.h:51-78, and only the fields this file writes are
+ * named. It is declared here rather than taken from gpueb-ipi.h because that header is a
+ * document, not something on this subtree's include path.
+ */
+union gpufreq_ipi_msg {
+	uint32_t w[8];
+};
+
+/*
+ * Four one-bit-per-channel bitmaps in the control bank, at the offsets the DT gives them.
+ *
+ * send and recv are read-only status, set and clr are write-one-to-act. Note that "clear"
+ * doubles as the answer: writing our channel's bit releases the reply slot, which is why a
+ * transaction ends with it and not with a read.
+ */
+static uint32_t
+gpueb_tx_busy(vm_offset_t ctl)
+{
+	return (reg_rd(ctl, MALI_GPUEB_CTL_TX_STS) & (1u << MALI_GPUEB_CHAN)) != 0u;
+}
+
+static uint32_t
+gpueb_rx_pending(vm_offset_t ctl)
+{
+	return (reg_rd(ctl, MALI_GPUEB_CTL_RX_STS) & (1u << MALI_GPUEB_CHAN)) != 0u;
+}
+
+static void
+gpueb_irq_raise(vm_offset_t ctl)
+{
+	reg_wr(ctl, MALI_GPUEB_CTL_IRQ_SET, 1u << MALI_GPUEB_CHAN);
+}
+
+static void
+gpueb_irq_clear(vm_offset_t ctl)
+{
+	reg_wr(ctl, MALI_GPUEB_CTL_IRQ_CLR, 1u << MALI_GPUEB_CHAN);
+}
+
+/* Word at a time, as mtk-gpueb-mailbox.c:136-143 requires; the SRAM is not normal memory. */
+static void
+gpueb_msg_write(vm_offset_t sram, const union gpufreq_ipi_msg *msg)
+{
+	uint32_t word;
+
+	for (word = 0; word < MALI_GPUEB_MSG_WORDS; word++) {
+		reg_wr(sram, MALI_GPUEB_TX_OFF + word * 4u, msg->w[word]);
+	}
+}
+
+static void
+gpueb_msg_read(vm_offset_t sram, union gpufreq_ipi_msg *msg)
+{
+	uint32_t word;
+
+	for (word = 0; word < MALI_GPUEB_MSG_WORDS; word++) {
+		msg->w[word] = reg_rd(sram, MALI_GPUEB_RX_OFF + word * 4u);
+	}
+}
+
+#define GPUEB_NAME              "hakios-gpueb"
+#define GPUEB_CMD_MAX           64
+#define GPUEB_SHARED_DUMP_WORDS 32
+#define GPUEB_IPI_TIMEOUT_MS    10000u          /* gpueb_ipi.h:10, the vendor's budget */
+#define GPUEB_POLL_US           1000u
+
+static int gpueb_major = -1;
+static lck_grp_t *gpueb_lck_grp;
+static vm_offset_t gpueb_sram, gpueb_ctl, gpueb_shared, gpueb_spm;
+static bool gpueb_inited;                       /* INIT_SHARED_MEM has succeeded this boot */
+static bool gpueb_held;                         /* this driver took a POWER_ON reference */
+
+/*
+ * Trial917: the last transaction, kept whole, for read() to hand back.
+ *
+ * Printing was not enough. The console path interleaves output from every processor, and an
+ * eight-word line from here landed inside a TCP summary line -- written, then half lost inside
+ * somebody else's message. A value a caller has to recover from a shared log is one that can be
+ * lost that way; a value it can read() is not.
+ *
+ * Everything a reader could want is recorded, including the cases that did not produce a reply:
+ * whether the send happened at all, what RX_STS was before the clear, and the eight words in
+ * order. Without that, a poll that gave up and a transaction that answered look the same from
+ * outside -- and the answer to "did the handshake happen" would depend on which one it was.
+ *
+ * A sequence number lets a caller tell a fresh answer from the previous one; the text is built
+ * once under the command lock and read out by offset, so a short read returns the next part
+ * rather than the beginning again.
+ */
+struct gpueb_outcome {
+	uint32_t sequence;
+	bool     sent;                  /* the message was written and the doorbell rung */
+	bool     replied;               /* RX was seen for this send */
+	uint32_t rx_status;             /* RX_STS as it was just before the clear */
+	int      verdict;               /* 0 ok, negative: what went wrong */
+	uint32_t word[MALI_GPUEB_MSG_WORDS];
+};
+
+static struct gpueb_outcome gpueb_last;
+static char gpueb_result[320];
+
+/*
+ * Trial915: one deadline for the whole command, in the clock XNU actually keeps.
+ *
+ * mach_absolute_time() counts ticks, not nanoseconds; dividing it by a million gave a number
+ * that was neither milliseconds nor in the unit this file assumed, so the "ten seconds" was
+ * whatever the tick rate happened to make it. clock_interval_to_deadline() converts once, from
+ * a named interval, and every later comparison is against the same counter -- which is what a
+ * budget has to mean if it is to mean anything.
+ */
+#define GPUEB_BUDGET_SECONDS    10u
+
+static void
+gpueb_set_deadline(uint64_t *deadline)
+{
+	clock_interval_to_deadline(GPUEB_BUDGET_SECONDS, NSEC_PER_SEC, deadline);
+}
+
+static void
+gpueb_dump_shared(const char *when)
+{
+	uint32_t word;
+
+	if (gpueb_shared == 0) {
+		printf("gpueb: shared page not mapped\n");
+		return;
+	}
+	printf("gpueb: shared %s:", when);
+	for (word = 0; word < GPUEB_SHARED_DUMP_WORDS; word++) {
+		if ((word % 8u) == 0u) {
+			printf("\n  +%03x:", word * 4u);
+		}
+		printf(" %08x", reg_rd(gpueb_shared, word * 4u));
+	}
+	printf("\n");
+}
+
+/*
+ * Trial915: one transaction, serialised, with exactly one budget.
+ *
+ * Everything here follows from a single rule: only a reply that arrives for THIS send counts.
+ * Three things enforce it. The mailbox is checked for a stale reply before sending, so an old
+ * one cannot be mistaken for an answer. A lock keeps two writes from interleaving on the same
+ * channel. And every exit that is not a fresh reply returns a negative code, because the caller
+ * uses that code to decide whether to record a state change -- the earlier version fell through
+ * a spin cap and read a stale slot, which made a handshake that never happened look like one
+ * that did.
+ *
+ * The lock is held across the whole command, so a second write from another thread waits for
+ * the first to finish rather than racing it. That is deliberate: there is one mailbox and one
+ * channel, and the states it changes (inited, held) only make sense serialised.
+ */
+static lck_mtx_t *gpueb_lock;
+
+/*
+ * Turn an outcome into the text a reader gets, and bump the sequence.
+ *
+ * Called with the command lock held, so the record and the text always describe the same
+ * transaction. The eight words are printed in order because the order is what identifies the
+ * message; the signed w[2] is the field the vendor's callers test.
+ */
+static void
+gpueb_publish(const char *what, bool sent, bool replied, uint32_t rx_status, int verdict,
+    const union gpufreq_ipi_msg *reply)
+{
+	uint32_t word;
+
+	gpueb_last.sequence++;
+	gpueb_last.sent = sent;
+	gpueb_last.replied = replied;
+	gpueb_last.rx_status = rx_status;
+	gpueb_last.verdict = verdict;
+	for (word = 0; word < MALI_GPUEB_MSG_WORDS; word++) {
+		gpueb_last.word[word] = (reply != NULL) ? reply->w[word] : 0u;
+	}
+
+	snprintf(gpueb_result, sizeof(gpueb_result),
+	    "seq %u %s sent %u replied %u rx %#x verdict %d cmd %#x ret %d "
+	    "words %08x %08x %08x %08x %08x %08x %08x %08x",
+	    gpueb_last.sequence, what, sent ? 1u : 0u, replied ? 1u : 0u,
+	    rx_status, verdict,
+	    gpueb_last.word[0], (int)gpueb_last.word[2],
+	    gpueb_last.word[0], gpueb_last.word[1], gpueb_last.word[2], gpueb_last.word[3],
+	    gpueb_last.word[4], gpueb_last.word[5], gpueb_last.word[6], gpueb_last.word[7]);
+}
+
+static int
+gpueb_xfer(const union gpufreq_ipi_msg *msg, int *ack, const char *what)
+{
+	union gpufreq_ipi_msg reply;
+	uint32_t rx_before = 0;
+	uint64_t deadline;
+	bool sent = false;
+	uint32_t spins = 0;
+	int rc = 0;
+
+	if (gpueb_lock == NULL) {
+		gpueb_lock = lck_mtx_alloc_init(gpueb_lck_grp, LCK_ATTR_NULL);
+	}
+	if (gpueb_lock == NULL) {
+		printf("gpueb: %s: no lock, so nothing is sent\n", what);
+		gpueb_publish(what, false, false, 0u, -4, NULL);
+		return -4;
+	}
+	lck_mtx_lock(gpueb_lock);
+
+	/*
+	 * A reply already sitting there belongs to an earlier transaction. Publishing this case
+	 * matters: from outside, "refused" and "answered" would otherwise both leave a record that
+	 * says nothing about why.
+	 */
+	if (gpueb_rx_pending(gpueb_ctl)) {
+		rx_before = reg_rd(gpueb_ctl, MALI_GPUEB_CTL_RX_STS);
+		printf("gpueb: %s: reply pending before the send (rx %#x); not sending, so the "
+		    "two cannot be confused\n", what, rx_before);
+		gpueb_publish(what, false, false, rx_before, -2, NULL);
+		rc = -2;
+		goto out;
+	}
+
+	/* One budget for the whole command: wait for TX, send, wait for RX. */
+	gpueb_set_deadline(&deadline);
+
+	while (gpueb_tx_busy(gpueb_ctl)) {
+		if (mach_absolute_time() >= deadline) {
+			printf("gpueb: %s: TX never went idle (tx %#x) -- nothing was sent, "
+			    "RESULT: not sent\n", what,
+			    reg_rd(gpueb_ctl, MALI_GPUEB_CTL_TX_STS));
+			gpueb_publish(what, false, false, 0u, -3, NULL);
+			rc = -3;
+			goto out;
+		}
+		delay(1);
+	}
+
+	gpueb_msg_write(gpueb_sram, msg);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	gpueb_irq_raise(gpueb_ctl);
+	sent = true;
+
+	while (!gpueb_rx_pending(gpueb_ctl)) {
+		if (mach_absolute_time() >= deadline) {
+			/*
+			 * Recorded before anything is cleared: IRQ_CLR does not touch TX_STS, and the
+			 * RX bit is the only evidence that this send was ever answered.
+			 */
+			rx_before = reg_rd(gpueb_ctl, MALI_GPUEB_CTL_RX_STS);
+			printf("gpueb: %s: sent, no reply within %u s -- RESULT UNKNOWN "
+			    "(tx %#x rx %#x); not retrying, the slot was not read\n",
+			    what, GPUEB_BUDGET_SECONDS,
+			    reg_rd(gpueb_ctl, MALI_GPUEB_CTL_TX_STS), rx_before);
+			gpueb_publish(what, true, false, rx_before, -1, NULL);
+			rc = -1;
+			goto out;
+		}
+		delay(1);
+		if (++spins > 20000u) {
+			rx_before = reg_rd(gpueb_ctl, MALI_GPUEB_CTL_RX_STS);
+			printf("gpueb: %s: gave up after %u polls with no reply -- RESULT UNKNOWN "
+			    "(tx %#x rx %#x); the slot was not read\n", what, spins,
+			    reg_rd(gpueb_ctl, MALI_GPUEB_CTL_TX_STS), rx_before);
+			gpueb_publish(what, true, false, rx_before, -1, NULL);
+			rc = -1;
+			goto out;
+		}
+	}
+
+	/* Only here is there a reply that belongs to this send. */
+	rx_before = reg_rd(gpueb_ctl, MALI_GPUEB_CTL_RX_STS);
+	gpueb_msg_read(gpueb_sram, &reply);
+	printf("gpueb: %s: reply %08x %08x %08x %08x\n", what,
+	    reply.w[0], reply.w[1], reply.w[2], reply.w[3]);
+	printf("gpueb: %s: reply (cont) %08x %08x %08x %08x; ret %d\n", what,
+	    reply.w[4], reply.w[5], reply.w[6], reply.w[7], (int)reply.w[2]);
+	if (ack != NULL) {
+		*ack = (int)reply.w[2];
+	}
+	gpueb_publish(what, true, true, rx_before, 0, &reply);
+
+out:
+	/* Release the reply slot either way: an unanswered send must not block the next one. */
+	gpueb_irq_clear(gpueb_ctl);
+	lck_mtx_unlock(gpueb_lock);
+	return rc;
+}
+
+/*
+ * The domains, sampled next to the shared page.
+ *
+ * A transaction's effect on the GPU cannot be read from the mailbox alone: GPUEB can answer and
+ * still not have powered anything. These four words are the other half of the question, and they
+ * have to be taken in the same breath as the shared page or the comparison is between two
+ * different moments -- the mistake that produced a wrong conclusion once already.
+ *
+ * MFG0_PWR_CON and MFG1_PWR_CON carry their own ACK bits (30 and 31); the XPU status word at
+ * 0xF3C is the one gpufreq reads, with MFG1..MFG12 in bits 2..13. The 0xF34 word is printed too
+ * because it is *not* the same set of domains -- its low bits are audio, ADSP and ISP -- and
+ * having both in the log is what stops them being mistaken for each other again.
+ */
+static void
+gpueb_dump_domains(const char *when)
+{
+	uint32_t mfg0, mfg1, status;
+
+	if (gpueb_spm == 0) {
+		gpueb_spm = ml_io_map_with_prot(MALI_SPM_PHYS, MALI_SPM_SIZE, VM_PROT_READ);
+		if (gpueb_spm == 0) {
+			printf("gpueb: domains %s: the SPM will not map\n", when);
+			return;
+		}
+	}
+	mfg0 = reg_rd(gpueb_spm, MALI_SPM_MFG0_PWR_CON);
+	mfg1 = reg_rd(gpueb_spm, MALI_SPM_MFG1_PWR_CON);
+	status = reg_rd(gpueb_spm, MALI_SPM_PWR_STATUS_GF);
+	/*
+	 * Which bits mean what, from the vendor's own table.
+	 *
+	 * mtk-pd-chk-mt6895.c:682-693 maps the MFG domains onto this word one per bit:
+	 *   MFG1 = 0x00000004 (bit 2)   MFG2 = 0x00000008 (bit 3)   ...   MFG12 = 0x00002000
+	 *
+	 * gpufreq_mt6895.h:74-76 defines the three masks the vendor actually tests:
+	 *   0x6    MFG0|MFG1   (:3382-3385, after the AP reference path brings MFG1 up)
+	 *   0x3ffe MFG0..MFG12
+	 *   0x3ffc MFG1..MFG12 (:3580, the power-off check)
+	 *
+	 * PWR_CON's own bits, mt6895_spm_reg.h:2179-2187:
+	 *   bit 0 PWR_RST_B   bit 2 PWR_ON   bit 3 PWR_ON_2ND   bit 4 PWR_CLK_DIS
+	 *   bit 30 PWR_ACK    bit 31 PWR_ACK_2ND
+	 * The request bits are 2 and 3; bit 0 is the reset release, not a request.
+	 *
+	 * The manual power-on path does not need all twelve. What it needs is the domain it turned
+	 * on, and mtk-scpsys-mt6895.c:462 waits for that domain's own PWR_CON[31:30]. So the two
+	 * words are printed side by side: MFG1_PWR_CON says whether MFG1 acknowledged, and F3C
+	 * bit 2 says whether the same domain reads as powered.
+	 */
+	printf("gpueb: domains %s: MFG0 %#x (ack30 %u ack31 %u) "
+	    "MFG1 %#x (rst_b %u on %u on2nd %u clk_dis %u ack30 %u ack31 %u) "
+	    "F3C %#x (mfg0 %u mfg1 %u mfg0_1 %#x mfg1_12 %#x) F40 %#x (mfg1 %u)\n",
+	    when,
+	    mfg0, (mfg0 >> 30) & 1u, (mfg0 >> 31) & 1u,
+	    mfg1,
+	    (mfg1 >> 0) & 1u, (mfg1 >> 2) & 1u, (mfg1 >> 3) & 1u, (mfg1 >> 4) & 1u,
+	    (mfg1 >> 30) & 1u, (mfg1 >> 31) & 1u,
+	    status, (status >> 1) & 1u, (status >> 2) & 1u,
+	    status & 0x6u, status & 0x3ffcu,
+	    reg_rd(gpueb_spm, MALI_SPM_PWR_STATUS_GF2),
+	    (reg_rd(gpueb_spm, MALI_SPM_PWR_STATUS_GF2) >> 2) & 1u);
+}
+
+/* ------------------------------------------------------------------ the clean stop */
+
+/*
+ * Trial924: stopping a GPU whose MCU is really running.
+ *
+ * Every run before this one reached the return path with an MCU that had never executed, so
+ * quiesce() could write DISABLE and move on: there was nothing to stop. trial 923g is the first
+ * run where the firmware booted -- version word 0x1010000, global interface answered, tiler
+ * ready -- and that run hung at the Apple logo on the way out.
+ *
+ * The order below is panthor's, from panthor_fw_pre_reset(), panthor_fw_stop(),
+ * panthor_mmu.c's AS teardown and panthor_gpu.c's L2 power-off:
+ *
+ *   1. ask the firmware to halt, and wait for MCU_STATUS_HALT
+ *   2. disable the MCU, and wait for MCU_STATUS_DISABLED
+ *   3. park AS0 so nothing can be translated while memory changes hands
+ *   4. power the L2 off, which is what flushes its dirty lines and quiets the AXI port
+ *   5. mask and clear the three interrupt blocks
+ *   6. only then release the GPUEB power
+ *
+ * Step 4 is the one that matters most and the one this driver never did. Without it the L2 is
+ * still a live cache with a bus master behind it when GPUEB is asked to remove power, and GPUEB
+ * waits for an idle that never comes.
+ *
+ * Each step prints before and after, because the point of a stop that runs while the kernel is
+ * alive is to read where it got to if it does not finish.
+ */
+
+#define MALI_HALT_TIMEOUT_US    500000u         /* the vendor's own halt budget */
+#define MALI_STOP_TIMEOUT_US    100000u
+#define MALI_L2_TIMEOUT_US      20000u
+
+/* Poll a register until it satisfies a predicate, or the budget runs out. */
+static bool
+mali_poll(const char *what, unsigned offset, uint32_t want, uint32_t mask, unsigned budget_us)
+{
+	unsigned waited = 0;
+	uint32_t value = mrd(offset);
+
+	while ((value & mask) != want) {
+		if (waited >= budget_us) {
+			printf("mali: stop %s: gave up after %u us, reads %#x (want %#x mask %#x)\n",
+			    what, waited, value, want, mask);
+			return false;
+		}
+		delay(1);
+		waited += 1000u;
+		value = mrd(offset);
+	}
+	printf("mali: stop %s: reads %#x after %u us\n", what, value, waited);
+	return true;
+}
+
+static bool
+mali_stop_hardware(void)
+{
+	volatile struct glb_input *input = NULL;
+	uint32_t status;
+	uint32_t mcu_final, tiler_final, l2_final;
+
+	if (gMaliStopped) {
+		printf("mali: stop: already stopped\n");
+		return true;
+	}
+	if (gGpu == 0) {
+		printf("mali: stop: the block was never mapped; nothing to stop\n");
+		/* The reference may still be held, so it is still released. */
+		hakios_gpueb_bringup_power_off();
+		gMaliStopped = 1u;
+		return true;
+	}
+
+	/*
+	 * Trial928: say we are here before reading anything.
+	 *
+	 * The line below used to be the first one, and it took its three values from three MMIO
+	 * reads before printf could be entered -- so a stop that hung on the very first register
+	 * access left no trace at all, and the last thing in the log was whatever came before. A
+	 * marker that costs nothing and reads nothing separates "never reached stop()" from
+	 * "reached it and hung on the first read", which are different problems.
+	 */
+	printf("mali: stop: stage 1 reached, gGpu %p, no register read yet\n", (void *)gGpu);
+	printf("mali: stop: stage 2 first register read about to happen\n");
+	printf("mali: stop: enter (mcu status %u, tiler ready %#x, l2 ready %#x)\n",
+	    mrd(kMcuStatus), mrd(kTilerReady), mrd(kL2Ready));
+	printf("mali: stop: stage 2 done, the block answers\n");
+
+	if (gMaliGpu) {
+		mali_uapi_stop_groups();
+	} else if (gMaliM2c && gM2c.programmed && !m2c_terminate(&gM2c)) {
+		printf("mali: m2c: RETURN group termination unconfirmed; retaining pages\n");
+	}
+	printf("mali: stop: stage 3 halt\n");
+	/*
+	 * Step 1: halt. Level, not a toggle, and the shared page has to be flushed first --
+	 * it is cacheable on this side, so a request written only to cache is a request the
+	 * firmware never sees.
+	 */
+	if (gShared != NULL && gShared->mem.kva != 0) {
+		volatile struct glb_control *control =
+		    (volatile struct glb_control *)gShared->mem.kva;
+
+		input = (volatile struct glb_input *)shared_at(control->input_va);
+	}
+	if (input != NULL) {
+		printf("mali: stop halt: req before %#x\n", input->req);
+		input->req |= kGlbReqHalt;
+		/*
+		 * The flush is not optional. This side maps the shared page cacheable, so a request
+		 * written only into cache is a request the firmware never reads -- and then the halt
+		 * never comes and this looks like a core that refused to stop.
+		 */
+		mem_flush(&gShared->mem);
+		__asm__ volatile ("dsb sy" ::: "memory");
+		printf("mali: stop halt: req after %#x, ringing the doorbell\n", input->req);
+		mwr(kDoorbell0, 1u);
+		(void)mali_poll("halt", kMcuStatus, 2u, 0xfu, MALI_HALT_TIMEOUT_US);
+	} else {
+		printf("mali: stop halt: no shared input block; going straight to the hard stop\n");
+	}
+
+	printf("mali: stop: stage 4 disable\n");
+	/* Step 2: disable, and wait for the core to actually report disabled. */
+	mwr(kMcuControl, kMcuControlDisable);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	(void)mali_poll("disabled", kMcuStatus, 0u, 0xfu, MALI_STOP_TIMEOUT_US);
+
+	status = mrd(kMcuStatus);
+	if ((status & 0xfu) != 0u) {
+		/*
+		 * Only now, with halt and disable both having failed to take, is the reset used.
+		 * The vendor never needs it on a normal stop; it is the hammer for a core that
+		 * will not stop, and doing it earlier risks restarting a state machine that was
+		 * already finishing.
+		 */
+		printf("mali: stop: the core did not stop (status %u); one bounded soft reset\n",
+		    status);
+		(void)gpu_soft_reset();
+	} else {
+		printf("mali: stop: no soft reset needed\n");
+	}
+
+	if (gMaliGpu) {
+		mali_uapi_park_all_vms();
+	} else if (gMaliM2c && gM2c.programmed) {
+		/* A failed TERMINATE must never cause reuse of pages still visible to DMA. */
+		if ((mrd(kMcuStatus) & 0xfu) == 0 && m2c_park(&gM2c) && !gM2c.group_in) {
+			m2c_free(&gM2c);
+		} else {
+			printf("mali: m2c: RETURN retaining AS1 pages through reset\n");
+		}
+	}
+	printf("mali: stop: stage 5 park as0\n");
+	/* Step 3: park AS0 so no translation survives into the handover. */
+	gpu_wr64(asReg(0, kAsTranstab), 0ull);
+	gpu_wr64(asReg(0, kAsMemattr), 0ull);
+	gpu_wr64(asReg(0, kAsTranscfg), kAsTranscfgUnmapped);
+	mwr(asReg(0, kAsCommand), 1u);          /* AS_COMMAND_UPDATE */
+	__asm__ volatile ("dsb sy" ::: "memory");
+	(void)mali_poll("as0 parked", asReg(0, kAsStatus), 0u, 0x1u, MALI_STOP_TIMEOUT_US);
+
+	printf("mali: stop: stage 6 l2 off\n");
+	/* Step 4: the L2 off. This is what makes the AXI port quiet. */
+	(void)mali_poll("l2 pwrtrans clear", kL2PwrTrans, 0u, 0x1u, MALI_L2_TIMEOUT_US);
+	if (mrd(kL2Ready) != 0u) {
+		mwr(kL2PwrOff, 1u);
+		__asm__ volatile ("dsb sy" ::: "memory");
+		(void)mali_poll("l2 pwrtrans after off", kL2PwrTrans, 0u, 0x1u, MALI_L2_TIMEOUT_US);
+		printf("mali: stop: l2 ready now %#x\n", mrd(kL2Ready));
+	}
+
+	printf("mali: stop: stage 7 irqs\n");
+	/* Step 5: mask and clear the three interrupt blocks. */
+	mwr(kJobIntMask, 0u);
+	mwr(kJobIntClear, 0xffffffffu);
+	mwr(kMmuIntMask, 0u);
+	mwr(kMmuIntClear, 0xffffffffu);
+	mwr(kIntMask, 0u);
+	mwr(kIntClear, 0xffffffffu);
+	__asm__ volatile ("dsb sy" ::: "memory");
+	printf("mali: stop: irqs masked and cleared (raw %#x job %#x mmu %#x)\n",
+	    mrd(kIntRaw), mrd(kJobIntRaw), mrd(kMmuIntRaw));
+
+	/*
+	 * Trial925: the last look at the block, taken BEFORE the power goes away.
+	 *
+	 * The previous version printed these three after releasing GPUEB, which is a MMIO read
+	 * from a domain that has just been switched off -- the exact mistake this file was
+	 * corrected for twice already, in quiesce() and in the ordering of the release itself.
+	 * Nothing may touch gGpu once step 6 has run.
+	 */
+	mcu_final = mrd(kMcuStatus);
+	tiler_final = mrd(kTilerReady);
+	l2_final = mrd(kL2Ready);
+
+	/*
+	 * Trial928: claim the flag before releasing, not after.
+	 *
+	 * Everything above this line touches the block, and by now it is stopped -- but it is still
+	 * powered. The release is what removes the power, and after that every one of those
+	 * registers is behind a domain that is off. If a panic lands between the release and the
+	 * flag being set, quiesce() reads the flag as clear, decides the GPU still needs stopping,
+	 * and writes MMIO into a block with no power behind it. On this interconnect that is a hang
+	 * or a bus error, not a no-op.
+	 *
+	 * So the flag goes up first. From here quiesce() is a return, and any panic in the release
+	 * leaves the GPU powered rather than half-written -- the safer of the two failures, because
+	 * power still on is something the loader can recover from.
+	 */
+	gMaliStopped = 1u;
+	__asm__ volatile ("dsb sy" ::: "memory");
+
+	/* Step 6: and only now the power. */
+	printf("mali: stop: releasing the GPUEB reference\n");
+	hakios_gpueb_bringup_power_off();
+
+	printf("mali: stop: done (mcu status %u, tiler ready %#x, l2 ready %#x; read before "
+	    "the release)\n", mcu_final, tiler_final, l2_final);
+	return true;
+}
+
+bool
+hakios_mali610_stop(void)
+{
+	if (gMaliGpu && gMaliApiLockInit) {
+		__atomic_store_n(&gMaliStopping, 1u, __ATOMIC_RELEASE);
+		lck_mtx_lock(&gMaliApiLock);
+		bool ok = mali_stop_hardware();
+		lck_mtx_unlock(&gMaliApiLock);
+		return ok;
+	}
+	if (!gMaliM2c) {
+		return mali_stop_hardware();
+	}
+	lck_mtx_lock(&m2c_lock);
+	bool ok = mali_stop_hardware();
+	lck_mtx_unlock(&m2c_lock);
+	return ok;
+}
+
+/* ------------------------------------------------------------------ the bring-up caller */
+
+/*
+ * Trial922: the same handshake, for the code path that starts the MCU.
+ *
+ * The device node is a bench tool: a person decides when to send each step. bring-up cannot
+ * wait for a person, so it needs the two calls directly, plus a mapping of its own -- the node
+ * maps lazily on first write, and on this path nobody writes.
+ *
+ * The reference is tracked separately from the node's gpueb_held on purpose. They are different
+ * owners: a person can hold the node's reference open while bring-up also holds one, and
+ * releasing one must not release the other. Each owner releases what it took.
+ *
+ * Nothing here is called unless the caller asked for it. mali=0, mali_probe=1 and every run
+ * before this one behave exactly as they did.
+ */
+
+static bool
+gpueb_bringup_map(void)
+{
+	if (gpueb_sram != 0 && gpueb_ctl != 0) {
+		return true;
+	}
+	gpueb_sram = ml_io_map(MALI_GPUEB_MBOX_SRAM_PHYS, MALI_GPUEB_MBOX_SRAM_SIZE);
+	gpueb_ctl = ml_io_map(MALI_GPUEB_MBOX_CTL_PHYS, MALI_GPUEB_MBOX_CTL_SIZE);
+	gpueb_shared = ml_io_map(MALI_GPUEB_SHARED_PHYS, MALI_GPUFREQ_MEM_SIZE);
+	if (gpueb_sram == 0 || gpueb_ctl == 0) {
+		printf("mali: gpueb: the mailbox will not map\n");
+		return false;
+	}
+	return true;
+}
+
+/*
+ * INIT then POWER_ON, in the vendor's order, answering whether the domain came up.
+ *
+ * The two steps are separate transactions with their own answers, as gpufreq_v2.c sends them.
+ * INIT is once per boot and remembered; a second call after a success only re-reads the state.
+ *
+ * On failure nothing is held: a POWER_ON that did not answer is not a reference this code may
+ * later release, because there is nothing to release.
+ */
+bool
+hakios_gpueb_bringup_power_on(void)
+{
+	union gpufreq_ipi_msg msg;
+	int ack = 0;
+	int rc;
+
+	if (!gpueb_bringup_map()) {
+		return false;
+	}
+	if (gpueb_lck_grp == NULL) {
+		printf("mali: gpueb: no lock group; not sending\n");
+		return false;
+	}
+	if (!gpueb_inited) {
+		memset(&msg, 0, sizeof(msg));
+		msg.w[0] = MALI_GPUEB_CMD_INIT_SHARED;
+		msg.w[2] = (uint32_t)(MALI_GPUEB_SHARED_PHYS & 0xffffffffu);
+		msg.w[4] = (uint32_t)((MALI_GPUEB_SHARED_PHYS + MALI_GPUFREQ_STATUS_MEM_SZ) &
+		    0xffffffffu);
+		msg.w[6] = MALI_GPUFREQ_STATUS_MEM_SZ;
+		msg.w[7] = MALI_GPUFREQ_MEM_SIZE - MALI_GPUFREQ_STATUS_MEM_SZ;
+
+		rc = gpueb_xfer(&msg, &ack, "bringup init");
+		if (rc != 0 || ack < 0) {
+			printf("mali: gpueb: INIT did not succeed (rc %d ack %d); no power request "
+			    "is sent, because INIT is what registers the shared page\n", rc, ack);
+			return false;
+		}
+		gpueb_inited = true;
+		printf("mali: gpueb: INIT answered %d\n", ack);
+	}
+
+	memset(&msg, 0, sizeof(msg));
+	msg.w[0] = MALI_GPUEB_CMD_POWER;
+	msg.w[2] = MALI_GPUEB_POWER_ON;
+
+	rc = gpueb_xfer(&msg, &ack, "bringup on");
+	if (rc != 0) {
+		printf("mali: gpueb: POWER_ON got no answer (rc %d) -- RESULT UNKNOWN, "
+		    "nothing is held\n", rc);
+		return false;
+	}
+	if (ack < 0) {
+		printf("mali: gpueb: POWER_ON refused, return value %d\n", ack);
+		return false;
+	}
+
+	gpueb_bringup_held = true;
+	gpueb_dump_shared("after bringup on");
+	gpueb_dump_domains("after bringup on");
+	printf("mali: gpueb: POWER_ON answered %d, a reference is held for this run\n", ack);
+	if (gMaliOpp >= 0) {
+		memset(&msg, 0, sizeof(msg));
+		msg.w[0] = MALI_GPUEB_CMD_COMMIT;
+		msg.w[1] = MALI_GPUEB_TARGET_STACK;
+		msg.w[2] = (uint32_t)gMaliOpp;
+		rc = gpueb_xfer(&msg, &ack, "stack opp commit");
+		printf("mali: gpueb: CMD_COMMIT(TARGET_STACK, opp=%d) -> rc %d ack %d\n",
+		    gMaliOpp, rc, ack);
+		if (rc == 0 && ack >= 0) {
+			gpueb_dump_shared("after stack commit");
+		}
+	}
+	return true;
+}
+
+/* Release only what this path took. */
+void
+hakios_gpueb_bringup_power_off(void)
+{
+	union gpufreq_ipi_msg msg;
+	int ack = 0;
+	int rc;
+
+	if (!gpueb_bringup_held) {
+		return;
+	}
+	memset(&msg, 0, sizeof(msg));
+	msg.w[0] = MALI_GPUEB_CMD_POWER;
+	msg.w[2] = MALI_GPUEB_POWER_OFF;
+
+	rc = gpueb_xfer(&msg, &ack, "bringup off");
+	if (rc != 0 || ack < 0) {
+		printf("mali: gpueb: POWER_OFF did not confirm (rc %d ack %d); the reference "
+		    "stays marked as held\n", rc, ack);
+		return;
+	}
+	gpueb_bringup_held = false;
+	gpueb_dump_shared("after bringup off");
+	gpueb_dump_domains("after bringup off");
+	printf("mali: gpueb: POWER_OFF answered %d; the reference is released\n", ack);
+}
+
+static void
+gpueb_do_probe(void)
+{
+	printf("gpueb: probe: ctl tx %#x rx %#x (nothing written)\n",
+	    reg_rd(gpueb_ctl, MALI_GPUEB_CTL_TX_STS),
+	    reg_rd(gpueb_ctl, MALI_GPUEB_CTL_RX_STS));
+	gpueb_dump_shared("now");
+	gpueb_dump_domains("now");
+}
+
+static int
+gpueb_do_init(void)
+{
+	union gpufreq_ipi_msg msg;
+	int ack = 0;
+	int rc;
+
+	if (gpueb_inited) {
+		printf("gpueb: init: already done this boot; not sending again\n");
+		return 0;
+	}
+	memset(&msg, 0, sizeof(msg));
+	msg.w[0] = MALI_GPUEB_CMD_INIT_SHARED;
+	msg.w[2] = (uint32_t)(MALI_GPUEB_SHARED_PHYS & 0xffffffffu);
+	msg.w[3] = 0u;
+	msg.w[4] = (uint32_t)((MALI_GPUEB_SHARED_PHYS + MALI_GPUFREQ_STATUS_MEM_SZ) &
+	    0xffffffffu);
+	msg.w[5] = 0u;
+	msg.w[6] = MALI_GPUFREQ_STATUS_MEM_SZ;
+	msg.w[7] = MALI_GPUFREQ_MEM_SIZE - MALI_GPUFREQ_STATUS_MEM_SZ;
+
+	rc = gpueb_xfer(&msg, &ack, "init");
+	if (rc != 0) {
+		printf("gpueb: init: nothing recorded, result %d; init is still owed\n", rc);
+		return rc;
+	}
+	if (ack >= 0) {
+		gpueb_inited = true;
+		printf("gpueb: init: done, return value %d\n", ack);
+		/* Basis for the ON comparison: the domains as INIT left them, before any power command. */
+		gpueb_dump_domains("after init, before on");
+	} else {
+		printf("gpueb: init: return value %d (negative -- firmware refused); "
+		    "not marked done\n", ack);
+		return EIO;
+	}
+	return 0;
+}
+
+static int
+gpueb_do_power(bool on)
+{
+	union gpufreq_ipi_msg msg;
+	int ack = 0;
+	int rc;
+
+	if (!gpueb_inited) {
+		printf("gpueb: %s: init has not succeeded, so this is not sent\n",
+		    on ? "on" : "off");
+		return EPERM;
+	}
+	if (on && gpueb_held) {
+		printf("gpueb: on: already held by this driver; not sent again\n");
+		return 0;
+	}
+	if (!on && !gpueb_held) {
+		printf("gpueb: off: this driver holds no reference; not sent\n");
+		return EPERM;
+	}
+	memset(&msg, 0, sizeof(msg));
+	msg.w[0] = MALI_GPUEB_CMD_POWER;
+	msg.w[2] = on ? MALI_GPUEB_POWER_ON : MALI_GPUEB_POWER_OFF;
+
+	rc = gpueb_xfer(&msg, &ack, on ? "on" : "off");
+	if (rc != 0) {
+		/*
+		 * Nothing is recorded on a failed transaction. For OFF that means the reference
+		 * stays held, which is the safe direction: this driver went on believing it owns
+		 * a power vote that may or may not have been released, and the next OFF is allowed
+		 * to try again.
+		 */
+		printf("gpueb: %s: nothing changed, result %d\n", on ? "on" : "off", rc);
+		return EIO;
+	}
+	if (on) {
+		if (ack >= 0) {
+			gpueb_held = true;
+			/* The domains and the shared page together, right after the answer. */
+			gpueb_dump_shared("after on");
+			gpueb_dump_domains("after on");
+			return 0;
+		}
+		printf("gpueb: on: return value %d (negative -- power was refused, "
+		    "reference not taken)\n", ack);
+		return EIO;
+	}
+	if (ack >= 0) {
+		gpueb_held = false;
+		gpueb_dump_shared("after off");
+		gpueb_dump_domains("after off");
+		return 0;
+	}
+	printf("gpueb: off: return value %d (negative -- release refused, "
+	    "reference kept)\n", ack);
+	return EIO;
+}
+
+static int
+gpueb_open(__unused dev_t dev, __unused int flags, __unused int devtype,
+    __unused struct proc *process)
+{
+	/* Opening touches nothing: the hardware work is done by a write, one step at a time. */
+	return 0;
+}
+
+static int
+gpueb_close(__unused dev_t dev, __unused int flags, __unused int devtype,
+    __unused struct proc *process)
+{
+	return 0;
+}
+
+/*
+ * Trial917: read the answer by offset, and never clear it.
+ *
+ * The first version copied from the start of the buffer on every call and then emptied it, so a
+ * reader that asked for less than the whole thing got the beginning twice and a reader that
+ * came back got nothing. Neither is wrong in a way that shows up loudly -- both quietly give a
+ * wrong answer, which is the kind this file keeps having to correct. The text now belongs to the
+ * transaction that produced it and is read like a file: the caller's offset decides what comes
+ * next, and re-reading after the fact is allowed because the next transaction overwrites it.
+ */
+static int
+gpueb_read(__unused dev_t dev, struct uio *uio, __unused int flags)
+{
+	size_t length;
+	size_t at;
+	size_t take;
+	int error;
+
+	if (gpueb_lock != NULL) {
+		lck_mtx_lock(gpueb_lock);
+	}
+	length = strlen(gpueb_result);
+	if (gpueb_lock != NULL) {
+		lck_mtx_unlock(gpueb_lock);
+	}
+
+	at = (size_t)uio_offset(uio);
+	if (at >= length) {
+		return 0;
+	}
+	take = MIN(length - at, (size_t)uio_resid(uio));
+	error = uiomove(gpueb_result + at, take, uio);
+	return error;
+}
+
+static int
+gpueb_write(__unused dev_t dev, struct uio *uio, __unused int flags)
+{
+	char command[GPUEB_CMD_MAX];
+	uint32_t take = MIN((uint32_t)uio_resid(uio), (uint32_t)sizeof(command) - 1u);
+	int error;
+	char *end;
+
+	if (take == 0u) {
+		return 0;
+	}
+	error = uiomove(command, take, uio);
+	if (error != 0) {
+		return error;
+	}
+	command[take] = 0;
+	/* A trailing newline is what a shell echo adds; it is not part of the command. */
+	for (end = command; *end != 0; end++) {
+		if (*end == '\n' || *end == '\r') {
+			*end = 0;
+			break;
+		}
+	}
+	if (gpueb_sram == 0) {
+		gpueb_sram = ml_io_map(MALI_GPUEB_MBOX_SRAM_PHYS, MALI_GPUEB_MBOX_SRAM_SIZE);
+		gpueb_ctl = ml_io_map(MALI_GPUEB_MBOX_CTL_PHYS, MALI_GPUEB_MBOX_CTL_SIZE);
+		gpueb_shared = ml_io_map(MALI_GPUEB_SHARED_PHYS, MALI_GPUFREQ_MEM_SIZE);
+		if (gpueb_sram == 0 || gpueb_ctl == 0) {
+			printf("gpueb: the mailbox will not map; nothing done\n");
+			return ENXIO;
+		}
+		printf("gpueb: mapped sram %p ctl %p shared %p\n",
+		    (void *)gpueb_sram, (void *)gpueb_ctl, (void *)gpueb_shared);
+	}
+
+	/*
+	 * Trial915: the transaction's verdict reaches the caller.
+	 *
+	 * Returning zero for every write made the only signal a user-space program could see --
+	 * the write's result -- say "fine" whether the handshake had answered or not. A caller that
+	 * wants to know must look at /dev/hlog either way, but it should not be told the opposite.
+	 */
+	if (strcmp(command, "probe") == 0) {
+		gpueb_do_probe();
+		return 0;
+	}
+	if (strcmp(command, "stop") == 0) {
+		/*
+		 * Trial924: the clean stop on demand.
+		 *
+		 * This is the point of the step: run it while the kernel is alive, read /dev/hlog, and
+		 * see which of the six stages it reached. If it finishes here and the board still hangs
+		 * on RETURN, the cause is not the GPU handover.
+		 */
+		return hakios_mali610_stop() ? 0 : EIO;
+	}
+	if (strcmp(command, "init") == 0) {
+		return gpueb_do_init();
+	}
+	if (strcmp(command, "on") == 0) {
+		return gpueb_do_power(true);
+	}
+	if (strcmp(command, "off") == 0) {
+		return gpueb_do_power(false);
+	}
+	if (command[0] != 0) {
+		printf("gpueb: unknown command \"%s\"; probe, init, on, off\n", command);
+		return EINVAL;
+	}
+	return 0;
+}
+
+static const struct cdevsw gpueb_cdevsw = {
+	.d_open = gpueb_open, .d_close = gpueb_close, .d_read = gpueb_read,
+	.d_write = gpueb_write, .d_ioctl = eno_ioctl, .d_stop = eno_stop, .d_reset = eno_reset,
+	.d_select = eno_select, .d_mmap = eno_mmap, .d_strategy = eno_strat, .d_type = 0
+};
+
+void
+hakios_gpueb_start(void)
+{
+	if (gpueb_major >= 0) {
+		return;
+	}
+	gpueb_lck_grp = lck_grp_alloc_init("hakios-gpueb", LCK_GRP_ATTR_NULL);
+	gpueb_major = cdevsw_add(-1, &gpueb_cdevsw);
+	if (gpueb_major < 0) {
+		printf("gpueb: cdevsw_add failed\n");
+		return;
+	}
+	if (devfs_make_node(makedev(gpueb_major, 0), DEVFS_CHAR, UID_ROOT, GID_WHEEL,
+	    0600, GPUEB_NAME) == NULL) {
+		printf("gpueb: cannot make /dev/%s (major %d)\n", GPUEB_NAME, gpueb_major);
+		return;
+	}
+	printf("gpueb: /dev/%s major %d; writing probe/init/on/off/stop works it, "
+	    "opening it does not\n", GPUEB_NAME, gpueb_major);
+}
+
+void hakios_gpueb_start(void);
 
 static void
 mali_thread(void *parameter, wait_result_t result)
@@ -5054,17 +9433,80 @@ mali_thread(void *parameter, wait_result_t result)
 	(void)result;
 
 	delay(2000 * 1000);                     /* let the rest of the machine settle first */
-	mali_bring_up();
+	if (gMaliGpu && gMaliApiLockInit) {
+		bool start_service = false;
+
+		lck_mtx_lock(&gMaliApiLock);
+		if (!gMaliStopped && !__atomic_load_n(&gMaliStopping, __ATOMIC_ACQUIRE)) {
+			mali_bring_up();
+			start_service = gMaliDone && !gMaliStopped &&
+			    !__atomic_load_n(&gMaliStopping, __ATOMIC_ACQUIRE);
+		}
+		lck_mtx_unlock(&gMaliApiLock);
+		if (start_service) {
+			HakiosMali610Start();
+		}
+	} else if (gMaliM2c) {
+		lck_mtx_lock(&m2c_lock);
+		if (!gMaliStopped) {
+			mali_bring_up();
+		}
+		lck_mtx_unlock(&m2c_lock);
+	} else {
+		mali_bring_up();
+	}
 }
 
 void
 hakios_mali610_init(void)
 {
 	unsigned which = 0;
+	unsigned mali_gpu = 0;
+	bool have_mali = PE_parse_boot_argn("mali", &which, sizeof(which));
 	thread_t thread;
 
-	if (!PE_parse_boot_argn("mali", &which, sizeof(which)) || which == 0) {
+	(void)PE_parse_boot_argn("mali_gpu", &mali_gpu, sizeof(mali_gpu));
+	if (mali_gpu != 0 && !have_mali) {
+		which = 6u;
+		have_mali = true;
+	}
+	if (!have_mali || which == 0) {
+		/*
+		 * Trial908: mali_probe works on its own, without mali=N.
+		 *
+		 * The read-only probe is the one thing this driver can do that does not change the
+		 * GPU's state, so it must be reachable without asking for a power-on sequence -- and
+		 * mali=0 is exactly the request not to have one. Without this the probe never ran: the
+		 * only switch that opens the file also starts the twelve domains.
+		 */
+		unsigned probe = 0;
+
+		/*
+		 * Trial912: the GPUEB knob is registered on every boot, including the stable mali=0
+		 * one, because that is the baseline the handshake is meant to be tried against.
+		 * Registering a character device and opening it touch no hardware -- the first write
+		 * is what maps the mailbox, and the commands after it are what talk to the block.
+		 */
+		hakios_gpueb_start();
+
+		if (PE_parse_boot_argn("mali_probe", &probe, sizeof(probe)) && probe != 0) {
+			(void)kernel_thread_start(mali_thread, NULL, &thread);
+			thread_deallocate(thread);
+		}
 		return;
+	}
+	hakios_gpueb_start();
+	if (mali_gpu != 0) {
+		if (gpueb_lck_grp != NULL) {
+			lck_mtx_init(&gMaliApiLock, gpueb_lck_grp, LCK_ATTR_NULL);
+			gMaliApiLockInit = true;
+			gMaliGpu = 1u;
+			if (which < 6u) {
+				which = 6u;
+			}
+		} else {
+			printf("mali: mali_gpu: no lock group; HakiosGPU disabled\n");
+		}
 	}
 	/*
 	 * Six is the highest step there is: the global interface, its configuration and a ping. The
@@ -5105,6 +9547,31 @@ hakios_mali610_init(void)
 
 		if (PE_parse_boot_argn("mali_gpueb", &gpueb, sizeof(gpueb))) {
 			gMaliGpueb = gpueb ? 1u : 0u;
+		}
+	}
+	{
+		int gpuebpower = 1;
+
+		if (PE_parse_boot_argn("mali_gpuebpower", &gpuebpower, sizeof(gpuebpower))) {
+			gMaliGpuebPower = gpuebpower ? 1u : 0u;
+		}
+	}
+	{
+		int m2 = 1;
+
+		if (PE_parse_boot_argn("mali_m2", &m2, sizeof(m2))) {
+			gMaliM2 = m2 ? 1u : 0u;
+		}
+		int m2c = 0;
+		if (!gMaliGpu && gMaliM2 &&
+		    PE_parse_boot_argn("mali_m2c", &m2c, sizeof(m2c)) && (m2c == 1 || m2c == 2)) {
+			if (gpueb_lck_grp) {
+				lck_mtx_init(&m2c_lock, gpueb_lck_grp, LCK_ATTR_NULL);
+				gMaliM2c = (unsigned)m2c;
+			} else {
+				printf("mali: m2c: no lock group; skipping group submission\n");
+				gMaliM2 = 0;
+			}
 		}
 	}
 	{
@@ -5169,6 +9636,13 @@ hakios_mali610_init(void)
 		}
 		if (PE_parse_boot_argn("mali_ostd", &ostd, sizeof(ostd))) {
 			gMaliOstd = ostd ? 1u : 0u;
+		}
+	}
+	{
+		int opp = -1;
+
+		if (PE_parse_boot_argn("mali_opp", &opp, sizeof(opp)) && opp >= 0 && opp <= 39) {
+			gMaliOpp = opp;
 		}
 	}
 	{
